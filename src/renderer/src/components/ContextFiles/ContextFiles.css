@@ -1,0 +1,12 @@
+.rct-tree-item-li {
+  @apply list-none;
+}
+
+.rct-tree-items-container {
+  padding-left: 7px;
+}
+
+.rct-tree-root {
+  @apply p-0;
+  margin-left: -6px;
+}
