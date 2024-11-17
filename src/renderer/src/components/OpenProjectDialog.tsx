@@ -10,7 +10,7 @@ export const OpenProjectDialog = ({ onClose, onAddProject }: Props) => {
 
   const handleSelectProject = async () => {
     try {
-      const result = await window.electron.dialog.showOpenDialog({
+      const result = await window.api.dialog.showOpenDialog({
         properties: ['openDirectory'],
       });
 
@@ -30,15 +30,16 @@ export const OpenProjectDialog = ({ onClose, onAddProject }: Props) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-neutral-800 p-6 rounded-lg shadow-xl w-96">
-        <h2 className="text-xl mb-4 text-neutral-100">Open Project</h2>
+      <div className="bg-neutral-800 p-5 pt-4 rounded-lg shadow-xl w-96">
+        <h2 className="text-lg mb-4 text-neutral-100">OPEN PROJECT</h2>
         <div className="mb-4">
           <input
+            className="w-full p-2 border-2 border-gray-700 rounded-lg focus:outline-none focus:border-gray-400 text-sm bg-gray-900 text-white placeholder-gray-500"
             type="text"
             value={projectPath}
-            placeholder="Select project directory"
-            className="w-full p-2 bg-neutral-700 text-neutral-100 rounded"
-            readOnly
+            onChange={(e) => setProjectPath(e.target.value)}
+            placeholder="Choose project directory"
+            autoFocus
           />
           <button onClick={handleSelectProject} className="mt-2 w-full bg-neutral-600 text-neutral-100 p-2 rounded hover:bg-neutral-500">
             Browse
@@ -51,9 +52,9 @@ export const OpenProjectDialog = ({ onClose, onAddProject }: Props) => {
           <button
             onClick={handleAddProject}
             disabled={!projectPath}
-            className={`px-4 py-2 rounded ${projectPath ? 'bg-blue-600 text-white hover:bg-blue-500' : 'bg-neutral-500 text-neutral-300 cursor-not-allowed'}`}
+            className={`px-4 py-2 rounded ${projectPath ? 'bg-amber-600 text-white hover:bg-amber-500' : 'bg-neutral-700 text-neutral-600 cursor-not-allowed'}`}
           >
-            Add Project
+            Open
           </button>
         </div>
       </div>

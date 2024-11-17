@@ -7,7 +7,7 @@ import { websocketManager } from './websocket';
 import { setupIpcHandlers } from './ipcHandlers';
 import { projectManager } from './project-manager';
 
-const createWindow = (): void => {
+const createWindow = () => {
   const mainWindow = new BrowserWindow({
     width: 900,
     height: 670,
@@ -31,6 +31,7 @@ const createWindow = (): void => {
   });
 
   websocketManager.initServer(mainWindow);
+  projectManager.init(mainWindow);
 
   app.on('before-quit', () => {
     websocketManager.closeServer();
@@ -44,6 +45,8 @@ const createWindow = (): void => {
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'));
   }
+
+  return mainWindow;
 };
 
 app.whenReady().then(() => {
@@ -53,12 +56,14 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window);
   });
 
-  setupIpcHandlers();
-
-  createWindow();
+  const mainWindow = createWindow();
+  setupIpcHandlers(mainWindow);
 
   app.on('activate', function () {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    if (BrowserWindow.getAllWindows().length === 0) {
+      const mainWindow = createWindow();
+      setupIpcHandlers(mainWindow);
+    }
   });
 });
 

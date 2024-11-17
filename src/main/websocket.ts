@@ -1,24 +1,27 @@
-import WebSocket, { WebSocketServer } from 'ws';
-import { v4 as uuidv4 } from 'uuid';
 import { BrowserWindow } from 'electron';
+import { v4 as uuidv4 } from 'uuid';
+import WebSocket, { WebSocketServer } from 'ws';
 import { WEBSOCKET_PORT } from './constants';
 import {
-  DropFileMessage,
-  isFileAddedMessage,
-  isFileDroppedMessage,
+  EditFormat,
+  isAddFileMessage,
+  isDropFileMessage,
   isInitMessage,
   isResponseMessage,
+  isUpdateAutocompletionMessage,
   Message,
   PromptMessage,
   ResponseMessage,
 } from './messages';
-import { ResponseCompletedData, ResponseChunkData } from '@/common/types';
+import { projectManager } from './project-manager';
+import { WebSocketClient } from './web-socket-client';
+import { ResponseChunkData, ResponseCompletedData } from '@/common/types';
 
 class WebSocketManager {
   private static instance: WebSocketManager;
   private wss: WebSocketServer | null = null;
   private mainWindow: BrowserWindow | null = null;
-  private clients: Map<string, WebSocket> = new Map();
+  private clients: WebSocketClient[] = [];
   private currentResponseMessageId: string | null = null;
 
   private constructor() {}
@@ -46,31 +49,18 @@ class WebSocketManager {
     });
   }
 
-  public sendPrompt(baseDir: string, prompt: string): void {
+  public sendPrompt(baseDir: string, prompt: string, editFormat?: EditFormat): void {
     const message: PromptMessage = {
       action: 'prompt',
       prompt,
+      editFormat,
     };
 
-    this.sendMessage(baseDir, message);
+    this.clients
+      .filter((client) => client.baseDir === baseDir)
+      .filter((client) => client.listenTo.includes('prompt'))
+      .forEach((client) => client.sendMessage(message));
   }
-
-  public dropFile(baseDir: string, filePath: string): void {
-    const message: DropFileMessage = {
-      action: 'drop-file',
-      path: filePath,
-    };
-
-    this.sendMessage(baseDir, message);
-  }
-
-  private sendMessage = (baseDir: string, message: Message) => {
-    const client = this.clients.get(baseDir);
-    if (client?.readyState === WebSocket.OPEN) {
-      console.log(`Sending message to ${baseDir}`);
-      client.send(JSON.stringify(message));
-    }
-  };
 
   public closeServer(): void {
     if (this.wss) {
@@ -86,35 +76,47 @@ class WebSocketManager {
       const message: Message = JSON.parse(messageJSON);
 
       if (isInitMessage(message)) {
-        this.clients.set(message.baseDir, socket);
-        console.log(`WebSocket registered for base directory: ${message.baseDir}`);
+        const client = new WebSocketClient(socket, message.baseDir, message.listenTo);
+        this.clients.push(client);
+
+        const project = projectManager.getProject(message.baseDir);
+        project.addClient(client);
+
+        message.openFiles?.forEach((file) => project.addFile(file));
+        console.log(`WebSocket registered project for base directory: ${message.baseDir}`);
       } else if (isResponseMessage(message)) {
-        const baseDir = this.getBaseDir(socket);
-        if (!baseDir) {
+        const client = this.findClientBySocket(socket);
+        if (!client) {
           return;
         }
-        this.processResponseMessage(baseDir, message);
-      } else if (isFileAddedMessage(message)) {
-        const baseDir = this.getBaseDir(socket);
-        if (!baseDir) {
+        this.processResponseMessage(client.baseDir, message);
+      } else if (isAddFileMessage(message)) {
+        const client = this.findClientBySocket(socket);
+        if (!client) {
+          console.log('No client found', this.clients);
           return;
         }
-        console.log(`Sending file-added event for ${baseDir}`);
-        this.mainWindow?.webContents.send('file-added', {
-          baseDir: baseDir,
+        console.log(`Adding file in project ${client.baseDir}`);
+        projectManager.getProject(client.baseDir).addFile({
           path: message.path,
           readOnly: message.readOnly,
+          sourceType: message.sourceType,
         });
-      } else if (isFileDroppedMessage(message)) {
-        const baseDir = this.getBaseDir(socket);
-        if (!baseDir) {
+      } else if (isDropFileMessage(message)) {
+        const client = this.findClientBySocket(socket);
+        if (!client) {
           return;
         }
-        console.log(`Sending file-dropped event for ${baseDir}`);
-        this.mainWindow?.webContents.send('file-dropped', {
-          baseDir: baseDir,
-          path: message.path,
-          readOnly: message.readOnly,
+        console.log(`Dropping file in project ${client.baseDir}`);
+        projectManager.getProject(client.baseDir).dropFile(message.path);
+      } else if (isUpdateAutocompletionMessage(message)) {
+        const client = this.findClientBySocket(socket);
+        if (!client) {
+          return;
+        }
+        this.mainWindow?.webContents.send('update-autocompletion', {
+          baseDir: client.baseDir,
+          words: message.words,
         });
       } else {
         console.error('Unknown message type');
@@ -157,24 +159,21 @@ class WebSocketManager {
     }
   };
 
-  private getBaseDir(socket: WebSocket): string | null {
-    for (const [baseDir, connection] of this.clients.entries()) {
-      if (connection === socket) {
-        return baseDir;
-      }
+  private removeClientConnection = (socket: WebSocket) => {
+    const client = this.findClientBySocket(socket);
+    if (!client) {
+      return;
     }
-    return null;
-  }
 
-  private removeClientConnection(ws: WebSocket) {
-    for (const [baseDir, connection] of this.clients.entries()) {
-      if (connection === ws) {
-        this.clients.delete(baseDir);
-        console.log(`WebSocket removed for base directory: ${baseDir}`);
-        break;
-      }
-    }
-  }
+    const project = projectManager.getProject(client.baseDir);
+    project.removeClient(client);
+
+    this.clients = this.clients.filter((c) => c !== client);
+  };
+
+  private findClientBySocket = (socket: WebSocket): WebSocketClient | undefined => {
+    return this.clients.find((c) => c.socket === socket);
+  };
 }
 
 export const websocketManager = WebSocketManager.getInstance();

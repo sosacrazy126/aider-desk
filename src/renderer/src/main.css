@@ -8,21 +8,23 @@
 }
 
 .react-resizable-handle {
-  position: absolute;
-  width: 10px;
-  height: 100%;
-  background-repeat: no-repeat;
-  background-origin: content-box;
-  box-sizing: border-box;
-  padding: 0 3px;
-  cursor: col-resize;
-  border-left: 1px solid theme('colors.neutral.800');
+  background-image: none !important;
+  position: relative;
 }
 
-.react-resizable-handle-w {
-  left: 0;
-  background-position: bottom left;
+.react-resizable-handle::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-0%, -0%) rotate(45deg);
+  width: 0;
+  height: 0;
+  border-left: 6px solid theme('colors.neutral.800');
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
 }
+
 
 @layer base {
   html {

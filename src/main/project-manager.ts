@@ -1,14 +1,10 @@
-import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
-import { AIDER_COMMAND } from './constants';
-
-interface Project {
-  baseDir: string;
-  process?: ChildProcessWithoutNullStreams;
-}
+import { BrowserWindow } from 'electron';
+import { Project } from './project';
 
 class ProjectManager {
   private static instance: ProjectManager;
   private projects: Project[] = [];
+  private mainWindow: BrowserWindow | null = null;
 
   private constructor() {}
 
@@ -19,62 +15,48 @@ class ProjectManager {
     return ProjectManager.instance;
   }
 
-  private runAider(baseDir: string): ChildProcessWithoutNullStreams {
-    const process = spawn(AIDER_COMMAND, [baseDir], {
-      cwd: baseDir,
-      shell: true,
-    });
+  public init(mainWindow: BrowserWindow): void {
+    this.mainWindow = mainWindow;
+  }
 
-    process.stdout.on('data', (data) => {
-      console.log(`Aider stdout (${baseDir}): ${data}`);
-    });
+  public getProject(baseDir: string): Project {
+    let project = this.projects.find((project) => project.baseDir === baseDir);
 
-    process.stderr.on('data', (data) => {
-      console.error(`Aider stderr (${baseDir}): ${data}`);
-    });
+    if (!project) {
+      project = new Project(this.mainWindow!, baseDir);
+      this.projects.push(project);
+    }
 
-    process.on('close', (code) => {
-      console.log(`Aider process exited with code ${code} (${baseDir})`);
-    });
-
-    return process;
+    return project;
   }
 
   public startProject(baseDir: string): void {
-    if (this.projects.some((project) => project.baseDir === baseDir)) {
-      console.log(`Project with base directory ${baseDir} is already running`);
-      return;
-    }
+    const project = this.getProject(baseDir);
 
-    const newProject: Project = {
-      baseDir,
-      process: this.runAider(baseDir),
-    };
-    this.projects.push(newProject);
+    project.contextFiles.forEach((contextFile) => {
+      this.mainWindow?.webContents.send('file-added', {
+        baseDir,
+        path: contextFile.path,
+        readOnly: contextFile.readOnly,
+      });
+    });
+
+    project.runAider(baseDir);
   }
 
   public stopProject(baseDir: string): void {
-    const projectIndex = this.projects.findIndex((project) => project.baseDir === baseDir);
+    const project = this.projects.find((project) => project.baseDir === baseDir);
 
-    if (projectIndex === -1) {
+    if (!project) {
       console.log(`No project found with base directory ${baseDir}`);
       return;
     }
-
-    const project = this.projects[projectIndex];
-
-    if (project.process) {
-      project.process.kill();
-    }
-
-    this.projects.splice(projectIndex, 1);
+    project.killAider();
   }
 
   public stopProjects(): void {
     this.projects.forEach((project) => {
-      if (project.process) {
-        project.process.kill();
-      }
+      project.killAider();
     });
     this.projects = [];
   }

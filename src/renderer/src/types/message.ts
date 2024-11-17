@@ -6,6 +6,7 @@ export interface Message {
 
 export interface PromptMessage extends Message {
   type: 'prompt';
+  edit_format?: 'code' | 'ask' | 'architect';
 }
 
 export interface ResponseMessage extends Message {

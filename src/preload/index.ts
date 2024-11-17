@@ -1,18 +1,22 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import { electronAPI } from '@electron-toolkit/preload';
 import { v4 as uuidv4 } from 'uuid';
-import { FileAddedData, FileDroppedData, ResponseChunkData, ResponseCompletedData } from '../common/types';
+import { AutocompletionData, ConfirmAskData, FileAddedData, FileDroppedData, ResponseChunkData, ResponseCompletedData } from '../common/types';
 import { ApplicationAPI } from './index.d';
 
 const responseChunkListeners: Record<string, (event: Electron.IpcRendererEvent, data: ResponseChunkData) => void> = {};
 const responseFinishedListeners: Record<string, (event: Electron.IpcRendererEvent, data: ResponseCompletedData) => void> = {};
 const fileAddedListeners: Record<string, (event: Electron.IpcRendererEvent, data: FileAddedData) => void> = {};
 const fileDroppedListeners: Record<string, (event: Electron.IpcRendererEvent, data: FileDroppedData) => void> = {};
+const updateAutocompletionListeners: Record<string, (event: Electron.IpcRendererEvent, data: AutocompletionData) => void> = {};
 
 const api: ApplicationAPI = {
   startProject: (baseDir: string) => ipcRenderer.send('start-project', baseDir),
   stopProject: (baseDir: string) => ipcRenderer.send('stop-project', baseDir),
-  sendPrompt: (baseDir: string, prompt: string) => ipcRenderer.send('send-prompt', baseDir, prompt),
+  sendPrompt: (baseDir: string, prompt: string, editFormat?: string) => ipcRenderer.send('send-prompt', baseDir, prompt, editFormat),
+  dialog: {
+    showOpenDialog: (options: Electron.OpenDialogSyncOptions) => ipcRenderer.invoke('show-open-dialog', options),
+  },
 
   addResponseChunkListener: (baseDir, callback) => {
     const listenerId = uuidv4();
@@ -87,6 +91,44 @@ const api: ApplicationAPI = {
     if (callback) {
       ipcRenderer.removeListener('file-dropped', callback);
       delete fileDroppedListeners[listenerId];
+    }
+  },
+
+  addUpdateAutocompletionListener: (baseDir, callback) => {
+    const listenerId = uuidv4();
+    updateAutocompletionListeners[listenerId] = (event: Electron.IpcRendererEvent, data: AutocompletionData) => {
+      if (data.baseDir !== baseDir) {
+        return;
+      }
+      callback(event, data);
+    };
+    ipcRenderer.on('update-autocompletion', updateAutocompletionListeners[listenerId]);
+    return listenerId;
+  },
+  removeUpdateAutocompletionListener: (listenerId) => {
+    const callback = updateAutocompletionListeners[listenerId];
+    if (callback) {
+      ipcRenderer.removeListener('update-autocompletion', callback);
+      delete updateAutocompletionListeners[listenerId];
+    }
+  },
+
+  addConfirmAskListener: (baseDir, callback) => {
+    const listenerId = uuidv4();
+    const listener = (event: Electron.IpcRendererEvent, data: ConfirmAskData) => {
+      if (data.baseDir !== baseDir) {
+        return;
+      }
+      callback(event, data);
+    };
+    ipcRenderer.on('confirm-ask', listener);
+    return listenerId;
+  },
+  removeConfirmAskListener: (listenerId) => {
+    const callback = responseChunkListeners[listenerId];
+    if (callback) {
+      ipcRenderer.removeListener('confirm-ask', callback);
+      delete responseChunkListeners[listenerId];
     }
   },
 };

@@ -1,10 +1,10 @@
+import { ResponseChunkData, ResponseCompletedData, FileAddedData, FileDroppedData, AutocompletionData, ConfirmAskData } from '../common/types';
 import type { ElectronAPI } from '@electron-toolkit/preload';
-import { ResponseChunkData, ResponseCompletedData, FileAddedData, FileDroppedData } from '../common/types';
 
 export interface ApplicationAPI {
   startProject: (baseDir: string) => void;
   stopProject: (baseDir: string) => void;
-  sendPrompt: (baseDir: string, prompt: string) => void;
+  sendPrompt: (baseDir: string, prompt: string, editFormat?: string) => void;
   dialog: {
     showOpenDialog: (options: Electron.OpenDialogSyncOptions) => Promise<Electron.OpenDialogReturnValue>;
   };
@@ -20,6 +20,12 @@ export interface ApplicationAPI {
 
   addFileDroppedListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: FileDroppedData) => void) => string;
   removeFileDroppedListener: (listenerId: string) => void;
+
+  addUpdateAutocompletionListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: AutocompletionData) => void) => string;
+  removeUpdateAutocompletionListener: (listenerId: string) => void;
+
+  addConfirmAskListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: ConfirmAskData) => void) => string;
+  removeConfirmAskListener: (listenerId: string) => void;
 }
 
 declare global {
@@ -28,4 +34,3 @@ declare global {
     api: ApplicationAPI;
   }
 }
-

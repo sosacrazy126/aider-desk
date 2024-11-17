@@ -25,3 +25,17 @@ export interface FileDroppedData {
   path: string;
   readOnly?: boolean;
 }
+
+export interface PathSuggestionsData {
+  paths: string[];
+}
+
+export interface AutocompletionData {
+  baseDir: string;
+  words: string[];
+}
+
+export interface ConfirmAskData {
+  baseDir: string;
+  question: string;
+}
