@@ -16,18 +16,12 @@ export interface ResponseCompletedData {
 
 export interface FileAddedData {
   baseDir: string;
-  path: string;
-  readOnly?: boolean;
+  file: ContextFile;
 }
 
 export interface FileDroppedData {
   baseDir: string;
   path: string;
-  readOnly?: boolean;
-}
-
-export interface PathSuggestionsData {
-  paths: string[];
 }
 
 export interface AutocompletionData {
@@ -38,4 +32,20 @@ export interface AutocompletionData {
 export interface ConfirmAskData {
   baseDir: string;
   question: string;
+}
+
+export type ContexFileSourceType = 'companion' | 'aider' | 'app' | string;
+
+export interface ContextFile {
+  path: string;
+  sourceType?: ContexFileSourceType;
+  readOnly?: boolean;
+}
+
+export interface WindowState {
+  width: number;
+  height: number;
+  x: number | undefined;
+  y: number | undefined;
+  isMaximized: boolean;
 }

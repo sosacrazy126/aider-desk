@@ -1,4 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
+import { BiSend } from 'react-icons/bi';
 
 const PLACEHOLDERS = [
   'How can I help you today?',
@@ -37,10 +38,11 @@ const getPromptWithEditFormat = (prompt: string): [string, string | undefined] =
 type Props = {
   baseDir: string;
   onSubmit?: (prompt: string) => void;
+  processing?: boolean;
   test?: string;
 };
 
-export const PromptField: React.FC<Props> = ({ baseDir, onSubmit }) => {
+export const PromptField: React.FC<Props> = ({ baseDir, onSubmit, processing = false }) => {
   const [text, setText] = useState('');
   const [suggestionsVisible, setSuggestionsVisible] = useState(false);
   const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
@@ -48,7 +50,20 @@ export const PromptField: React.FC<Props> = ({ baseDir, onSubmit }) => {
   const [placeholder] = useState(PLACEHOLDERS[Math.floor(Math.random() * PLACEHOLDERS.length)]);
   const [highlightedSuggestionIndex, setHighlightedSuggestionIndex] = useState(-1);
   const [autocompletionWords, setAutocompletionWords] = useState<string[]>([]);
+  const [inputHistory, setInputHistory] = useState<string[]>([]);
+  const [historyIndex, setHistoryIndex] = useState<number>(-1);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const loadHistory = async () => {
+    try {
+      const history = await window.api.loadInputHistory(baseDir);
+      setInputHistory(history || []);
+    } catch (error: unknown) {
+      console.error('Failed to load input history:', error);
+      // If loading fails, continue with empty history
+      setInputHistory([]);
+    }
+  };
 
   useEffect(() => {
     const listenerId = window.api.addUpdateAutocompletionListener(baseDir, (_, { words }) => {
@@ -59,6 +74,14 @@ export const PromptField: React.FC<Props> = ({ baseDir, onSubmit }) => {
       window.api.removeUpdateAutocompletionListener(listenerId);
     };
   }, [baseDir]);
+
+  useEffect(() => {
+    if (processing) {
+      return;
+    }
+    void loadHistory();
+    // intentionally omitting loadHistory
+  }, [processing, baseDir]);
 
   const getCurrentWord = (text: string, cursorPosition: number) => {
     const textBeforeCursor = text.slice(0, cursorPosition);
@@ -123,13 +146,20 @@ export const PromptField: React.FC<Props> = ({ baseDir, onSubmit }) => {
     }
   };
 
+  const prepareForNextPrompt = () => {
+    setText('');
+    setSuggestionsVisible(false);
+    setHighlightedSuggestionIndex(-1);
+    setHistoryIndex(-1);
+  };
+
   const handleSubmit = () => {
     const [prompt, editFormat] = getPromptWithEditFormat(text);
 
     if (prompt) {
       window.api.sendPrompt(baseDir, prompt, editFormat);
-      setText('');
       onSubmit?.(prompt);
+      prepareForNextPrompt();
     }
   };
 
@@ -161,9 +191,42 @@ export const PromptField: React.FC<Props> = ({ baseDir, onSubmit }) => {
           }
           break;
       }
-    } else if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit();
+    } else {
+      switch (e.key) {
+        case 'Enter':
+          if (!e.shiftKey) {
+            e.preventDefault();
+            if (!processing) {
+              handleSubmit();
+            }
+          }
+          break;
+        case 'ArrowUp':
+          if (text === '' && inputHistory.length > 0) {
+            e.preventDefault();
+            const newIndex = historyIndex === -1 ? 0 : Math.min(historyIndex + 1, inputHistory.length - 1);
+            setHistoryIndex(newIndex);
+            setText(inputHistory[newIndex]);
+          } else if (historyIndex !== -1) {
+            e.preventDefault();
+            const newIndex = Math.min(historyIndex + 1, inputHistory.length - 1);
+            setHistoryIndex(newIndex);
+            setText(inputHistory[newIndex]);
+          }
+          break;
+        case 'ArrowDown':
+          if (historyIndex !== -1) {
+            e.preventDefault();
+            const newIndex = historyIndex - 1;
+            if (newIndex === -1) {
+              setText('');
+            } else {
+              setText(inputHistory[newIndex]);
+            }
+            setHistoryIndex(newIndex);
+          }
+          break;
+      }
     }
   };
 
@@ -178,8 +241,22 @@ export const PromptField: React.FC<Props> = ({ baseDir, onSubmit }) => {
         rows={Math.max(text.split('\n').length, 1)}
         className="w-full px-2 py-2 border-2 border-gray-700 rounded-lg focus:outline-none focus:border-gray-400 text-sm bg-gray-800 text-white placeholder-gray-500 resize-none overflow-y-auto"
       />
-
-      {suggestionsVisible && (
+      {processing ? (
+        <div className="absolute right-3 top-1/2 -translate-y-[12px] text-neutral-400">
+          <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : (
+        <button
+          onClick={handleSubmit}
+          disabled={!text.trim()}
+          className={`absolute right-3 top-1/2 -translate-y-[12px] text-neutral-400 hover:text-neutral-300 transition-all duration-200
+            ${!text.trim() ? 'opacity-0' : 'opacity-100'}`}
+          title="Send message (Enter)"
+        >
+          <BiSend className="w-4 h-4" />
+        </button>
+      )}
+      {suggestionsVisible && filteredSuggestions.length > 0 && (
         <div
           className="absolute bg-neutral-950 text-xs shadow-lg z-10 text-white"
           style={{

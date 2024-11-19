@@ -15,6 +15,7 @@ type Props = {
 
 export const ProjectPanel = ({ baseDir }: Props) => {
   const [messages, setMessages] = useState<Message[]>([]);
+  const [processing, setProcessing] = useState(false);
   const processingMessageRef = useRef<ResponseMessage | null>(null);
 
   useEffect(() => {
@@ -48,6 +49,7 @@ export const ProjectPanel = ({ baseDir }: Props) => {
       if (processingMessage && processingMessage.id === messageId) {
         processingMessage.processing = false;
         setMessages((prevMessages) => prevMessages.map((message) => (message.id === messageId ? processingMessage : message)));
+        setProcessing(false);
       }
     };
 
@@ -58,9 +60,10 @@ export const ProjectPanel = ({ baseDir }: Props) => {
       window.api.removeResponseChunkListener(responseChunkListenerId);
       window.api.removeResponseCompletedListener(responseCompletedListenerId);
     };
-  }, []);
+  }, [baseDir]);
 
   const handlePromptSubmit = (prompt: string) => {
+    setProcessing(true);
     const promptMessage: PromptMessage = {
       id: uuidv4(),
       type: 'prompt',
@@ -93,7 +96,7 @@ export const ProjectPanel = ({ baseDir }: Props) => {
           before:to-transparent
           before:pointer-events-none"
         >
-          <PromptField baseDir={baseDir} onSubmit={handlePromptSubmit} />
+          <PromptField baseDir={baseDir} onSubmit={handlePromptSubmit} processing={processing} />
         </div>
       </div>
       <ResizableBox

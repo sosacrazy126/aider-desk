@@ -1,13 +1,15 @@
 import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
+import fs from 'fs/promises';
+import path from 'path';
 import { BrowserWindow } from 'electron';
-import { ContextFile } from './messages';
+import { ContextFile } from '@common/types';
+import { Connector } from './connector';
 import { AIDER_COMMAND } from './constants';
-import { WebSocketClient } from './web-socket-client';
 
 export class Project {
   private mainWindow: BrowserWindow | null = null;
-  private process?: ChildProcessWithoutNullStreams;
-  private clients: WebSocketClient[] = [];
+  private process?: ChildProcessWithoutNullStreams | null = null;
+  private connectors: Connector[] = [];
   public baseDir: string;
   public contextFiles: ContextFile[] = [];
 
@@ -16,22 +18,29 @@ export class Project {
     this.baseDir = baseDir;
   }
 
-  public addClient(client: WebSocketClient) {
-    this.clients.push(client);
-    this.contextFiles.forEach(client.sendAddFileMessage);
+  public addConnector(connector: Connector) {
+    this.connectors.push(connector);
+    this.contextFiles.forEach(connector.sendAddFileMessage);
   }
 
-  public removeClient(client: WebSocketClient) {
-    this.clients = this.clients.filter((c) => c !== client);
+  public removeConnector(connector: Connector) {
+    this.connectors = this.connectors.filter((c) => c !== connector);
   }
 
   public runAider(baseDir: string): void {
-    const process = spawn(AIDER_COMMAND, [baseDir], {
+    if (this.process) {
+      return;
+    }
+
+    // Spawn without shell to have direct process control
+    this.process = spawn(AIDER_COMMAND, [baseDir], {
       cwd: baseDir,
-      shell: true,
+      detached: true,
     });
 
-    process.stdout.on('data', (data) => {
+    console.log('Starting Aider...');
+
+    this.process.stdout.on('data', (data) => {
       const output = data.toString();
       console.log(output);
       const match = output.match(/^\$confirm-ask\$:(.*)$/ms);
@@ -44,15 +53,13 @@ export class Project {
       }
     });
 
-    process.stderr.on('data', (data) => {
+    this.process.stderr.on('data', (data) => {
       console.error(`Aider stderr (${baseDir}): ${data}`);
     });
 
-    process.on('close', (code) => {
+    this.process.on('close', (code) => {
       console.log(`Aider process exited with code ${code} (${baseDir})`);
     });
-
-    this.process = process;
   }
 
   public isStarted() {
@@ -60,28 +67,74 @@ export class Project {
   }
 
   public killAider() {
-    this.process?.kill();
+    if (this.process) {
+      console.log('Killing Aider...', this.baseDir);
+      try {
+        // Kill the process group
+        process.kill(-this.process.pid!, 'SIGKILL');
+      } catch (error: unknown) {
+        console.error(error);
+        // Fallback to direct process termination
+        this.process.kill('SIGKILL');
+      }
+    }
+    this.process = null;
   }
 
   public addFile(contextFile: ContextFile): void {
     console.log(`Adding file: ${contextFile.path}`);
     this.contextFiles.push(contextFile);
-    this.clients.filter((client) => client.listenTo.includes('add-file')).forEach((client) => client.sendAddFileMessage(contextFile));
+    this.connectors.filter((connector) => connector.listenTo.includes('add-file')).forEach((connector) => connector.sendAddFileMessage(contextFile));
 
     this.mainWindow?.webContents.send('file-added', {
       baseDir: this.baseDir,
-      path: contextFile.path,
-      readOnly: contextFile.readOnly,
+      file: contextFile,
     });
   }
 
   public dropFile(path: string): void {
+    console.log(`Dropping file: ${path}`);
     this.contextFiles = this.contextFiles.filter((file) => file.path !== path);
-    this.clients.filter((client) => client.listenTo.includes('drop-file')).forEach((client) => client.sendDropFileMessage(path));
+    this.connectors.filter((connector) => connector.listenTo.includes('drop-file')).forEach((connector) => connector.sendDropFileMessage(path));
 
     this.mainWindow?.webContents.send('file-dropped', {
       baseDir: this.baseDir,
       path,
     });
+  }
+
+  public async loadInputHistory(): Promise<string[]> {
+    try {
+      const historyPath = path.join(this.baseDir, '.aider.input.history');
+      const content = await fs.readFile(historyPath, 'utf8');
+
+      if (!content) {
+        return [];
+      }
+
+      const history: string[] = [];
+      const lines = content.split('\n');
+      let currentInput = '';
+
+      for (const line of lines) {
+        if (line.startsWith('# ')) {
+          if (currentInput) {
+            history.push(currentInput.trim());
+            currentInput = '';
+          }
+        } else if (line.startsWith('+')) {
+          currentInput += line.substring(1) + '\n';
+        }
+      }
+
+      if (currentInput) {
+        history.push(currentInput.trim());
+      }
+
+      return history.reverse();
+    } catch (error) {
+      console.log('Failed to load input history:', error);
+      return [];
+    }
   }
 }

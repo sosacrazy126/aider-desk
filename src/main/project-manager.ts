@@ -36,8 +36,7 @@ class ProjectManager {
     project.contextFiles.forEach((contextFile) => {
       this.mainWindow?.webContents.send('file-added', {
         baseDir,
-        path: contextFile.path,
-        readOnly: contextFile.readOnly,
+        file: contextFile,
       });
     });
 
@@ -54,7 +53,8 @@ class ProjectManager {
     project.killAider();
   }
 
-  public stopProjects(): void {
+  public close(): void {
+    console.log('Stopping all projects...');
     this.projects.forEach((project) => {
       project.killAider();
     });

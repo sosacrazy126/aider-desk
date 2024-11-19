@@ -3,14 +3,24 @@ import { app, shell, BrowserWindow } from 'electron';
 import { electronApp, optimizer, is } from '@electron-toolkit/utils';
 
 import icon from '../../resources/icon.png?asset';
-import { websocketManager } from './websocket';
+import { Store } from './store';
+import { connectorManager } from './connector-manager';
 import { setupIpcHandlers } from './ipcHandlers';
 import { projectManager } from './project-manager';
 
-const createWindow = () => {
+const initStore = async (): Promise<Store> => {
+  const store = new Store();
+  await store.init();
+  return store;
+};
+
+const createWindow = (store: Store) => {
+  const lastWindowState = store.getWindowState();
   const mainWindow = new BrowserWindow({
-    width: 900,
-    height: 670,
+    width: lastWindowState.width,
+    height: lastWindowState.height,
+    x: lastWindowState.x,
+    y: lastWindowState.y,
     show: false,
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon } : {}),
@@ -30,12 +40,23 @@ const createWindow = () => {
     return { action: 'deny' };
   });
 
-  websocketManager.initServer(mainWindow);
+  const saveWindowState = (): void => {
+    const [width, height] = mainWindow.getSize();
+    const [x, y] = mainWindow.getPosition();
+    store.setWindowState({ width, height, x, y, isMaximized: mainWindow.isMaximized() });
+  };
+
+  mainWindow.on('resize', saveWindowState);
+  mainWindow.on('move', saveWindowState);
+  mainWindow.on('maximize', saveWindowState);
+  mainWindow.on('unmaximize', saveWindowState);
+
+  connectorManager.init(mainWindow);
   projectManager.init(mainWindow);
 
   app.on('before-quit', () => {
-    websocketManager.closeServer();
-    projectManager.stopProjects();
+    connectorManager.close();
+    projectManager.close();
   });
 
   // HMR for renderer base on electron-vite cli.
@@ -49,20 +70,22 @@ const createWindow = () => {
   return mainWindow;
 };
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   electronApp.setAppUserModelId('com.electron');
 
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window);
   });
 
-  const mainWindow = createWindow();
-  setupIpcHandlers(mainWindow);
+  const store = await initStore();
+
+  const mainWindow = createWindow(store);
+  setupIpcHandlers(mainWindow, store);
 
   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) {
-      const mainWindow = createWindow();
-      setupIpcHandlers(mainWindow);
+      const mainWindow = createWindow(store);
+      setupIpcHandlers(mainWindow, store);
     }
   });
 });

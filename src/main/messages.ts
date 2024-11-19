@@ -1,15 +1,9 @@
+import { ContexFileSourceType, ContextFile } from '@common/types';
+
 export type MessageAction = 'init' | 'prompt' | 'response' | 'add-file' | 'drop-file' | 'update-autocompletion' | 'confirm';
 
 export interface Message {
   action: MessageAction;
-}
-
-export type ContexFileSourceType = 'companion' | 'aider' | 'app' | string;
-
-export interface ContextFile {
-  path: string;
-  sourceType?: ContexFileSourceType;
-  readOnly?: boolean;
 }
 
 export interface InitMessage {

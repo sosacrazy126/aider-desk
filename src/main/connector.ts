@@ -1,24 +1,25 @@
-import WebSocket from 'ws';
-import { AddFileMessage, ContextFile, DropFileMessage, Message, MessageAction } from './messages';
+import { Socket } from 'socket.io';
+import { AddFileMessage, DropFileMessage, Message, MessageAction } from './messages';
+import { ContextFile } from '@/common/types';
 
-export class WebSocketClient {
-  socket: WebSocket;
+export class Connector {
+  socket: Socket;
   baseDir: string;
   listenTo: MessageAction[];
 
-  constructor(socket: WebSocket, baseDir: string, listenTo: MessageAction[] = []) {
+  constructor(socket: Socket, baseDir: string, listenTo: MessageAction[] = []) {
     this.socket = socket;
     this.baseDir = baseDir;
     this.listenTo = listenTo;
   }
 
   public sendMessage = (message: Message) => {
-    if (this.socket.readyState !== WebSocket.OPEN) {
-      console.log('WebSocket client is not connected');
+    if (!this.socket.connected) {
+      console.log('Socket.IO client is not connected');
       return;
     }
     console.log(`Sending message to client with baseDir: ${this.baseDir}`);
-    this.socket.send(JSON.stringify(message));
+    this.socket.emit('message', message);
   };
 
   public sendAddFileMessage = (contextFile: ContextFile) => {

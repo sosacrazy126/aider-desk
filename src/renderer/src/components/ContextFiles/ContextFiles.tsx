@@ -1,28 +1,19 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { StaticTreeDataProvider, Tree, UncontrolledTreeEnvironment } from 'react-complex-tree';
 import { HiX } from 'react-icons/hi';
+import { ContextFile } from '@common/types';
+
 import './ContextFiles.css';
-
-enum FileType {
-  Editable = 'editable',
-  ReadOnly = 'readOnly',
-  Companion = 'companion',
-}
-
-interface File {
-  path: string;
-  type: FileType;
-}
 
 interface TreeItem {
   index: string;
   isFolder: boolean;
   children: string[];
   data: string;
-  file?: File;
+  file?: ContextFile;
 }
 
-const createFileTree = (files: File[]) => {
+const createFileTree = (files: ContextFile[]) => {
   const tree: Record<string, TreeItem> = {
     root: { index: 'root', children: [], isFolder: true, data: 'Root' },
   };
@@ -66,19 +57,11 @@ type Props = {
 };
 
 export const ContextFiles = ({ baseDir }: Props) => {
-  const [files, setFiles] = useState<File[]>([]);
+  const [files, setFiles] = useState<ContextFile[]>([]);
 
   useEffect(() => {
-    const fileAddedListenerId = window.api.addFileAddedListener(baseDir, (_, data) => {
-      setFiles((prev) => [
-        ...new Set([
-          ...prev,
-          {
-            path: data.path,
-            type: data.readOnly ? FileType.ReadOnly : FileType.Editable,
-          },
-        ]),
-      ]);
+    const fileAddedListenerId = window.api.addFileAddedListener(baseDir, (_, { file }) => {
+      setFiles((prev) => [...new Set([...prev, file])]);
     });
 
     const fileDroppedListenerId = window.api.addFileDroppedListener(baseDir, (_, data) => {
@@ -91,7 +74,7 @@ export const ContextFiles = ({ baseDir }: Props) => {
     };
   }, [baseDir]);
 
-  const treeData = useMemo(() => createFileTree(files.filter((f) => f.type === FileType.Editable)), [files]);
+  const treeData = useMemo(() => createFileTree(files), [files]);
 
   const renderFileTree = (key: React.Key, id: string, title: string, treeData: Record<string, TreeItem>) => {
     return (
@@ -113,11 +96,10 @@ export const ContextFiles = ({ baseDir }: Props) => {
                 expandedItems: Object.keys(treeData),
               },
             }}
-            renderItem={({ item, title, arrow, children }) => (
+            renderItem={({ item, title, children }) => (
               <>
                 <div className="flex items-center justify-between w-full pr-2">
                   <div className="flex items-center">
-                    {arrow}
                     <span className={`ml-1 text-xxs ${item.isFolder ? 'text-neutral-400' : 'text-white'}`}>{title}</span>
                   </div>
                   {!item.isFolder && (

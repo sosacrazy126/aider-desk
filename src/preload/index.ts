@@ -4,19 +4,22 @@ import { v4 as uuidv4 } from 'uuid';
 import { AutocompletionData, ConfirmAskData, FileAddedData, FileDroppedData, ResponseChunkData, ResponseCompletedData } from '../common/types';
 import { ApplicationAPI } from './index.d';
 
-const responseChunkListeners: Record<string, (event: Electron.IpcRendererEvent, data: ResponseChunkData) => void> = {};
-const responseFinishedListeners: Record<string, (event: Electron.IpcRendererEvent, data: ResponseCompletedData) => void> = {};
-const fileAddedListeners: Record<string, (event: Electron.IpcRendererEvent, data: FileAddedData) => void> = {};
-const fileDroppedListeners: Record<string, (event: Electron.IpcRendererEvent, data: FileDroppedData) => void> = {};
-const updateAutocompletionListeners: Record<string, (event: Electron.IpcRendererEvent, data: AutocompletionData) => void> = {};
+const responseChunkListeners: Record<string, (event: Electron.IpcRendererEvent, ResponseChunkData) => void> = {};
+const responseFinishedListeners: Record<string, (event: Electron.IpcRendererEvent, ResponseCompletedData) => void> = {};
+const fileAddedListeners: Record<string, (event: Electron.IpcRendererEvent, FileAddedData) => void> = {};
+const fileDroppedListeners: Record<string, (event: Electron.IpcRendererEvent, FileDroppedData) => void> = {};
+const updateAutocompletionListeners: Record<string, (event: Electron.IpcRendererEvent, AutocompletionData) => void> = {};
 
 const api: ApplicationAPI = {
   startProject: (baseDir: string) => ipcRenderer.send('start-project', baseDir),
   stopProject: (baseDir: string) => ipcRenderer.send('stop-project', baseDir),
   sendPrompt: (baseDir: string, prompt: string, editFormat?: string) => ipcRenderer.send('send-prompt', baseDir, prompt, editFormat),
+  loadInputHistory: (baseDir: string) => ipcRenderer.invoke('load-input-history', baseDir),
   dialog: {
     showOpenDialog: (options: Electron.OpenDialogSyncOptions) => ipcRenderer.invoke('show-open-dialog', options),
   },
+  loadProjects: () => ipcRenderer.invoke('load-projects'),
+  saveProjects: (projects) => ipcRenderer.invoke('save-projects', projects),
 
   addResponseChunkListener: (baseDir, callback) => {
     const listenerId = uuidv4();
