@@ -32,6 +32,7 @@ module.exports = {
           600: '#6c757d',   // Muted gray
           700: '#495057',   // Dark muted gray
           800: '#343a40',   // Very dark gray
+          850: '#262d2e',   // Darkest gray
           900: '#212529',   // Darkest gray, almost black
           950: '#1c2025',   // Ultra dark, near black
         },
@@ -46,7 +47,7 @@ module.exports = {
           700: '#495057',   // Dark muted gray
           800: '#343a40',   // Very dark gray
           900: '#252a30',   // Darkest gray, almost black
-          950: '#0f1114',   // Ultra dark, near black
+          950: '#18181b',   // Ultra dark, near black
         }
       },
       borderRadius: {
