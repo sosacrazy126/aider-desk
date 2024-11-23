@@ -1,6 +1,6 @@
 import { Socket } from 'socket.io';
-import { AddFileMessage, DropFileMessage, Message, MessageAction } from './messages';
-import { ContextFile } from '@/common/types';
+import { ContextFile } from '@common/types';
+import { AddFileMessage, AnswerQuestionMessage, DropFileMessage, EditFormat, Message, MessageAction, PromptMessage } from './messages';
 
 export class Connector {
   socket: Socket;
@@ -13,13 +13,30 @@ export class Connector {
     this.listenTo = listenTo;
   }
 
-  public sendMessage = (message: Message) => {
+  private sendMessage = (message: Message) => {
     if (!this.socket.connected) {
       console.log('Socket.IO client is not connected');
       return;
     }
     console.log(`Sending message to client with baseDir: ${this.baseDir}`);
     this.socket.emit('message', message);
+  };
+
+  public sendPromptMessage(prompt: string, editFormat?: EditFormat): void {
+    const message: PromptMessage = {
+      action: 'prompt',
+      prompt,
+      editFormat,
+    };
+    this.sendMessage(message);
+  }
+
+  public sendAnswerQuestionMessage = (answer: string) => {
+    const message: AnswerQuestionMessage = {
+      action: 'answer-question',
+      answer,
+    };
+    this.sendMessage(message);
   };
 
   public sendAddFileMessage = (contextFile: ContextFile) => {

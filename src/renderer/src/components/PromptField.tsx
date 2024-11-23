@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { BiSend } from 'react-icons/bi';
+import { QuestionData } from '@common/types';
 
 const PLACEHOLDERS = [
   'How can I help you today?',
@@ -40,19 +41,21 @@ type Props = {
   onSubmit?: (prompt: string) => void;
   processing?: boolean;
   test?: string;
+  isActive?: boolean;
+  words?: string[];
 };
 
-export const PromptField: React.FC<Props> = ({ baseDir, onSubmit, processing = false }) => {
+export const PromptField = ({ baseDir, onSubmit, processing = false, isActive = false, words = [] }: Props) => {
   const [text, setText] = useState('');
   const [suggestionsVisible, setSuggestionsVisible] = useState(false);
   const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
   const [cursorPosition, setCursorPosition] = useState({ top: 0, left: 0 });
   const [placeholder] = useState(PLACEHOLDERS[Math.floor(Math.random() * PLACEHOLDERS.length)]);
   const [highlightedSuggestionIndex, setHighlightedSuggestionIndex] = useState(-1);
-  const [autocompletionWords, setAutocompletionWords] = useState<string[]>([]);
   const [inputHistory, setInputHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState<number>(-1);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [question, setQuestion] = useState<QuestionData | null>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const loadHistory = async () => {
     try {
@@ -66,12 +69,12 @@ export const PromptField: React.FC<Props> = ({ baseDir, onSubmit, processing = f
   };
 
   useEffect(() => {
-    const listenerId = window.api.addUpdateAutocompletionListener(baseDir, (_, { words }) => {
-      setAutocompletionWords(words);
+    const questionListenerId = window.api.addAskQuestionListener(baseDir, (_, data) => {
+      setQuestion(data);
     });
 
     return () => {
-      window.api.removeUpdateAutocompletionListener(listenerId);
+      window.api.removeAskQuestionListener(questionListenerId);
     };
   }, [baseDir]);
 
@@ -80,8 +83,13 @@ export const PromptField: React.FC<Props> = ({ baseDir, onSubmit, processing = f
       return;
     }
     void loadHistory();
-    // intentionally omitting loadHistory
   }, [processing, baseDir]);
+
+  useEffect(() => {
+    if (isActive && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isActive]);
 
   const getCurrentWord = (text: string, cursorPosition: number) => {
     const textBeforeCursor = text.slice(0, cursorPosition);
@@ -102,15 +110,15 @@ export const PromptField: React.FC<Props> = ({ baseDir, onSubmit, processing = f
       setFilteredSuggestions(matched);
       setSuggestionsVisible(matched.length > 0);
     } else if (word.length > 0) {
-      const matched = autocompletionWords.filter((s) => s.toLowerCase().startsWith(word.toLowerCase()));
+      const matched = words.filter((s) => s.toLowerCase().startsWith(word.toLowerCase()));
       setFilteredSuggestions(matched);
       setSuggestionsVisible(matched.length > 0);
     } else {
       setSuggestionsVisible(false);
     }
 
-    if (textareaRef.current) {
-      const { selectionStart } = textareaRef.current;
+    if (inputRef.current) {
+      const { selectionStart } = inputRef.current;
       const textBeforeCursor = newText.substring(0, selectionStart);
       const lines = textBeforeCursor.split('\n');
       const currentLineNumber = lines.length - 1;
@@ -127,8 +135,8 @@ export const PromptField: React.FC<Props> = ({ baseDir, onSubmit, processing = f
   };
 
   const handleSuggestionClick = (suggestion: string) => {
-    if (textareaRef.current) {
-      const cursorPos = textareaRef.current.selectionStart;
+    if (inputRef.current) {
+      const cursorPos = inputRef.current.selectionStart;
       const textBeforeCursor = text.slice(0, cursorPos);
       const lastSpaceIndex = textBeforeCursor.lastIndexOf(' ');
       const textAfterCursor = text.slice(cursorPos);
@@ -140,9 +148,9 @@ export const PromptField: React.FC<Props> = ({ baseDir, onSubmit, processing = f
       setText(newText);
       setSuggestionsVisible(false);
 
-      textareaRef.current.focus();
+      inputRef.current.focus();
       const newCursorPos = editFormatMatch ? suggestion.length + 1 : lastSpaceIndex + 1 + suggestion.length;
-      textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
+      inputRef.current.setSelectionRange(newCursorPos, newCursorPos);
     }
   };
 
@@ -157,6 +165,7 @@ export const PromptField: React.FC<Props> = ({ baseDir, onSubmit, processing = f
     const [prompt, editFormat] = getPromptWithEditFormat(text);
 
     if (prompt) {
+      console.log(`Sending prompt to ${baseDir}`, prompt);
       window.api.sendPrompt(baseDir, prompt, editFormat);
       onSubmit?.(prompt);
       prepareForNextPrompt();
@@ -164,6 +173,22 @@ export const PromptField: React.FC<Props> = ({ baseDir, onSubmit, processing = f
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (question) {
+      const answers = ['y', 'n', 'a', 'd'];
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        const currentIndex = answers.indexOf(question.defaultAnswer);
+        const nextIndex = (currentIndex + (e.shiftKey ? -1 : 1) + answers.length) % answers.length;
+        setQuestion({ ...question, defaultAnswer: answers[nextIndex] });
+        return;
+      }
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        answerQuestion(question.defaultAnswer);
+        return;
+      }
+    }
+
     if (suggestionsVisible) {
       switch (e.key) {
         case 'Enter':
@@ -230,14 +255,58 @@ export const PromptField: React.FC<Props> = ({ baseDir, onSubmit, processing = f
     }
   };
 
+  const answerQuestion = (answer: string) => {
+    if (question) {
+      window.api.answerQuestion(baseDir, answer);
+      setQuestion(null);
+      prepareForNextPrompt();
+    }
+  };
+
   return (
     <div className="w-full relative">
+      {question && (
+        <div className="mb-2 p-4 bg-gray-800 rounded-lg border border-gray-700">
+          <div className="text-white mb-2">{question.text}</div>
+          {question.subject && <div className="text-gray-400 text-sm mb-3">{question.subject}</div>}
+          <div className="flex gap-2">
+            <button
+              onClick={() => answerQuestion('y')}
+              className={`px-2 py-0.5 text-sm rounded hover:bg-gray-700 border border-gray-600 ${question.defaultAnswer === 'y' ? 'bg-gray-700' : 'bg-gray-800'}`}
+              title="Yes (Y)"
+            >
+              (Y)es
+            </button>
+            <button
+              onClick={() => answerQuestion('n')}
+              className={`px-2 py-0.5 text-sm rounded hover:bg-gray-700 border border-gray-600 ${question.defaultAnswer === 'n' ? 'bg-gray-700' : 'bg-gray-800'}`}
+              title="No (N)"
+            >
+              (N)o
+            </button>
+            <button
+              onClick={() => answerQuestion('a')}
+              className={`px-2 py-0.5 text-sm rounded hover:bg-gray-700 border border-gray-600 ${question.defaultAnswer === 'a' ? 'bg-gray-700' : 'bg-gray-800'}`}
+              title="Always (A)"
+            >
+              (A)lways
+            </button>
+            <button
+              onClick={() => answerQuestion('d')}
+              className={`px-2 py-0.5 text-sm rounded hover:bg-gray-700 border border-gray-600 ${question.defaultAnswer === 'd' ? 'bg-gray-700' : 'bg-gray-800'}`}
+              title="Don't ask again (D)"
+            >
+              (D)on&apos;t ask again
+            </button>
+          </div>
+        </div>
+      )}
       <textarea
-        ref={textareaRef}
+        ref={inputRef}
         value={text}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
-        placeholder={placeholder}
+        placeholder={question ? '...or suggest something else' : placeholder}
         rows={Math.max(text.split('\n').length, 1)}
         className="w-full px-2 py-2 border-2 border-gray-700 rounded-lg focus:outline-none focus:border-gray-400 text-sm bg-gray-800 text-white placeholder-gray-500 resize-none overflow-y-auto"
       />

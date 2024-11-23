@@ -4,9 +4,10 @@ import { MessageBlock } from './MessageBlock';
 
 type Props = {
   messages: Message[];
+  allFiles?: string[];
 };
 
-export const Messages = ({ messages }: Props) => {
+export const Messages = ({ messages, allFiles = [] }: Props) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -22,7 +23,7 @@ export const Messages = ({ messages }: Props) => {
       hover:scrollbar-thumb-neutral-600"
     >
       {messages.map((message, index) => (
-        <MessageBlock key={index} message={message} />
+        <MessageBlock key={index} message={message} allFiles={allFiles} />
       ))}
       <div ref={messagesEndRef} />
     </div>

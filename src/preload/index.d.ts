@@ -1,34 +1,37 @@
-import { ResponseChunkData, ResponseCompletedData, FileAddedData, FileDroppedData, AutocompletionData, ConfirmAskData } from '../common/types';
+import { ResponseChunkData, ResponseCompletedData, FileAddedData, FileDroppedData, AutocompletionData, QuestionData, ProjectData, ProjectSettings } from '../common/types';
 import type { ElectronAPI } from '@electron-toolkit/preload';
 
 export interface ApplicationAPI {
   startProject: (baseDir: string) => void;
   stopProject: (baseDir: string) => void;
   sendPrompt: (baseDir: string, prompt: string, editFormat?: string) => void;
+  answerQuestion: (baseDir: string, answer: string) => void;
   loadInputHistory: (baseDir: string) => Promise<string[]>;
   dialog: {
     showOpenDialog: (options: Electron.OpenDialogSyncOptions) => Promise<Electron.OpenDialogReturnValue>;
   };
-  loadProjects: () => Promise<string[]>;
-  saveProjects: (projects: string[]) => Promise<void>;
+  loadProjects: () => Promise<ProjectData[]>;
+  saveProjects: (projects: ProjectData[]) => Promise<void>;
+  getProjectSettings: (baseDir: string) => Promise<ProjectSettings>;
+  saveProjectSettings: (baseDir: string, settings: ProjectSettings) => Promise<void>;
 
-  addResponseChunkListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent,  ResponseChunkData) => void) => string;
+  addResponseChunkListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: ResponseChunkData) => void) => string;
   removeResponseChunkListener: (listenerId: string) => void;
 
-  addResponseCompletedListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent,  ResponseCompletedData) => void) => string;
+  addResponseCompletedListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: ResponseCompletedData) => void) => string;
   removeResponseCompletedListener: (listenerId: string) => void;
 
-  addFileAddedListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent,  FileAddedData) => void) => string;
+  addFileAddedListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: FileAddedData) => void) => string;
   removeFileAddedListener: (listenerId: string) => void;
 
-  addFileDroppedListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent,  FileDroppedData) => void) => string;
+  addFileDroppedListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: FileDroppedData) => void) => string;
   removeFileDroppedListener: (listenerId: string) => void;
 
-  addUpdateAutocompletionListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent,  AutocompletionData) => void) => string;
+  addUpdateAutocompletionListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: AutocompletionData) => void) => string;
   removeUpdateAutocompletionListener: (listenerId: string) => void;
 
-  addConfirmAskListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent,  ConfirmAskData) => void) => string;
-  removeConfirmAskListener: (listenerId: string) => void;
+  addAskQuestionListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: QuestionData) => void) => string;
+  removeAskQuestionListener: (listenerId: string) => void;
 }
 
 declare global {

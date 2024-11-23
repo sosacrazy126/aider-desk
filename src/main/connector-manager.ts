@@ -2,17 +2,16 @@ import { BrowserWindow } from 'electron';
 import { v4 as uuidv4 } from 'uuid';
 import { Server, Socket } from 'socket.io';
 import { Connector } from 'src/main/connector';
-import { ResponseChunkData, ResponseCompletedData } from '@common/types';
+import { QuestionData, ResponseChunkData, ResponseCompletedData } from '@common/types';
 import { WEBSOCKET_PORT } from './constants';
 import {
-  EditFormat,
   isAddFileMessage,
+  isAskQuestionMessage,
   isDropFileMessage,
   isInitMessage,
   isResponseMessage,
   isUpdateAutocompletionMessage,
   Message,
-  PromptMessage,
   ResponseMessage,
 } from './messages';
 import { projectManager } from './project-manager';
@@ -54,19 +53,6 @@ class ConnectorManager {
     });
   }
 
-  public sendPrompt(baseDir: string, prompt: string, editFormat?: EditFormat): void {
-    const message: PromptMessage = {
-      action: 'prompt',
-      prompt,
-      editFormat,
-    };
-
-    this.connectors
-      .filter((connector) => connector.baseDir === baseDir)
-      .filter((connector) => connector.listenTo.includes('prompt'))
-      .forEach((connector) => connector.sendMessage(message));
-  }
-
   public close(): void {
     if (this.io) {
       this.io.close();
@@ -96,7 +82,6 @@ class ConnectorManager {
       } else if (isAddFileMessage(message)) {
         const connector = this.findConnectorBySocket(socket);
         if (!connector) {
-          console.log('No connector found', this.connectors);
           return;
         }
         console.log(`Adding file in project ${connector.baseDir}`);
@@ -120,15 +105,22 @@ class ConnectorManager {
         this.mainWindow?.webContents.send('update-autocompletion', {
           baseDir: connector.baseDir,
           words: message.words,
+          allFiles: message.allFiles,
         });
+      } else if (isAskQuestionMessage(message)) {
+        const connector = this.findConnectorBySocket(socket);
+        if (!connector) {
+          return;
+        }
+        const questionData: QuestionData = {
+          baseDir: connector.baseDir,
+          text: message.question,
+          subject: message.subject,
+          defaultAnswer: message.defaultAnswer,
+        };
+        projectManager.getProject(connector.baseDir).setCurrentQuestion(questionData);
+        this.mainWindow?.webContents.send('ask-question', questionData);
       } else {
-        setTimeout(() => {
-          console.log('Sending answer-question message');
-          socket.emit('message', {
-            action: 'answer-question',
-            answer: 'n',
-          });
-        }, 5000);
         console.error('Unknown message type');
       }
     } catch (error) {
@@ -182,7 +174,11 @@ class ConnectorManager {
   };
 
   private findConnectorBySocket = (socket: Socket): Connector | undefined => {
-    return this.connectors.find((c) => c.socket === socket);
+    const connector = this.connectors.find((c) => c.socket === socket);
+    if (!connector) {
+      console.error('Connector not found');
+    }
+    return connector;
   };
 }
 

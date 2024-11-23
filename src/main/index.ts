@@ -95,3 +95,10 @@ app.on('window-all-closed', () => {
     app.quit();
   }
 });
+
+// Handle CTRL+C (SIGINT)
+process.on('SIGINT', () => {
+  connectorManager.close();
+  projectManager.close();
+  process.exit(0);
+});

@@ -6,25 +6,136 @@ import 'react-resizable/css/styles.css';
 import { Messages } from 'components/Messages';
 import { PromptField } from 'components/PromptField';
 import { ContextFiles } from 'components/ContextFiles';
-import { ResponseChunkData, ResponseCompletedData } from '@common/types';
+import { AutocompletionData, ResponseChunkData, ResponseCompletedData, ProjectData } from '@common/types';
 import { LoadingMessage, Message, PromptMessage, ResponseMessage } from 'types/message';
 
 type Props = {
-  baseDir: string;
+  project: ProjectData;
+  isActive?: boolean;
 };
 
-export const ProjectPanel = ({ baseDir }: Props) => {
-  const [messages, setMessages] = useState<Message[]>([]);
+export const ProjectPanel = ({ project, isActive = false }: Props) => {
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: 'test',
+      type: 'response',
+      content:
+        'To add the `Test` interface to `src/common/types.ts`, you need to insert the following code snippet at the appropriate location in the file:\n' +
+        '\n' +
+        '<source>ts\n' +
+        'export interface Test {\n' +
+        '  propertyA: boolean;\n' +
+        '}\n' +
+        '</source>\n' +
+        '\n' +
+        'Here is the exact change you need to make:\n' +
+        '\n' +
+        'src/common/types.ts\n' +
+        '<source>\n' +
+        'export interface ResponseChunkData {\n' +
+        '  messageId: string;\n' +
+        '  baseDir: string;\n' +
+        '  chunk: string;\n' +
+        '}\n' +
+        '\n' +
+        'export interface ResponseCompletedData {\n' +
+        '  messageId: string;\n' +
+        '  baseDir: string;\n' +
+        '  content: string;\n' +
+        '  editedFiles?: string[];\n' +
+        '  commitHash?: string;\n' +
+        '  commitMessage?: string;\n' +
+        '  diff?: string;\n' +
+        '}\n' +
+        '\n' +
+        'export interface FileAddedData {\n' +
+        '  baseDir: string;\n' +
+        '  file: ContextFile;\n' +
+        '}\n' +
+        '\n' +
+        'export interface FileDroppedData {\n' +
+        '  baseDir: string;\n' +
+        '  path: string;\n' +
+        '}\n' +
+        '\n' +
+        'export interface AutocompletionData {\n' +
+        '  baseDir: string;\n' +
+        '  words: string[];\n' +
+        '}\n' +
+        '\n' +
+        'export interface QuestionData {\n' +
+        '  baseDir: string;\n' +
+        '  text: string;\n' +
+        '  subject?: string;\n' +
+        '  defaultAnswer: string;\n' +
+        '}\n' +
+        '\n' +
+        "export type ContexFileSourceType = 'companion' | 'aider' | 'app' | string;\n" +
+        '\n' +
+        'export interface ContextFile {\n' +
+        '  path: string;\n' +
+        '  sourceType?: ContexFileSourceType;\n' +
+        '  readOnly?: boolean;\n' +
+        '}\n' +
+        '\n' +
+        'export interface WindowState {\n' +
+        '  width: number;\n' +
+        '  height: number;\n' +
+        '  x: number | undefined;\n' +
+        '  y: number | undefined;\n' +
+        '  isMaximized: boolean;\n' +
+        '}\n' +
+        '\n' +
+        '+ export interface Test {\n' +
+        '+   propertyA: boolean;\n' +
+        '+ }\n' +
+        '</source>\n' +
+        '\n' +
+        'This will add the `Test` interface with the `propertyA` field to the `types.ts` file.',
+    },
+    {
+      id: 'test2',
+      type: 'response',
+      content:
+        'To add the `Test` interface to `types.ts`, we need to:\n' +
+        '\n' +
+        '1. Append the `Test` interface definition to the end of the file.\n' +
+        '\n' +
+        'Here is the *SEARCH/REPLACE* block for the change:\n' +
+        '\n' +
+        'src/common/types.ts\n' +
+        '<source>\n' +
+        '<<<<<<< SEARCH\n' +
+        'export interface ProjectData {\n' +
+        '  baseDir: string;\n' +
+        '  settings: ProjectSettings;\n' +
+        '}\n' +
+        '=======\n' +
+        'export interface ProjectData {\n' +
+        '  baseDir: string;\n' +
+        '  settings: ProjectSettings;\n' +
+        '}\n' +
+        '\n' +
+        'export interface Test {\n' +
+        '  propertyA: boolean;\n' +
+        '}\n' +
+        '>>>>>>> REPLACE\n' +
+        '</source>\n' +
+        '\n' +
+        'This change will add the `Test` interface with the `propertyA` property to the `types.ts` file.',
+    },
+  ]);
   const [processing, setProcessing] = useState(false);
+  const [autocompletionData, setAutocompletionData] = useState<AutocompletionData | null>(null);
   const processingMessageRef = useRef<ResponseMessage | null>(null);
 
   useEffect(() => {
-    window.api.startProject(baseDir);
+    window.api.startProject(project.baseDir);
 
     return () => {
-      window.api.stopProject(baseDir);
+      window.api.stopProject(project.baseDir);
     };
-  }, [baseDir]);
+  }, [project.baseDir]);
 
   useEffect(() => {
     const handleResponseChunk = (_: IpcRendererEvent, { messageId, chunk }: ResponseChunkData) => {
@@ -53,14 +164,24 @@ export const ProjectPanel = ({ baseDir }: Props) => {
       }
     };
 
-    const responseChunkListenerId = window.api.addResponseChunkListener(baseDir, handleResponseChunk);
-    const responseCompletedListenerId = window.api.addResponseCompletedListener(baseDir, handleResponseCompleted);
+    const responseChunkListenerId = window.api.addResponseChunkListener(project.baseDir, handleResponseChunk);
+    const responseCompletedListenerId = window.api.addResponseCompletedListener(project.baseDir, handleResponseCompleted);
 
     return () => {
       window.api.removeResponseChunkListener(responseChunkListenerId);
       window.api.removeResponseCompletedListener(responseCompletedListenerId);
     };
-  }, [baseDir]);
+  }, [project.baseDir]);
+
+  useEffect(() => {
+    const listenerId = window.api.addUpdateAutocompletionListener(project.baseDir, (_, data) => {
+      setAutocompletionData(data);
+    });
+
+    return () => {
+      window.api.removeUpdateAutocompletionListener(listenerId);
+    };
+  }, [project.baseDir]);
 
   const handlePromptSubmit = (prompt: string) => {
     setProcessing(true);
@@ -81,7 +202,7 @@ export const ProjectPanel = ({ baseDir }: Props) => {
     <div className="flex h-full bg-neutral-900">
       <div className="flex flex-col flex-grow overflow-hidden">
         <div className="flex-grow overflow-y-auto">
-          <Messages messages={messages} />
+          <Messages messages={messages} allFiles={autocompletionData?.allFiles} />
         </div>
         <div
           className="relative bottom-0 w-full p-4 pt-3 flex-shrink-0 flex max-h-[50vh]
@@ -96,7 +217,7 @@ export const ProjectPanel = ({ baseDir }: Props) => {
           before:to-transparent
           before:pointer-events-none"
         >
-          <PromptField baseDir={baseDir} onSubmit={handlePromptSubmit} processing={processing} />
+          <PromptField baseDir={project.baseDir} onSubmit={handlePromptSubmit} processing={processing} isActive={isActive} words={autocompletionData?.words} />
         </div>
       </div>
       <ResizableBox
@@ -108,7 +229,7 @@ export const ProjectPanel = ({ baseDir }: Props) => {
         resizeHandles={['w']}
         className="border-l border-neutral-800 flex flex-col flex-shrink-0"
       >
-        <ContextFiles baseDir={baseDir} />
+        <ContextFiles baseDir={project.baseDir} />
       </ResizableBox>
     </div>
   );

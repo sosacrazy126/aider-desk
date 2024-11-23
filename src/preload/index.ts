@@ -1,25 +1,29 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import { electronAPI } from '@electron-toolkit/preload';
 import { v4 as uuidv4 } from 'uuid';
-import { AutocompletionData, ConfirmAskData, FileAddedData, FileDroppedData, ResponseChunkData, ResponseCompletedData } from '../common/types';
+import { AutocompletionData, QuestionData, FileAddedData, FileDroppedData, ResponseChunkData, ResponseCompletedData } from '../common/types';
 import { ApplicationAPI } from './index.d';
 
-const responseChunkListeners: Record<string, (event: Electron.IpcRendererEvent, ResponseChunkData) => void> = {};
-const responseFinishedListeners: Record<string, (event: Electron.IpcRendererEvent, ResponseCompletedData) => void> = {};
-const fileAddedListeners: Record<string, (event: Electron.IpcRendererEvent, FileAddedData) => void> = {};
-const fileDroppedListeners: Record<string, (event: Electron.IpcRendererEvent, FileDroppedData) => void> = {};
-const updateAutocompletionListeners: Record<string, (event: Electron.IpcRendererEvent, AutocompletionData) => void> = {};
+const responseChunkListeners: Record<string, (event: Electron.IpcRendererEvent, data: ResponseChunkData) => void> = {};
+const responseFinishedListeners: Record<string, (event: Electron.IpcRendererEvent, data: ResponseCompletedData) => void> = {};
+const fileAddedListeners: Record<string, (event: Electron.IpcRendererEvent, data: FileAddedData) => void> = {};
+const fileDroppedListeners: Record<string, (event: Electron.IpcRendererEvent, data: FileDroppedData) => void> = {};
+const updateAutocompletionListeners: Record<string, (event: Electron.IpcRendererEvent, data: AutocompletionData) => void> = {};
+const askQuestionListeners: Record<string, (event: Electron.IpcRendererEvent, data: QuestionData) => void> = {};
 
 const api: ApplicationAPI = {
   startProject: (baseDir: string) => ipcRenderer.send('start-project', baseDir),
   stopProject: (baseDir: string) => ipcRenderer.send('stop-project', baseDir),
   sendPrompt: (baseDir: string, prompt: string, editFormat?: string) => ipcRenderer.send('send-prompt', baseDir, prompt, editFormat),
+  answerQuestion: (baseDir: string, answer: string) => ipcRenderer.send('answer-question', baseDir, answer),
   loadInputHistory: (baseDir: string) => ipcRenderer.invoke('load-input-history', baseDir),
   dialog: {
     showOpenDialog: (options: Electron.OpenDialogSyncOptions) => ipcRenderer.invoke('show-open-dialog', options),
   },
   loadProjects: () => ipcRenderer.invoke('load-projects'),
   saveProjects: (projects) => ipcRenderer.invoke('save-projects', projects),
+  getProjectSettings: (baseDir) => ipcRenderer.invoke('get-project-settings', baseDir),
+  saveProjectSettings: (baseDir, settings) => ipcRenderer.invoke('save-project-settings', baseDir, settings),
 
   addResponseChunkListener: (baseDir, callback) => {
     const listenerId = uuidv4();
@@ -116,22 +120,22 @@ const api: ApplicationAPI = {
     }
   },
 
-  addConfirmAskListener: (baseDir, callback) => {
+  addAskQuestionListener: (baseDir, callback) => {
     const listenerId = uuidv4();
-    const listener = (event: Electron.IpcRendererEvent, data: ConfirmAskData) => {
+    askQuestionListeners[listenerId] = (event: Electron.IpcRendererEvent, data: QuestionData) => {
       if (data.baseDir !== baseDir) {
         return;
       }
       callback(event, data);
     };
-    ipcRenderer.on('confirm-ask', listener);
+    ipcRenderer.on('ask-question', askQuestionListeners[listenerId]);
     return listenerId;
   },
-  removeConfirmAskListener: (listenerId) => {
-    const callback = responseChunkListeners[listenerId];
+  removeAskQuestionListener: (listenerId) => {
+    const callback = askQuestionListeners[listenerId];
     if (callback) {
-      ipcRenderer.removeListener('confirm-ask', callback);
-      delete responseChunkListeners[listenerId];
+      ipcRenderer.removeListener('ask-question', callback);
+      delete askQuestionListeners[listenerId];
     }
   },
 };

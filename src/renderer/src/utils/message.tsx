@@ -2,80 +2,148 @@ import React from 'react';
 import { CodeBlock } from 'components/CodeBlock';
 import { CodeInline } from 'components/CodeInline';
 
-export const parseContent = (content: string) => {
+const ALL_FENCES = [
+  ['```', '```'],
+  ['<source>', '</source>'],
+  ['<code>', '</code>'],
+  ['<pre>', '</pre>'],
+  ['<codeblock>', '</codeblock>'],
+  ['<sourcecode>', '</sourcecode>'],
+] as const;
+
+export const parseMessageContent = (content: string, allFiles: string[]) => {
   const parts: React.ReactNode[] = [];
+  const lines = content.split('\n');
   let currentText = '';
-  let isInTripleTick = false;
-  let isInSingleTick = false;
+  let isInCodeBlock = false;
+  let currentFence: (typeof ALL_FENCES)[number] | null = null;
   let language = '';
+  let codeContent: string[] = [];
+  let currentFile: string | undefined;
+  let foundClosingFence = false;
 
-  for (let i = 0; i < content.length; i++) {
-    const char = content[i];
+  const processTextBlock = () => {
+    if (currentText.trim()) {
+      parts.push(currentText.trim());
+      currentText = '';
+    }
+  };
 
-    if (char === '`') {
-      // Look ahead for triple ticks
-      if (!isInTripleTick && !isInSingleTick && i + 2 < content.length && content[i + 1] === '`' && content[i + 2] === '`') {
-        if (currentText) {
-          parts.push(currentText);
-        }
-        currentText = '';
-        isInTripleTick = true;
-        i += 2; // Skip the next two backticks
+  const processCodeBlock = () => {
+    if (codeContent.length > 0) {
+      parts.push(
+        <CodeBlock key={parts.length} language={language} file={currentFile} isComplete={foundClosingFence}>
+          {codeContent.join('\n').trim()}
+        </CodeBlock>,
+      );
+      codeContent = [];
+      language = '';
+      currentFile = undefined;
+      foundClosingFence = false;
+    }
+  };
 
-        // Extract language if present
-        let j = i + 1;
-        while (j < content.length && /[a-zA-Z]/.test(content[j])) {
-          language += content[j];
-          j++;
+  const findFileInPreviousLine = (currentLine: number): { file?: string; removeLine: boolean } => {
+    if (currentLine <= 0) {
+      return { removeLine: false };
+    }
+
+    const prevLine = lines[currentLine - 1].trim();
+    if (!prevLine) {
+      return { removeLine: false };
+    }
+
+    // Check if the line is just a filepath
+    if (allFiles.includes(prevLine)) {
+      return { file: prevLine, removeLine: true };
+    }
+
+    // Check if line ends with a filepath
+    const lastWord = prevLine.split(/\s+/).pop();
+    if (lastWord && allFiles.includes(lastWord)) {
+      return { file: lastWord, removeLine: true };
+    }
+
+    return { removeLine: false };
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    if (!isInCodeBlock) {
+      // Check if line starts a code block
+      const matchingFence = ALL_FENCES.find(([start]) => line.trim().startsWith(start));
+      if (matchingFence) {
+        const { file, removeLine } = findFileInPreviousLine(i);
+        if (removeLine) {
+          // Remove the last line from currentText if it contains the filename
+          currentText = currentText.split('\n').slice(0, -2).join('\n') + '\n';
         }
-        i = j - 1;
-      }
-      // Close triple tick block
-      else if (isInTripleTick && i + 2 < content.length && content[i + 1] === '`' && content[i + 2] === '`') {
-        parts.push(
-          <CodeBlock key={parts.length} language={language}>
-            {currentText.trim()}
-          </CodeBlock>,
-        );
-        currentText = '';
-        isInTripleTick = false;
-        language = '';
-        i += 2; // Skip the next two backticks
-      }
-      // Single tick handling outside triple tick
-      else if (!isInTripleTick && !isInSingleTick) {
-        if (currentText) {
-          parts.push(currentText);
+        processTextBlock();
+        isInCodeBlock = true;
+        currentFence = matchingFence;
+        currentFile = file;
+        foundClosingFence = false;
+
+        // Extract language for ``` fence
+        if (matchingFence[0] === '```') {
+          language = line.trim().slice(3).trim();
         }
-        currentText = '';
-        isInSingleTick = true;
+        continue;
       }
-      // Close single tick block
-      else if (isInSingleTick) {
-        parts.push(<CodeInline key={parts.length}>{currentText}</CodeInline>);
-        currentText = '';
-        isInSingleTick = false;
+
+      // Handle inline code ticks
+      let lineText = '';
+      let isInSingleTick = false;
+
+      for (let j = 0; j < line.length; j++) {
+        const char = line[j];
+
+        if (char === '`') {
+          if (!isInSingleTick) {
+            if (lineText) {
+              currentText += lineText;
+              lineText = '';
+            }
+            isInSingleTick = true;
+          } else {
+            parts.push(currentText);
+            parts.push(<CodeInline key={parts.length}>{lineText}</CodeInline>);
+            currentText = '';
+            lineText = '';
+            isInSingleTick = false;
+          }
+        } else {
+          if (isInSingleTick) {
+            lineText += char;
+          } else {
+            currentText += char;
+          }
+        }
       }
-      // If inside triple tick, treat as regular character
-      else if (isInTripleTick) {
-        currentText += char;
+
+      if (lineText) {
+        currentText += lineText;
       }
+      currentText += '\n';
     } else {
-      currentText += char;
+      // Check if line ends the code block
+      if (line.trim() === currentFence![1]) {
+        foundClosingFence = true;
+        processCodeBlock();
+        isInCodeBlock = false;
+        currentFence = null;
+      } else {
+        codeContent.push(line);
+      }
     }
   }
 
-  // Handle any remaining text
-  if (isInTripleTick) {
-    parts.push(
-      <CodeBlock key={parts.length} language={language}>
-        {currentText.trim()}
-      </CodeBlock>,
-    );
-  } else if (isInSingleTick) {
-    parts.push(<CodeInline key={parts.length}>{currentText}</CodeInline>);
-  } else if (currentText) {
-    parts.push(currentText.trim());
+  // Handle any remaining content
+  if (isInCodeBlock) {
+    processCodeBlock();
+  } else {
+    processTextBlock();
   }
 
   return parts;

@@ -1,12 +1,17 @@
-import { ipcMain, dialog, BrowserWindow } from 'electron';
+import { BrowserWindow, dialog, ipcMain } from 'electron';
 import { EditFormat } from './messages';
-import { connectorManager } from './connector-manager';
 import { projectManager } from './project-manager';
 import { Store } from './store';
 
 export const setupIpcHandlers = (mainWindow: BrowserWindow, store: Store) => {
+  console.log('Setting up IPC handlers...');
   ipcMain.on('send-prompt', (_, baseDir: string, prompt: string, editFormat?: EditFormat) => {
-    connectorManager.sendPrompt(baseDir, prompt, editFormat);
+    console.log(`IPC 'send-prompt' event received for ${baseDir}`);
+    projectManager.getProject(baseDir).sendPrompt(prompt, editFormat);
+  });
+
+  ipcMain.on('answer-question', (_, baseDir: string, answer: string) => {
+    projectManager.getProject(baseDir).answerQuestion(answer);
   });
 
   ipcMain.on('drop-file', (_, baseDir: string, filePath: string) => {
@@ -35,5 +40,13 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, store: Store) => {
 
   ipcMain.handle('save-projects', async (_, projects) => {
     store.setOpenProjects(projects);
+  });
+
+  ipcMain.handle('get-project-settings', (_, baseDir: string) => {
+    return store.getProjectSettings(baseDir);
+  });
+
+  ipcMain.handle('save-project-settings', (_, baseDir: string, settings) => {
+    store.saveProjectSettings(baseDir, settings);
   });
 };

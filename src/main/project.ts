@@ -2,7 +2,8 @@ import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
 import fs from 'fs/promises';
 import path from 'path';
 import { BrowserWindow } from 'electron';
-import { ContextFile } from '@common/types';
+import { ContextFile, QuestionData } from '@common/types';
+import { EditFormat, MessageAction } from './messages';
 import { Connector } from './connector';
 import { AIDER_COMMAND } from './constants';
 
@@ -10,6 +11,7 @@ export class Project {
   private mainWindow: BrowserWindow | null = null;
   private process?: ChildProcessWithoutNullStreams | null = null;
   private connectors: Connector[] = [];
+  private currentQuestion: QuestionData | null = null;
   public baseDir: string;
   public contextFiles: ContextFile[] = [];
 
@@ -19,6 +21,7 @@ export class Project {
   }
 
   public addConnector(connector: Connector) {
+    console.log(`Adding connector for base directory: ${this.baseDir}`);
     this.connectors.push(connector);
     this.contextFiles.forEach(connector.sendAddFileMessage);
   }
@@ -81,10 +84,31 @@ export class Project {
     this.process = null;
   }
 
+  private findMessageConnectors(action: MessageAction): Connector[] {
+    return this.connectors.filter((connector) => connector.listenTo.includes(action));
+  }
+
+  public sendPrompt(prompt: string, editFormat?: EditFormat): void {
+    console.log(`Sending prompt to ${this.baseDir}`, prompt);
+    if (this.currentQuestion) {
+      this.answerQuestion('n');
+    }
+    this.findMessageConnectors('prompt').forEach((connector) => connector.sendPromptMessage(prompt, editFormat));
+  }
+
+  public answerQuestion(answer: string): void {
+    if (!this.currentQuestion) {
+      return;
+    }
+
+    this.findMessageConnectors('answer-question').forEach((connector) => connector.sendAnswerQuestionMessage(answer));
+    this.currentQuestion = null;
+  }
+
   public addFile(contextFile: ContextFile): void {
     console.log(`Adding file: ${contextFile.path}`);
     this.contextFiles.push(contextFile);
-    this.connectors.filter((connector) => connector.listenTo.includes('add-file')).forEach((connector) => connector.sendAddFileMessage(contextFile));
+    this.findMessageConnectors('add-file').forEach((connector) => connector.sendAddFileMessage(contextFile));
 
     this.mainWindow?.webContents.send('file-added', {
       baseDir: this.baseDir,
@@ -95,7 +119,7 @@ export class Project {
   public dropFile(path: string): void {
     console.log(`Dropping file: ${path}`);
     this.contextFiles = this.contextFiles.filter((file) => file.path !== path);
-    this.connectors.filter((connector) => connector.listenTo.includes('drop-file')).forEach((connector) => connector.sendDropFileMessage(path));
+    this.findMessageConnectors('drop-file').forEach((connector) => connector.sendDropFileMessage(path));
 
     this.mainWindow?.webContents.send('file-dropped', {
       baseDir: this.baseDir,
@@ -136,5 +160,9 @@ export class Project {
       console.log('Failed to load input history:', error);
       return [];
     }
+  }
+
+  public setCurrentQuestion(questionData: QuestionData) {
+    this.currentQuestion = questionData;
   }
 }

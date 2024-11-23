@@ -27,11 +27,14 @@ export interface FileDroppedData {
 export interface AutocompletionData {
   baseDir: string;
   words: string[];
+  allFiles: string[];
 }
 
-export interface ConfirmAskData {
+export interface QuestionData {
   baseDir: string;
-  question: string;
+  text: string;
+  subject?: string;
+  defaultAnswer: string;
 }
 
 export type ContexFileSourceType = 'companion' | 'aider' | 'app' | string;
@@ -48,4 +51,13 @@ export interface WindowState {
   x: number | undefined;
   y: number | undefined;
   isMaximized: boolean;
+}
+
+export interface ProjectSettings {
+  codeBlockExpanded: boolean;
+}
+
+export interface ProjectData {
+  baseDir: string;
+  settings: ProjectSettings;
 }

@@ -1,8 +1,8 @@
-import { WindowState } from '@common/types';
+import { WindowState, ProjectData, ProjectSettings } from '@common/types';
 
 interface StoreSchema {
   windowState: WindowState;
-  openProjects: string[];
+  openProjects: ProjectData[];
 }
 
 interface CustomStore<T> {
@@ -19,16 +19,34 @@ export class Store {
     this.store = new ElectronStore<StoreSchema>() as unknown as CustomStore<StoreSchema>;
   }
 
-  getOpenProjects(): string[] {
+  getOpenProjects(): ProjectData[] {
     return this.store.get('openProjects') || this.getDefaultOpenProjects();
   }
 
-  private getDefaultOpenProjects(): string[] {
+  private getDefaultOpenProjects(): ProjectData[] {
     return [];
   }
 
-  setOpenProjects(projects: string[]): void {
+  setOpenProjects(projects: ProjectData[]): void {
     this.store.set('openProjects', projects);
+  }
+
+  getProjectSettings(baseDir: string): ProjectSettings | undefined {
+    const projects = this.getOpenProjects();
+    const project = projects.find((p) => p.baseDir === baseDir);
+    return project?.settings;
+  }
+
+  saveProjectSettings(baseDir: string, settings: ProjectSettings): void {
+    const projects = this.getOpenProjects();
+    const projectIndex = projects.findIndex((project) => project.baseDir === baseDir);
+    if (projectIndex >= 0) {
+      projects[projectIndex] = {
+        ...projects[projectIndex],
+        settings,
+      };
+      this.setOpenProjects(projects);
+    }
   }
 
   getWindowState(): StoreSchema['windowState'] {

@@ -1,6 +1,6 @@
 import { ContexFileSourceType, ContextFile } from '@common/types';
 
-export type MessageAction = 'init' | 'prompt' | 'response' | 'add-file' | 'drop-file' | 'update-autocompletion' | 'confirm';
+export type MessageAction = 'init' | 'prompt' | 'response' | 'add-file' | 'drop-file' | 'update-autocompletion' | 'ask-question' | 'answer-question';
 
 export interface Message {
   action: MessageAction;
@@ -63,8 +63,25 @@ export const isDropFileMessage = (message: Message): message is DropFileMessage 
 export interface UpdateAutocompletionMessage extends Message {
   action: 'update-autocompletion';
   words: string[];
+  allFiles: string[];
 }
 
 export const isUpdateAutocompletionMessage = (message: Message): message is UpdateAutocompletionMessage => {
   return typeof message === 'object' && message !== null && 'action' in message && message.action === 'update-autocompletion';
 };
+
+export interface AskQuestionMessage extends Message {
+  action: 'ask-question';
+  question: string;
+  subject?: string;
+  defaultAnswer: string;
+}
+
+export const isAskQuestionMessage = (message: Message): message is AskQuestionMessage => {
+  return typeof message === 'object' && message !== null && 'action' in message && message.action === 'ask-question';
+};
+
+export interface AnswerQuestionMessage extends Message {
+  action: 'answer-question';
+  answer: string;
+}
