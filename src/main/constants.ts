@@ -1,6 +1,7 @@
 import { app } from 'electron';
 
 export const AIDER_DESKTOP_DIR = app.getPath('userData');
+export const LOGS_DIR = `${AIDER_DESKTOP_DIR}/logs`;
 export const SETUP_COMPLETE_FILENAME = `${AIDER_DESKTOP_DIR}/setup-complete`;
 export const PYTHON_VENV_DIR = `${AIDER_DESKTOP_DIR}/python-venv`;
 export const PYTHON_COMMAND = `${PYTHON_VENV_DIR}/bin/python`;

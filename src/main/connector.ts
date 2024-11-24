@@ -1,6 +1,7 @@
 import { Socket } from 'socket.io';
 import { ContextFile } from '@common/types';
 import { AddFileMessage, AnswerQuestionMessage, DropFileMessage, EditFormat, Message, MessageAction, PromptMessage } from './messages';
+import logger from './logger';
 
 export class Connector {
   socket: Socket;
@@ -15,10 +16,10 @@ export class Connector {
 
   private sendMessage = (message: Message) => {
     if (!this.socket.connected) {
-      console.log('Socket.IO client is not connected');
+      logger.warn('Socket.IO client is not connected');
       return;
     }
-    console.log(`Sending message to client with baseDir: ${this.baseDir}`);
+    logger.info('Sending message to client:', { baseDir: this.baseDir, messageType: message.action });
     this.socket.emit('message', message);
   };
 

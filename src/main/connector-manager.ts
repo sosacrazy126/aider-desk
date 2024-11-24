@@ -16,6 +16,7 @@ import {
   ResponseMessage,
 } from './messages';
 import { projectManager } from './project-manager';
+import logger from './logger';
 
 class ConnectorManager {
   private static instance: ConnectorManager;
@@ -43,13 +44,13 @@ class ConnectorManager {
     });
 
     this.io.on('connection', (socket) => {
-      console.log('Socket.IO client connected');
+      logger.info('Socket.IO client connected');
 
       socket.on('message', (message) => this.processMessage(socket, message));
       socket.on('error', (message) => this.processErrorMessage(socket, message));
 
       socket.on('disconnect', () => {
-        console.log('Socket.IO client disconnected');
+        logger.info('Socket.IO client disconnected');
         this.removeConnector(socket);
       });
     });
@@ -64,7 +65,7 @@ class ConnectorManager {
 
   private processMessage = (socket: Socket, message: Message) => {
     try {
-      console.log('Received message:', message);
+      logger.debug('Received message:', { message });
 
       if (isInitMessage(message)) {
         const connector = new Connector(socket, message.baseDir, message.listenTo);
@@ -74,7 +75,7 @@ class ConnectorManager {
         project.addConnector(connector);
 
         message.openFiles?.forEach((file) => project.addFile(file));
-        console.log(`Socket.IO registered project for base directory: ${message.baseDir}`);
+        logger.info('Socket.IO registered project for base directory:', { baseDir: message.baseDir });
       } else if (isResponseMessage(message)) {
         const connector = this.findConnectorBySocket(socket);
         if (!connector) {
@@ -86,7 +87,7 @@ class ConnectorManager {
         if (!connector) {
           return;
         }
-        console.log(`Adding file in project ${connector.baseDir}`);
+        logger.info('Adding file in project', { baseDir: connector.baseDir });
         projectManager.getProject(connector.baseDir).addFile({
           path: message.path,
           readOnly: message.readOnly,
@@ -97,7 +98,7 @@ class ConnectorManager {
         if (!connector) {
           return;
         }
-        console.log(`Dropping file in project ${connector.baseDir}`);
+        logger.info('Dropping file in project', { baseDir: connector.baseDir });
         projectManager.getProject(connector.baseDir).dropFile(message.path);
       } else if (isUpdateAutocompletionMessage(message)) {
         const connector = this.findConnectorBySocket(socket);
@@ -123,10 +124,10 @@ class ConnectorManager {
         projectManager.getProject(connector.baseDir).setCurrentQuestion(questionData);
         this.mainWindow?.webContents.send('ask-question', questionData);
       } else {
-        console.error('Unknown message type');
+        logger.error('Unknown message type');
       }
     } catch (error) {
-      console.error('Socket.IO message parsing error:', error);
+      logger.error('Socket.IO message parsing error:', { error });
     }
   };
 
@@ -161,7 +162,7 @@ class ConnectorManager {
     }
 
     if (!message.finished) {
-      console.log(`Sending response chunk to ${baseDir}`);
+      logger.debug(`Sending response chunk to ${baseDir}`);
       const data: ResponseChunkData = {
         messageId: this.currentResponseMessageId,
         baseDir,
@@ -169,7 +170,8 @@ class ConnectorManager {
       };
       this.mainWindow.webContents.send('response-chunk', data);
     } else {
-      console.log(`Sending response finished to ${baseDir}`);
+      logger.info(`Sending response completed to ${baseDir}`);
+      logger.debug(`Message data: ${JSON.stringify(message)}`);
       const data: ResponseCompletedData = {
         messageId: this.currentResponseMessageId,
         content: message.content,
@@ -199,7 +201,7 @@ class ConnectorManager {
   private findConnectorBySocket = (socket: Socket): Connector | undefined => {
     const connector = this.connectors.find((c) => c.socket === socket);
     if (!connector) {
-      console.error('Connector not found');
+      logger.error('Connector not found');
     }
     return connector;
   };

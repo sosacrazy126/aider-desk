@@ -6,6 +6,7 @@ import { ContextFile, QuestionData } from '@common/types';
 import { EditFormat, MessageAction } from './messages';
 import { Connector } from './connector';
 import { AIDER_DESKTOP_CONNECTOR_DIR, PYTHON_COMMAND } from './constants';
+import logger from './logger';
 
 export class Project {
   private mainWindow: BrowserWindow | null = null;
@@ -21,9 +22,11 @@ export class Project {
   }
 
   public addConnector(connector: Connector) {
-    console.log(`Adding connector for base directory: ${this.baseDir}`);
+    logger.info('Adding connector for base directory:', { baseDir: this.baseDir });
     this.connectors.push(connector);
-    this.contextFiles.forEach(connector.sendAddFileMessage);
+    if (connector.listenTo.includes('add-file')) {
+      this.contextFiles.forEach(connector.sendAddFileMessage);
+    }
   }
 
   public removeConnector(connector: Connector) {
@@ -55,18 +58,18 @@ export class Project {
       env,
     });
 
-    console.log('Starting Aider...');
+    logger.info('Starting Aider...');
     this.process.stdout.on('data', (data) => {
       const output = data.toString();
-      console.log(output);
+      logger.debug('Aider output:', { output });
     });
 
     this.process.stderr.on('data', (data) => {
-      console.error(`Aider stderr (${this.baseDir}): ${data}`);
+      logger.error('Aider stderr:', { baseDir: this.baseDir, error: data.toString() });
     });
 
     this.process.on('close', (code) => {
-      console.log(`Aider process exited with code ${code} (${this.baseDir})`);
+      logger.info('Aider process exited:', { baseDir: this.baseDir, code });
     });
   }
 
@@ -76,12 +79,12 @@ export class Project {
 
   public killAider() {
     if (this.process) {
-      console.log('Killing Aider...', this.baseDir);
+      logger.info('Killing Aider...', { baseDir: this.baseDir });
       try {
         // Kill the process group
         process.kill(-this.process.pid!, 'SIGKILL');
       } catch (error: unknown) {
-        console.error(error);
+        logger.error('Error killing Aider process:', { error });
         // Fallback to direct process termination
         this.process.kill('SIGKILL');
       }
@@ -94,7 +97,7 @@ export class Project {
   }
 
   public sendPrompt(prompt: string, editFormat?: EditFormat): void {
-    console.log(`Sending prompt to ${this.baseDir}`, prompt);
+    logger.info('Sending prompt:', { baseDir: this.baseDir, prompt });
     if (this.currentQuestion) {
       this.answerQuestion('n');
     }
@@ -111,7 +114,7 @@ export class Project {
   }
 
   public addFile(contextFile: ContextFile): void {
-    console.log(`Adding file: ${contextFile.path}`);
+    logger.info('Adding file:', { path: contextFile.path });
     this.contextFiles.push(contextFile);
     this.findMessageConnectors('add-file').forEach((connector) => connector.sendAddFileMessage(contextFile));
 
@@ -122,7 +125,7 @@ export class Project {
   }
 
   public dropFile(path: string): void {
-    console.log(`Dropping file: ${path}`);
+    logger.info('Dropping file:', { path });
     this.contextFiles = this.contextFiles.filter((file) => file.path !== path);
     this.findMessageConnectors('drop-file').forEach((connector) => connector.sendDropFileMessage(path));
 
@@ -162,7 +165,7 @@ export class Project {
 
       return history.reverse();
     } catch (error) {
-      console.log('Failed to load input history:', error);
+      logger.error('Failed to load input history:', { error });
       return [];
     }
   }

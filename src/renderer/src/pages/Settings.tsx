@@ -21,7 +21,6 @@ export const Settings = () => {
   const [environmentVariables, setEnvironmentVariables] = useState('');
 
   useEffect(() => {
-    console.log('Loading settings...');
     const loadSettings = async () => {
       const settings = await window.api.loadSettings();
       setOptions(settings.aider.options);

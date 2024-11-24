@@ -165,7 +165,6 @@ export const PromptField = ({ baseDir, onSubmit, processing = false, isActive = 
     const [prompt, editFormat] = getPromptWithEditFormat(text);
 
     if (prompt) {
-      console.log(`Sending prompt to ${baseDir}`, prompt);
       window.api.sendPrompt(baseDir, prompt, editFormat);
       onSubmit?.(prompt);
       prepareForNextPrompt();

@@ -1,7 +1,16 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import { electronAPI } from '@electron-toolkit/preload';
 import { v4 as uuidv4 } from 'uuid';
-import { AutocompletionData, QuestionData, FileAddedData, FileDroppedData, ResponseChunkData, ResponseCompletedData, SettingsData, ResponseErrorData } from '../common/types';
+import {
+  AutocompletionData,
+  QuestionData,
+  FileAddedData,
+  FileDroppedData,
+  ResponseChunkData,
+  ResponseCompletedData,
+  SettingsData,
+  ResponseErrorData,
+} from '../common/types';
 import { ApplicationAPI } from './index.d';
 
 const responseChunkListeners: Record<string, (event: Electron.IpcRendererEvent, data: ResponseChunkData) => void> = {};

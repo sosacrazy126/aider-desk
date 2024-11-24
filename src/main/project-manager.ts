@@ -2,6 +2,7 @@ import { BrowserWindow } from 'electron';
 import { parse } from '@dotenvx/dotenvx';
 import { Project } from './project';
 import { Store } from './store';
+import logger from './logger';
 
 class ProjectManager {
   private static instance: ProjectManager;
@@ -33,6 +34,7 @@ class ProjectManager {
     let project = this.projects.find((project) => project.baseDir === baseDir);
 
     if (!project) {
+      logger.info('Creating new project', { baseDir });
       project = new Project(this.mainWindow!, baseDir);
       this.projects.push(project);
       this.runAiderForProject(project);
@@ -42,6 +44,7 @@ class ProjectManager {
   }
 
   public startProject(baseDir: string): void {
+    logger.info('Starting project', { baseDir });
     const project = this.getProject(baseDir);
 
     project.contextFiles.forEach((contextFile) => {
@@ -58,14 +61,15 @@ class ProjectManager {
     const project = this.projects.find((project) => project.baseDir === baseDir);
 
     if (!project) {
-      console.log(`No project found with base directory ${baseDir}`);
+      logger.warn('No project found to stop', { baseDir });
       return;
     }
+    logger.info('Stopping project', { baseDir });
     project.killAider();
   }
 
   public close(): void {
-    console.log('Stopping all projects...');
+    logger.info('Stopping all projects');
     this.projects.forEach((project) => {
       project.killAider();
     });

@@ -21,6 +21,7 @@
     "build:linux": "electron-vite build && electron-builder --linux"
   },
   "dependencies": {
+    "@dotenvx/dotenvx": "^1.24.5",
     "@electron-toolkit/preload": "^3.0.1",
     "@electron-toolkit/utils": "^3.0.0",
     "@tiptap/extension-mention": "^2.9.1",
@@ -29,7 +30,6 @@
     "@tiptap/suggestion": "^2.9.1",
     "@types/react-resizable": "^3.0.8",
     "@types/socket.io": "^3.0.1",
-    "dotenvx": "^0.6.0",
     "electron-progressbar": "^2.2.1",
     "electron-store": "^10.0.0",
     "electron-updater": "^6.1.7",
@@ -44,6 +44,7 @@
     "react-router-dom": "^7.0.1",
     "socket.io": "^4.8.1",
     "uuid": "^11.0.2",
+    "winston": "^3.17.0",
     "ws": "^8.18.0"
   },
   "devDependencies": {
