@@ -3,8 +3,9 @@ import { v4 as uuidv4 } from 'uuid';
 import { Server, Socket } from 'socket.io';
 import { Connector } from 'src/main/connector';
 import { QuestionData, ResponseChunkData, ResponseCompletedData } from '@common/types';
-import { WEBSOCKET_PORT } from './constants';
+import { SOCKET_PORT } from './constants';
 import {
+  ErrorMessage,
   isAddFileMessage,
   isAskQuestionMessage,
   isDropFileMessage,
@@ -32,7 +33,7 @@ class ConnectorManager {
     return ConnectorManager.instance;
   }
 
-  public init(mainWindow: BrowserWindow, port = WEBSOCKET_PORT): void {
+  public init(mainWindow: BrowserWindow, port = SOCKET_PORT): void {
     this.mainWindow = mainWindow;
     this.io = new Server(port, {
       cors: {
@@ -45,6 +46,7 @@ class ConnectorManager {
       console.log('Socket.IO client connected');
 
       socket.on('message', (message) => this.processMessage(socket, message));
+      socket.on('error', (message) => this.processErrorMessage(socket, message));
 
       socket.on('disconnect', () => {
         console.log('Socket.IO client disconnected');
@@ -126,6 +128,27 @@ class ConnectorManager {
     } catch (error) {
       console.error('Socket.IO message parsing error:', error);
     }
+  };
+
+  private processErrorMessage = (socket: Socket, message: ErrorMessage) => {
+    const connector = this.findConnectorBySocket(socket);
+    if (!connector || !this.mainWindow) {
+      return;
+    }
+    if (this.currentResponseMessageId) {
+      const data: ResponseCompletedData = {
+        messageId: this.currentResponseMessageId,
+        content: '',
+        baseDir: connector.baseDir,
+      };
+      this.mainWindow.webContents.send('response-completed', data);
+      this.currentResponseMessageId = null;
+    }
+
+    this.mainWindow.webContents.send('response-error', {
+      baseDir: connector.baseDir,
+      error: message.message,
+    });
   };
 
   private processResponseMessage = (baseDir: string, message: ResponseMessage) => {

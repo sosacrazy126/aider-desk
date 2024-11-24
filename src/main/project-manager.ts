@@ -1,10 +1,13 @@
 import { BrowserWindow } from 'electron';
+import { parse } from '@dotenvx/dotenvx';
 import { Project } from './project';
+import { Store } from './store';
 
 class ProjectManager {
   private static instance: ProjectManager;
   private projects: Project[] = [];
   private mainWindow: BrowserWindow | null = null;
+  private store: Store | null = null;
 
   private constructor() {}
 
@@ -15,8 +18,15 @@ class ProjectManager {
     return ProjectManager.instance;
   }
 
-  public init(mainWindow: BrowserWindow): void {
+  public init(mainWindow: BrowserWindow, store: Store): void {
     this.mainWindow = mainWindow;
+    this.store = store;
+  }
+
+  private runAiderForProject(project: Project): void {
+    const settings = this.store!.getSettings();
+    const environmentVariables = parse(settings.aider.environmentVariables);
+    project.runAider(settings.aider.options, environmentVariables);
   }
 
   public getProject(baseDir: string): Project {
@@ -25,6 +35,7 @@ class ProjectManager {
     if (!project) {
       project = new Project(this.mainWindow!, baseDir);
       this.projects.push(project);
+      this.runAiderForProject(project);
     }
 
     return project;
@@ -40,7 +51,7 @@ class ProjectManager {
       });
     });
 
-    project.runAider(baseDir);
+    this.runAiderForProject(project);
   }
 
   public stopProject(baseDir: string): void {

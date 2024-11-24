@@ -14,6 +14,11 @@ export interface ResponseCompletedData {
   diff?: string;
 }
 
+export interface ResponseErrorData {
+  baseDir: string;
+  error: string;
+}
+
 export interface FileAddedData {
   baseDir: string;
   file: ContextFile;
@@ -60,4 +65,11 @@ export interface ProjectSettings {
 export interface ProjectData {
   baseDir: string;
   settings: ProjectSettings;
+}
+
+export interface SettingsData {
+  aider: {
+    options: string;
+    environmentVariables: string;
+  };
 }

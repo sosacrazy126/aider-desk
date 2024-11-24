@@ -6,7 +6,7 @@ import 'react-resizable/css/styles.css';
 import { Messages } from 'components/Messages';
 import { PromptField } from 'components/PromptField';
 import { ContextFiles } from 'components/ContextFiles';
-import { AutocompletionData, ResponseChunkData, ResponseCompletedData, ProjectData } from '@common/types';
+import { AutocompletionData, ResponseChunkData, ResponseCompletedData, ResponseErrorData, ProjectData } from '@common/types';
 import { LoadingMessage, Message, PromptMessage, ResponseMessage } from 'types/message';
 
 type Props = {
@@ -14,117 +14,8 @@ type Props = {
   isActive?: boolean;
 };
 
-export const ProjectPanel = ({ project, isActive = false }: Props) => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 'test',
-      type: 'response',
-      content:
-        'To add the `Test` interface to `src/common/types.ts`, you need to insert the following code snippet at the appropriate location in the file:\n' +
-        '\n' +
-        '<source>ts\n' +
-        'export interface Test {\n' +
-        '  propertyA: boolean;\n' +
-        '}\n' +
-        '</source>\n' +
-        '\n' +
-        'Here is the exact change you need to make:\n' +
-        '\n' +
-        'src/common/types.ts\n' +
-        '<source>\n' +
-        'export interface ResponseChunkData {\n' +
-        '  messageId: string;\n' +
-        '  baseDir: string;\n' +
-        '  chunk: string;\n' +
-        '}\n' +
-        '\n' +
-        'export interface ResponseCompletedData {\n' +
-        '  messageId: string;\n' +
-        '  baseDir: string;\n' +
-        '  content: string;\n' +
-        '  editedFiles?: string[];\n' +
-        '  commitHash?: string;\n' +
-        '  commitMessage?: string;\n' +
-        '  diff?: string;\n' +
-        '}\n' +
-        '\n' +
-        'export interface FileAddedData {\n' +
-        '  baseDir: string;\n' +
-        '  file: ContextFile;\n' +
-        '}\n' +
-        '\n' +
-        'export interface FileDroppedData {\n' +
-        '  baseDir: string;\n' +
-        '  path: string;\n' +
-        '}\n' +
-        '\n' +
-        'export interface AutocompletionData {\n' +
-        '  baseDir: string;\n' +
-        '  words: string[];\n' +
-        '}\n' +
-        '\n' +
-        'export interface QuestionData {\n' +
-        '  baseDir: string;\n' +
-        '  text: string;\n' +
-        '  subject?: string;\n' +
-        '  defaultAnswer: string;\n' +
-        '}\n' +
-        '\n' +
-        "export type ContexFileSourceType = 'companion' | 'aider' | 'app' | string;\n" +
-        '\n' +
-        'export interface ContextFile {\n' +
-        '  path: string;\n' +
-        '  sourceType?: ContexFileSourceType;\n' +
-        '  readOnly?: boolean;\n' +
-        '}\n' +
-        '\n' +
-        'export interface WindowState {\n' +
-        '  width: number;\n' +
-        '  height: number;\n' +
-        '  x: number | undefined;\n' +
-        '  y: number | undefined;\n' +
-        '  isMaximized: boolean;\n' +
-        '}\n' +
-        '\n' +
-        '+ export interface Test {\n' +
-        '+   propertyA: boolean;\n' +
-        '+ }\n' +
-        '</source>\n' +
-        '\n' +
-        'This will add the `Test` interface with the `propertyA` field to the `types.ts` file.',
-    },
-    {
-      id: 'test2',
-      type: 'response',
-      content:
-        'To add the `Test` interface to `types.ts`, we need to:\n' +
-        '\n' +
-        '1. Append the `Test` interface definition to the end of the file.\n' +
-        '\n' +
-        'Here is the *SEARCH/REPLACE* block for the change:\n' +
-        '\n' +
-        'src/common/types.ts\n' +
-        '<source>\n' +
-        '<<<<<<< SEARCH\n' +
-        'export interface ProjectData {\n' +
-        '  baseDir: string;\n' +
-        '  settings: ProjectSettings;\n' +
-        '}\n' +
-        '=======\n' +
-        'export interface ProjectData {\n' +
-        '  baseDir: string;\n' +
-        '  settings: ProjectSettings;\n' +
-        '}\n' +
-        '\n' +
-        'export interface Test {\n' +
-        '  propertyA: boolean;\n' +
-        '}\n' +
-        '>>>>>>> REPLACE\n' +
-        '</source>\n' +
-        '\n' +
-        'This change will add the `Test` interface with the `propertyA` property to the `types.ts` file.',
-    },
-  ]);
+export const ProjectView = ({ project, isActive = false }: Props) => {
+  const [messages, setMessages] = useState<Message[]>([]);
   const [processing, setProcessing] = useState(false);
   const [autocompletionData, setAutocompletionData] = useState<AutocompletionData | null>(null);
   const processingMessageRef = useRef<ResponseMessage | null>(null);
@@ -161,15 +52,31 @@ export const ProjectPanel = ({ project, isActive = false }: Props) => {
         processingMessage.processing = false;
         setMessages((prevMessages) => prevMessages.map((message) => (message.id === messageId ? processingMessage : message)));
         setProcessing(false);
+        processingMessageRef.current = null;
+      } else if (!processingMessage && processing) {
+        setMessages((prevMessages) => prevMessages.filter((message) => message.type !== 'loading'));
+        setProcessing(false);
       }
+    };
+
+    const handleResponseError = (_: IpcRendererEvent, { error }: ResponseErrorData) => {
+      const errorMessage: Message = {
+        id: uuidv4(),
+        type: 'response-error',
+        content: error,
+      };
+      setMessages((prevMessages) => prevMessages.filter((message) => message.type !== 'loading').concat(errorMessage));
+      setProcessing(false);
     };
 
     const responseChunkListenerId = window.api.addResponseChunkListener(project.baseDir, handleResponseChunk);
     const responseCompletedListenerId = window.api.addResponseCompletedListener(project.baseDir, handleResponseCompleted);
+    const responseErrorListenerId = window.api.addResponseErrorListener(project.baseDir, handleResponseError);
 
     return () => {
       window.api.removeResponseChunkListener(responseChunkListenerId);
       window.api.removeResponseCompletedListener(responseCompletedListenerId);
+      window.api.removeResponseErrorListener(responseErrorListenerId);
     };
   }, [project.baseDir]);
 

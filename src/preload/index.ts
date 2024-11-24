@@ -1,17 +1,20 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import { electronAPI } from '@electron-toolkit/preload';
 import { v4 as uuidv4 } from 'uuid';
-import { AutocompletionData, QuestionData, FileAddedData, FileDroppedData, ResponseChunkData, ResponseCompletedData } from '../common/types';
+import { AutocompletionData, QuestionData, FileAddedData, FileDroppedData, ResponseChunkData, ResponseCompletedData, SettingsData, ResponseErrorData } from '../common/types';
 import { ApplicationAPI } from './index.d';
 
 const responseChunkListeners: Record<string, (event: Electron.IpcRendererEvent, data: ResponseChunkData) => void> = {};
 const responseFinishedListeners: Record<string, (event: Electron.IpcRendererEvent, data: ResponseCompletedData) => void> = {};
+const responseErrorListeners: Record<string, (event: Electron.IpcRendererEvent, data: ResponseErrorData) => void> = {};
 const fileAddedListeners: Record<string, (event: Electron.IpcRendererEvent, data: FileAddedData) => void> = {};
 const fileDroppedListeners: Record<string, (event: Electron.IpcRendererEvent, data: FileDroppedData) => void> = {};
 const updateAutocompletionListeners: Record<string, (event: Electron.IpcRendererEvent, data: AutocompletionData) => void> = {};
 const askQuestionListeners: Record<string, (event: Electron.IpcRendererEvent, data: QuestionData) => void> = {};
 
 const api: ApplicationAPI = {
+  loadSettings: () => ipcRenderer.invoke('load-settings'),
+  saveSettings: (settings: SettingsData) => ipcRenderer.invoke('save-settings', settings),
   startProject: (baseDir: string) => ipcRenderer.send('start-project', baseDir),
   stopProject: (baseDir: string) => ipcRenderer.send('stop-project', baseDir),
   sendPrompt: (baseDir: string, prompt: string, editFormat?: string) => ipcRenderer.send('send-prompt', baseDir, prompt, editFormat),
@@ -60,6 +63,24 @@ const api: ApplicationAPI = {
     if (callback) {
       ipcRenderer.removeListener('response-completed', callback);
       delete responseFinishedListeners[listenerId];
+    }
+  },
+
+  addResponseErrorListener: (baseDir, callback) => {
+    const listenerId = uuidv4();
+    responseErrorListeners[listenerId] = (event: Electron.IpcRendererEvent, data: ResponseErrorData) => {
+      if (data.baseDir !== baseDir) {
+        return;
+      }
+      callback(event, data);
+    };
+    ipcRenderer.on('response-error', responseErrorListeners[listenerId]);
+    return listenerId;
+  },
+  removeResponseErrorListener: (listenerId) => {
+    if (responseErrorListeners[listenerId]) {
+      ipcRenderer.removeListener('response-error', responseErrorListeners[listenerId]);
+      delete responseErrorListeners[listenerId];
     }
   },
 

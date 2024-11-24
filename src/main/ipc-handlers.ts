@@ -1,12 +1,19 @@
 import { BrowserWindow, dialog, ipcMain } from 'electron';
+import { ProjectSettings, SettingsData } from '@common/types';
 import { EditFormat } from './messages';
 import { projectManager } from './project-manager';
 import { Store } from './store';
 
 export const setupIpcHandlers = (mainWindow: BrowserWindow, store: Store) => {
-  console.log('Setting up IPC handlers...');
+  ipcMain.handle('load-settings', () => {
+    return store.getSettings();
+  });
+
+  ipcMain.handle('save-settings', (_, settings: SettingsData) => {
+    store.saveSettings(settings);
+  });
+
   ipcMain.on('send-prompt', (_, baseDir: string, prompt: string, editFormat?: EditFormat) => {
-    console.log(`IPC 'send-prompt' event received for ${baseDir}`);
     projectManager.getProject(baseDir).sendPrompt(prompt, editFormat);
   });
 
@@ -46,7 +53,7 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, store: Store) => {
     return store.getProjectSettings(baseDir);
   });
 
-  ipcMain.handle('save-project-settings', (_, baseDir: string, settings) => {
+  ipcMain.handle('save-project-settings', (_, baseDir: string, settings: ProjectSettings) => {
     store.saveProjectSettings(baseDir, settings);
   });
 };

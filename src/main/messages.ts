@@ -6,6 +6,10 @@ export interface Message {
   action: MessageAction;
 }
 
+export interface ErrorMessage {
+  message: string;
+}
+
 export interface InitMessage {
   action: 'init';
   baseDir: string;

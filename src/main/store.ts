@@ -1,8 +1,16 @@
-import { WindowState, ProjectData, ProjectSettings } from '@common/types';
+import { WindowState, ProjectData, ProjectSettings, SettingsData } from '@common/types';
+
+const DEFAULT_SETTINGS: SettingsData = {
+  aider: {
+    options: '',
+    environmentVariables: '',
+  },
+};
 
 interface StoreSchema {
   windowState: WindowState;
   openProjects: ProjectData[];
+  settings: SettingsData;
 }
 
 interface CustomStore<T> {
@@ -19,12 +27,16 @@ export class Store {
     this.store = new ElectronStore<StoreSchema>() as unknown as CustomStore<StoreSchema>;
   }
 
-  getOpenProjects(): ProjectData[] {
-    return this.store.get('openProjects') || this.getDefaultOpenProjects();
+  getSettings(): SettingsData {
+    return this.store.get('settings') || DEFAULT_SETTINGS;
   }
 
-  private getDefaultOpenProjects(): ProjectData[] {
-    return [];
+  saveSettings(settings: SettingsData): void {
+    this.store.set('settings', settings);
+  }
+
+  getOpenProjects(): ProjectData[] {
+    return this.store.get('openProjects') || [];
   }
 
   setOpenProjects(projects: ProjectData[]): void {

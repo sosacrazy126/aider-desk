@@ -1,12 +1,15 @@
 import { join } from 'path';
-import { app, shell, BrowserWindow } from 'electron';
+import { app, shell, BrowserWindow, dialog } from 'electron';
 import { electronApp, optimizer, is } from '@electron-toolkit/utils';
+import ProgressBar from 'electron-progressbar';
 
+import { delay } from '@common/utils';
 import icon from '../../resources/icon.png?asset';
 import { Store } from './store';
 import { connectorManager } from './connector-manager';
-import { setupIpcHandlers } from './ipcHandlers';
+import { setupIpcHandlers } from './ipc-handlers';
 import { projectManager } from './project-manager';
+import { performInitialSetup, UpdateProgressData } from './initial-setup';
 
 const initStore = async (): Promise<Store> => {
   const store = new Store();
@@ -52,7 +55,7 @@ const createWindow = (store: Store) => {
   mainWindow.on('unmaximize', saveWindowState);
 
   connectorManager.init(mainWindow);
-  projectManager.init(mainWindow);
+  projectManager.init(mainWindow, store);
 
   app.on('before-quit', () => {
     connectorManager.close();
@@ -71,20 +74,61 @@ const createWindow = (store: Store) => {
 };
 
 app.whenReady().then(async () => {
-  electronApp.setAppUserModelId('com.electron');
+  electronApp.setAppUserModelId('com.hotovo.aider-desktop');
 
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window);
   });
 
-  const store = await initStore();
+  const progressBar = new ProgressBar({
+    text: 'Starting Aider Desktop...',
+    detail: 'Initializing...',
+    closeOnComplete: false,
+    browserWindow: {
+      webPreferences: {
+        nodeIntegration: true,
+      },
+    },
+  });
 
+  await new Promise((resolve) => {
+    progressBar.on('ready', () => {
+      resolve(null);
+    });
+  });
+  await delay(1000);
+
+  const updateProgress = ({ step, message }: UpdateProgressData) => {
+    progressBar.detail = message;
+    progressBar.text = step;
+  };
+
+  try {
+    await performInitialSetup(updateProgress);
+    updateProgress({
+      step: 'Welcome to Aider Desktop',
+      message: 'Everything is ready! Have fun coding!',
+    });
+    progressBar.setCompleted();
+    await delay(1000);
+  } catch (error) {
+    progressBar.close();
+    dialog.showErrorBox('Setup Failed', error instanceof Error ? error.message : 'Unknown error occurred during setup');
+    app.quit();
+    return;
+  }
+
+  const store = await initStore();
   const mainWindow = createWindow(store);
+
+  projectManager.init(mainWindow, store);
   setupIpcHandlers(mainWindow, store);
+  progressBar.close();
 
   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) {
       const mainWindow = createWindow(store);
+      projectManager.init(mainWindow, store);
       setupIpcHandlers(mainWindow, store);
     }
   });

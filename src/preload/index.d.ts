@@ -1,7 +1,20 @@
-import { ResponseChunkData, ResponseCompletedData, FileAddedData, FileDroppedData, AutocompletionData, QuestionData, ProjectData, ProjectSettings } from '../common/types';
+import {
+  ResponseChunkData,
+  ResponseCompletedData,
+  FileAddedData,
+  FileDroppedData,
+  AutocompletionData,
+  QuestionData,
+  ProjectData,
+  ProjectSettings,
+  SettingsData,
+  ResponseErrorData,
+} from '../common/types';
 import type { ElectronAPI } from '@electron-toolkit/preload';
 
 export interface ApplicationAPI {
+  loadSettings: () => Promise<SettingsData>;
+  saveSettings: (settings: SettingsData) => Promise<void>;
   startProject: (baseDir: string) => void;
   stopProject: (baseDir: string) => void;
   sendPrompt: (baseDir: string, prompt: string, editFormat?: string) => void;
@@ -20,6 +33,9 @@ export interface ApplicationAPI {
 
   addResponseCompletedListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: ResponseCompletedData) => void) => string;
   removeResponseCompletedListener: (listenerId: string) => void;
+
+  addResponseErrorListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: ResponseErrorData) => void) => string;
+  removeResponseErrorListener: (listenerId: string) => void;
 
   addFileAddedListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: FileAddedData) => void) => string;
   removeFileAddedListener: (listenerId: string) => void;

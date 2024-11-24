@@ -5,7 +5,7 @@ import { BrowserWindow } from 'electron';
 import { ContextFile, QuestionData } from '@common/types';
 import { EditFormat, MessageAction } from './messages';
 import { Connector } from './connector';
-import { AIDER_COMMAND } from './constants';
+import { AIDER_DESKTOP_CONNECTOR_DIR, PYTHON_COMMAND } from './constants';
 
 export class Project {
   private mainWindow: BrowserWindow | null = null;
@@ -30,38 +30,43 @@ export class Project {
     this.connectors = this.connectors.filter((c) => c !== connector);
   }
 
-  public runAider(baseDir: string): void {
+  public runAider(options: string, environmentVariables: Record<string, string>): void {
     if (this.process) {
       return;
     }
 
+    const args = ['-m', 'aider.main'];
+    if (options) {
+      args.push(...options.split(' ').filter((arg) => arg));
+    }
+    args.push(...['--no-check-update', '--connector', '--no-show-model-warnings']);
+    args.push(this.baseDir);
+
+    const env = {
+      ...process.env,
+      ...environmentVariables,
+      PYTHONPATH: AIDER_DESKTOP_CONNECTOR_DIR,
+    };
+
     // Spawn without shell to have direct process control
-    this.process = spawn(AIDER_COMMAND, [baseDir], {
-      cwd: baseDir,
+    this.process = spawn(PYTHON_COMMAND, args, {
+      cwd: this.baseDir,
       detached: true,
+      env,
     });
 
     console.log('Starting Aider...');
-
     this.process.stdout.on('data', (data) => {
       const output = data.toString();
       console.log(output);
-      const match = output.match(/^\$confirm-ask\$:(.*)$/ms);
-      if (match) {
-        const message = JSON.parse(match[1]);
-        console.log(`Sending confirm-ask message: ${JSON.stringify(message)}`);
-        if (this.mainWindow) {
-          this.mainWindow.webContents.send('confirm-ask', message);
-        }
-      }
     });
 
     this.process.stderr.on('data', (data) => {
-      console.error(`Aider stderr (${baseDir}): ${data}`);
+      console.error(`Aider stderr (${this.baseDir}): ${data}`);
     });
 
     this.process.on('close', (code) => {
-      console.log(`Aider process exited with code ${code} (${baseDir})`);
+      console.log(`Aider process exited with code ${code} (${this.baseDir})`);
     });
   }
 
