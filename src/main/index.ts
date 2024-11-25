@@ -9,7 +9,7 @@ import { Store } from './store';
 import { connectorManager } from './connector-manager';
 import { setupIpcHandlers } from './ipc-handlers';
 import { projectManager } from './project-manager';
-import { performInitialSetup, UpdateProgressData } from './initial-setup';
+import { performStartUp, UpdateProgressData } from './start-up';
 
 const initStore = async (): Promise<Store> => {
   const store = new Store();
@@ -104,9 +104,9 @@ app.whenReady().then(async () => {
   };
 
   try {
-    await performInitialSetup(updateProgress);
+    await performStartUp(updateProgress);
     updateProgress({
-      step: 'Welcome to Aider Desktop',
+      step: 'Startup complete',
       message: 'Everything is ready! Have fun coding!',
     });
     progressBar.setCompleted();

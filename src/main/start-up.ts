@@ -47,6 +47,36 @@ const installRequirements = (repoDir: string): void => {
   });
 };
 
+const performUpdateCheck = async (updateProgress: UpdateProgressFunction): Promise<void> => {
+  const repoDir = path.join(AIDER_DESKTOP_DIR, 'aider');
+  
+  updateProgress({
+    step: 'Update Check',
+    message: 'Checking for updates...',
+  });
+
+  // Fetch latest changes
+  execSync(`git -C "${repoDir}" fetch`, { stdio: 'inherit' });
+  
+  // Check if there are any changes
+  const localCommit = execSync(`git -C "${repoDir}" rev-parse HEAD`).toString().trim();
+  const remoteCommit = execSync(`git -C "${repoDir}" rev-parse origin/${AIDER_DESKTOP_CONNECTOR_BRANCH}`).toString().trim();
+  
+  if (localCommit !== remoteCommit) {
+    updateProgress({
+      step: 'Update Check',
+      message: 'Updating to latest version...',
+    });
+    
+    // Checkout latest changes
+    execSync(`git -C "${repoDir}" checkout ${AIDER_DESKTOP_CONNECTOR_BRANCH}`, { stdio: 'inherit' });
+    execSync(`git -C "${repoDir}" pull origin ${AIDER_DESKTOP_CONNECTOR_BRANCH}`, { stdio: 'inherit' });
+    
+    // Reinstall requirements in case they changed
+    installRequirements(repoDir);
+  }
+};
+
 export type UpdateProgressData = {
   step: string;
   message: string;
@@ -54,8 +84,9 @@ export type UpdateProgressData = {
 
 export type UpdateProgressFunction = (data: UpdateProgressData) => void;
 
-export const performInitialSetup = async (updateProgress: UpdateProgressFunction): Promise<boolean> => {
+export const performStartUp = async (updateProgress: UpdateProgressFunction): Promise<boolean> => {
   if (fs.existsSync(SETUP_COMPLETE_FILENAME)) {
+    await performUpdateCheck(updateProgress);
     return true;
   }
 

@@ -58,7 +58,7 @@ export class Project {
       env,
     });
 
-    logger.info('Starting Aider...');
+    logger.info('Starting Aider...', { baseDir: this.baseDir });
     this.process.stdout.on('data', (data) => {
       const output = data.toString();
       logger.debug('Aider output:', { output });

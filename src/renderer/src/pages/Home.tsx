@@ -116,26 +116,43 @@ export const Home = () => {
 
   return (
     <div className="flex flex-col h-screen bg-neutral-900">
-      <div className="flex border-b justify-between">
-        <div className="flex">
+      <div className="flex border-b border-neutral-700 justify-between bg-neutral-900">
+        <div className="flex items-center">
           {openProjects.map((project) => (
             <button
               key={project.baseDir}
-              className={`text-sm px-4 py-2 border-l-2 border-neutral-700 first:border-l-0 transition-colors duration-200 ease-in-out flex items-center gap-2 ${activeTab === project.baseDir ? 'bg-neutral-700 text-neutral-100' : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-600 hover:text-neutral-300'}`}
+              className={`text-sm px-6 py-3 transition-all duration-200 ease-in-out flex items-center gap-3 relative group
+                ${
+                  activeTab === project.baseDir
+                    ? 'bg-neutral-800 text-neutral-100 font-medium'
+                    : 'bg-neutral-900 text-neutral-400 hover:bg-neutral-800/50 hover:text-neutral-300'
+                }
+                ${activeTab === project.baseDir ? 'after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-neutral-700' : ''}
+              `}
               onClick={() => setActiveTab(project.baseDir)}
             >
               {project.baseDir.split('/').pop()}
-              <MdClose className="h-4 w-4 opacity-60 hover:opacity-100" onClick={(e) => handleCloseProject(project.baseDir, e)} />
+              <div
+                className={`flex items-center justify-center rounded-full p-1 transition-colors duration-200
+                  ${activeTab === project.baseDir ? 'hover:bg-neutral-500/30' : 'hover:bg-neutral-600/30'}
+                `}
+                onClick={(e) => handleCloseProject(project.baseDir, e)}
+              >
+                <MdClose className="h-3.5 w-3.5 opacity-60 group-hover:opacity-100 transition-opacity duration-200" />
+              </div>
             </button>
           ))}
           <button
-            className="px-3 py-2 text-neutral-400 hover:text-neutral-200 flex items-center justify-center"
+            className="px-4 py-3 text-neutral-400 hover:text-neutral-200 hover:bg-neutral-700/30 transition-colors duration-200 flex items-center justify-center"
             onClick={() => setIsOpenProjectDialogVisible(true)}
           >
             <MdAdd className="h-5 w-5" />
           </button>
         </div>
-        <button className="px-3 py-2 text-neutral-400 hover:text-neutral-200 flex items-center justify-center" onClick={() => navigate(ROUTES.Settings)}>
+        <button
+          className="px-4 py-3 text-neutral-400 hover:text-neutral-200 hover:bg-neutral-700/30 transition-colors duration-200 flex items-center justify-center"
+          onClick={() => navigate(ROUTES.Settings)}
+        >
           <MdSettings className="h-5 w-5" />
         </button>
       </div>
