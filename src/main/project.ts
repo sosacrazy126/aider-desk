@@ -7,6 +7,7 @@ import { EditFormat, MessageAction } from './messages';
 import { Connector } from './connector';
 import { AIDER_DESKTOP_CONNECTOR_DIR, PYTHON_COMMAND } from './constants';
 import logger from './logger';
+import treeKill from 'tree-kill';
 
 export class Project {
   private mainWindow: BrowserWindow | null = null;
@@ -81,12 +82,13 @@ export class Project {
     if (this.process) {
       logger.info('Killing Aider...', { baseDir: this.baseDir });
       try {
-        // Kill the process group
-        process.kill(-this.process.pid!, 'SIGKILL');
+        treeKill(this.process.pid!, 'SIGKILL', (err) => {
+          if (err) {
+            logger.error('Error killing Aider process:', { error: err });
+          }
+        });
       } catch (error: unknown) {
         logger.error('Error killing Aider process:', { error });
-        // Fallback to direct process termination
-        this.process.kill('SIGKILL');
       }
     }
     this.process = null;
