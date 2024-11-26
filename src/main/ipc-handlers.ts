@@ -1,5 +1,6 @@
-import { BrowserWindow, dialog, ipcMain } from 'electron';
 import { ProjectSettings, SettingsData } from '@common/types';
+import { BrowserWindow, dialog, ipcMain } from 'electron';
+import { getPathAutocompletion, isProjectPath } from './file-system';
 import { EditFormat } from './messages';
 import { projectManager } from './project-manager';
 import { Store } from './store';
@@ -55,5 +56,13 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, store: Store) => {
 
   ipcMain.handle('save-project-settings', (_, baseDir: string, settings: ProjectSettings) => {
     store.saveProjectSettings(baseDir, settings);
+  });
+
+  ipcMain.handle('isProjectPath', async (_, path: string) => {
+    return isProjectPath(path);
+  });
+
+  ipcMain.handle('get-path-autocompletion', async (_, currentPath: string) => {
+    return getPathAutocompletion(currentPath);
   });
 };

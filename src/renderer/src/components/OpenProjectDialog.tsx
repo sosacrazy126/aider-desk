@@ -1,4 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { FaFolder } from 'react-icons/fa';
+import { ConfirmDialog } from './ConfirmDialog';
+import { AutocompletionInput } from './AutocompletionInput';
 
 type Props = {
   onClose: () => void;
@@ -7,6 +10,29 @@ type Props = {
 
 export const OpenProjectDialog = ({ onClose, onAddProject }: Props) => {
   const [projectPath, setProjectPath] = useState('');
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [isValidPath, setIsValidPath] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(true);
+
+  useEffect(() => {
+    const updateSuggestions = async () => {
+      if (!projectPath) {
+        setSuggestions([]);
+        setIsValidPath(false);
+        return;
+      }
+      if (showSuggestions) {
+        const paths = await window.api.getPathAutocompletion(projectPath);
+        setSuggestions(paths);
+      } else {
+        setSuggestions([]);
+      }
+      const isValid = await window.api.isProjectPath(projectPath);
+      setIsValidPath(isValid);
+    };
+
+    updateSuggestions();
+  }, [projectPath, showSuggestions]);
 
   const handleSelectProject = async () => {
     try {
@@ -15,6 +41,7 @@ export const OpenProjectDialog = ({ onClose, onAddProject }: Props) => {
       });
 
       if (!result.canceled && result.filePaths.length > 0) {
+        setShowSuggestions(false);
         setProjectPath(result.filePaths[0]);
       }
     } catch (error) {
@@ -23,41 +50,40 @@ export const OpenProjectDialog = ({ onClose, onAddProject }: Props) => {
   };
 
   const handleAddProject = () => {
-    if (projectPath) {
+    if (projectPath && isValidPath) {
       onAddProject(projectPath);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-neutral-800 p-5 pt-4 rounded-lg shadow-xl w-96">
-        <h2 className="text-lg mb-4 text-neutral-100">OPEN PROJECT</h2>
-        <div className="mb-4">
-          <input
-            className="w-full p-2 border-2 border-gray-700 rounded-lg focus:outline-none focus:border-gray-400 text-sm bg-gray-900 text-white placeholder-gray-500"
-            type="text"
-            value={projectPath}
-            onChange={(e) => setProjectPath(e.target.value)}
-            placeholder="Choose project directory"
-            autoFocus
-          />
-          <button onClick={handleSelectProject} className="mt-2 w-full bg-neutral-600 text-neutral-100 p-2 rounded hover:bg-neutral-500">
-            Browse
-          </button>
-        </div>
-        <div className="flex justify-end space-x-2">
-          <button onClick={onClose} className="bg-neutral-600 text-neutral-100 px-4 py-2 rounded hover:bg-neutral-500">
-            Cancel
-          </button>
+    <ConfirmDialog
+      title="OPEN PROJECT"
+      onCancel={onClose}
+      onConfirm={handleAddProject}
+      confirmButtonText="Open"
+      disabled={!projectPath || !isValidPath}
+      width={600}
+    >
+      <AutocompletionInput
+        value={projectPath}
+        suggestions={suggestions}
+        onChange={(value) => {
+          setShowSuggestions(true);
+          setProjectPath(value);
+        }}
+        placeholder="Choose project directory"
+        autoFocus
+        className="w-full p-3 pr-12 rounded-lg bg-neutral-900/50 border border-neutral-700/50 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-neutral-500/50 focus:ring-1 focus:ring-neutral-500/50 transition-colors"
+        rightElement={
           <button
-            onClick={handleAddProject}
-            disabled={!projectPath}
-            className={`px-4 py-2 rounded ${projectPath ? 'bg-amber-600 text-white hover:bg-amber-500' : 'bg-neutral-700 text-neutral-600 cursor-not-allowed'}`}
+            onClick={handleSelectProject}
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-neutral-400 hover:text-white hover:bg-neutral-700/50 transition-colors"
+            title="Browse folders"
           >
-            Open
+            <FaFolder className="w-4 h-4" />
           </button>
-        </div>
-      </div>
-    </div>
+        }
+      />
+    </ConfirmDialog>
   );
 };

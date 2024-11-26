@@ -32,7 +32,7 @@ module.exports = {
           600: '#6c757d',   // Muted gray
           700: '#495057',   // Dark muted gray
           800: '#343a40',   // Very dark gray
-          850: '#262d2e',   // Darkest gray
+          850: '#2d343a',   // Darkest gray
           900: '#212529',   // Darkest gray, almost black
           950: '#1c2025',   // Ultra dark, near black
         },

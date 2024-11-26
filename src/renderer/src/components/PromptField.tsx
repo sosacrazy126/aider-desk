@@ -265,7 +265,7 @@ export const PromptField = ({ baseDir, onSubmit, processing = false, isActive = 
   return (
     <div className="w-full relative">
       {question && (
-        <div className="mb-2 p-4 bg-gray-800 rounded-lg border border-gray-700">
+        <div className="mb-2 p-4 bg-gray-800 rounded-md border border-gray-700">
           <div className="text-white mb-2">{question.text}</div>
           {question.subject && <div className="text-gray-400 text-sm mb-3">{question.subject}</div>}
           <div className="flex gap-2">
@@ -307,7 +307,7 @@ export const PromptField = ({ baseDir, onSubmit, processing = false, isActive = 
         onKeyDown={handleKeyDown}
         placeholder={question ? '...or suggest something else' : placeholder}
         rows={Math.max(text.split('\n').length, 1)}
-        className="w-full px-2 py-2 border-2 border-gray-700 rounded-lg focus:outline-none focus:border-gray-400 text-sm bg-gray-800 text-white placeholder-gray-500 resize-none overflow-y-auto"
+        className="w-full px-2 py-2 border-2 border-gray-700 rounded-md focus:outline-none focus:border-gray-400 text-sm bg-gray-800 text-white placeholder-gray-500 resize-none overflow-y-auto transition-colors duration-200"
       />
       {processing ? (
         <div className="absolute right-3 top-1/2 -translate-y-[12px] text-neutral-400">

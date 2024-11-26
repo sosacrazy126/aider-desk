@@ -37,7 +37,6 @@ class ProjectManager {
       logger.info('Creating new project', { baseDir });
       project = new Project(this.mainWindow!, baseDir);
       this.projects.push(project);
-      this.runAiderForProject(project);
     }
 
     return project;

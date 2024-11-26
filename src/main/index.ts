@@ -84,7 +84,30 @@ app.whenReady().then(async () => {
     text: 'Starting Aider Desktop...',
     detail: 'Initializing...',
     closeOnComplete: false,
+    indeterminate: true,
+    style: {
+      text: {
+        fontSize: '14px',
+        fontWeight: 'bold',
+        color: '#f1f3f5',
+      },
+      detail: {
+        fontSize: '12px',
+        color: '#adb5bd',
+      },
+      bar: {
+        height: '16px',
+        borderRadius: '4px',
+        backgroundColor: '#1c2025',
+      },
+      value: {
+        backgroundColor: '#1c2025',
+        borderRadius: '4px',
+      },
+    },
     browserWindow: {
+      width: 400,
+      backgroundColor: '#1c2025',
       webPreferences: {
         nodeIntegration: true,
       },

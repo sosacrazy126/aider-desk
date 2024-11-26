@@ -59,6 +59,10 @@ type Props = {
 export const ContextFiles = ({ baseDir }: Props) => {
   const [files, setFiles] = useState<ContextFile[]>([]);
 
+  const sortedFiles = useMemo(() => {
+    return [...files].sort((a, b) => a.path.localeCompare(b.path));
+  }, [files]);
+
   useEffect(() => {
     const fileAddedListenerId = window.api.addFileAddedListener(baseDir, (_, { file }) => {
       setFiles((prev) => [...new Set([...prev, file])]);
@@ -74,7 +78,7 @@ export const ContextFiles = ({ baseDir }: Props) => {
     };
   }, [baseDir]);
 
-  const treeData = useMemo(() => createFileTree(files), [files]);
+  const treeData = useMemo(() => createFileTree(sortedFiles), [sortedFiles]);
 
   const renderFileTree = (key: React.Key, id: string, title: string, treeData: Record<string, TreeItem>) => {
     return (
@@ -98,16 +102,20 @@ export const ContextFiles = ({ baseDir }: Props) => {
             }}
             renderItem={({ item, title, children }) => (
               <>
-                <div className="flex items-center justify-between w-full pr-2">
+                <div className="flex items-center justify-between w-full pr-2 min-h-5">
                   <div className="flex items-center">
-                    <span className={`ml-1 text-xxs ${item.isFolder ? 'text-neutral-400' : 'text-white'}`}>{title}</span>
+                    <span className={`ml-1 text-xxs ${item.isFolder ? 'text-neutral-500' : 'text-white font-semibold'}`}>{title}</span>
                   </div>
                   {!item.isFolder && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
+                        const file = (item as TreeItem).file;
+                        if (file) {
+                          window.api.dropFile(baseDir, file.path);
+                        }
                       }}
-                      className="p-1 rounded hover:bg-neutral-900 text-neutral-500 hover:text-red-800"
+                      className="px-1 py-1 rounded hover:bg-neutral-900 text-neutral-500 hover:text-red-800"
                     >
                       <HiX className="w-4 h-4" />
                     </button>

@@ -2,12 +2,12 @@ import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
 import fs from 'fs/promises';
 import path from 'path';
 import { BrowserWindow } from 'electron';
+import treeKill from 'tree-kill';
 import { ContextFile, QuestionData } from '@common/types';
 import { EditFormat, MessageAction } from './messages';
 import { Connector } from './connector';
 import { AIDER_DESKTOP_CONNECTOR_DIR, PYTHON_COMMAND } from './constants';
 import logger from './logger';
-import treeKill from 'tree-kill';
 
 export class Project {
   private mainWindow: BrowserWindow | null = null;

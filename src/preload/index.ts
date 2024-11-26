@@ -36,6 +36,9 @@ const api: ApplicationAPI = {
   saveProjects: (projects) => ipcRenderer.invoke('save-projects', projects),
   getProjectSettings: (baseDir) => ipcRenderer.invoke('get-project-settings', baseDir),
   saveProjectSettings: (baseDir, settings) => ipcRenderer.invoke('save-project-settings', baseDir, settings),
+  getPathAutocompletion: (currentPath: string) => ipcRenderer.invoke('get-path-autocompletion', currentPath),
+  isProjectPath: (path: string) => ipcRenderer.invoke('isProjectPath', path),
+  dropFile: (baseDir: string, path: string) => ipcRenderer.send('drop-file', baseDir, path),
 
   addResponseChunkListener: (baseDir, callback) => {
     const listenerId = uuidv4();

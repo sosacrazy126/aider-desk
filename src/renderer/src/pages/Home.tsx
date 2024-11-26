@@ -115,49 +115,51 @@ export const Home = () => {
     ));
 
   return (
-    <div className="flex flex-col h-screen bg-neutral-900">
-      <div className="flex border-b border-neutral-700 justify-between bg-neutral-900">
-        <div className="flex items-center">
-          {openProjects.map((project) => (
-            <button
-              key={project.baseDir}
-              className={`text-sm px-6 py-3 transition-all duration-200 ease-in-out flex items-center gap-3 relative group
+    <div className="flex flex-col h-screen p-[4px] bg-neutral-900">
+      <div className="flex flex-col h-screen bg-neutral-900 border-2 border-neutral-600 bg-neutral-900/50">
+        <div className="flex border-b border-neutral-600 justify-between bg-neutral-900">
+          <div className="flex items-center">
+            {openProjects.map((project) => (
+              <button
+                key={project.baseDir}
+                className={`text-sm pl-3 py-2 pr-1 transition-all duration-200 ease-in-out flex items-center gap-3 relative group
                 ${
                   activeTab === project.baseDir
                     ? 'bg-neutral-800 text-neutral-100 font-medium'
-                    : 'bg-neutral-900 text-neutral-400 hover:bg-neutral-800/50 hover:text-neutral-300'
+                    : 'bg-neutral-900 text-neutral-600 hover:bg-neutral-800/50 hover:text-neutral-300'
                 }
-                ${activeTab === project.baseDir ? 'after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-neutral-700' : ''}
+                ${activeTab === project.baseDir ? 'after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-neutral-600' : ''}
               `}
-              onClick={() => setActiveTab(project.baseDir)}
-            >
-              {project.baseDir.split('/').pop()}
-              <div
-                className={`flex items-center justify-center rounded-full p-1 transition-colors duration-200
+                onClick={() => setActiveTab(project.baseDir)}
+              >
+                {project.baseDir.split('/').pop()}
+                <div
+                  className={`flex items-center justify-center rounded-full p-1 transition-colors duration-200
                   ${activeTab === project.baseDir ? 'hover:bg-neutral-500/30' : 'hover:bg-neutral-600/30'}
                 `}
-                onClick={(e) => handleCloseProject(project.baseDir, e)}
-              >
-                <MdClose className="h-3.5 w-3.5 opacity-60 group-hover:opacity-100 transition-opacity duration-200" />
-              </div>
+                  onClick={(e) => handleCloseProject(project.baseDir, e)}
+                >
+                  <MdClose className="h-3.5 w-3.5 opacity-60 group-hover:opacity-100 transition-opacity duration-200" />
+                </div>
+              </button>
+            ))}
+            <button
+              className="px-4 py-2 text-neutral-400 hover:text-neutral-200 hover:bg-neutral-700/30 transition-colors duration-200 flex items-center justify-center"
+              onClick={() => setIsOpenProjectDialogVisible(true)}
+            >
+              <MdAdd className="h-5 w-5" />
             </button>
-          ))}
+          </div>
           <button
-            className="px-4 py-3 text-neutral-400 hover:text-neutral-200 hover:bg-neutral-700/30 transition-colors duration-200 flex items-center justify-center"
-            onClick={() => setIsOpenProjectDialogVisible(true)}
+            className="px-4 py-2 text-neutral-400 hover:text-neutral-200 hover:bg-neutral-700/30 transition-colors duration-200 flex items-center justify-center"
+            onClick={() => navigate(ROUTES.Settings)}
           >
-            <MdAdd className="h-5 w-5" />
+            <MdSettings className="h-5 w-5" />
           </button>
         </div>
-        <button
-          className="px-4 py-3 text-neutral-400 hover:text-neutral-200 hover:bg-neutral-700/30 transition-colors duration-200 flex items-center justify-center"
-          onClick={() => navigate(ROUTES.Settings)}
-        >
-          <MdSettings className="h-5 w-5" />
-        </button>
+        {isOpenProjectDialogVisible && <OpenProjectDialog onClose={() => setIsOpenProjectDialogVisible(false)} onAddProject={handleAddProject} />}
+        <div className="flex-grow overflow-hidden relative">{renderProjectPanels()}</div>
       </div>
-      {isOpenProjectDialogVisible && <OpenProjectDialog onClose={() => setIsOpenProjectDialogVisible(false)} onAddProject={handleAddProject} />}
-      <div className="flex-grow overflow-hidden relative">{renderProjectPanels()}</div>
     </div>
   );
 };

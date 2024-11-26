@@ -27,6 +27,9 @@ export interface ApplicationAPI {
   saveProjects: (projects: ProjectData[]) => Promise<void>;
   getProjectSettings: (baseDir: string) => Promise<ProjectSettings>;
   saveProjectSettings: (baseDir: string, settings: ProjectSettings) => Promise<void>;
+  getPathAutocompletion: (currentPath: string) => Promise<string[]>;
+  isProjectPath: (path: string) => Promise<boolean>;
+  dropFile: (baseDir: string, path: string) => void;
 
   addResponseChunkListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: ResponseChunkData) => void) => string;
   removeResponseChunkListener: (listenerId: string) => void;

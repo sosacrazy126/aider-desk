@@ -48,6 +48,7 @@ export interface ContextFile {
   path: string;
   sourceType?: ContexFileSourceType;
   readOnly?: boolean;
+  ignored?: boolean;
 }
 
 export interface WindowState {
