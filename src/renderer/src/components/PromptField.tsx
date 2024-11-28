@@ -211,7 +211,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
       }
     };
 
-    const handleSuggestionClick = (suggestion: string) => {
+    const acceptSuggestion = (suggestion: string) => {
       if (inputRef.current) {
         const cursorPos = inputRef.current.selectionStart;
         const textBeforeCursor = text.slice(0, cursorPos);
@@ -315,9 +315,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
           case 'Enter':
             e.preventDefault();
             if (highlightedSuggestionIndex !== -1) {
-              handleSuggestionClick(filteredSuggestions[highlightedSuggestionIndex]);
-            } else if (filteredSuggestions.length > 0) {
-              handleSuggestionClick(filteredSuggestions[0]);
+              acceptSuggestion(filteredSuggestions[highlightedSuggestionIndex]);
             }
             break;
           case 'ArrowUp':
@@ -330,11 +328,21 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
             break;
           case 'Tab':
             e.preventDefault();
-            if (highlightedSuggestionIndex !== -1) {
-              handleSuggestionClick(filteredSuggestions[highlightedSuggestionIndex]);
-            } else if (filteredSuggestions.length > 0) {
-              handleSuggestionClick(filteredSuggestions[0]);
+            if (filteredSuggestions.length === 1) {
+              acceptSuggestion(filteredSuggestions[0]);
+            } else {
+              setHighlightedSuggestionIndex((prev) => (prev < filteredSuggestions.length - 1 ? prev + 1 : 0));
             }
+            break;
+          case ' ':
+            if (highlightedSuggestionIndex !== -1) {
+              e.preventDefault();
+              acceptSuggestion(filteredSuggestions[highlightedSuggestionIndex] + ' ');
+            }
+            break;
+          case 'Escape':
+            e.preventDefault();
+            setSuggestionsVisible(false);
             break;
         }
       } else {
@@ -564,7 +572,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
               <div
                 key={index}
                 className={`px-2 py-1 cursor-pointer ${index === highlightedSuggestionIndex ? 'bg-neutral-700' : 'hover:bg-neutral-700'}`}
-                onClick={() => handleSuggestionClick(suggestion)}
+                onClick={() => acceptSuggestion(suggestion)}
               >
                 {suggestion}
               </div>
