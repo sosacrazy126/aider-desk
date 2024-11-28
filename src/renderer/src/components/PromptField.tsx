@@ -560,17 +560,23 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
         </div>
         {suggestionsVisible && filteredSuggestions.length > 0 && (
           <div
-            className="absolute bg-neutral-950 text-xs shadow-lg z-10 text-white"
+            className="absolute bg-neutral-950 text-xs shadow-lg z-10 text-white
+            scrollbar-thin
+            scrollbar-track-neutral-900
+            scrollbar-thumb-neutral-700
+            hover:scrollbar-thumb-neutral-600"
             style={{
               bottom: `calc(100% - 4px - ${cursorPosition.top}px)`,
               left: `${cursorPosition.left}px`,
               maxHeight: '200px',
               overflowY: 'auto',
+              overflowX: 'hidden',
             }}
           >
             {filteredSuggestions.map((suggestion, index) => (
               <div
                 key={index}
+                ref={index === highlightedSuggestionIndex ? (el) => el?.scrollIntoView({ block: 'nearest' }) : null}
                 className={`px-2 py-1 cursor-pointer ${index === highlightedSuggestionIndex ? 'bg-neutral-700' : 'hover:bg-neutral-700'}`}
                 onClick={() => acceptSuggestion(suggestion)}
               >
