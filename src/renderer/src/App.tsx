@@ -1,9 +1,11 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useEffect, useState } from 'react';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { Home } from 'pages/Home';
 import Settings from 'pages/Settings';
 import { ROUTES } from 'utils/routes';
-import { useEffect, useState } from 'react';
 
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -39,6 +41,7 @@ const App = () => {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: isVisible ? 1 : 0 }} transition={{ duration: 0.5, ease: 'easeIn' }}>
       <Router>
         <AnimatedRoutes />
+        <ToastContainer />
       </Router>
     </motion.div>
   );
