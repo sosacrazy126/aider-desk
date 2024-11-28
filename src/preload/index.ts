@@ -9,7 +9,7 @@ import {
   QuestionData,
   ResponseChunkData,
   ResponseCompletedData,
-  ResponseErrorData,
+  ErrorData,
   SettingsData,
 } from '../common/types';
 import { ApplicationAPI } from './index.d';
@@ -20,7 +20,7 @@ export interface ResponseModelData extends ModelsData {
 
 const responseChunkListeners: Record<string, (event: Electron.IpcRendererEvent, data: ResponseChunkData) => void> = {};
 const responseFinishedListeners: Record<string, (event: Electron.IpcRendererEvent, data: ResponseCompletedData) => void> = {};
-const responseErrorListeners: Record<string, (event: Electron.IpcRendererEvent, data: ResponseErrorData) => void> = {};
+const errorListeners: Record<string, (event: Electron.IpcRendererEvent, data: ErrorData) => void> = {};
 const fileAddedListeners: Record<string, (event: Electron.IpcRendererEvent, data: FileAddedData) => void> = {};
 const fileDroppedListeners: Record<string, (event: Electron.IpcRendererEvent, data: FileDroppedData) => void> = {};
 const updateAutocompletionListeners: Record<string, (event: Electron.IpcRendererEvent, data: AutocompletionData) => void> = {};
@@ -87,21 +87,21 @@ const api: ApplicationAPI = {
     }
   },
 
-  addResponseErrorListener: (baseDir, callback) => {
+  addErrorListener: (baseDir, callback) => {
     const listenerId = uuidv4();
-    responseErrorListeners[listenerId] = (event: Electron.IpcRendererEvent, data: ResponseErrorData) => {
+    errorListeners[listenerId] = (event: Electron.IpcRendererEvent, data: ErrorData) => {
       if (data.baseDir !== baseDir) {
         return;
       }
       callback(event, data);
     };
-    ipcRenderer.on('response-error', responseErrorListeners[listenerId]);
+    ipcRenderer.on('error', errorListeners[listenerId]);
     return listenerId;
   },
-  removeResponseErrorListener: (listenerId) => {
-    if (responseErrorListeners[listenerId]) {
-      ipcRenderer.removeListener('response-error', responseErrorListeners[listenerId]);
-      delete responseErrorListeners[listenerId];
+  removeErrorListener: (listenerId) => {
+    if (errorListeners[listenerId]) {
+      ipcRenderer.removeListener('error', errorListeners[listenerId]);
+      delete errorListeners[listenerId];
     }
   },
 

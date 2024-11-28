@@ -81,16 +81,17 @@ const parseDiffContent = (content: string): { oldValue: string; newValue: string
   const replaceMatch = content.match(REPLACE_MARKER);
 
   if (!dividerMatch) {
-    // We only have the old value being streamed - show it on both sides
     const oldValue = content.substring(searchIndex).trim();
-    return { oldValue, newValue: oldValue };
+    return { oldValue, newValue: '' };
   }
 
   const dividerIndex = dividerMatch.index!;
   const oldValue = content.substring(searchIndex, dividerIndex).trim();
 
   if (!replaceMatch) {
-    return { oldValue, newValue: '' };
+    // We have old value complete and new value being streamed
+    const newValue = content.substring(dividerIndex + dividerMatch[0].length).trim();
+    return { oldValue, newValue };
   }
 
   // We have complete diff

@@ -37,17 +37,29 @@ export class Project {
     this.connectors = this.connectors.filter((c) => c !== connector);
   }
 
-  public runAider(options: string, environmentVariables: Record<string, string>): void {
+  public runAider(options: string, environmentVariables: Record<string, string>, model?: string): void {
     if (this.process) {
       return;
     }
 
     const args = ['-m', 'aider.main'];
     if (options) {
-      args.push(...options.split(' ').filter((arg) => arg));
+      const optionsArgs = options.split(' ').filter((arg) => arg);
+      if (model) {
+        // Only remove existing --model if we're adding a new one
+        const modelIndex = optionsArgs.indexOf('--model');
+        if (modelIndex !== -1 && modelIndex + 1 < optionsArgs.length) {
+          optionsArgs.splice(modelIndex, 2);
+        }
+      }
+      args.push(...optionsArgs);
     }
     args.push(...['--no-check-update', '--connector', '--no-show-model-warnings']);
     args.push(this.baseDir);
+
+    if (model) {
+      args.push('--model', model);
+    }
 
     const env = {
       ...process.env,
@@ -65,11 +77,23 @@ export class Project {
     logger.info('Starting Aider...', { baseDir: this.baseDir });
     this.process.stdout.on('data', (data) => {
       const output = data.toString();
-      logger.info('Aider output:', { output });
+      logger.debug('Aider output:', { output });
     });
 
     this.process.stderr.on('data', (data) => {
-      logger.error('Aider stderr:', { baseDir: this.baseDir, error: data.toString() });
+      const output = data.toString();
+      if (output.startsWith('Warning:')) {
+        return;
+      }
+      if (output.startsWith('usage:')) {
+        this.mainWindow?.webContents.send('error', {
+          baseDir: this.baseDir,
+          error: output.includes('error:') ? output.substring(output.indexOf('error:')) : output,
+        });
+        return;
+      }
+
+      logger.error('Aider stderr:', { baseDir: this.baseDir, error: output });
     });
 
     this.process.on('close', (code) => {

@@ -71,7 +71,7 @@ export const ContextFiles = ({ baseDir, showFileDialog }: Props) => {
       setTimeout(() => {
         setNewlyAddedFiles((prev) => [...prev, file.path]);
         setTimeout(() => {
-          setNewlyAddedFiles((prev) => prev.filter(path => path !== file.path));
+          setNewlyAddedFiles((prev) => prev.filter((path) => path !== file.path));
         }, 2000);
       }, 10);
     });

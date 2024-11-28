@@ -161,7 +161,7 @@ class ConnectorManager {
       this.currentResponseMessageId = null;
     }
 
-    this.mainWindow.webContents.send('response-error', {
+    this.mainWindow.webContents.send('error', {
       baseDir: connector.baseDir,
       error: message.message,
     });

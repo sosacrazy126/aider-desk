@@ -1,4 +1,4 @@
-import { isLoadingMessage, isResponseErrorMessage, isModelsMessage, Message } from 'types/message';
+import { isLoadingMessage, isErrorMessage, isModelsMessage, Message } from 'types/message';
 import { parseMessageContent } from 'utils/message';
 import { BiCopy } from 'react-icons/bi';
 import { Tooltip } from 'react-tooltip';
@@ -32,7 +32,7 @@ export const MessageBlock = ({ message, allFiles }: Props) => {
     );
   }
 
-  if (isResponseErrorMessage(message)) {
+  if (isErrorMessage(message)) {
     return (
       <div className={`${baseClasses} bg-red-900/30 border-red-800/50 text-red-200 relative group`}>
         <div className="font-semibold mb-1">Error</div>

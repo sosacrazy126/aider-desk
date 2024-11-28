@@ -11,7 +11,7 @@ export const Messages = ({ messages, allFiles = [] }: Props) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView();
   }, [messages]);
 
   return (

@@ -76,5 +76,11 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, store: Store) => {
 
   ipcMain.on('update-main-model', (_, baseDir: string, model: string) => {
     projectManager.getProject(baseDir).updateMainModel(model);
+
+    const projectSettings = store.getProjectSettings(baseDir);
+    if (projectSettings) {
+      projectSettings.mainModel = model;
+      store.saveProjectSettings(baseDir, projectSettings);
+    }
   });
 };

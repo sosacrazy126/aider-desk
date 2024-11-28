@@ -8,7 +8,7 @@ import {
   QuestionData,
   ResponseChunkData,
   ResponseCompletedData,
-  ResponseErrorData,
+  ErrorData,
   SettingsData,
 } from '../common/types';
 import type { ElectronAPI } from '@electron-toolkit/preload';
@@ -41,8 +41,8 @@ export interface ApplicationAPI {
   addResponseCompletedListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: ResponseCompletedData) => void) => string;
   removeResponseCompletedListener: (listenerId: string) => void;
 
-  addResponseErrorListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: ResponseErrorData) => void) => string;
-  removeResponseErrorListener: (listenerId: string) => void;
+  addErrorListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: ErrorData) => void) => string;
+  removeErrorListener: (listenerId: string) => void;
 
   addFileAddedListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: FileAddedData) => void) => string;
   removeFileAddedListener: (listenerId: string) => void;

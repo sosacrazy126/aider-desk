@@ -26,8 +26,11 @@ class ProjectManager {
 
   private runAiderForProject(project: Project): void {
     const settings = this.store!.getSettings();
+    const model = this.store!.getProjectSettings(project.baseDir)?.mainModel;
     const environmentVariables = parse(settings.aider.environmentVariables);
-    project.runAider(settings.aider.options, environmentVariables);
+
+    logger.info('Running Aider for project', { baseDir: project.baseDir, model });
+    project.runAider(settings.aider.options, environmentVariables, model);
   }
 
   public getProject(baseDir: string): Project {

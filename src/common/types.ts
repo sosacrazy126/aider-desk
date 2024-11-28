@@ -14,7 +14,7 @@ export interface ResponseCompletedData {
   diff?: string;
 }
 
-export interface ResponseErrorData {
+export interface ErrorData {
   baseDir: string;
   error: string;
 }
@@ -61,7 +61,7 @@ export interface WindowState {
 }
 
 export interface ProjectSettings {
-  codeBlockExpanded: boolean;
+  mainModel?: string;
 }
 
 export interface ProjectData {
