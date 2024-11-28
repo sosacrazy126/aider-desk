@@ -1,13 +1,14 @@
-import { useEffect, useState, useRef } from 'react';
+import { AutocompletionData, ModelsData, ProjectData, ResponseChunkData, ResponseCompletedData, ResponseErrorData } from '@common/types';
+import { AddFileDialog } from 'components/AddFileDialog';
+import { ContextFiles } from 'components/ContextFiles';
+import { Messages } from 'components/Messages';
+import { PromptField, PromptFieldRef } from 'components/PromptField';
 import { IpcRendererEvent } from 'electron';
-import { v4 as uuidv4 } from 'uuid';
+import { useEffect, useRef, useState } from 'react';
 import { ResizableBox } from 'react-resizable';
 import 'react-resizable/css/styles.css';
-import { Messages } from 'components/Messages';
-import { PromptField } from 'components/PromptField';
-import { ContextFiles } from 'components/ContextFiles';
-import { AutocompletionData, ResponseChunkData, ResponseCompletedData, ResponseErrorData, ProjectData } from '@common/types';
-import { LoadingMessage, Message, PromptMessage, ResponseMessage } from 'types/message';
+import { LoadingMessage, Message, ModelsMessage, PromptMessage, ResponseErrorMessage, ResponseMessage } from 'types/message';
+import { v4 as uuidv4 } from 'uuid';
 
 type Props = {
   project: ProjectData;
@@ -17,8 +18,11 @@ type Props = {
 export const ProjectView = ({ project, isActive = false }: Props) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [processing, setProcessing] = useState(false);
+  const [addFileDialogVisible, setAddFileDialogVisible] = useState(false);
   const [autocompletionData, setAutocompletionData] = useState<AutocompletionData | null>(null);
+  const [currentModels, setCurrentModels] = useState<ModelsData | null>(null);
   const processingMessageRef = useRef<ResponseMessage | null>(null);
+  const promptFieldRef = useRef<PromptFieldRef>(null);
 
   useEffect(() => {
     window.api.startProject(project.baseDir);
@@ -60,7 +64,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
     };
 
     const handleResponseError = (_: IpcRendererEvent, { error }: ResponseErrorData) => {
-      const errorMessage: Message = {
+      const errorMessage: ResponseErrorMessage = {
         id: uuidv4(),
         type: 'response-error',
         content: error,
@@ -69,33 +73,56 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
       setProcessing(false);
     };
 
+    const autocompletionListenerId = window.api.addUpdateAutocompletionListener(project.baseDir, (_, data) => {
+      setAutocompletionData(data);
+    });
+
+    const currentModelsListenerId = window.api.addSetCurrentModelsListener(project.baseDir, (_, data) => {
+      setCurrentModels(data);
+
+      if (data.error) {
+        const errorMessage: ResponseErrorMessage = {
+          id: uuidv4(),
+          type: 'response-error',
+          content: data.error,
+        };
+        setMessages((prevMessages) => [...prevMessages, errorMessage]);
+      } else {
+        const modelsMessage: ModelsMessage = {
+          id: uuidv4(),
+          type: 'models',
+          content: '',
+          models: data,
+        };
+        setMessages((prevMessages) => [...prevMessages, modelsMessage]);
+      }
+    });
+
     const responseChunkListenerId = window.api.addResponseChunkListener(project.baseDir, handleResponseChunk);
     const responseCompletedListenerId = window.api.addResponseCompletedListener(project.baseDir, handleResponseCompleted);
     const responseErrorListenerId = window.api.addResponseErrorListener(project.baseDir, handleResponseError);
 
     return () => {
+      window.api.removeUpdateAutocompletionListener(autocompletionListenerId);
+      window.api.removeSetCurrentModelsListener(currentModelsListenerId);
       window.api.removeResponseChunkListener(responseChunkListenerId);
       window.api.removeResponseCompletedListener(responseCompletedListenerId);
       window.api.removeResponseErrorListener(responseErrorListenerId);
     };
-  }, [project.baseDir]);
+  }, [project.baseDir, processing]);
 
-  useEffect(() => {
-    const listenerId = window.api.addUpdateAutocompletionListener(project.baseDir, (_, data) => {
-      setAutocompletionData(data);
-    });
+  const handleAddFile = (filePath: string) => {
+    window.api.addFile(project.baseDir, filePath);
+    setAddFileDialogVisible(false);
+    promptFieldRef.current?.focus();
+  };
 
-    return () => {
-      window.api.removeUpdateAutocompletionListener(listenerId);
-    };
-  }, [project.baseDir]);
-
-  const handlePromptSubmit = (prompt: string) => {
+  const handlePromptSubmit = (prompt: string, editFormat?: string) => {
     setProcessing(true);
     const promptMessage: PromptMessage = {
       id: uuidv4(),
       type: 'prompt',
-      content: `> ${prompt}`,
+      content: `${editFormat ? `${editFormat}` : ''}> ${prompt}`,
     };
     const loadingMessage: LoadingMessage = {
       id: uuidv4(),
@@ -111,20 +138,18 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
         <div className="flex-grow overflow-y-auto">
           <Messages messages={messages} allFiles={autocompletionData?.allFiles} />
         </div>
-        <div
-          className="relative bottom-0 w-full p-4 pt-3 flex-shrink-0 flex max-h-[50vh]
-          before:content-['']
-          before:absolute
-          before:left-0
-          before:right-0
-          before:top-[-12px]
-          before:h-[12px]
-          before:bg-gradient-to-t
-          before:from-neutral-900
-          before:to-transparent
-          before:pointer-events-none"
-        >
-          <PromptField baseDir={project.baseDir} onSubmit={handlePromptSubmit} processing={processing} isActive={isActive} words={autocompletionData?.words} />
+        <div className="relative bottom-0 w-full p-4 pb-2 flex-shrink-0 flex max-h-[50vh] border-t border-neutral-800">
+          <PromptField
+            ref={promptFieldRef}
+            baseDir={project.baseDir}
+            onSubmitted={handlePromptSubmit}
+            processing={processing}
+            isActive={isActive}
+            words={autocompletionData?.words}
+            models={autocompletionData?.models}
+            currentModel={currentModels?.name}
+            showFileDialog={() => setAddFileDialogVisible(true)}
+          />
         </div>
       </div>
       <ResizableBox
@@ -136,8 +161,18 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
         resizeHandles={['w']}
         className="border-l border-neutral-800 flex flex-col flex-shrink-0"
       >
-        <ContextFiles baseDir={project.baseDir} />
+        <ContextFiles baseDir={project.baseDir} showFileDialog={() => setAddFileDialogVisible(true)} />
       </ResizableBox>
+      {addFileDialogVisible && (
+        <AddFileDialog
+          baseDir={project.baseDir}
+          onClose={() => {
+            setAddFileDialogVisible(false);
+            promptFieldRef.current?.focus();
+          }}
+          onAddFile={handleAddFile}
+        />
+      )}
     </div>
   );
 };

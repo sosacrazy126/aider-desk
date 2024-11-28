@@ -1,6 +1,9 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { BiSend } from 'react-icons/bi';
+import { MdKeyboardArrowUp, MdClose } from 'react-icons/md';
 import { QuestionData } from '@common/types';
+import { useClickOutside } from 'hooks/useClickOutside';
+import { useSettings } from 'hooks/useSettings';
 
 const PLACEHOLDERS = [
   'How can I help you today?',
@@ -21,330 +24,556 @@ const PLACEHOLDERS = [
   'Give me some task!',
 ];
 
+const COMMANDS = ['/code', '/ask', '/architect', '/add', '/model'];
+
 const EDIT_FORMATS = [
-  { prefix: '/code', format: 'code' },
-  { prefix: '/ask', format: 'ask' },
-  { prefix: '/architect', format: 'architect' },
+  { value: 'code', label: 'Code' },
+  { value: 'ask', label: 'Ask' },
+  { value: 'architect', label: 'Architect' },
 ];
 
-const getPromptWithEditFormat = (prompt: string): [string, string | undefined] => {
-  for (const { prefix, format } of EDIT_FORMATS) {
-    if (prompt.startsWith(prefix)) {
-      return [prompt.replace(prefix, '').trim(), format];
-    }
-  }
-  return [prompt.trim(), undefined];
-};
+export interface PromptFieldRef {
+  focus: () => void;
+}
 
 type Props = {
   baseDir: string;
-  onSubmit?: (prompt: string) => void;
+  onSubmitted?: (prompt: string, editFormat?: string) => void;
   processing?: boolean;
   test?: string;
   isActive?: boolean;
   words?: string[];
+  models?: string[];
+  currentModel?: string;
+  showFileDialog: () => void;
+  defaultEditFormat?: string;
 };
 
-export const PromptField = ({ baseDir, onSubmit, processing = false, isActive = false, words = [] }: Props) => {
-  const [text, setText] = useState('');
-  const [suggestionsVisible, setSuggestionsVisible] = useState(false);
-  const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
-  const [cursorPosition, setCursorPosition] = useState({ top: 0, left: 0 });
-  const [placeholder] = useState(PLACEHOLDERS[Math.floor(Math.random() * PLACEHOLDERS.length)]);
-  const [highlightedSuggestionIndex, setHighlightedSuggestionIndex] = useState(-1);
-  const [inputHistory, setInputHistory] = useState<string[]>([]);
-  const [historyIndex, setHistoryIndex] = useState<number>(-1);
-  const [question, setQuestion] = useState<QuestionData | null>(null);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
+export const PromptField = React.forwardRef<PromptFieldRef, Props>(
+  (
+    { baseDir, onSubmitted, processing = false, isActive = false, words = [], models = [], currentModel, showFileDialog, defaultEditFormat = 'code' }: Props,
+    ref,
+  ) => {
+    const [text, setText] = useState('');
+    const [editFormat, setEditFormat] = useState<string | undefined>(defaultEditFormat);
+    const [suggestionsVisible, setSuggestionsVisible] = useState(false);
+    const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
+    const [cursorPosition, setCursorPosition] = useState({ top: 0, left: 0 });
+    const [placeholder] = useState(PLACEHOLDERS[Math.floor(Math.random() * PLACEHOLDERS.length)]);
+    const [highlightedSuggestionIndex, setHighlightedSuggestionIndex] = useState(-1);
+    const [inputHistory, setInputHistory] = useState<string[]>([]);
+    const [historyIndex, setHistoryIndex] = useState<number>(-1);
+    const [question, setQuestion] = useState<QuestionData | null>(null);
+    const [showFormatSelector, setShowFormatSelector] = useState(false);
+    const [showModelSelector, setShowModelSelector] = useState(false);
+    const [modelSearchTerm, setModelSearchTerm] = useState('');
+    const [highlightedModelIndex, setHighlightedModelIndex] = useState(-1);
+    const highlightedModelRef = useRef<HTMLDivElement>(null);
+    const { settings, setSettings, saveSettings } = useSettings();
+    const inputRef = useRef<HTMLTextAreaElement>(null);
+    const modelSelectorRef = useRef<HTMLDivElement>(null);
+    const formatSelectorRef = useRef<HTMLDivElement>(null);
 
-  const loadHistory = async () => {
-    try {
-      const history = await window.api.loadInputHistory(baseDir);
-      setInputHistory(history || []);
-    } catch (error: unknown) {
-      console.error('Failed to load input history:', error);
-      // If loading fails, continue with empty history
-      setInputHistory([]);
-    }
-  };
+    useClickOutside(modelSelectorRef, () => setShowModelSelector(false));
+    useClickOutside(formatSelectorRef, () => setShowFormatSelector(false));
 
-  useEffect(() => {
-    const questionListenerId = window.api.addAskQuestionListener(baseDir, (_, data) => {
-      setQuestion(data);
-    });
+    useImperativeHandle(ref, () => ({
+      focus: () => {
+        inputRef.current?.focus();
+      },
+    }));
 
-    return () => {
-      window.api.removeAskQuestionListener(questionListenerId);
+    const loadHistory = async () => {
+      try {
+        const history = await window.api.loadInputHistory(baseDir);
+        setInputHistory(history || []);
+      } catch (error: unknown) {
+        console.error('Failed to load input history:', error);
+        // If loading fails, continue with empty history
+        setInputHistory([]);
+      }
     };
-  }, [baseDir]);
 
-  useEffect(() => {
-    if (processing) {
-      return;
-    }
-    void loadHistory();
-  }, [processing, baseDir]);
+    const invokeCommand = useCallback(
+      (command: string): void => {
+        switch (command) {
+          case '/code':
+          case '/ask':
+          case '/architect': {
+            const prompt = text.replace(command, '').trim();
+            setText(prompt);
+            setEditFormat(command.slice(1));
+            break;
+          }
+          case '/add':
+            setText('');
+            showFileDialog();
+            break;
+          case '/model':
+            setText('');
+            setShowModelSelector(true);
+            break;
+        }
+      },
+      [showFileDialog, text, setShowModelSelector],
+    );
 
-  useEffect(() => {
-    if (isActive && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [isActive]);
-
-  const getCurrentWord = (text: string, cursorPosition: number) => {
-    const textBeforeCursor = text.slice(0, cursorPosition);
-    const words = textBeforeCursor.split(/\s/);
-    return words[words.length - 1] || '';
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newText = e.target.value;
-    setText(newText);
-
-    const word = getCurrentWord(newText, e.target.selectionStart);
-    setHighlightedSuggestionIndex(-1);
-
-    if (newText.startsWith('/')) {
-      // Show edit format suggestions when text starts with '/'
-      const matched = EDIT_FORMATS.filter((format) => format.prefix.toLowerCase().startsWith(newText.toLowerCase())).map((format) => format.prefix);
-      setFilteredSuggestions(matched);
-      setSuggestionsVisible(matched.length > 0);
-    } else if (word.length > 0) {
-      const matched = words.filter((s) => s.toLowerCase().startsWith(word.toLowerCase()));
-      setFilteredSuggestions(matched);
-      setSuggestionsVisible(matched.length > 0);
-    } else {
-      setSuggestionsVisible(false);
-    }
-
-    if (inputRef.current) {
-      const { selectionStart } = inputRef.current;
-      const textBeforeCursor = newText.substring(0, selectionStart);
-      const lines = textBeforeCursor.split('\n');
-      const currentLineNumber = lines.length - 1;
-      const currentLineText = lines[currentLineNumber];
-
-      const lineHeight = 20;
-      const charWidth = 8;
-
-      setCursorPosition({
-        top: currentLineNumber * lineHeight,
-        left: currentLineText.length * charWidth,
+    useEffect(() => {
+      const questionListenerId = window.api.addAskQuestionListener(baseDir, (_, data) => {
+        setQuestion(data);
       });
-    }
-  };
 
-  const handleSuggestionClick = (suggestion: string) => {
-    if (inputRef.current) {
-      const cursorPos = inputRef.current.selectionStart;
-      const textBeforeCursor = text.slice(0, cursorPos);
-      const lastSpaceIndex = textBeforeCursor.lastIndexOf(' ');
-      const textAfterCursor = text.slice(cursorPos);
+      return () => {
+        window.api.removeAskQuestionListener(questionListenerId);
+      };
+    }, [baseDir]);
 
-      // Check if suggestion is an edit format prefix
-      const editFormatMatch = EDIT_FORMATS.find((format) => format.prefix === suggestion);
-      const newText = editFormatMatch ? suggestion + ' ' + textAfterCursor : textBeforeCursor.slice(0, lastSpaceIndex + 1) + suggestion + textAfterCursor;
+    useEffect(() => {
+      if (processing) {
+        return;
+      }
+      void loadHistory();
+    }, [processing, baseDir]);
 
+    useEffect(() => {
+      if (isActive && inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, [isActive]);
+
+    useEffect(() => {
+      if (isActive && inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, [isActive]);
+
+    useEffect(() => {
+      if (isActive && inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, [isActive]);
+
+    useEffect(() => {
+      const commandMatch = COMMANDS.find((cmd) => text.startsWith(cmd));
+      if (commandMatch) {
+        invokeCommand(commandMatch);
+        setSuggestionsVisible(false);
+      }
+    }, [text, invokeCommand]);
+
+    useEffect(() => {
+      if (!showModelSelector) {
+        setHighlightedModelIndex(-1);
+        setModelSearchTerm('');
+      }
+    }, [showModelSelector]);
+
+    const getCurrentWord = (text: string, cursorPosition: number) => {
+      const textBeforeCursor = text.slice(0, cursorPosition);
+      const words = textBeforeCursor.split(/\s/);
+      return words[words.length - 1] || '';
+    };
+
+    const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      const newText = e.target.value;
       setText(newText);
+
+      const word = getCurrentWord(newText, e.target.selectionStart);
+      setHighlightedSuggestionIndex(-1);
+
+      if (newText.startsWith('/')) {
+        // Show command suggestions when text starts with '/'
+        const matched = COMMANDS.filter((cmd) => cmd.toLowerCase().startsWith(newText.toLowerCase()));
+        setFilteredSuggestions(matched);
+        setSuggestionsVisible(matched.length > 0);
+      } else if (word.length > 0) {
+        const matched = words.filter((s) => s.toLowerCase().startsWith(word.toLowerCase()));
+        setFilteredSuggestions(matched);
+        setSuggestionsVisible(matched.length > 0);
+      } else {
+        setSuggestionsVisible(false);
+      }
+
+      if (inputRef.current) {
+        const { selectionStart } = inputRef.current;
+        const textBeforeCursor = newText.substring(0, selectionStart);
+        const lines = textBeforeCursor.split('\n');
+        const currentLineNumber = lines.length - 1;
+        const currentLineText = lines[currentLineNumber];
+
+        const lineHeight = 20;
+        const charWidth = 8;
+
+        setCursorPosition({
+          top: currentLineNumber * lineHeight,
+          left: currentLineText.length * charWidth,
+        });
+      }
+    };
+
+    const handleSuggestionClick = (suggestion: string) => {
+      if (inputRef.current) {
+        const cursorPos = inputRef.current.selectionStart;
+        const textBeforeCursor = text.slice(0, cursorPos);
+        const lastSpaceIndex = textBeforeCursor.lastIndexOf(' ');
+        const textAfterCursor = text.slice(cursorPos);
+
+        // Check if suggestion is a command prefix
+        const commandMatch = COMMANDS.find((cmd) => cmd === suggestion);
+        const newText = commandMatch ? suggestion + ' ' + textAfterCursor : textBeforeCursor.slice(0, lastSpaceIndex + 1) + suggestion + textAfterCursor;
+
+        setText(newText);
+        setSuggestionsVisible(false);
+
+        inputRef.current.focus();
+        const newCursorPos = commandMatch ? suggestion.length + 1 : lastSpaceIndex + 1 + suggestion.length;
+        inputRef.current.setSelectionRange(newCursorPos, newCursorPos);
+      }
+    };
+
+    const prepareForNextPrompt = () => {
+      setText('');
       setSuggestionsVisible(false);
+      setHighlightedSuggestionIndex(-1);
+      setHistoryIndex(-1);
+      setEditFormat(defaultEditFormat);
+    };
 
-      inputRef.current.focus();
-      const newCursorPos = editFormatMatch ? suggestion.length + 1 : lastSpaceIndex + 1 + suggestion.length;
-      inputRef.current.setSelectionRange(newCursorPos, newCursorPos);
-    }
-  };
-
-  const prepareForNextPrompt = () => {
-    setText('');
-    setSuggestionsVisible(false);
-    setHighlightedSuggestionIndex(-1);
-    setHistoryIndex(-1);
-  };
-
-  const handleSubmit = () => {
-    const [prompt, editFormat] = getPromptWithEditFormat(text);
-
-    if (prompt) {
-      window.api.sendPrompt(baseDir, prompt, editFormat);
-      onSubmit?.(prompt);
-      prepareForNextPrompt();
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (question) {
-      const answers = ['y', 'n', 'a', 'd'];
-      if (e.key === 'Tab') {
-        e.preventDefault();
-        const currentIndex = answers.indexOf(question.defaultAnswer);
-        const nextIndex = (currentIndex + (e.shiftKey ? -1 : 1) + answers.length) % answers.length;
-        setQuestion({ ...question, defaultAnswer: answers[nextIndex] });
-        return;
+    const handleSubmit = () => {
+      if (text) {
+        window.api.sendPrompt(baseDir, text, editFormat);
+        onSubmitted?.(text, editFormat === defaultEditFormat ? undefined : editFormat);
+        prepareForNextPrompt();
       }
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        answerQuestion(question.defaultAnswer);
-        return;
-      }
-    }
+    };
 
-    if (suggestionsVisible) {
+    const updateMainModel = (model: string) => {
+      window.api.updateMainModel(baseDir, model);
+      const updatedSettings = {
+        ...settings,
+        models: {
+          ...settings.models,
+          preferred: [model, ...settings.models.preferred.filter((m) => m !== model)],
+        },
+      };
+      setSettings(updatedSettings);
+      saveSettings(updatedSettings);
+      setShowModelSelector(false);
+      inputRef.current?.focus();
+    };
+
+    const onModelSelectorSearchInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+      const sortedModels = [...settings.models.preferred, ...models.filter((model) => !settings.models.preferred.includes(model))];
+      const filteredModels = sortedModels.filter((model) => model.toLowerCase().includes(modelSearchTerm.toLowerCase()));
+
       switch (e.key) {
-        case 'Enter':
+        case 'ArrowDown':
           e.preventDefault();
-          if (highlightedSuggestionIndex !== -1) {
-            handleSuggestionClick(filteredSuggestions[highlightedSuggestionIndex]);
-          } else if (filteredSuggestions.length > 0) {
-            handleSuggestionClick(filteredSuggestions[0]);
-          }
+          setHighlightedModelIndex((prev) => {
+            const newIndex = prev < filteredModels.length - 1 ? prev + 1 : 0;
+            setTimeout(() => highlightedModelRef.current?.scrollIntoView({ block: 'nearest' }), 0);
+            return newIndex;
+          });
           break;
         case 'ArrowUp':
           e.preventDefault();
-          setHighlightedSuggestionIndex((prev) => (prev > 0 ? prev - 1 : filteredSuggestions.length - 1));
+          setHighlightedModelIndex((prev) => {
+            const newIndex = prev > 0 ? prev - 1 : filteredModels.length - 1;
+            setTimeout(() => highlightedModelRef.current?.scrollIntoView({ block: 'nearest' }), 0);
+            return newIndex;
+          });
           break;
-        case 'ArrowDown':
-          e.preventDefault();
-          setHighlightedSuggestionIndex((prev) => (prev < filteredSuggestions.length - 1 ? prev + 1 : 0));
-          break;
-        case 'Tab':
-          e.preventDefault();
-          if (highlightedSuggestionIndex !== -1) {
-            handleSuggestionClick(filteredSuggestions[highlightedSuggestionIndex]);
-          } else if (filteredSuggestions.length > 0) {
-            handleSuggestionClick(filteredSuggestions[0]);
+        case 'Enter':
+          if (highlightedModelIndex !== -1) {
+            e.preventDefault();
+            const selectedModel = filteredModels[highlightedModelIndex];
+            updateMainModel(selectedModel);
           }
           break;
       }
-    } else {
-      switch (e.key) {
-        case 'Enter':
-          if (!e.shiftKey) {
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (question) {
+        const answers = ['y', 'n', 'a', 'd'];
+        if (e.key === 'Tab') {
+          e.preventDefault();
+          const currentIndex = answers.indexOf(question.defaultAnswer);
+          const nextIndex = (currentIndex + (e.shiftKey ? -1 : 1) + answers.length) % answers.length;
+          setQuestion({ ...question, defaultAnswer: answers[nextIndex] });
+          return;
+        }
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          answerQuestion(question.defaultAnswer);
+          return;
+        }
+      }
+
+      if (suggestionsVisible) {
+        switch (e.key) {
+          case 'Enter':
             e.preventDefault();
-            if (!processing) {
-              handleSubmit();
+            if (highlightedSuggestionIndex !== -1) {
+              handleSuggestionClick(filteredSuggestions[highlightedSuggestionIndex]);
+            } else if (filteredSuggestions.length > 0) {
+              handleSuggestionClick(filteredSuggestions[0]);
             }
-          }
-          break;
-        case 'ArrowUp':
-          if (text === '' && inputHistory.length > 0) {
+            break;
+          case 'ArrowUp':
             e.preventDefault();
-            const newIndex = historyIndex === -1 ? 0 : Math.min(historyIndex + 1, inputHistory.length - 1);
-            setHistoryIndex(newIndex);
-            setText(inputHistory[newIndex]);
-          } else if (historyIndex !== -1) {
+            setHighlightedSuggestionIndex((prev) => (prev > 0 ? prev - 1 : filteredSuggestions.length - 1));
+            break;
+          case 'ArrowDown':
             e.preventDefault();
-            const newIndex = Math.min(historyIndex + 1, inputHistory.length - 1);
-            setHistoryIndex(newIndex);
-            setText(inputHistory[newIndex]);
-          }
-          break;
-        case 'ArrowDown':
-          if (historyIndex !== -1) {
+            setHighlightedSuggestionIndex((prev) => (prev < filteredSuggestions.length - 1 ? prev + 1 : 0));
+            break;
+          case 'Tab':
             e.preventDefault();
-            const newIndex = historyIndex - 1;
-            if (newIndex === -1) {
-              setText('');
-            } else {
+            if (highlightedSuggestionIndex !== -1) {
+              handleSuggestionClick(filteredSuggestions[highlightedSuggestionIndex]);
+            } else if (filteredSuggestions.length > 0) {
+              handleSuggestionClick(filteredSuggestions[0]);
+            }
+            break;
+        }
+      } else {
+        switch (e.key) {
+          case 'Enter':
+            if (!e.shiftKey) {
+              e.preventDefault();
+              if (!processing) {
+                handleSubmit();
+              }
+            }
+            break;
+          case 'ArrowUp':
+            if (text === '' && inputHistory.length > 0) {
+              e.preventDefault();
+              const newIndex = historyIndex === -1 ? 0 : Math.min(historyIndex + 1, inputHistory.length - 1);
+              setHistoryIndex(newIndex);
+              setText(inputHistory[newIndex]);
+            } else if (historyIndex !== -1) {
+              e.preventDefault();
+              const newIndex = Math.min(historyIndex + 1, inputHistory.length - 1);
+              setHistoryIndex(newIndex);
               setText(inputHistory[newIndex]);
             }
-            setHistoryIndex(newIndex);
-          }
-          break;
+            break;
+          case 'ArrowDown':
+            if (historyIndex !== -1) {
+              e.preventDefault();
+              const newIndex = historyIndex - 1;
+              if (newIndex === -1) {
+                setText('');
+              } else {
+                setText(inputHistory[newIndex]);
+              }
+              setHistoryIndex(newIndex);
+            }
+            break;
+        }
       }
-    }
-  };
+    };
 
-  const answerQuestion = (answer: string) => {
-    if (question) {
-      window.api.answerQuestion(baseDir, answer);
-      setQuestion(null);
-      prepareForNextPrompt();
-    }
-  };
+    const answerQuestion = (answer: string) => {
+      if (question) {
+        window.api.answerQuestion(baseDir, answer);
+        setQuestion(null);
+        prepareForNextPrompt();
+      }
+    };
 
-  return (
-    <div className="w-full relative">
-      {question && (
-        <div className="mb-2 p-4 bg-gray-800 rounded-md border border-gray-700">
-          <div className="text-white mb-2">{question.text}</div>
-          {question.subject && <div className="text-gray-400 text-sm mb-3">{question.subject}</div>}
-          <div className="flex gap-2">
+    const renderModelItem = (model: string, index: number) => {
+      const isPreferred = settings.models.preferred.includes(model);
+      index = index + (isPreferred ? 0 : settings.models.preferred.length);
+
+      return (
+        <div
+          key={model}
+          ref={index === highlightedModelIndex ? highlightedModelRef : undefined}
+          className={`flex items-center w-full hover:bg-gray-700 transition-colors duration-200 ${index === highlightedModelIndex ? 'bg-neutral-700' : 'text-neutral-300'}`}
+        >
+          <button
+            onClick={() => updateMainModel(model)}
+            className={`flex-grow px-3 py-1 text-left text-xs
+                          ${model === currentModel ? 'text-white font-bold' : ''}`}
+          >
+            {model}
+          </button>
+          {isPreferred && (
             <button
-              onClick={() => answerQuestion('y')}
-              className={`px-2 py-0.5 text-sm rounded hover:bg-gray-700 border border-gray-600 ${question.defaultAnswer === 'y' ? 'bg-gray-700' : 'bg-gray-800'}`}
-              title="Yes (Y)"
+              onClick={(e) => {
+                e.stopPropagation();
+                const updatedSettings = {
+                  ...settings,
+                  models: {
+                    ...settings.models,
+                    preferred: settings.models.preferred.filter((m) => m !== model),
+                  },
+                };
+                setSettings(updatedSettings);
+                saveSettings(updatedSettings);
+              }}
+              className="px-2 py-1 text-neutral-500 hover:text-neutral-400 transition-colors duration-200"
+              title="Remove from preferred models"
             >
-              (Y)es
+              <MdClose className="w-4 h-4" />
             </button>
-            <button
-              onClick={() => answerQuestion('n')}
-              className={`px-2 py-0.5 text-sm rounded hover:bg-gray-700 border border-gray-600 ${question.defaultAnswer === 'n' ? 'bg-gray-700' : 'bg-gray-800'}`}
-              title="No (N)"
-            >
-              (N)o
-            </button>
-            <button
-              onClick={() => answerQuestion('a')}
-              className={`px-2 py-0.5 text-sm rounded hover:bg-gray-700 border border-gray-600 ${question.defaultAnswer === 'a' ? 'bg-gray-700' : 'bg-gray-800'}`}
-              title="Always (A)"
-            >
-              (A)lways
-            </button>
-            <button
-              onClick={() => answerQuestion('d')}
-              className={`px-2 py-0.5 text-sm rounded hover:bg-gray-700 border border-gray-600 ${question.defaultAnswer === 'd' ? 'bg-gray-700' : 'bg-gray-800'}`}
-              title="Don't ask again (D)"
-            >
-              (D)on&apos;t ask again
-            </button>
+          )}
+        </div>
+      );
+    };
+
+    return (
+      <div className="w-full relative">
+        {question && (
+          <div className="mb-2 p-4 bg-gray-800 rounded-md border border-gray-700">
+            <div className="text-white mb-2">{question.text}</div>
+            {question.subject && <div className="text-gray-400 text-sm mb-3">{question.subject}</div>}
+            <div className="flex gap-2">
+              <button
+                onClick={() => answerQuestion('y')}
+                className={`px-2 py-0.5 text-sm rounded hover:bg-gray-700 border border-gray-600 ${question.defaultAnswer === 'y' ? 'bg-gray-700' : 'bg-gray-800'}`}
+                title="Yes (Y)"
+              >
+                (Y)es
+              </button>
+              <button
+                onClick={() => answerQuestion('n')}
+                className={`px-2 py-0.5 text-sm rounded hover:bg-gray-700 border border-gray-600 ${question.defaultAnswer === 'n' ? 'bg-gray-700' : 'bg-gray-800'}`}
+                title="No (N)"
+              >
+                (N)o
+              </button>
+              <button
+                onClick={() => answerQuestion('a')}
+                className={`px-2 py-0.5 text-sm rounded hover:bg-gray-700 border border-gray-600 ${question.defaultAnswer === 'a' ? 'bg-gray-700' : 'bg-gray-800'}`}
+                title="Always (A)"
+              >
+                (A)lways
+              </button>
+              <button
+                onClick={() => answerQuestion('d')}
+                className={`px-2 py-0.5 text-sm rounded hover:bg-gray-700 border border-gray-600 ${question.defaultAnswer === 'd' ? 'bg-gray-700' : 'bg-gray-800'}`}
+                title="Don't ask again (D)"
+              >
+                (D)on&apos;t ask again
+              </button>
+            </div>
+          </div>
+        )}
+        <div className="flex flex-col">
+          <div className="relative">
+            <textarea
+              ref={inputRef}
+              value={text}
+              onChange={handleChange}
+              onKeyDown={handleKeyDown}
+              placeholder={question ? '...or suggest something else' : placeholder}
+              rows={Math.max(text.split('\n').length, 1)}
+              className="w-full px-2 py-2 border-2 border-gray-700 rounded-md focus:outline-none focus:border-gray-400 text-sm bg-gray-800 text-white placeholder-gray-500 resize-none overflow-y-auto transition-colors duration-200"
+            />
+            {processing ? (
+              <div className="absolute right-3 top-1/2 -translate-y-[12px] text-neutral-400">
+                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : (
+              <button
+                onClick={handleSubmit}
+                disabled={!text.trim()}
+                className={`absolute right-3 top-1/2 -translate-y-[12px] text-neutral-400 hover:text-neutral-300 transition-all duration-200
+                ${!text.trim() ? 'opacity-0' : 'opacity-100'}`}
+                title="Send message (Enter)"
+              >
+                <BiSend className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+          <div className="relative flex items-center text-sm text-neutral-400">
+            <div className="relative" ref={modelSelectorRef}>
+              <button
+                onClick={() => setShowModelSelector(!showModelSelector)}
+                className="flex items-center hover:text-neutral-300 focus:outline-none transition-colors duration-200 text-xs"
+              >
+                <MdKeyboardArrowUp className="w-3 h-3 mr-0.5" />
+                <span>{currentModel || 'Loading...'}</span>
+              </button>
+              {showModelSelector && (
+                <div className="absolute bottom-full left-3 mb-1 bg-gray-800 border border-gray-700 rounded-md shadow-lg z-10 max-h-48 flex flex-col w-[600px]">
+                  <div className="sticky top-0 p-2 border-b border-gray-700 bg-gray-800 z-10">
+                    <input
+                      type="text"
+                      autoFocus={true}
+                      placeholder="Search models..."
+                      className="w-full px-2 py-1 text-xs bg-gray-800 text-white rounded border border-gray-600 focus:outline-none focus:border-gray-500"
+                      value={modelSearchTerm}
+                      onChange={(e) => setModelSearchTerm(e.target.value)}
+                      onKeyDown={onModelSelectorSearchInputKeyDown}
+                    />
+                  </div>
+                  <div className="overflow-y-auto scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-gray-700 hover:scrollbar-thumb-gray-600 max-h-48">
+                    {...settings.models.preferred.filter((model) => model.toLowerCase().includes(modelSearchTerm.toLowerCase())).map(renderModelItem)}
+                    <div key="divider" className="border-t border-gray-700 my-1" />
+                    {...models
+                      .filter((model) => !settings.models.preferred.includes(model) && model.toLowerCase().includes(modelSearchTerm.toLowerCase()))
+                      .map(renderModelItem)}
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="relative" ref={formatSelectorRef}>
+              <button
+                onClick={() => setShowFormatSelector(!showFormatSelector)}
+                className="flex items-center hover:text-neutral-300 focus:outline-none transition-colors duration-200 text-xs ml-4"
+              >
+                <MdKeyboardArrowUp className="w-3 h-3 mr-0.5" />
+                <span className="capitalize">{editFormat}</span>
+              </button>
+              {showFormatSelector && (
+                <div className="absolute bottom-full left-4 mb-1 bg-gray-800 border border-gray-700 rounded-md shadow-lg z-10 ml-2">
+                  {EDIT_FORMATS.map(({ label, value }) => (
+                    <button
+                      key={value}
+                      onClick={() => {
+                        setEditFormat(value);
+                        setShowFormatSelector(false);
+                      }}
+                      className={`w-full px-3 py-1 text-left hover:bg-gray-700 transition-colors duration-200 text-xs
+                    ${value === editFormat ? 'text-white font-bold' : 'text-neutral-300'}`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      )}
-      <textarea
-        ref={inputRef}
-        value={text}
-        onChange={handleChange}
-        onKeyDown={handleKeyDown}
-        placeholder={question ? '...or suggest something else' : placeholder}
-        rows={Math.max(text.split('\n').length, 1)}
-        className="w-full px-2 py-2 border-2 border-gray-700 rounded-md focus:outline-none focus:border-gray-400 text-sm bg-gray-800 text-white placeholder-gray-500 resize-none overflow-y-auto transition-colors duration-200"
-      />
-      {processing ? (
-        <div className="absolute right-3 top-1/2 -translate-y-[12px] text-neutral-400">
-          <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-        </div>
-      ) : (
-        <button
-          onClick={handleSubmit}
-          disabled={!text.trim()}
-          className={`absolute right-3 top-1/2 -translate-y-[12px] text-neutral-400 hover:text-neutral-300 transition-all duration-200
-            ${!text.trim() ? 'opacity-0' : 'opacity-100'}`}
-          title="Send message (Enter)"
-        >
-          <BiSend className="w-4 h-4" />
-        </button>
-      )}
-      {suggestionsVisible && filteredSuggestions.length > 0 && (
-        <div
-          className="absolute bg-neutral-950 text-xs shadow-lg z-10 text-white"
-          style={{
-            bottom: `calc(100% - 4px - ${cursorPosition.top}px)`,
-            left: `${cursorPosition.left}px`,
-            maxHeight: '200px',
-            overflowY: 'auto',
-          }}
-        >
-          {filteredSuggestions.map((suggestion, index) => (
-            <div
-              key={index}
-              className={`px-2 py-1 cursor-pointer ${index === highlightedSuggestionIndex ? 'bg-neutral-700' : 'hover:bg-neutral-700'}`}
-              onClick={() => handleSuggestionClick(suggestion)}
-            >
-              {suggestion}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
+        {suggestionsVisible && filteredSuggestions.length > 0 && (
+          <div
+            className="absolute bg-neutral-950 text-xs shadow-lg z-10 text-white"
+            style={{
+              bottom: `calc(100% - 4px - ${cursorPosition.top}px)`,
+              left: `${cursorPosition.left}px`,
+              maxHeight: '200px',
+              overflowY: 'auto',
+            }}
+          >
+            {filteredSuggestions.map((suggestion, index) => (
+              <div
+                key={index}
+                className={`px-2 py-1 cursor-pointer ${index === highlightedSuggestionIndex ? 'bg-neutral-700' : 'hover:bg-neutral-700'}`}
+                onClick={() => handleSuggestionClick(suggestion)}
+              >
+                {suggestion}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  },
+);
+
+PromptField.displayName = 'PromptField';

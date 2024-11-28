@@ -1,6 +1,6 @@
 import { Socket } from 'socket.io';
 import { ContextFile } from '@common/types';
-import { AddFileMessage, AnswerQuestionMessage, DropFileMessage, EditFormat, Message, MessageAction, PromptMessage } from './messages';
+import { AddFileMessage, AnswerQuestionMessage, DropFileMessage, EditFormat, Message, MessageAction, PromptMessage, SetModelsMessage } from './messages';
 import logger from './logger';
 
 export class Connector {
@@ -56,4 +56,13 @@ export class Connector {
     };
     this.sendMessage(message);
   };
+
+  public sendSetModelsMessage(mainModel: string, weakModel: string): void {
+    const message: SetModelsMessage = {
+      action: 'set-models',
+      name: mainModel,
+      weakModel,
+    };
+    this.sendMessage(message);
+  }
 }

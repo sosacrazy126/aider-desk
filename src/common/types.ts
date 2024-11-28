@@ -33,6 +33,7 @@ export interface AutocompletionData {
   baseDir: string;
   words: string[];
   allFiles: string[];
+  models: string[];
 }
 
 export interface QuestionData {
@@ -42,11 +43,11 @@ export interface QuestionData {
   defaultAnswer: string;
 }
 
-export type ContexFileSourceType = 'companion' | 'aider' | 'app' | string;
+export type ContextFileSourceType = 'companion' | 'aider' | 'app' | string;
 
 export interface ContextFile {
   path: string;
-  sourceType?: ContexFileSourceType;
+  sourceType?: ContextFileSourceType;
   readOnly?: boolean;
   ignored?: boolean;
 }
@@ -68,9 +69,21 @@ export interface ProjectData {
   settings: ProjectSettings;
 }
 
+export interface ModelsData {
+  baseDir: string;
+  name: string;
+  weakModel: string;
+  maxChatHistoryTokens?: number;
+  info?: Record<string, unknown>;
+  error?: string;
+}
+
 export interface SettingsData {
   aider: {
     options: string;
     environmentVariables: string;
+  };
+  models: {
+    preferred: string[];
   };
 }

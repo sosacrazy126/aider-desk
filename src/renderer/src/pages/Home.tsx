@@ -122,7 +122,7 @@ export const Home = () => {
             {openProjects.map((project) => (
               <button
                 key={project.baseDir}
-                className={`text-sm pl-3 py-2 pr-1 transition-all duration-200 ease-in-out flex items-center gap-3 relative group
+                className={`text-sm pl-3 py-2 pr-1 transition-all duration-200 ease-in-out flex items-center gap-3 relative
                 ${
                   activeTab === project.baseDir
                     ? 'bg-neutral-800 text-neutral-100 font-medium'

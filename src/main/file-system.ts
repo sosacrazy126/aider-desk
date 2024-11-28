@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import logger from './logger';
 
-export const getPathAutocompletion = async (currentPath: string): Promise<string[]> => {
+export const getFilePathSuggestions = async (currentPath: string): Promise<string[]> => {
   try {
     let dirPath = currentPath;
     let searchPattern = '';

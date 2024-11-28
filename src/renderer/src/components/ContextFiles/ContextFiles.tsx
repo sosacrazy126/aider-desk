@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { StaticTreeDataProvider, Tree, UncontrolledTreeEnvironment } from 'react-complex-tree';
-import { HiX } from 'react-icons/hi';
+import { HiX, HiPlus } from 'react-icons/hi';
 import { ContextFile } from '@common/types';
 
 import './ContextFiles.css';
@@ -54,10 +54,12 @@ const createFileTree = (files: ContextFile[]) => {
 
 type Props = {
   baseDir: string;
+  showFileDialog: () => void;
 };
 
-export const ContextFiles = ({ baseDir }: Props) => {
+export const ContextFiles = ({ baseDir, showFileDialog }: Props) => {
   const [files, setFiles] = useState<ContextFile[]>([]);
+  const [newlyAddedFiles, setNewlyAddedFiles] = useState<string[]>([]);
 
   const sortedFiles = useMemo(() => {
     return [...files].sort((a, b) => a.path.localeCompare(b.path));
@@ -66,6 +68,12 @@ export const ContextFiles = ({ baseDir }: Props) => {
   useEffect(() => {
     const fileAddedListenerId = window.api.addFileAddedListener(baseDir, (_, { file }) => {
       setFiles((prev) => [...new Set([...prev, file])]);
+      setTimeout(() => {
+        setNewlyAddedFiles((prev) => [...prev, file.path]);
+        setTimeout(() => {
+          setNewlyAddedFiles((prev) => prev.filter(path => path !== file.path));
+        }, 2000);
+      }, 10);
     });
 
     const fileDroppedListenerId = window.api.addFileDroppedListener(baseDir, (_, data) => {
@@ -83,7 +91,12 @@ export const ContextFiles = ({ baseDir }: Props) => {
   const renderFileTree = (key: React.Key, id: string, title: string, treeData: Record<string, TreeItem>) => {
     return (
       <div className="flex flex-col">
-        <h3 className="text-md font-semibold mb-2 uppercase">{title}</h3>
+        <div className="flex justify-between items-center mb-2">
+          <h3 className="text-md font-semibold uppercase">{title}</h3>
+          <button onClick={showFileDialog} className="p-1 hover:bg-neutral-700 rounded-md" title="Add file">
+            <HiPlus className="w-5 h-5" />
+          </button>
+        </div>
         <div className="flex-grow w-full">
           <UncontrolledTreeEnvironment
             key={key}
@@ -95,6 +108,10 @@ export const ContextFiles = ({ baseDir }: Props) => {
               }))
             }
             getItemTitle={(item) => item.data}
+            renderItemTitle={({ title, item }) => {
+              const isNewlyAdded = (item as TreeItem).file?.path && newlyAddedFiles.includes((item as TreeItem).file!.path);
+              return <div className={`px-1 ${isNewlyAdded ? 'flash-highlight' : ''}`}>{title}</div>;
+            }}
             viewState={{
               [id]: {
                 expandedItems: Object.keys(treeData),

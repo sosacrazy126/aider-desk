@@ -3,7 +3,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { BrowserWindow } from 'electron';
 import treeKill from 'tree-kill';
-import { ContextFile, QuestionData } from '@common/types';
+import { ContextFile, ModelsData, QuestionData } from '@common/types';
 import { EditFormat, MessageAction } from './messages';
 import { Connector } from './connector';
 import { AIDER_DESKTOP_CONNECTOR_DIR, PYTHON_COMMAND } from './constants';
@@ -14,8 +14,11 @@ export class Project {
   private process?: ChildProcessWithoutNullStreams | null = null;
   private connectors: Connector[] = [];
   private currentQuestion: QuestionData | null = null;
+  private allTrackedFiles: string[] = [];
   public baseDir: string;
   public contextFiles: ContextFile[] = [];
+  public addableFilePaths: string[] = [];
+  public models: ModelsData | null = null;
 
   constructor(mainWindow: BrowserWindow, baseDir: string) {
     this.mainWindow = mainWindow;
@@ -62,7 +65,7 @@ export class Project {
     logger.info('Starting Aider...', { baseDir: this.baseDir });
     this.process.stdout.on('data', (data) => {
       const output = data.toString();
-      logger.debug('Aider output:', { output });
+      logger.info('Aider output:', { output });
     });
 
     this.process.stderr.on('data', (data) => {
@@ -174,5 +177,24 @@ export class Project {
 
   public setCurrentQuestion(questionData: QuestionData) {
     this.currentQuestion = questionData;
+  }
+
+  public setAllTrackedFiles(files: string[]) {
+    this.allTrackedFiles = files;
+  }
+
+  public setCurrentModels(modelsData: ModelsData) {
+    this.models = modelsData;
+    this.mainWindow?.webContents.send('set-current-models', this.models);
+  }
+
+  public updateMainModel(model: string) {
+    logger.info('Updating main model:', model);
+    this.findMessageConnectors('set-models').forEach((connector) => connector.sendSetModelsMessage(model, this.models!.weakModel));
+  }
+
+  public getAddableFiles(): string[] {
+    const contextFilePaths = new Set(this.contextFiles.map((file) => file.path));
+    return this.allTrackedFiles.filter((file) => !contextFilePaths.has(file));
   }
 }

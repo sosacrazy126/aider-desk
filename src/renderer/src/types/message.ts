@@ -1,6 +1,8 @@
+import { ModelsData } from '@common/types';
+
 export interface Message {
   id: string;
-  type: 'prompt' | 'response' | 'response-error' | 'loading';
+  type: 'prompt' | 'response' | 'response-error' | 'loading' | 'models';
   content: string;
 }
 
@@ -22,6 +24,11 @@ export interface LoadingMessage extends Message {
   type: 'loading';
 }
 
+export interface ModelsMessage extends Message {
+  type: 'models';
+  models: ModelsData;
+}
+
 export const isPromptMessage = (message: Message): message is PromptMessage => {
   return message.type === 'prompt';
 };
@@ -36,4 +43,8 @@ export const isResponseErrorMessage = (message: Message): message is ResponseErr
 
 export const isLoadingMessage = (message: Message): message is LoadingMessage => {
   return message.type === 'loading';
+};
+
+export const isModelsMessage = (message: Message): message is ModelsMessage => {
+  return message.type === 'models';
 };

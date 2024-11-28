@@ -11,6 +11,7 @@ type Props = {
   disabled?: boolean;
   confirmButtonClass?: string;
   width?: number;
+  closeOnEscape?: boolean;
 };
 
 export const ConfirmDialog = ({
@@ -23,6 +24,7 @@ export const ConfirmDialog = ({
   disabled = false,
   confirmButtonClass = 'bg-amber-600 hover:bg-amber-500',
   width,
+  closeOnEscape = false,
 }: Props) => {
   return (
     <BaseDialog
@@ -45,6 +47,7 @@ export const ConfirmDialog = ({
           </button>
         </>
       }
+      closeOnEscape={closeOnEscape}
     >
       {children}
     </BaseDialog>

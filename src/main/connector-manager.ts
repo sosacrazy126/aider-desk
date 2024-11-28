@@ -2,7 +2,7 @@ import { BrowserWindow } from 'electron';
 import { v4 as uuidv4 } from 'uuid';
 import { Server, Socket } from 'socket.io';
 import { Connector } from 'src/main/connector';
-import { QuestionData, ResponseChunkData, ResponseCompletedData } from '@common/types';
+import { ModelsData, QuestionData, ResponseChunkData, ResponseCompletedData } from '@common/types';
 import { SOCKET_PORT } from './constants';
 import {
   ErrorMessage,
@@ -11,6 +11,7 @@ import {
   isDropFileMessage,
   isInitMessage,
   isResponseMessage,
+  isSetModelsMessage,
   isUpdateAutocompletionMessage,
   Message,
   ResponseMessage,
@@ -65,7 +66,8 @@ class ConnectorManager {
 
   private processMessage = (socket: Socket, message: Message) => {
     try {
-      logger.debug('Received message:', { message });
+      logger.info('Received message from client', { action: message.action });
+      logger.debug('Message:', { message });
 
       if (isInitMessage(message)) {
         const connector = new Connector(socket, message.baseDir, message.listenTo);
@@ -74,7 +76,7 @@ class ConnectorManager {
         const project = projectManager.getProject(message.baseDir);
         project.addConnector(connector);
 
-        message.openFiles?.forEach((file) => project.addFile(file));
+        message.contextFiles?.forEach((file) => project.addFile(file));
         logger.info('Socket.IO registered project for base directory:', { baseDir: message.baseDir });
       } else if (isResponseMessage(message)) {
         const connector = this.findConnectorBySocket(socket);
@@ -109,7 +111,9 @@ class ConnectorManager {
           baseDir: connector.baseDir,
           words: message.words,
           allFiles: message.allFiles,
+          models: message.models,
         });
+        projectManager.getProject(connector.baseDir).setAllTrackedFiles(message.allFiles);
       } else if (isAskQuestionMessage(message)) {
         const connector = this.findConnectorBySocket(socket);
         if (!connector) {
@@ -123,8 +127,19 @@ class ConnectorManager {
         };
         projectManager.getProject(connector.baseDir).setCurrentQuestion(questionData);
         this.mainWindow?.webContents.send('ask-question', questionData);
+      } else if (isSetModelsMessage(message)) {
+        const connector = this.findConnectorBySocket(socket);
+        if (!connector) {
+          return;
+        }
+        const modelsData: ModelsData = {
+          baseDir: connector.baseDir,
+          ...message,
+        };
+
+        projectManager.getProject(connector.baseDir).setCurrentModels(modelsData);
       } else {
-        logger.error('Unknown message type');
+        logger.error('Unknown message type: ', message);
       }
     } catch (error) {
       logger.error('Socket.IO message parsing error:', { error });

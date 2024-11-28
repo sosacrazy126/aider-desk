@@ -1,6 +1,6 @@
 import { ProjectSettings, SettingsData } from '@common/types';
 import { BrowserWindow, dialog, ipcMain } from 'electron';
-import { getPathAutocompletion, isProjectPath } from './file-system';
+import { getFilePathSuggestions, isProjectPath } from './file-system';
 import { EditFormat } from './messages';
 import { projectManager } from './project-manager';
 import { Store } from './store';
@@ -24,6 +24,10 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, store: Store) => {
 
   ipcMain.on('drop-file', (_, baseDir: string, filePath: string) => {
     projectManager.getProject(baseDir).dropFile(filePath);
+  });
+
+  ipcMain.on('add-file', (_, baseDir: string, filePath: string) => {
+    projectManager.getProject(baseDir).addFile({ path: filePath });
   });
 
   ipcMain.on('start-project', (_, baseDir: string) => {
@@ -54,15 +58,23 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, store: Store) => {
     return store.getProjectSettings(baseDir);
   });
 
-  ipcMain.handle('save-project-settings', (_, baseDir: string, settings: ProjectSettings) => {
+  ipcMain.handle('save-project-settings', async (_, baseDir: string, settings: ProjectSettings) => {
     store.saveProjectSettings(baseDir, settings);
+  });
+
+  ipcMain.handle('get-addable-files', async (_, baseDir: string) => {
+    return projectManager.getProject(baseDir).getAddableFiles();
   });
 
   ipcMain.handle('isProjectPath', async (_, path: string) => {
     return isProjectPath(path);
   });
 
-  ipcMain.handle('get-path-autocompletion', async (_, currentPath: string) => {
-    return getPathAutocompletion(currentPath);
+  ipcMain.handle('get-file-path-suggestions', async (_, currentPath: string) => {
+    return getFilePathSuggestions(currentPath);
+  });
+
+  ipcMain.on('update-main-model', (_, baseDir: string, model: string) => {
+    projectManager.getProject(baseDir).updateMainModel(model);
   });
 };

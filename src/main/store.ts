@@ -5,6 +5,9 @@ const DEFAULT_SETTINGS: SettingsData = {
     options: '',
     environmentVariables: '',
   },
+  models: {
+    preferred: ['claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022', 'gpt-4o', 'gemini-1.5-flash-002', 'deepseek/deepseek-coder'],
+  },
 };
 
 interface StoreSchema {
@@ -28,7 +31,11 @@ export class Store {
   }
 
   getSettings(): SettingsData {
-    return this.store.get('settings') || DEFAULT_SETTINGS;
+    const settings = this.store.get('settings');
+
+    settings.models = DEFAULT_SETTINGS.models;
+
+    return settings || DEFAULT_SETTINGS;
   }
 
   saveSettings(settings: SettingsData): void {

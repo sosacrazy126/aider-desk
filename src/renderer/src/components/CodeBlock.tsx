@@ -81,9 +81,7 @@ const parseDiffContent = (content: string): { oldValue: string; newValue: string
   const oldValue = content.substring(searchIndex, dividerIndex).trim();
 
   if (!replaceMatch) {
-    // We have old value complete and new value being streamed
-    const newValue = content.substring(dividerIndex + dividerMatch[0].length).trim();
-    return { oldValue, newValue };
+    return { oldValue, newValue: '' };
   }
 
   // We have complete diff
@@ -132,6 +130,7 @@ export const CodeBlock = ({ language, children, file, isComplete = true }: Props
           oldValue={diffContent.oldValue}
           newValue={diffContent.newValue}
           splitView={true}
+          disableWordDiff={true}
           useDarkTheme={true}
           showDiffOnly={false}
           renderContent={highlightSyntax}
@@ -165,7 +164,7 @@ export const CodeBlock = ({ language, children, file, isComplete = true }: Props
                 </span>
               </span>
             </div>
-            <div className={`transition-all duration-200 overflow-hidden ${isExpanded ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+            <div className={`transition-all duration-200 overflow-hidden ${isExpanded ? 'max-h-[5000px] opacity-100' : 'max-h-0 opacity-0'}`}>
               <hr className="border-gray-700 my-2" />
               {renderContent()}
             </div>

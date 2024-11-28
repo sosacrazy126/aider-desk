@@ -35,6 +35,7 @@
     "electron-updater": "^6.1.7",
     "framer-motion": "^11.11.17",
     "marked-react": "^2.0.0",
+    "match-sorter": "^8.0.0",
     "prismjs": "^1.29.0",
     "react-complex-tree": "^2.4.5",
     "react-diff-viewer-continued": "^3.4.0",

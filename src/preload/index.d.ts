@@ -1,14 +1,15 @@
 import {
-  ResponseChunkData,
-  ResponseCompletedData,
+  AutocompletionData,
   FileAddedData,
   FileDroppedData,
-  AutocompletionData,
-  QuestionData,
+  ModelsData,
   ProjectData,
   ProjectSettings,
-  SettingsData,
+  QuestionData,
+  ResponseChunkData,
+  ResponseCompletedData,
   ResponseErrorData,
+  SettingsData,
 } from '../common/types';
 import type { ElectronAPI } from '@electron-toolkit/preload';
 
@@ -25,9 +26,12 @@ export interface ApplicationAPI {
   };
   loadProjects: () => Promise<ProjectData[]>;
   saveProjects: (projects: ProjectData[]) => Promise<void>;
+  updateMainModel: (baseDir: string, model: string) => void;
   getProjectSettings: (baseDir: string) => Promise<ProjectSettings>;
   saveProjectSettings: (baseDir: string, settings: ProjectSettings) => Promise<void>;
-  getPathAutocompletion: (currentPath: string) => Promise<string[]>;
+  getFilePathSuggestions: (currentPath: string) => Promise<string[]>;
+  getAddableFiles: (baseDir: string) => Promise<string[]>;
+  addFile: (baseDir: string, filePath: string) => void;
   isProjectPath: (path: string) => Promise<boolean>;
   dropFile: (baseDir: string, path: string) => void;
 
@@ -51,6 +55,9 @@ export interface ApplicationAPI {
 
   addAskQuestionListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: QuestionData) => void) => string;
   removeAskQuestionListener: (listenerId: string) => void;
+
+  addSetCurrentModelsListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: ModelsData & { baseDir: string }) => void) => string;
+  removeSetCurrentModelsListener: (listenerId: string) => void;
 }
 
 declare global {

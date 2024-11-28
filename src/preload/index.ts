@@ -1,17 +1,22 @@
-import { contextBridge, ipcRenderer } from 'electron';
 import { electronAPI } from '@electron-toolkit/preload';
+import { contextBridge, ipcRenderer } from 'electron';
 import { v4 as uuidv4 } from 'uuid';
 import {
   AutocompletionData,
-  QuestionData,
   FileAddedData,
   FileDroppedData,
+  ModelsData,
+  QuestionData,
   ResponseChunkData,
   ResponseCompletedData,
-  SettingsData,
   ResponseErrorData,
+  SettingsData,
 } from '../common/types';
 import { ApplicationAPI } from './index.d';
+
+export interface ResponseModelData extends ModelsData {
+  baseDir: string;
+}
 
 const responseChunkListeners: Record<string, (event: Electron.IpcRendererEvent, data: ResponseChunkData) => void> = {};
 const responseFinishedListeners: Record<string, (event: Electron.IpcRendererEvent, data: ResponseCompletedData) => void> = {};
@@ -20,6 +25,7 @@ const fileAddedListeners: Record<string, (event: Electron.IpcRendererEvent, data
 const fileDroppedListeners: Record<string, (event: Electron.IpcRendererEvent, data: FileDroppedData) => void> = {};
 const updateAutocompletionListeners: Record<string, (event: Electron.IpcRendererEvent, data: AutocompletionData) => void> = {};
 const askQuestionListeners: Record<string, (event: Electron.IpcRendererEvent, data: QuestionData) => void> = {};
+const setCurrentModelsListeners: Record<string, (event: Electron.IpcRendererEvent, data: ModelsData & { baseDir: string }) => void> = {};
 
 const api: ApplicationAPI = {
   loadSettings: () => ipcRenderer.invoke('load-settings'),
@@ -34,9 +40,12 @@ const api: ApplicationAPI = {
   },
   loadProjects: () => ipcRenderer.invoke('load-projects'),
   saveProjects: (projects) => ipcRenderer.invoke('save-projects', projects),
+  updateMainModel: (baseDir, model) => ipcRenderer.send('update-main-model', baseDir, model),
   getProjectSettings: (baseDir) => ipcRenderer.invoke('get-project-settings', baseDir),
   saveProjectSettings: (baseDir, settings) => ipcRenderer.invoke('save-project-settings', baseDir, settings),
-  getPathAutocompletion: (currentPath: string) => ipcRenderer.invoke('get-path-autocompletion', currentPath),
+  getFilePathSuggestions: (currentPath: string) => ipcRenderer.invoke('get-file-path-suggestions', currentPath),
+  getAddableFiles: (baseDir: string) => ipcRenderer.invoke('get-addable-files', baseDir),
+  addFile: (baseDir: string, filePath: string) => ipcRenderer.send('add-file', baseDir, filePath),
   isProjectPath: (path: string) => ipcRenderer.invoke('isProjectPath', path),
   dropFile: (baseDir: string, path: string) => ipcRenderer.send('drop-file', baseDir, path),
 
@@ -169,6 +178,25 @@ const api: ApplicationAPI = {
     if (callback) {
       ipcRenderer.removeListener('ask-question', callback);
       delete askQuestionListeners[listenerId];
+    }
+  },
+
+  addSetCurrentModelsListener: (baseDir, callback) => {
+    const listenerId = uuidv4();
+    setCurrentModelsListeners[listenerId] = (event: Electron.IpcRendererEvent, data: ModelsData & { baseDir: string }) => {
+      if (data.baseDir !== baseDir) {
+        return;
+      }
+      callback(event, data);
+    };
+    ipcRenderer.on('set-current-models', setCurrentModelsListeners[listenerId]);
+    return listenerId;
+  },
+  removeSetCurrentModelsListener: (listenerId) => {
+    const callback = setCurrentModelsListeners[listenerId];
+    if (callback) {
+      ipcRenderer.removeListener('set-current-models', callback);
+      delete setCurrentModelsListeners[listenerId];
     }
   },
 };

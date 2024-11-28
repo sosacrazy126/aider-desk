@@ -1,6 +1,15 @@
-import { ContexFileSourceType, ContextFile } from '@common/types';
+import { ContextFileSourceType, ContextFile } from '@common/types';
 
-export type MessageAction = 'init' | 'prompt' | 'response' | 'add-file' | 'drop-file' | 'update-autocompletion' | 'ask-question' | 'answer-question';
+export type MessageAction =
+  | 'init'
+  | 'prompt'
+  | 'response'
+  | 'add-file'
+  | 'drop-file'
+  | 'update-autocompletion'
+  | 'ask-question'
+  | 'answer-question'
+  | 'set-models';
 
 export interface Message {
   action: MessageAction;
@@ -13,7 +22,7 @@ export interface ErrorMessage {
 export interface InitMessage {
   action: 'init';
   baseDir: string;
-  openFiles?: ContextFile[];
+  contextFiles?: ContextFile[];
   listenTo?: MessageAction[];
 }
 
@@ -46,7 +55,7 @@ export const isResponseMessage = (message: Message): message is ResponseMessage 
 export interface AddFileMessage extends Message {
   action: 'add-file';
   path: string;
-  sourceType?: ContexFileSourceType;
+  sourceType?: ContextFileSourceType;
   readOnly?: boolean;
 }
 
@@ -68,6 +77,7 @@ export interface UpdateAutocompletionMessage extends Message {
   action: 'update-autocompletion';
   words: string[];
   allFiles: string[];
+  models: string[];
 }
 
 export const isUpdateAutocompletionMessage = (message: Message): message is UpdateAutocompletionMessage => {
@@ -89,3 +99,16 @@ export interface AnswerQuestionMessage extends Message {
   action: 'answer-question';
   answer: string;
 }
+
+export interface SetModelsMessage extends Message {
+  action: 'set-models';
+  name: string;
+  weakModel: string;
+  maxChatHistoryTokens?: number;
+  info?: Record<string, unknown>;
+  hasError?: boolean;
+}
+
+export const isSetModelsMessage = (message: Message): message is SetModelsMessage => {
+  return typeof message === 'object' && message !== null && 'action' in message && message.action === 'set-models';
+};

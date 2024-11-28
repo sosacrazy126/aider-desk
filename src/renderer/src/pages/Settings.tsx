@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSettings } from '../hooks/useSettings';
 
 const OPTIONS_PLACEHOLDER = 'e.g. --no-auto-commits --lint-cmd python: flake8 –select=…';
 
@@ -17,25 +18,10 @@ const ENV_VARIABLES_PLACEHOLDER = `#################
 
 export const Settings = () => {
   const navigate = useNavigate();
-  const [options, setOptions] = useState('');
-  const [environmentVariables, setEnvironmentVariables] = useState('');
-
-  useEffect(() => {
-    const loadSettings = async () => {
-      const settings = await window.api.loadSettings();
-      setOptions(settings.aider.options);
-      setEnvironmentVariables(settings.aider.environmentVariables);
-    };
-    void loadSettings();
-  }, []);
+  const { settings, setSettings, saveSettings } = useSettings();
 
   const handleSave = async () => {
-    await window.api.saveSettings({
-      aider: {
-        options,
-        environmentVariables,
-      },
-    });
+    await saveSettings();
     navigate(-1);
   };
 
@@ -66,9 +52,17 @@ export const Settings = () => {
               <label className="block text-sm font-medium text-neutral-300">Options</label>
               <input
                 type="text"
-                value={options}
+                value={settings.aider.options}
                 spellCheck={false}
-                onChange={(e) => setOptions(e.target.value)}
+                onChange={(e) =>
+                  setSettings((prev) => ({
+                    ...prev,
+                    aider: {
+                      ...prev.aider,
+                      options: e.target.value,
+                    },
+                  }))
+                }
                 className="w-full p-2 bg-neutral-700 border-2 border-neutral-600 rounded focus:outline-none focus:border-neutral-400 text-neutral-100 text-sm placeholder-neutral-600"
                 placeholder={OPTIONS_PLACEHOLDER}
               />
@@ -83,8 +77,16 @@ export const Settings = () => {
             <div className="space-y-1">
               <label className="block text-sm font-medium text-neutral-300">Environment Variables</label>
               <textarea
-                value={environmentVariables}
-                onChange={(e) => setEnvironmentVariables(e.target.value)}
+                value={settings.aider.environmentVariables}
+                onChange={(e) =>
+                  setSettings((prev) => ({
+                    ...prev,
+                    aider: {
+                      ...prev.aider,
+                      environmentVariables: e.target.value,
+                    },
+                  }))
+                }
                 spellCheck={false}
                 className="w-full p-2 bg-neutral-700 border-2 border-neutral-600 rounded focus:outline-none focus:border-neutral-400 text-neutral-100 min-h-[300px] text-sm placeholder-neutral-600"
                 placeholder={ENV_VARIABLES_PLACEHOLDER}
