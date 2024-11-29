@@ -87,3 +87,11 @@ export interface SettingsData {
     preferred: string[];
   };
 }
+
+export interface Test {
+  propertyA: string;
+}
+
+export interface Test2 {
+  propertyB: boolean;
+}

@@ -125,8 +125,7 @@ class ConnectorManager {
           subject: message.subject,
           defaultAnswer: message.defaultAnswer,
         };
-        projectManager.getProject(connector.baseDir).setCurrentQuestion(questionData);
-        this.mainWindow?.webContents.send('ask-question', questionData);
+        projectManager.getProject(connector.baseDir).askQuestion(questionData);
       } else if (isSetModelsMessage(message)) {
         const connector = this.findConnectorBySocket(socket);
         if (!connector) {

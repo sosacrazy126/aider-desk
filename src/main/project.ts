@@ -15,6 +15,7 @@ export class Project {
   private connectors: Connector[] = [];
   private currentQuestion: QuestionData | null = null;
   private allTrackedFiles: string[] = [];
+  private questionAnswers: Map<string, 'y' | 'n'> = new Map();
   public baseDir: string;
   public contextFiles: ContextFile[] = [];
   public addableFilePaths: string[] = [];
@@ -133,12 +134,28 @@ export class Project {
     this.findMessageConnectors('prompt').forEach((connector) => connector.sendPromptMessage(prompt, editFormat));
   }
 
+  private getQuestionKey(question: QuestionData) {
+    return `${question.text}_${question.subject || ''}`;
+  }
+
   public answerQuestion(answer: string): void {
     if (!this.currentQuestion) {
       return;
     }
 
-    this.findMessageConnectors('answer-question').forEach((connector) => connector.sendAnswerQuestionMessage(answer));
+    logger.info('Answering question:', { baseDir: this.baseDir, question: this.currentQuestion, answer });
+
+    const yesNoAnswer = answer.toLowerCase() === 'a' || answer.toLowerCase() === 'y' ? 'y' : 'n';
+    if (answer.toLowerCase() === 'd' || answer.toLowerCase() === 'a') {
+      logger.info('Storing answer for question:', {
+        baseDir: this.baseDir,
+        question: this.currentQuestion,
+        answer,
+      });
+      this.questionAnswers.set(this.getQuestionKey(this.currentQuestion), yesNoAnswer);
+    }
+
+    this.findMessageConnectors('answer-question').forEach((connector) => connector.sendAnswerQuestionMessage(yesNoAnswer));
     this.currentQuestion = null;
   }
 
@@ -199,8 +216,20 @@ export class Project {
     }
   }
 
-  public setCurrentQuestion(questionData: QuestionData) {
+  public askQuestion(questionData: QuestionData) {
     this.currentQuestion = questionData;
+
+    const storedAnswer = this.questionAnswers.get(this.getQuestionKey(questionData));
+
+    logger.info('Asking question:', { baseDir: this.baseDir, question: questionData, answer: storedAnswer });
+    if (storedAnswer) {
+      logger.info('Found stored answer for question:', { baseDir: this.baseDir, question: questionData, answer: storedAnswer });
+      // Auto-answer based on stored preference
+      this.answerQuestion(storedAnswer);
+      return;
+    }
+
+    this.mainWindow?.webContents.send('ask-question', questionData);
   }
 
   public setAllTrackedFiles(files: string[]) {

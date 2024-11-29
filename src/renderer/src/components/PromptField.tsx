@@ -32,6 +32,8 @@ const EDIT_FORMATS = [
   { value: 'architect', label: 'Architect' },
 ];
 
+const ANSWERS = ['y', 'n', 'a', 'd'];
+
 export interface PromptFieldRef {
   focus: () => void;
 }
@@ -64,6 +66,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
     const [inputHistory, setInputHistory] = useState<string[]>([]);
     const [historyIndex, setHistoryIndex] = useState<number>(-1);
     const [question, setQuestion] = useState<QuestionData | null>(null);
+    const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
     const [showFormatSelector, setShowFormatSelector] = useState(false);
     const [showModelSelector, setShowModelSelector] = useState(false);
     const [modelSearchTerm, setModelSearchTerm] = useState('');
@@ -121,6 +124,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
     useEffect(() => {
       const questionListenerId = window.api.addAskQuestionListener(baseDir, (_, data) => {
         setQuestion(data);
+        setSelectedAnswer(data.defaultAnswer || 'y');
       });
 
       return () => {
@@ -181,6 +185,14 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
       const word = getCurrentWord(newText, e.target.selectionStart);
       setHighlightedSuggestionIndex(-1);
 
+      if (question) {
+        if (ANSWERS.includes(newText.toLowerCase())) {
+          setSelectedAnswer(newText);
+          return;
+        } else {
+          setSelectedAnswer('n');
+        }
+      }
       if (newText.startsWith('/')) {
         // Show command suggestions when text starts with '/'
         const matched = COMMANDS.filter((cmd) => cmd.toLowerCase().startsWith(newText.toLowerCase()));
@@ -295,17 +307,19 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (question) {
-        const answers = ['y', 'n', 'a', 'd'];
         if (e.key === 'Tab') {
           e.preventDefault();
-          const currentIndex = answers.indexOf(question.defaultAnswer);
-          const nextIndex = (currentIndex + (e.shiftKey ? -1 : 1) + answers.length) % answers.length;
-          setQuestion({ ...question, defaultAnswer: answers[nextIndex] });
-          return;
+          console.log(selectedAnswer);
+          const currentIndex = ANSWERS.indexOf(selectedAnswer?.toLowerCase() || 'y');
+          if (currentIndex !== -1) {
+            const nextIndex = (currentIndex + (e.shiftKey ? -1 : 1) + ANSWERS.length) % ANSWERS.length;
+            setSelectedAnswer(ANSWERS[nextIndex]);
+            return;
+          }
         }
-        if (e.key === 'Enter' && !e.shiftKey) {
+        if (e.key === 'Enter' && !e.shiftKey && ANSWERS.includes(selectedAnswer?.toLowerCase() || 'y')) {
           e.preventDefault();
-          answerQuestion(question.defaultAnswer);
+          answerQuestion(selectedAnswer!);
           return;
         }
       }
@@ -442,28 +456,28 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
             <div className="flex gap-2">
               <button
                 onClick={() => answerQuestion('y')}
-                className={`px-2 py-0.5 text-sm rounded hover:bg-gray-700 border border-gray-600 ${question.defaultAnswer === 'y' ? 'bg-gray-700' : 'bg-gray-800'}`}
+                className={`px-2 py-0.5 text-sm rounded hover:bg-gray-700 border border-gray-600 ${selectedAnswer === 'y' ? 'bg-gray-700' : 'bg-gray-800'}`}
                 title="Yes (Y)"
               >
                 (Y)es
               </button>
               <button
                 onClick={() => answerQuestion('n')}
-                className={`px-2 py-0.5 text-sm rounded hover:bg-gray-700 border border-gray-600 ${question.defaultAnswer === 'n' ? 'bg-gray-700' : 'bg-gray-800'}`}
+                className={`px-2 py-0.5 text-sm rounded hover:bg-gray-700 border border-gray-600 ${selectedAnswer === 'n' ? 'bg-gray-700' : 'bg-gray-800'}`}
                 title="No (N)"
               >
                 (N)o
               </button>
               <button
                 onClick={() => answerQuestion('a')}
-                className={`px-2 py-0.5 text-sm rounded hover:bg-gray-700 border border-gray-600 ${question.defaultAnswer === 'a' ? 'bg-gray-700' : 'bg-gray-800'}`}
+                className={`px-2 py-0.5 text-sm rounded hover:bg-gray-700 border border-gray-600 ${selectedAnswer === 'a' ? 'bg-gray-700' : 'bg-gray-800'}`}
                 title="Always (A)"
               >
                 (A)lways
               </button>
               <button
                 onClick={() => answerQuestion('d')}
-                className={`px-2 py-0.5 text-sm rounded hover:bg-gray-700 border border-gray-600 ${question.defaultAnswer === 'd' ? 'bg-gray-700' : 'bg-gray-800'}`}
+                className={`px-2 py-0.5 text-sm rounded hover:bg-gray-700 border border-gray-600 ${selectedAnswer === 'd' ? 'bg-gray-700' : 'bg-gray-800'}`}
                 title="Don't ask again (D)"
               >
                 (D)on&apos;t ask again
