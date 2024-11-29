@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { BiSend } from 'react-icons/bi';
+import { CgLock, CgLockUnlock } from 'react-icons/cg';
 import { MdKeyboardArrowUp, MdClose } from 'react-icons/md';
 import { QuestionData } from '@common/types';
 import { useClickOutside } from 'hooks/useClickOutside';
@@ -71,6 +72,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
     const [showModelSelector, setShowModelSelector] = useState(false);
     const [modelSearchTerm, setModelSearchTerm] = useState('');
     const [highlightedModelIndex, setHighlightedModelIndex] = useState(-1);
+    const [editFormatLocked, setEditFormatLocked] = useState(false);
     const highlightedModelRef = useRef<HTMLDivElement>(null);
     const { settings, setSettings, saveSettings } = useSettings();
     const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -106,6 +108,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
             const prompt = text.replace(command, '').trim();
             setText(prompt);
             setEditFormat(command.slice(1));
+            setEditFormatLocked(false);
             break;
           }
           case '/add':
@@ -248,7 +251,9 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
       setSuggestionsVisible(false);
       setHighlightedSuggestionIndex(-1);
       setHistoryIndex(-1);
-      setEditFormat(defaultEditFormat);
+      if (!editFormatLocked) {
+        setEditFormat(defaultEditFormat);
+      }
     };
 
     const handleSubmit = () => {
@@ -551,6 +556,29 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
               >
                 <MdKeyboardArrowUp className="w-3 h-3 mr-0.5" />
                 <span className="capitalize">{editFormat}</span>
+                {editFormat !== defaultEditFormat && (
+                  <span className="ml-1">
+                    {editFormatLocked ? (
+                      <CgLock
+                        className="w-4 h-4 focus:outline-none"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditFormatLocked(false);
+                          inputRef.current?.focus();
+                        }}
+                      />
+                    ) : (
+                      <CgLockUnlock
+                        className="w-4 h-4 focus:outline-none"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditFormatLocked(true);
+                          inputRef.current?.focus();
+                        }}
+                      />
+                    )}
+                  </span>
+                )}
               </button>
               {showFormatSelector && (
                 <div className="absolute bottom-full left-4 mb-1 bg-gray-800 border border-gray-700 rounded-md shadow-lg z-10 ml-2">
@@ -560,6 +588,9 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
                       onClick={() => {
                         setEditFormat(value);
                         setShowFormatSelector(false);
+                        if (value !== defaultEditFormat) {
+                          setEditFormatLocked(false);
+                        }
                       }}
                       className={`w-full px-3 py-1 text-left hover:bg-gray-700 transition-colors duration-200 text-xs
                     ${value === editFormat ? 'text-white font-bold' : 'text-neutral-300'}`}
