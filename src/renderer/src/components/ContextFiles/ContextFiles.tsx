@@ -88,18 +88,18 @@ export const ContextFiles = ({ baseDir, showFileDialog }: Props) => {
 
   const treeData = useMemo(() => createFileTree(sortedFiles), [sortedFiles]);
 
-  const renderFileTree = (key: React.Key, id: string, title: string, treeData: Record<string, TreeItem>) => {
-    return (
+  return (
+    <div className="flex-grow w-full p-2 space-y-2 overflow-auto">
       <div className="flex flex-col">
         <div className="flex justify-between items-center mb-2">
-          <h3 className="text-md font-semibold uppercase">{title}</h3>
+          <h3 className="text-md font-semibold uppercase pl-1">Context Files</h3>
           <button onClick={showFileDialog} className="p-1 hover:bg-neutral-700 rounded-md" title="Add file">
             <HiPlus className="w-5 h-5" />
           </button>
         </div>
         <div className="flex-grow w-full">
           <UncontrolledTreeEnvironment
-            key={key}
+            key={files.length}
             dataProvider={
               new StaticTreeDataProvider(treeData, (item) => ({
                 ...item,
@@ -113,7 +113,7 @@ export const ContextFiles = ({ baseDir, showFileDialog }: Props) => {
               return <div className={`px-1 ${isNewlyAdded ? 'flash-highlight' : ''}`}>{title}</div>;
             }}
             viewState={{
-              [id]: {
+              ['contextFiles']: {
                 expandedItems: Object.keys(treeData),
               },
             }}
@@ -145,12 +145,10 @@ export const ContextFiles = ({ baseDir, showFileDialog }: Props) => {
             canDropOnFolder={false}
             canReorderItems={false}
           >
-            <Tree treeId={id} rootItem="root" />
+            <Tree treeId="contextFiles" rootItem="root" />
           </UncontrolledTreeEnvironment>
         </div>
       </div>
-    );
-  };
-
-  return <div className="flex-grow w-full p-2 space-y-4 overflow-auto">{renderFileTree(files.length, 'contextFiles', 'Context Files', treeData)}</div>;
+    </div>
+  );
 };
