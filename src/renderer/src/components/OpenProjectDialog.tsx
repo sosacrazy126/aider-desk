@@ -22,7 +22,7 @@ export const OpenProjectDialog = ({ onClose, onAddProject }: Props) => {
         return;
       }
       if (showSuggestions) {
-        const paths = await window.api.getFilePathSuggestions(projectPath);
+        const paths = await window.api.getFilePathSuggestions(projectPath, true);
         setSuggestions(paths);
       } else {
         setSuggestions([]);

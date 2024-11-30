@@ -13,6 +13,7 @@ import {
   isResponseMessage,
   isSetModelsMessage,
   isUpdateAutocompletionMessage,
+  isUpdateContextFilesMessage,
   Message,
   ResponseMessage,
 } from './messages';
@@ -93,7 +94,6 @@ class ConnectorManager {
         projectManager.getProject(connector.baseDir).addFile({
           path: message.path,
           readOnly: message.readOnly,
-          sourceType: message.sourceType,
         });
       } else if (isDropFileMessage(message)) {
         const connector = this.findConnectorBySocket(socket);
@@ -137,6 +137,13 @@ class ConnectorManager {
         };
 
         projectManager.getProject(connector.baseDir).setCurrentModels(modelsData);
+      } else if (isUpdateContextFilesMessage(message)) {
+        const connector = this.findConnectorBySocket(socket);
+        if (!connector) {
+          return;
+        }
+        const project = projectManager.getProject(connector.baseDir);
+        project.updateContextFiles(message.files);
       } else {
         logger.error('Unknown message type: ', message);
       }

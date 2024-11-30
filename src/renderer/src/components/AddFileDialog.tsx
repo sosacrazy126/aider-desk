@@ -1,31 +1,52 @@
 import { useState, useEffect } from 'react';
 import { FaFolder } from 'react-icons/fa';
+import { RiCheckboxBlankLine, RiCheckboxFill } from 'react-icons/ri';
 import { matchSorter } from 'match-sorter';
 import { ConfirmDialog } from './ConfirmDialog';
 import { AutocompletionInput } from './AutocompletionInput';
 
-interface Props {
+type Props = {
   baseDir: string;
   onClose: () => void;
-  onAddFile: (filePath: string) => void;
-}
+  onAddFile: (filePath: string, readOnly?: boolean) => void;
+  initialReadOnly?: boolean;
+};
 
-export const AddFileDialog = ({ onClose, onAddFile, baseDir }: Props) => {
+export const AddFileDialog = ({ onClose, onAddFile, baseDir, initialReadOnly = false }: Props) => {
   const [filePath, setFilePath] = useState('');
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isValidPath, setIsValidPath] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(true);
+  const [isReadOnly, setIsReadOnly] = useState(initialReadOnly);
+
+  const convertPath = (path: string, toAbsolute: boolean) => {
+    if (toAbsolute) {
+      // If path is not absolute, prepend baseDir
+      return path.startsWith('/') || path.includes(':') ? path : `${baseDir}/${path}`.replace(/\/+/g, '/');
+    } else {
+      // Convert absolute path to relative if it's under baseDir
+      return path.startsWith(baseDir) ? path.slice(baseDir.length).replace(/^\//, '') : path;
+    }
+  };
+
+  const toggleReadOnly = () => {
+    const newReadOnlyState = !isReadOnly;
+    if (filePath) {
+      setFilePath(convertPath(filePath, newReadOnlyState));
+    }
+    setIsReadOnly(newReadOnlyState);
+  };
 
   useEffect(() => {
     const updateSuggestions = async () => {
       if (!filePath) {
         setSuggestions([]);
-        setIsValidPath(false);
         return;
       }
+      const suggestFiles = isReadOnly ? await window.api.getFilePathSuggestions(filePath) : await window.api.getAddableFiles(baseDir);
+
       if (showSuggestions) {
-        const addableFiles = await window.api.getAddableFiles(baseDir);
-        const filteredSuggestions = matchSorter(addableFiles, filePath, {
+        const filteredSuggestions = matchSorter(suggestFiles, filePath, {
           keys: [
             (item) => item,
             (item) => item.split('/').pop()?.toLowerCase() ?? '',
@@ -37,15 +58,20 @@ export const AddFileDialog = ({ onClose, onAddFile, baseDir }: Props) => {
           ],
         });
         setSuggestions(filteredSuggestions);
-        setIsValidPath(addableFiles.includes(filePath));
       } else {
         setSuggestions([]);
-        setIsValidPath(suggestions.includes(filePath));
       }
     };
 
     updateSuggestions();
-  }, [filePath, showSuggestions, baseDir]);
+  }, [filePath, showSuggestions, baseDir, isReadOnly]);
+
+  useEffect(() => {
+    const checkValidPath = async () => {
+      setIsValidPath(await window.api.isValidPath(baseDir, filePath));
+    };
+    void checkValidPath();
+  }, [filePath, baseDir]);
 
   const handleBrowse = async () => {
     try {
@@ -57,7 +83,6 @@ export const AddFileDialog = ({ onClose, onAddFile, baseDir }: Props) => {
       if (!result.canceled && result.filePaths.length > 0) {
         setShowSuggestions(false);
         setFilePath(result.filePaths[0]);
-        setIsValidPath(true);
       }
     } catch (error) {
       console.error('Error selecting file:', error);
@@ -66,13 +91,13 @@ export const AddFileDialog = ({ onClose, onAddFile, baseDir }: Props) => {
 
   const handleAddFile = () => {
     if (filePath && isValidPath) {
-      onAddFile(filePath);
+      onAddFile(filePath, isReadOnly);
     }
   };
 
   return (
     <ConfirmDialog
-      title="ADD FILE"
+      title="ADD CONTEXT FILE"
       onCancel={onClose}
       onConfirm={handleAddFile}
       confirmButtonText="Add"
@@ -101,6 +126,14 @@ export const AddFileDialog = ({ onClose, onAddFile, baseDir }: Props) => {
         }
         onSubmit={handleAddFile}
       />
+      <div className="mt-3 ml-2 flex items-center">
+        <button type="button" onClick={toggleReadOnly} className="mr-2 focus:outline-none" aria-label="Toggle Read-Only">
+          {isReadOnly ? <RiCheckboxFill className="w-5 h-5 text-neutral-400" /> : <RiCheckboxBlankLine className="w-5 h-5 text-neutral-600" />}
+        </button>
+        <label onClick={toggleReadOnly} className="text-xs text-neutral-300 cursor-pointer select-none">
+          Read-Only
+        </label>
+      </div>
     </ConfirmDialog>
   );
 };

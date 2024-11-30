@@ -26,6 +26,8 @@ export const AutocompletionInput = ({ value, suggestions, onChange, placeholder,
       if (e.key === 'Enter' && onSubmit) {
         e.preventDefault();
         onSubmit();
+      } else if (e.key === 'Tab') {
+        e.preventDefault();
       }
       return;
     }
@@ -33,11 +35,23 @@ export const AutocompletionInput = ({ value, suggestions, onChange, placeholder,
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
-        setSelectedIndex((prev) => Math.min(prev + 1, suggestions.length - 1));
+        setSelectedIndex((prev) => {
+          const newIndex = Math.min(prev + 1, suggestions.length - 1);
+          const suggestionElement = document.getElementById(`suggestion-${newIndex}`);
+          suggestionElement?.scrollIntoView({ block: 'nearest' });
+          return newIndex;
+        });
         break;
       case 'ArrowUp':
         e.preventDefault();
-        setSelectedIndex((prev) => Math.max(prev - 1, -1));
+        setSelectedIndex((prev) => {
+          const newIndex = Math.max(prev - 1, 0);
+          if (newIndex >= 0) {
+            const suggestionElement = document.getElementById(`suggestion-${newIndex}`);
+            suggestionElement?.scrollIntoView({ block: 'nearest' });
+          }
+          return newIndex;
+        });
         break;
       case 'Enter':
         if (selectedIndex >= 0) {
@@ -57,6 +71,8 @@ export const AutocompletionInput = ({ value, suggestions, onChange, placeholder,
         }
         break;
       case 'Escape':
+        e.preventDefault();
+        e.stopPropagation();
         setShowSuggestions(false);
         break;
     }
@@ -77,9 +93,10 @@ export const AutocompletionInput = ({ value, suggestions, onChange, placeholder,
       />
       {rightElement}
       {showSuggestions && suggestions.length > 0 && (
-        <div className="absolute w-full mt-1 py-0.5 bg-neutral-800 border border-neutral-700 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+        <div className="absolute w-full mt-1 py-0.5 bg-neutral-800 border border-neutral-700 rounded-lg shadow-lg max-h-48 overflow-y-auto scrollbar-thin scrollbar-track-neutral-800 scrollbar-thumb-neutral-600 scrollbar-thumb-rounded-full">
           {suggestions.map((suggestion, index) => (
             <div
+              id={`suggestion-${index}`}
               key={suggestion}
               className={`px-3 py-1 text-sm cursor-pointer hover:bg-neutral-700 ${index === selectedIndex ? 'bg-neutral-700' : ''}`}
               onMouseEnter={() => setSelectedIndex(index)}

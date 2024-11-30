@@ -11,6 +11,10 @@ import { LoadingMessage, Message, ModelsMessage, PromptMessage, ErrorMessage, Re
 import { v4 as uuidv4 } from 'uuid';
 import { CgSpinner } from 'react-icons/cg';
 
+type AddFileDialogOptions = {
+  readOnly: boolean;
+};
+
 type Props = {
   project: ProjectData;
   isActive?: boolean;
@@ -19,7 +23,7 @@ type Props = {
 export const ProjectView = ({ project, isActive = false }: Props) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [processing, setProcessing] = useState(false);
-  const [addFileDialogVisible, setAddFileDialogVisible] = useState(false);
+  const [addFileDialogOptions, setAddFileDialogOptions] = useState<AddFileDialogOptions | null>(null);
   const [autocompletionData, setAutocompletionData] = useState<AutocompletionData | null>(null);
   const [currentModels, setCurrentModels] = useState<ModelsData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -119,9 +123,9 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
     };
   }, [project.baseDir, processing]);
 
-  const handleAddFile = (filePath: string) => {
-    window.api.addFile(project.baseDir, filePath);
-    setAddFileDialogVisible(false);
+  const handleAddFile = (filePath: string, readOnly = false) => {
+    window.api.addFile(project.baseDir, filePath, readOnly);
+    setAddFileDialogOptions(null);
     promptFieldRef.current?.focus();
   };
 
@@ -138,6 +142,12 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
       content: 'Thinking...',
     };
     setMessages((prevMessages) => [...prevMessages, promptMessage, loadingMessage]);
+  };
+
+  const showFileDialog = (readOnly: boolean) => {
+    setAddFileDialogOptions({
+      readOnly,
+    });
   };
 
   return (
@@ -162,7 +172,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
             words={autocompletionData?.words}
             models={autocompletionData?.models}
             currentModel={currentModels?.name}
-            showFileDialog={() => setAddFileDialogVisible(true)}
+            showFileDialog={showFileDialog}
           />
         </div>
       </div>
@@ -175,16 +185,24 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
         resizeHandles={['w']}
         className="border-l border-neutral-800 flex flex-col flex-shrink-0"
       >
-        <ContextFiles baseDir={project.baseDir} showFileDialog={() => setAddFileDialogVisible(true)} />
+        <ContextFiles
+          baseDir={project.baseDir}
+          showFileDialog={() =>
+            setAddFileDialogOptions({
+              readOnly: false,
+            })
+          }
+        />
       </ResizableBox>
-      {addFileDialogVisible && (
+      {addFileDialogOptions && (
         <AddFileDialog
           baseDir={project.baseDir}
           onClose={() => {
-            setAddFileDialogVisible(false);
+            setAddFileDialogOptions(null);
             promptFieldRef.current?.focus();
           }}
           onAddFile={handleAddFile}
+          initialReadOnly={addFileDialogOptions.readOnly}
         />
       )}
     </div>

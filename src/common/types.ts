@@ -19,14 +19,9 @@ export interface ErrorData {
   error: string;
 }
 
-export interface FileAddedData {
+export interface ContextFilesUpdatedData {
   baseDir: string;
-  file: ContextFile;
-}
-
-export interface FileDroppedData {
-  baseDir: string;
-  path: string;
+  files: ContextFile[];
 }
 
 export interface AutocompletionData {
@@ -47,9 +42,7 @@ export type ContextFileSourceType = 'companion' | 'aider' | 'app' | string;
 
 export interface ContextFile {
   path: string;
-  sourceType?: ContextFileSourceType;
   readOnly?: boolean;
-  ignored?: boolean;
 }
 
 export interface WindowState {

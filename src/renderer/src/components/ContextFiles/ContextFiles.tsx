@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { StaticTreeDataProvider, Tree, UncontrolledTreeEnvironment } from 'react-complex-tree';
 import { HiX, HiPlus } from 'react-icons/hi';
+import { CgLock } from 'react-icons/cg';
 import { ContextFile } from '@common/types';
 
 import './ContextFiles.css';
@@ -66,27 +67,33 @@ export const ContextFiles = ({ baseDir, showFileDialog }: Props) => {
   }, [files]);
 
   useEffect(() => {
-    const fileAddedListenerId = window.api.addFileAddedListener(baseDir, (_, { file }) => {
-      setFiles((prev) => [...new Set([...prev, file])]);
-      setTimeout(() => {
-        setNewlyAddedFiles((prev) => [...prev, file.path]);
-        setTimeout(() => {
-          setNewlyAddedFiles((prev) => prev.filter((path) => path !== file.path));
-        }, 2000);
-      }, 10);
-    });
+    const listenerId = window.api.addContextFilesUpdatedListener(baseDir, (_, { files: updatedFiles }) => {
+      setFiles(updatedFiles);
 
-    const fileDroppedListenerId = window.api.addFileDroppedListener(baseDir, (_, data) => {
-      setFiles((prev) => prev.filter((file) => file.path !== data.path));
+      // Handle highlighting of new files
+      const newFiles = updatedFiles.filter((file) => !files.some((f) => f.path === file.path));
+      if (newFiles.length > 0) {
+        setNewlyAddedFiles((prev) => [...prev, ...newFiles.map((f) => f.path)]);
+        setTimeout(() => {
+          setNewlyAddedFiles((prev) => prev.filter((path) => !newFiles.some((f) => f.path === path)));
+        }, 2000);
+      }
     });
 
     return () => {
-      window.api.removeFileAddedListener(fileAddedListenerId);
-      window.api.removeFileDroppedListener(fileDroppedListenerId);
+      window.api.removeContextFilesUpdatedListener(listenerId);
     };
-  }, [baseDir]);
+  }, [baseDir, files]);
 
   const treeData = useMemo(() => createFileTree(sortedFiles), [sortedFiles]);
+
+  const dropFile = (item: TreeItem) => (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    const file = (item as TreeItem).file;
+    if (file) {
+      window.api.dropFile(baseDir, file.path);
+    }
+  };
 
   return (
     <div className="flex-grow w-full p-2 space-y-2 overflow-auto">
@@ -110,8 +117,9 @@ export const ContextFiles = ({ baseDir, showFileDialog }: Props) => {
             getItemTitle={(item) => item.data}
             renderItemTitle={({ title, item }) => {
               const isNewlyAdded = (item as TreeItem).file?.path && newlyAddedFiles.includes((item as TreeItem).file!.path);
-              return <div className={`px-1 ${isNewlyAdded ? 'flash-highlight' : ''}`}>{title}</div>;
+              return <div className={`px-1 ${isNewlyAdded ? 'flash-highlight' : ''} flex items-center gap-1`}>{title}</div>;
             }}
+            renderItemArrow={() => null}
             viewState={{
               ['contextFiles']: {
                 expandedItems: Object.keys(treeData),
@@ -121,21 +129,15 @@ export const ContextFiles = ({ baseDir, showFileDialog }: Props) => {
               <>
                 <div className="flex items-center justify-between w-full pr-2 min-h-5">
                   <div className="flex items-center">
-                    <span className={`ml-1 text-xxs ${item.isFolder ? 'text-neutral-500' : 'text-white font-semibold'}`}>{title}</span>
+                    <span className={`ml-1 text-xxs ${item.isFolder ? 'text-neutral-600' : 'text-neutral-100 font-semibold'}`}>{title}</span>
                   </div>
                   {!item.isFolder && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const file = (item as TreeItem).file;
-                        if (file) {
-                          window.api.dropFile(baseDir, file.path);
-                        }
-                      }}
-                      className="px-1 py-1 rounded hover:bg-neutral-900 text-neutral-500 hover:text-red-800"
-                    >
-                      <HiX className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center gap-1">
+                      {(item as TreeItem).file?.readOnly && <CgLock className="w-3 h-3 text-neutral-400" />}
+                      <button onClick={dropFile(item as TreeItem)} className="px-1 py-1 rounded hover:bg-neutral-900 text-neutral-500 hover:text-red-800">
+                        <HiX className="w-4 h-4" />
+                      </button>
+                    </div>
                   )}
                 </div>
                 {children}

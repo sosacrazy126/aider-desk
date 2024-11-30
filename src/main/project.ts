@@ -78,7 +78,7 @@ export class Project {
     logger.info('Starting Aider...', { baseDir: this.baseDir });
     this.process.stdout.on('data', (data) => {
       const output = data.toString();
-      logger.debug('Aider output:', { output });
+      logger.info('Aider output:', { output });
     });
 
     this.process.stderr.on('data', (data) => {
@@ -160,24 +160,34 @@ export class Project {
   }
 
   public addFile(contextFile: ContextFile): void {
-    logger.info('Adding file:', { path: contextFile.path });
-    this.contextFiles.push(contextFile);
-    this.findMessageConnectors('add-file').forEach((connector) => connector.sendAddFileMessage(contextFile));
-
-    this.mainWindow?.webContents.send('file-added', {
-      baseDir: this.baseDir,
-      file: contextFile,
-    });
+    logger.info('Adding file:', { path: contextFile.path, readOnly: contextFile.readOnly });
+    const existingFile = this.contextFiles.find((file) => file.path === contextFile.path);
+    if (!existingFile) {
+      this.contextFiles.push(contextFile);
+      this.findMessageConnectors('add-file').forEach((connector) => connector.sendAddFileMessage(contextFile));
+    }
   }
 
-  public dropFile(path: string): void {
-    logger.info('Dropping file:', { path });
-    this.contextFiles = this.contextFiles.filter((file) => file.path !== path);
-    this.findMessageConnectors('drop-file').forEach((connector) => connector.sendDropFileMessage(path));
+  public dropFile(filePath: string): void {
+    logger.info('Dropping file:', { path: filePath });
+    const file = this.contextFiles.find((f) => f.path === filePath);
+    
+    // Check if file is outside project directory
+    const absolutePath = path.resolve(this.baseDir, filePath);
+    const isOutsideProject = !absolutePath.startsWith(path.resolve(this.baseDir));
+    
+    const pathToSend = (file?.readOnly || isOutsideProject) ? absolutePath : filePath;
+    
+    this.contextFiles = this.contextFiles.filter((file) => file.path !== filePath);
+    this.findMessageConnectors('drop-file').forEach((connector) => connector.sendDropFileMessage(pathToSend));
+  }
 
-    this.mainWindow?.webContents.send('file-dropped', {
+  public updateContextFiles(contextFiles: ContextFile[]) {
+    this.contextFiles = contextFiles;
+
+    this.mainWindow?.webContents.send('context-files-updated', {
       baseDir: this.baseDir,
-      path,
+      files: contextFiles,
     });
   }
 

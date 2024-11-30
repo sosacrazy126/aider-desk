@@ -3,13 +3,13 @@ import { contextBridge, ipcRenderer } from 'electron';
 import { v4 as uuidv4 } from 'uuid';
 import {
   AutocompletionData,
-  FileAddedData,
-  FileDroppedData,
+  ContextFile,
+  ContextFilesUpdatedData,
+  ErrorData,
   ModelsData,
   QuestionData,
   ResponseChunkData,
   ResponseCompletedData,
-  ErrorData,
   SettingsData,
 } from '../common/types';
 import { ApplicationAPI } from './index.d';
@@ -21,8 +21,7 @@ export interface ResponseModelData extends ModelsData {
 const responseChunkListeners: Record<string, (event: Electron.IpcRendererEvent, data: ResponseChunkData) => void> = {};
 const responseFinishedListeners: Record<string, (event: Electron.IpcRendererEvent, data: ResponseCompletedData) => void> = {};
 const errorListeners: Record<string, (event: Electron.IpcRendererEvent, data: ErrorData) => void> = {};
-const fileAddedListeners: Record<string, (event: Electron.IpcRendererEvent, data: FileAddedData) => void> = {};
-const fileDroppedListeners: Record<string, (event: Electron.IpcRendererEvent, data: FileDroppedData) => void> = {};
+const contextFilesUpdatedListeners: Record<string, (event: Electron.IpcRendererEvent, data: { baseDir: string; files: ContextFile[] }) => void> = {};
 const updateAutocompletionListeners: Record<string, (event: Electron.IpcRendererEvent, data: AutocompletionData) => void> = {};
 const askQuestionListeners: Record<string, (event: Electron.IpcRendererEvent, data: QuestionData) => void> = {};
 const setCurrentModelsListeners: Record<string, (event: Electron.IpcRendererEvent, data: ModelsData & { baseDir: string }) => void> = {};
@@ -43,10 +42,11 @@ const api: ApplicationAPI = {
   updateMainModel: (baseDir, model) => ipcRenderer.send('update-main-model', baseDir, model),
   getProjectSettings: (baseDir) => ipcRenderer.invoke('get-project-settings', baseDir),
   saveProjectSettings: (baseDir, settings) => ipcRenderer.invoke('save-project-settings', baseDir, settings),
-  getFilePathSuggestions: (currentPath: string) => ipcRenderer.invoke('get-file-path-suggestions', currentPath),
+  getFilePathSuggestions: (currentPath: string, directoriesOnly = false) => ipcRenderer.invoke('get-file-path-suggestions', currentPath, directoriesOnly),
   getAddableFiles: (baseDir: string) => ipcRenderer.invoke('get-addable-files', baseDir),
-  addFile: (baseDir: string, filePath: string) => ipcRenderer.send('add-file', baseDir, filePath),
-  isProjectPath: (path: string) => ipcRenderer.invoke('isProjectPath', path),
+  addFile: (baseDir: string, filePath: string, readOnly = false) => ipcRenderer.send('add-file', baseDir, filePath, readOnly),
+  isValidPath: (baseDir: string, path: string) => ipcRenderer.invoke('is-valid-path', baseDir, path),
+  isProjectPath: (path: string) => ipcRenderer.invoke('is-project-path', path),
   dropFile: (baseDir: string, path: string) => ipcRenderer.send('drop-file', baseDir, path),
 
   addResponseChunkListener: (baseDir, callback) => {
@@ -105,41 +105,22 @@ const api: ApplicationAPI = {
     }
   },
 
-  addFileAddedListener: (baseDir, callback) => {
+  addContextFilesUpdatedListener: (baseDir, callback) => {
     const listenerId = uuidv4();
-    fileAddedListeners[listenerId] = (event: Electron.IpcRendererEvent, data: FileAddedData) => {
+    contextFilesUpdatedListeners[listenerId] = (event: Electron.IpcRendererEvent, data: ContextFilesUpdatedData) => {
       if (data.baseDir !== baseDir) {
         return;
       }
       callback(event, data);
     };
-    ipcRenderer.on('file-added', fileAddedListeners[listenerId]);
+    ipcRenderer.on('context-files-updated', contextFilesUpdatedListeners[listenerId]);
     return listenerId;
   },
-  removeFileAddedListener: (listenerId) => {
-    const callback = fileAddedListeners[listenerId];
+  removeContextFilesUpdatedListener: (listenerId) => {
+    const callback = contextFilesUpdatedListeners[listenerId];
     if (callback) {
-      ipcRenderer.removeListener('file-added', callback);
-      delete fileAddedListeners[listenerId];
-    }
-  },
-
-  addFileDroppedListener: (baseDir, callback) => {
-    const listenerId = uuidv4();
-    fileDroppedListeners[listenerId] = (event: Electron.IpcRendererEvent, data: FileDroppedData) => {
-      if (data.baseDir !== baseDir) {
-        return;
-      }
-      callback(event, data);
-    };
-    ipcRenderer.on('file-dropped', fileDroppedListeners[listenerId]);
-    return listenerId;
-  },
-  removeFileDroppedListener: (listenerId) => {
-    const callback = fileDroppedListeners[listenerId];
-    if (callback) {
-      ipcRenderer.removeListener('file-dropped', callback);
-      delete fileDroppedListeners[listenerId];
+      ipcRenderer.removeListener('context-files-updated', callback);
+      delete contextFilesUpdatedListeners[listenerId];
     }
   },
 

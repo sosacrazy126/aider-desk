@@ -2,28 +2,35 @@ import * as fs from 'fs';
 import * as path from 'path';
 import logger from './logger';
 
-export const getFilePathSuggestions = async (currentPath: string): Promise<string[]> => {
+export const getFilePathSuggestions = async (currentPath: string, directoriesOnly = false): Promise<string[]> => {
   try {
     let dirPath = currentPath;
     let searchPattern = '';
 
-    // If path ends with a non-separator, treat the last part as a search pattern
+    // Extract directory and search pattern
     if (currentPath && !currentPath.endsWith(path.sep)) {
       dirPath = path.dirname(currentPath);
       searchPattern = path.basename(currentPath).toLowerCase();
     }
 
-    // Ensure directory exists
+    // Fallback to parent directory if current doesn't exist
     if (!fs.existsSync(dirPath)) {
       dirPath = path.dirname(dirPath);
     }
 
-    // Read directory contents
+    // Ensure dirPath is a directory
+    const stats = await fs.promises.stat(dirPath);
+    if (!stats.isDirectory()) {
+      logger.error('Provided path is not a directory:', { path: dirPath });
+      return [];
+    }
+
+    // Get directory contents
     const entries = await fs.promises.readdir(dirPath, { withFileTypes: true });
 
-    // Filter and sort entries
+    // Filter entries based on type and search pattern
     return entries
-      .filter((entry) => entry.isDirectory() && (!searchPattern || entry.name.toLowerCase().startsWith(searchPattern)))
+      .filter((entry) => (!directoriesOnly || entry.isDirectory()) && (!searchPattern || entry.name.toLowerCase().startsWith(searchPattern)))
       .map((entry) => path.join(dirPath, entry.name))
       .filter((entryPath) => entryPath !== currentPath)
       .sort();
@@ -38,6 +45,17 @@ export const isProjectPath = async (path: string): Promise<boolean> => {
     return fs.existsSync(path);
   } catch (error) {
     logger.error('Error checking if path exists:', { error });
+    return false;
+  }
+};
+
+export const isValidPath = async (baseDir: string, filePath: string): Promise<boolean> => {
+  try {
+    const fullPath = path.isAbsolute(filePath) ? filePath : path.join(baseDir, filePath);
+    const stats = await fs.promises.stat(fullPath);
+
+    return stats.isDirectory() || stats.isFile();
+  } catch {
     return false;
   }
 };

@@ -1,7 +1,5 @@
 import {
   AutocompletionData,
-  FileAddedData,
-  FileDroppedData,
   ModelsData,
   ProjectData,
   ProjectSettings,
@@ -10,6 +8,7 @@ import {
   ResponseCompletedData,
   ErrorData,
   SettingsData,
+  ContextFilesUpdatedData,
 } from '../common/types';
 import type { ElectronAPI } from '@electron-toolkit/preload';
 
@@ -29,9 +28,10 @@ export interface ApplicationAPI {
   updateMainModel: (baseDir: string, model: string) => void;
   getProjectSettings: (baseDir: string) => Promise<ProjectSettings>;
   saveProjectSettings: (baseDir: string, settings: ProjectSettings) => Promise<void>;
-  getFilePathSuggestions: (currentPath: string) => Promise<string[]>;
+  getFilePathSuggestions: (currentPath: string, directoriesOnly?: boolean) => Promise<string[]>;
   getAddableFiles: (baseDir: string) => Promise<string[]>;
-  addFile: (baseDir: string, filePath: string) => void;
+  addFile: (baseDir: string, filePath: string, readOnly?: boolean) => void;
+  isValidPath: (baseDir: string, path: string) => Promise<boolean>;
   isProjectPath: (path: string) => Promise<boolean>;
   dropFile: (baseDir: string, path: string) => void;
 
@@ -44,11 +44,8 @@ export interface ApplicationAPI {
   addErrorListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: ErrorData) => void) => string;
   removeErrorListener: (listenerId: string) => void;
 
-  addFileAddedListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: FileAddedData) => void) => string;
-  removeFileAddedListener: (listenerId: string) => void;
-
-  addFileDroppedListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: FileDroppedData) => void) => string;
-  removeFileDroppedListener: (listenerId: string) => void;
+  addContextFilesUpdatedListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: ContextFilesUpdatedData) => void) => string;
+  removeContextFilesUpdatedListener: (listenerId: string) => void;
 
   addUpdateAutocompletionListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: AutocompletionData) => void) => string;
   removeUpdateAutocompletionListener: (listenerId: string) => void;

@@ -1,6 +1,6 @@
 import { ProjectSettings, SettingsData } from '@common/types';
 import { BrowserWindow, dialog, ipcMain } from 'electron';
-import { getFilePathSuggestions, isProjectPath } from './file-system';
+import { getFilePathSuggestions, isProjectPath, isValidPath } from './file-system';
 import { EditFormat } from './messages';
 import { projectManager } from './project-manager';
 import { Store } from './store';
@@ -26,8 +26,8 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, store: Store) => {
     projectManager.getProject(baseDir).dropFile(filePath);
   });
 
-  ipcMain.on('add-file', (_, baseDir: string, filePath: string) => {
-    projectManager.getProject(baseDir).addFile({ path: filePath });
+  ipcMain.on('add-file', (_, baseDir: string, filePath: string, readOnly = false) => {
+    projectManager.getProject(baseDir).addFile({ path: filePath, readOnly });
   });
 
   ipcMain.on('start-project', (_, baseDir: string) => {
@@ -66,12 +66,16 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, store: Store) => {
     return projectManager.getProject(baseDir).getAddableFiles();
   });
 
-  ipcMain.handle('isProjectPath', async (_, path: string) => {
+  ipcMain.handle('is-project-path', async (_, path: string) => {
     return isProjectPath(path);
   });
 
-  ipcMain.handle('get-file-path-suggestions', async (_, currentPath: string) => {
-    return getFilePathSuggestions(currentPath);
+  ipcMain.handle('is-valid-path', async (_, baseDir: string, path: string) => {
+    return isValidPath(baseDir, path);
+  });
+
+  ipcMain.handle('get-file-path-suggestions', async (_, currentPath: string, directoriesOnly = true) => {
+    return getFilePathSuggestions(currentPath, directoriesOnly);
   });
 
   ipcMain.on('update-main-model', (_, baseDir: string, model: string) => {

@@ -9,7 +9,8 @@ export type MessageAction =
   | 'update-autocompletion'
   | 'ask-question'
   | 'answer-question'
-  | 'set-models';
+  | 'set-models'
+  | 'update-context-files';
 
 export interface Message {
   action: MessageAction;
@@ -111,4 +112,13 @@ export interface SetModelsMessage extends Message {
 
 export const isSetModelsMessage = (message: Message): message is SetModelsMessage => {
   return typeof message === 'object' && message !== null && 'action' in message && message.action === 'set-models';
+};
+
+export interface UpdateContextFilesMessage extends Message {
+  action: 'update-context-files';
+  files: ContextFile[];
+}
+
+export const isUpdateContextFilesMessage = (message: Message): message is UpdateContextFilesMessage => {
+  return typeof message === 'object' && message !== null && 'action' in message && message.action === 'update-context-files';
 };

@@ -11,7 +11,9 @@ type Props = {
 
 export const BaseDialog = ({ title, onClose, children, footer, width = 384, closeOnEscape = false }: Props) => {
   useEffect(() => {
-    if (!closeOnEscape) return;
+    if (!closeOnEscape) {
+      return;
+    }
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {

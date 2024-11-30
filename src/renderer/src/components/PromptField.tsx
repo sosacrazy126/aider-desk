@@ -25,7 +25,7 @@ const PLACEHOLDERS = [
   'Give me some task!',
 ];
 
-const COMMANDS = ['/code', '/ask', '/architect', '/add', '/model'];
+const COMMANDS = ['/code', '/ask', '/architect', '/add', '/model', '/read-only'];
 
 const EDIT_FORMATS = [
   { value: 'code', label: 'Code' },
@@ -48,7 +48,7 @@ type Props = {
   words?: string[];
   models?: string[];
   currentModel?: string;
-  showFileDialog: () => void;
+  showFileDialog: (readOnly: boolean) => void;
   defaultEditFormat?: string;
 };
 
@@ -113,7 +113,11 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
           }
           case '/add':
             setText('');
-            showFileDialog();
+            showFileDialog(false);
+            break;
+          case '/read-only':
+            setText('');
+            showFileDialog(true);
             break;
           case '/model':
             setText('');
@@ -314,7 +318,6 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
       if (question) {
         if (e.key === 'Tab') {
           e.preventDefault();
-          console.log(selectedAnswer);
           const currentIndex = ANSWERS.indexOf(selectedAnswer?.toLowerCase() || 'y');
           if (currentIndex !== -1) {
             const nextIndex = (currentIndex + (e.shiftKey ? -1 : 1) + ANSWERS.length) % ANSWERS.length;
