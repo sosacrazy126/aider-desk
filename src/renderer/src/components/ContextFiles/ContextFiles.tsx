@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { StaticTreeDataProvider, Tree, UncontrolledTreeEnvironment } from 'react-complex-tree';
 import { HiX, HiPlus } from 'react-icons/hi';
-import { CgLock } from 'react-icons/cg';
+import { TbPencilOff } from 'react-icons/tb';
 import { ContextFile } from '@common/types';
 
 import './ContextFiles.css';
@@ -133,7 +133,7 @@ export const ContextFiles = ({ baseDir, showFileDialog }: Props) => {
                   </div>
                   {!item.isFolder && (
                     <div className="flex items-center gap-1">
-                      {(item as TreeItem).file?.readOnly && <CgLock className="w-3 h-3 text-neutral-400" />}
+                      {(item as TreeItem).file?.readOnly && <TbPencilOff className="w-4 h-4 text-neutral-400" />}
                       <button onClick={dropFile(item as TreeItem)} className="px-1 py-1 rounded hover:bg-neutral-900 text-neutral-500 hover:text-red-800">
                         <HiX className="w-4 h-4" />
                       </button>
