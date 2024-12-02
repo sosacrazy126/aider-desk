@@ -2,7 +2,7 @@ import { ModelsData } from '@common/types';
 
 export interface Message {
   id: string;
-  type: 'prompt' | 'response' | 'error' | 'loading' | 'models';
+  type: 'prompt' | 'response' | 'warning' | 'error' | 'loading' | 'models' | 'reflected-message';
   content: string;
 }
 
@@ -14,6 +14,14 @@ export interface PromptMessage extends Message {
 export interface ResponseMessage extends Message {
   type: 'response';
   processing: boolean;
+}
+
+export interface ReflectedMessage extends Message {
+  type: 'reflected-message';
+}
+
+export interface WarningMessage extends Message {
+  type: 'warning';
 }
 
 export interface ErrorMessage extends Message {
@@ -37,6 +45,10 @@ export const isResponseMessage = (message: Message): message is ResponseMessage 
   return message.type === 'response';
 };
 
+export const isWarningMessage = (message: Message): message is WarningMessage => {
+  return message.type === 'warning';
+};
+
 export const isErrorMessage = (message: Message): message is ErrorMessage => {
   return message.type === 'error';
 };
@@ -47,4 +59,8 @@ export const isLoadingMessage = (message: Message): message is LoadingMessage =>
 
 export const isModelsMessage = (message: Message): message is ModelsMessage => {
   return message.type === 'models';
+};
+
+export const isReflectedMessage = (message: Message): message is ResponseMessage => {
+  return message.type === 'reflected-message';
 };

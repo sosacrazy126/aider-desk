@@ -1,8 +1,9 @@
-import { isLoadingMessage, isErrorMessage, isModelsMessage, Message } from 'types/message';
+import { isLoadingMessage, isErrorMessage, isModelsMessage, isWarningMessage, isReflectedMessage, Message } from 'types/message';
 import { parseMessageContent } from 'utils/message';
 import { BiCopy } from 'react-icons/bi';
 import { Tooltip } from 'react-tooltip';
 import { showInfoNotification } from 'utils/notifications';
+import { ReflectedMessageBlock } from './ReflectedMessageBlock';
 
 type Props = {
   message: Message;
@@ -28,6 +29,22 @@ export const MessageBlock = ({ message, allFiles }: Props) => {
           className="absolute top-2 right-2 h-4 w-4 text-neutral-600 opacity-0 group-hover:opacity-100 cursor-pointer hover:text-neutral-300 transition-opacity focus:outline-none"
         />
         <Tooltip id={`copy-tooltip-${message.id}`} place="top" className="z-50" />
+      </div>
+    );
+  }
+
+  if (isWarningMessage(message)) {
+    return (
+      <div className={`${baseClasses} bg-yellow-900/30 border-yellow-800/50 text-yellow-200 relative group`}>
+        <div className="font-semibold mb-1">Warning</div>
+        {message.content}
+        <BiCopy
+          data-tooltip-id={`copy-tooltip-${message.id}`}
+          data-tooltip-content="Copy to clipboard"
+          onClick={() => copyToClipboard(message.content)}
+          className="absolute top-2 right-2 h-4 w-4 text-yellow-600 opacity-0 group-hover:opacity-100 cursor-pointer hover:text-yellow-300 transition-opacity focus:outline-none"
+        />
+        <Tooltip id={`copy-tooltip-${message.id}`} />
       </div>
     );
   }
@@ -75,6 +92,10 @@ export const MessageBlock = ({ message, allFiles }: Props) => {
     );
   }
 
+  if (isReflectedMessage(message)) {
+    return <ReflectedMessageBlock message={message} allFiles={allFiles} />;
+  }
+
   return (
     <div className={`${baseClasses} relative group`}>
       {parseMessageContent(message.content, allFiles)}
@@ -82,7 +103,7 @@ export const MessageBlock = ({ message, allFiles }: Props) => {
         data-tooltip-id={`copy-tooltip-${message.id}`}
         data-tooltip-content="Copy to clipboard"
         onClick={() => copyToClipboard(message.content)}
-        className="absolute top-2 right-2 h-4 w-4 text-neutral-600 opacity-0 group-hover:opacity-100 cursor-pointer hover:text-neutral-300 transition-opacity f "
+        className="absolute top-2 right-2 h-4 w-4 text-neutral-600 opacity-0 group-hover:opacity-100 cursor-pointer hover:text-neutral-300 transition-opacity"
       />
       <Tooltip id={`copy-tooltip-${message.id}`} />
     </div>

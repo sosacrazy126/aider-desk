@@ -2,16 +2,23 @@ export interface ResponseChunkData {
   messageId: string;
   baseDir: string;
   chunk: string;
+  reflectedMessage?: string;
 }
 
 export interface ResponseCompletedData {
   messageId: string;
   baseDir: string;
   content: string;
+  reflectedMessage?: string;
   editedFiles?: string[];
   commitHash?: string;
   commitMessage?: string;
   diff?: string;
+}
+
+export interface WarningData {
+  baseDir: string;
+  warning: string;
 }
 
 export interface ErrorData {
@@ -79,12 +86,4 @@ export interface SettingsData {
   models: {
     preferred: string[];
   };
-}
-
-export interface Test {
-  propertyA: string;
-}
-
-export interface Test2 {
-  propertyB: boolean;
 }

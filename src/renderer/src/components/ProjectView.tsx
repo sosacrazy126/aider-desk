@@ -1,4 +1,4 @@
-import { AutocompletionData, ModelsData, ProjectData, ResponseChunkData, ResponseCompletedData, ErrorData } from '@common/types';
+import { AutocompletionData, ModelsData, ProjectData, ResponseChunkData, ResponseCompletedData, ErrorData, WarningData } from '@common/types';
 import { AddFileDialog } from 'components/AddFileDialog';
 import { ContextFiles } from 'components/ContextFiles';
 import { Messages } from 'components/Messages';
@@ -7,7 +7,7 @@ import { IpcRendererEvent } from 'electron';
 import { useEffect, useRef, useState } from 'react';
 import { ResizableBox } from 'react-resizable';
 import 'react-resizable/css/styles.css';
-import { LoadingMessage, Message, ModelsMessage, PromptMessage, ErrorMessage, ResponseMessage } from 'types/message';
+import { LoadingMessage, Message, ModelsMessage, PromptMessage, ErrorMessage, ResponseMessage, WarningMessage } from 'types/message';
 import { v4 as uuidv4 } from 'uuid';
 import { CgSpinner } from 'react-icons/cg';
 
@@ -45,17 +45,28 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
   }, [messages]);
 
   useEffect(() => {
-    const handleResponseChunk = (_: IpcRendererEvent, { messageId, chunk }: ResponseChunkData) => {
+    const handleResponseChunk = (_: IpcRendererEvent, { messageId, chunk, reflectedMessage }: ResponseChunkData) => {
       const processingMessage = processingMessageRef.current;
       if (!processingMessage || processingMessage.id !== messageId) {
+        const newMessages: Message[] = [];
+
+        if (reflectedMessage) {
+          newMessages.push({
+            id: uuidv4(),
+            type: 'reflected-message',
+            content: reflectedMessage,
+          });
+        }
+
         const newResponseMessage: ResponseMessage = {
-          type: 'response',
           id: messageId,
+          type: 'response',
           content: chunk,
           processing: true,
         };
         processingMessageRef.current = newResponseMessage;
-        setMessages((prevMessages) => prevMessages.filter((message) => message.type !== 'loading').concat(newResponseMessage));
+        newMessages.push(newResponseMessage);
+        setMessages((prevMessages) => prevMessages.filter((message) => message.type !== 'loading').concat(...newMessages));
       } else {
         processingMessage.content += chunk;
         setMessages((prevMessages) => prevMessages.map((message) => (message.id === messageId ? processingMessage : message)));
@@ -73,6 +84,16 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
         setMessages((prevMessages) => prevMessages.filter((message) => message.type !== 'loading'));
         setProcessing(false);
       }
+    };
+
+    const handleWarning = (_: IpcRendererEvent, { warning }: WarningData) => {
+      const warningMessage: WarningMessage = {
+        id: uuidv4(),
+        type: 'warning',
+        content: warning,
+      };
+      setMessages((prevMessages) => prevMessages.filter((message) => message.type !== 'loading').concat(warningMessage));
+      setProcessing(false);
     };
 
     const handleError = (_: IpcRendererEvent, { error }: ErrorData) => {
@@ -112,6 +133,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
 
     const responseChunkListenerId = window.api.addResponseChunkListener(project.baseDir, handleResponseChunk);
     const responseCompletedListenerId = window.api.addResponseCompletedListener(project.baseDir, handleResponseCompleted);
+    const warningListenerId = window.api.addWarningListener(project.baseDir, handleWarning);
     const errorListenerId = window.api.addErrorListener(project.baseDir, handleError);
 
     return () => {
@@ -119,6 +141,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
       window.api.removeSetCurrentModelsListener(currentModelsListenerId);
       window.api.removeResponseChunkListener(responseChunkListenerId);
       window.api.removeResponseCompletedListener(responseCompletedListenerId);
+      window.api.removeWarningListener(warningListenerId);
       window.api.removeErrorListener(errorListenerId);
     };
   }, [project.baseDir, processing]);

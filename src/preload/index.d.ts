@@ -55,6 +55,9 @@ export interface ApplicationAPI {
 
   addSetCurrentModelsListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: ModelsData & { baseDir: string }) => void) => string;
   removeSetCurrentModelsListener: (listenerId: string) => void;
+
+  addWarningListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: { baseDir: string; warning: string }) => void) => string;
+  removeWarningListener: (listenerId: string) => void;
 }
 
 declare global {

@@ -11,6 +11,7 @@ import {
   ResponseChunkData,
   ResponseCompletedData,
   SettingsData,
+  WarningData,
 } from '../common/types';
 import { ApplicationAPI } from './index.d';
 
@@ -25,6 +26,7 @@ const contextFilesUpdatedListeners: Record<string, (event: Electron.IpcRendererE
 const updateAutocompletionListeners: Record<string, (event: Electron.IpcRendererEvent, data: AutocompletionData) => void> = {};
 const askQuestionListeners: Record<string, (event: Electron.IpcRendererEvent, data: QuestionData) => void> = {};
 const setCurrentModelsListeners: Record<string, (event: Electron.IpcRendererEvent, data: ModelsData & { baseDir: string }) => void> = {};
+const warningListeners: Record<string, (event: Electron.IpcRendererEvent, data: { baseDir: string; warning: string }) => void> = {};
 
 const api: ApplicationAPI = {
   loadSettings: () => ipcRenderer.invoke('load-settings'),
@@ -84,6 +86,25 @@ const api: ApplicationAPI = {
     if (callback) {
       ipcRenderer.removeListener('response-completed', callback);
       delete responseFinishedListeners[listenerId];
+    }
+  },
+
+  addWarningListener: (baseDir, callback) => {
+    const listenerId = uuidv4();
+    warningListeners[listenerId] = (event: Electron.IpcRendererEvent, data: WarningData) => {
+      if (data.baseDir !== baseDir) {
+        return;
+      }
+      callback(event, data);
+    };
+    ipcRenderer.on('warning', warningListeners[listenerId]);
+    return listenerId;
+  },
+  removeWarningListener: (listenerId) => {
+    const callback = warningListeners[listenerId];
+    if (callback) {
+      ipcRenderer.removeListener('warning', callback);
+      delete warningListeners[listenerId];
     }
   },
 

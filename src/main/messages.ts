@@ -16,6 +16,10 @@ export interface Message {
   action: MessageAction;
 }
 
+export interface WarningMessage {
+  message: string;
+}
+
 export interface ErrorMessage {
   message: string;
 }
@@ -42,6 +46,7 @@ export interface PromptMessage extends Message {
 export interface ResponseMessage extends Message {
   action: 'response';
   content: string;
+  reflectedMessage?: string;
   finished: boolean;
   editedFiles?: string[];
   commitHash?: string;

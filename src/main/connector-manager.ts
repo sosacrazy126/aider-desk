@@ -16,6 +16,7 @@ import {
   isUpdateContextFilesMessage,
   Message,
   ResponseMessage,
+  WarningMessage,
 } from './messages';
 import { projectManager } from './project-manager';
 import logger from './logger';
@@ -49,6 +50,7 @@ class ConnectorManager {
       logger.info('Socket.IO client connected');
 
       socket.on('message', (message) => this.processMessage(socket, message));
+      socket.on('warning', (message) => this.processWarningMessage(socket, message));
       socket.on('error', (message) => this.processErrorMessage(socket, message));
 
       socket.on('disconnect', () => {
@@ -152,6 +154,18 @@ class ConnectorManager {
     }
   };
 
+  private processWarningMessage = (socket: Socket, message: WarningMessage) => {
+    const connector = this.findConnectorBySocket(socket);
+    if (!connector || !this.mainWindow) {
+      return;
+    }
+
+    this.mainWindow.webContents.send('warning', {
+      baseDir: connector.baseDir,
+      warning: message.message,
+    });
+  };
+
   private processErrorMessage = (socket: Socket, message: ErrorMessage) => {
     const connector = this.findConnectorBySocket(socket);
     if (!connector || !this.mainWindow) {
@@ -188,6 +202,7 @@ class ConnectorManager {
         messageId: this.currentResponseMessageId,
         baseDir,
         chunk: message.content,
+        reflectedMessage: message.reflectedMessage,
       };
       this.mainWindow.webContents.send('response-chunk', data);
     } else {
@@ -196,6 +211,7 @@ class ConnectorManager {
       const data: ResponseCompletedData = {
         messageId: this.currentResponseMessageId,
         content: message.content,
+        reflectedMessage: message.reflectedMessage,
         baseDir,
         editedFiles: message.editedFiles,
         commitHash: message.commitHash,

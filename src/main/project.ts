@@ -45,7 +45,7 @@ export class Project {
 
     const args = ['-m', 'aider.main'];
     if (options) {
-      const optionsArgs = options.split(' ').filter((arg) => arg);
+      const optionsArgs = (options.match(/(?:[^\s"]+|"[^"]*")+/g) as string[]) || [];
       if (model) {
         // Only remove existing --model if we're adding a new one
         const modelIndex = optionsArgs.indexOf('--model');
@@ -53,10 +53,12 @@ export class Project {
           optionsArgs.splice(modelIndex, 2);
         }
       }
-      args.push(...optionsArgs);
+      args.push(...optionsArgs.map((option) => (option.startsWith('"') && option.endsWith('"') ? option.slice(1, -1) : option)));
     }
     args.push(...['--no-check-update', '--connector', '--no-show-model-warnings']);
     args.push(this.baseDir);
+
+    logger.info('Running Aider with args:', { args });
 
     if (model) {
       args.push('--model', model);
@@ -171,13 +173,13 @@ export class Project {
   public dropFile(filePath: string): void {
     logger.info('Dropping file:', { path: filePath });
     const file = this.contextFiles.find((f) => f.path === filePath);
-    
+
     // Check if file is outside project directory
     const absolutePath = path.resolve(this.baseDir, filePath);
     const isOutsideProject = !absolutePath.startsWith(path.resolve(this.baseDir));
-    
-    const pathToSend = (file?.readOnly || isOutsideProject) ? absolutePath : filePath;
-    
+
+    const pathToSend = file?.readOnly || isOutsideProject ? absolutePath : filePath;
+
     this.contextFiles = this.contextFiles.filter((file) => file.path !== filePath);
     this.findMessageConnectors('drop-file').forEach((connector) => connector.sendDropFileMessage(pathToSend));
   }
