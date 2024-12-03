@@ -13,6 +13,7 @@ export class Project {
   private mainWindow: BrowserWindow | null = null;
   private process?: ChildProcessWithoutNullStreams | null = null;
   private connectors: Connector[] = [];
+  private currentCommand: string | null = null;
   private currentQuestion: QuestionData | null = null;
   private allTrackedFiles: string[] = [];
   private questionAnswers: Map<string, 'y' | 'n'> = new Map();
@@ -42,6 +43,9 @@ export class Project {
     if (this.process) {
       return;
     }
+
+    this.currentCommand = null;
+    this.currentQuestion = null;
 
     const args = ['-m', 'aider.main'];
     if (options) {
@@ -81,6 +85,10 @@ export class Project {
     this.process.stdout.on('data', (data) => {
       const output = data.toString();
       logger.info('Aider output:', { output });
+
+      if (this.currentCommand) {
+        this.sendCommandOutput(this.currentCommand, output);
+      }
     });
 
     this.process.stderr.on('data', (data) => {
@@ -261,5 +269,22 @@ export class Project {
   public getAddableFiles(): string[] {
     const contextFilePaths = new Set(this.contextFiles.map((file) => file.path));
     return this.allTrackedFiles.filter((file) => !contextFilePaths.has(file));
+  }
+
+  public openCommandOutput(command: string) {
+    this.currentCommand = command;
+    this.sendCommandOutput(command, '');
+  }
+
+  public closeCommandOutput() {
+    this.currentCommand = null;
+  }
+
+  private sendCommandOutput(command: string, output: string) {
+    this.mainWindow!.webContents.send('command-output', {
+      baseDir: this.baseDir,
+      command: command,
+      output,
+    });
   }
 }

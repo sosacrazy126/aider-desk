@@ -8,6 +8,7 @@ import {
   ErrorMessage,
   isAddFileMessage,
   isAskQuestionMessage,
+  isUseCommandOutputMessage,
   isDropFileMessage,
   isInitMessage,
   isResponseMessage,
@@ -146,6 +147,19 @@ class ConnectorManager {
         }
         const project = projectManager.getProject(connector.baseDir);
         project.updateContextFiles(message.files);
+      } else if (isUseCommandOutputMessage(message)) {
+        logger.info('Use command output', { message });
+
+        const connector = this.findConnectorBySocket(socket);
+        if (!connector || !this.mainWindow) {
+          return;
+        }
+        const project = projectManager.getProject(connector.baseDir);
+        if (message.finished) {
+          project.closeCommandOutput();
+        } else {
+          project.openCommandOutput(message.command);
+        }
       } else {
         logger.error('Unknown message type: ', message);
       }
@@ -220,6 +234,9 @@ class ConnectorManager {
       };
       this.mainWindow.webContents.send('response-completed', data);
       this.currentResponseMessageId = null;
+
+      const project = projectManager.getProject(baseDir);
+      project.closeCommandOutput();
     }
   };
 

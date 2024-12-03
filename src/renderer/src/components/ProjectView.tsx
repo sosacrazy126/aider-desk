@@ -1,4 +1,13 @@
-import { AutocompletionData, ModelsData, ProjectData, ResponseChunkData, ResponseCompletedData, ErrorData, WarningData } from '@common/types';
+import {
+  AutocompletionData,
+  ModelsData,
+  ProjectData,
+  ResponseChunkData,
+  ResponseCompletedData,
+  ErrorData,
+  WarningData,
+  CommandOutputData,
+} from '@common/types';
 import { AddFileDialog } from 'components/AddFileDialog';
 import { ContextFiles } from 'components/ContextFiles';
 import { Messages } from 'components/Messages';
@@ -7,7 +16,17 @@ import { IpcRendererEvent } from 'electron';
 import { useEffect, useRef, useState } from 'react';
 import { ResizableBox } from 'react-resizable';
 import 'react-resizable/css/styles.css';
-import { LoadingMessage, Message, ModelsMessage, PromptMessage, ErrorMessage, ResponseMessage, WarningMessage } from 'types/message';
+import {
+  LoadingMessage,
+  Message,
+  ModelsMessage,
+  PromptMessage,
+  ErrorMessage,
+  ResponseMessage,
+  WarningMessage,
+  CommandOutputMessage,
+  isCommandOutputMessage,
+} from 'types/message';
 import { v4 as uuidv4 } from 'uuid';
 import { CgSpinner } from 'react-icons/cg';
 
@@ -86,6 +105,28 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
       }
     };
 
+    const handleCommandOutput = (_: IpcRendererEvent, { command, output }: CommandOutputData) => {
+      setMessages((prevMessages) => {
+        const lastMessage = prevMessages[prevMessages.length - 1];
+
+        if (isCommandOutputMessage(lastMessage) && lastMessage.command === command) {
+          const updatedLastMessage: CommandOutputMessage = {
+            ...lastMessage,
+            content: lastMessage.content + output,
+          };
+          return prevMessages.slice(0, -1).concat(updatedLastMessage);
+        } else {
+          const commandOutputMessage: CommandOutputMessage = {
+            id: uuidv4(),
+            type: 'command-output',
+            command,
+            content: output,
+          };
+          return prevMessages.filter((message) => message.type !== 'loading').concat(commandOutputMessage);
+        }
+      });
+    };
+
     const handleWarning = (_: IpcRendererEvent, { warning }: WarningData) => {
       const warningMessage: WarningMessage = {
         id: uuidv4(),
@@ -131,6 +172,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
       }
     });
 
+    const commandOutputListenerId = window.api.addCommandOutputListener(project.baseDir, handleCommandOutput);
     const responseChunkListenerId = window.api.addResponseChunkListener(project.baseDir, handleResponseChunk);
     const responseCompletedListenerId = window.api.addResponseCompletedListener(project.baseDir, handleResponseCompleted);
     const warningListenerId = window.api.addWarningListener(project.baseDir, handleWarning);
@@ -139,6 +181,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
     return () => {
       window.api.removeUpdateAutocompletionListener(autocompletionListenerId);
       window.api.removeSetCurrentModelsListener(currentModelsListenerId);
+      window.api.removeCommandOutputListener(commandOutputListenerId);
       window.api.removeResponseChunkListener(responseChunkListenerId);
       window.api.removeResponseCompletedListener(responseCompletedListenerId);
       window.api.removeWarningListener(warningListenerId);
@@ -157,7 +200,8 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
     const promptMessage: PromptMessage = {
       id: uuidv4(),
       type: 'prompt',
-      content: `${editFormat ? `${editFormat}` : ''}> ${prompt}`,
+      editFormat,
+      content: prompt,
     };
     const loadingMessage: LoadingMessage = {
       id: uuidv4(),

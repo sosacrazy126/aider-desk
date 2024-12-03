@@ -2,13 +2,13 @@ import { ModelsData } from '@common/types';
 
 export interface Message {
   id: string;
-  type: 'prompt' | 'response' | 'warning' | 'error' | 'loading' | 'models' | 'reflected-message';
+  type: 'prompt' | 'response' | 'warning' | 'error' | 'loading' | 'models' | 'reflected-message' | 'command-output';
   content: string;
 }
 
 export interface PromptMessage extends Message {
   type: 'prompt';
-  edit_format?: 'code' | 'ask' | 'architect';
+  editFormat?: string;
 }
 
 export interface ResponseMessage extends Message {
@@ -37,6 +37,11 @@ export interface ModelsMessage extends Message {
   models: ModelsData;
 }
 
+export interface CommandOutputMessage extends Message {
+  type: 'command-output';
+  command: string;
+}
+
 export const isPromptMessage = (message: Message): message is PromptMessage => {
   return message.type === 'prompt';
 };
@@ -61,6 +66,10 @@ export const isModelsMessage = (message: Message): message is ModelsMessage => {
   return message.type === 'models';
 };
 
-export const isReflectedMessage = (message: Message): message is ResponseMessage => {
+export const isReflectedMessage = (message: Message): message is ReflectedMessage => {
   return message.type === 'reflected-message';
+};
+
+export const isCommandOutputMessage = (message: Message): message is CommandOutputMessage => {
+  return message.type === 'command-output';
 };

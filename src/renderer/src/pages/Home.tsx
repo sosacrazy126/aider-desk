@@ -1,30 +1,25 @@
 import { useCallback, useEffect, useState } from 'react';
 import { MdAdd, MdClose, MdSettings } from 'react-icons/md';
-import { ProjectData, ProjectSettings } from '@common/types';
+import { ProjectData } from '@common/types';
 import { ProjectView } from 'components/ProjectView';
 import { OpenProjectDialog } from 'components/OpenProjectDialog';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from 'utils/routes';
 
-const DEFAULT_PROJECT_SETTINGS: ProjectSettings = {
-  codeBlockExpanded: false,
-};
-
 export const Home = () => {
   const [openProjects, setOpenProjects] = useState<ProjectData[]>([]);
-  const [activeTab, setActiveTab] = useState<string | null>(null);
-  const [previousTab, setPreviousTab] = useState<string | null>(null);
+  const [previousProjectBaseDir, setPreviousProjectBaseDir] = useState<string | null>(null);
   const [isOpenProjectDialogVisible, setIsOpenProjectDialogVisible] = useState(false);
   const [isCtrlPressed, setIsCtrlPressed] = useState(false);
   const [isTabbing, setIsTabbing] = useState(false);
   const navigate = useNavigate();
+  const activeProject = openProjects.find((project) => project.active) || openProjects[0];
 
   useEffect(() => {
     const loadProjects = async () => {
       try {
         const loadedProjects = await window.api.loadProjects();
         setOpenProjects(loadedProjects);
-        setActiveTab(loadedProjects.length > 0 ? loadedProjects[0].baseDir : null);
       } catch (error) {
         console.error('Error loading projects:', error);
       }
@@ -32,6 +27,17 @@ export const Home = () => {
 
     void loadProjects();
   }, []);
+
+  const setActiveProject = async (baseDir: string | null) => {
+    const projects = openProjects.map((project) => {
+      if (project.baseDir === baseDir) {
+        return { ...project, active: true };
+      }
+      return { ...project, active: false };
+    });
+    setOpenProjects(projects);
+    void saveProjects(projects);
+  };
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -42,20 +48,20 @@ export const Home = () => {
       if (e.key === 'Tab' && isCtrlPressed && openProjects.length > 1) {
         e.preventDefault();
         setIsTabbing(true);
-        if (!isTabbing && previousTab && openProjects.some((project) => project.baseDir === previousTab)) {
+        if (!isTabbing && previousProjectBaseDir && openProjects.some((project) => project.baseDir === previousProjectBaseDir)) {
           // First TAB press - switch to previous tab
-          setActiveTab(previousTab);
-          setPreviousTab(activeTab);
+          setPreviousProjectBaseDir(activeProject?.baseDir);
+          setActiveProject(previousProjectBaseDir);
         } else {
           // Subsequent TAB presses - cycle through tabs
-          const currentIndex = openProjects.findIndex((project) => project.baseDir === activeTab);
+          const currentIndex = openProjects.findIndex((project) => project.baseDir === activeProject?.baseDir);
           const nextIndex = (currentIndex + 1) % openProjects.length;
-          setActiveTab(openProjects[nextIndex].baseDir);
-          setPreviousTab(activeTab);
+          setActiveProject(openProjects[nextIndex].baseDir);
+          setPreviousProjectBaseDir(activeProject?.baseDir);
         }
       }
     },
-    [isCtrlPressed, activeTab, openProjects, previousTab, isTabbing],
+    [isCtrlPressed, activeProject?.baseDir, openProjects, previousProjectBaseDir, isTabbing],
   );
 
   const handleKeyUp = useCallback((e: KeyboardEvent) => {
@@ -84,33 +90,35 @@ export const Home = () => {
 
   const handleAddProject = (baseDir: string) => {
     const newProject: ProjectData = {
-      baseDir,
-      settings: {
-        ...DEFAULT_PROJECT_SETTINGS,
-      },
+      baseDir: baseDir.endsWith('/') ? baseDir.slice(0, -1) : baseDir,
+      settings: {},
+      active: true,
     };
-    const projects = [...openProjects, newProject];
+    const projects = [...openProjects.map((project) => ({ ...project, active: false })), newProject];
     setOpenProjects(projects);
-    setActiveTab(baseDir);
     setIsOpenProjectDialogVisible(false);
     void saveProjects(projects);
   };
 
-  const handleCloseProject = (project: string, e: React.MouseEvent) => {
+  const handleCloseProject = (projectBaseDir: string, e: React.MouseEvent) => {
     e.stopPropagation();
 
-    const projects = openProjects.filter((p) => p.baseDir !== project);
-    setOpenProjects(projects);
-    if (activeTab === project) {
-      setActiveTab(projects.length > 0 ? projects[projects.length - 1].baseDir : null);
+    const projects = openProjects.filter((project) => project.baseDir !== projectBaseDir);
+    if (activeProject?.baseDir === projectBaseDir) {
+      setActiveProject(projects.length > 0 ? projects[projects.length - 1].baseDir : null);
     }
+    setOpenProjects(projects);
     void saveProjects(projects);
   };
 
   const renderProjectPanels = () =>
     openProjects.map((project) => (
-      <div key={project.baseDir} className="absolute top-0 left-0 w-full h-full" style={{ display: activeTab === project.baseDir ? 'block' : 'none' }}>
-        <ProjectView key={project.baseDir} project={project} isActive={activeTab === project.baseDir} />
+      <div
+        key={project.baseDir}
+        className="absolute top-0 left-0 w-full h-full"
+        style={{ display: activeProject?.baseDir === project.baseDir ? 'block' : 'none' }}
+      >
+        <ProjectView key={project.baseDir} project={project} isActive={activeProject?.baseDir === project.baseDir} />
       </div>
     ));
 
@@ -124,18 +132,18 @@ export const Home = () => {
                 key={project.baseDir}
                 className={`text-sm pl-3 py-2 pr-1 transition-all duration-200 ease-in-out flex items-center gap-3 relative
                 ${
-                  activeTab === project.baseDir
+                  activeProject?.baseDir === project.baseDir
                     ? 'bg-neutral-800 text-neutral-100 font-medium'
                     : 'bg-neutral-900 text-neutral-600 hover:bg-neutral-800/50 hover:text-neutral-300'
                 }
-                ${activeTab === project.baseDir ? 'after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-neutral-600' : ''}
+                ${activeProject?.baseDir === project.baseDir ? 'after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-neutral-600' : ''}
               `}
-                onClick={() => setActiveTab(project.baseDir)}
+                onClick={() => setActiveProject(project.baseDir)}
               >
                 {project.baseDir.split('/').pop()}
                 <div
                   className={`flex items-center justify-center rounded-full p-1 transition-colors duration-200
-                  ${activeTab === project.baseDir ? 'hover:bg-neutral-500/30' : 'hover:bg-neutral-600/30'}
+                  ${activeProject?.baseDir === project.baseDir ? 'hover:bg-neutral-500/30' : 'hover:bg-neutral-600/30'}
                 `}
                   onClick={(e) => handleCloseProject(project.baseDir, e)}
                 >

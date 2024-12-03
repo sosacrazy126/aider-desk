@@ -58,6 +58,9 @@ export interface ApplicationAPI {
 
   addWarningListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: { baseDir: string; warning: string }) => void) => string;
   removeWarningListener: (listenerId: string) => void;
+
+  addCommandOutputListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: CommandOutputData) => void) => string;
+  removeCommandOutputListener: (listenerId: string) => void;
 }
 
 declare global {

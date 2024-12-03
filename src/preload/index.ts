@@ -3,6 +3,7 @@ import { contextBridge, ipcRenderer } from 'electron';
 import { v4 as uuidv4 } from 'uuid';
 import {
   AutocompletionData,
+  CommandOutputData,
   ContextFile,
   ContextFilesUpdatedData,
   ErrorData,
@@ -27,6 +28,7 @@ const updateAutocompletionListeners: Record<string, (event: Electron.IpcRenderer
 const askQuestionListeners: Record<string, (event: Electron.IpcRendererEvent, data: QuestionData) => void> = {};
 const setCurrentModelsListeners: Record<string, (event: Electron.IpcRendererEvent, data: ModelsData & { baseDir: string }) => void> = {};
 const warningListeners: Record<string, (event: Electron.IpcRendererEvent, data: { baseDir: string; warning: string }) => void> = {};
+const commandOutputListeners: Record<string, (event: Electron.IpcRendererEvent, data: CommandOutputData) => void> = {};
 
 const api: ApplicationAPI = {
   loadSettings: () => ipcRenderer.invoke('load-settings'),
@@ -199,6 +201,25 @@ const api: ApplicationAPI = {
     if (callback) {
       ipcRenderer.removeListener('set-current-models', callback);
       delete setCurrentModelsListeners[listenerId];
+    }
+  },
+
+  addCommandOutputListener: (baseDir, callback) => {
+    const listenerId = uuidv4();
+    commandOutputListeners[listenerId] = (event: Electron.IpcRendererEvent, data: CommandOutputData) => {
+      if (data.baseDir !== baseDir) {
+        return;
+      }
+      callback(event, data);
+    };
+    ipcRenderer.on('command-output', commandOutputListeners[listenerId]);
+    return listenerId;
+  },
+  removeCommandOutputListener: (listenerId) => {
+    const callback = commandOutputListeners[listenerId];
+    if (callback) {
+      ipcRenderer.removeListener('command-output', callback);
+      delete commandOutputListeners[listenerId];
     }
   },
 };

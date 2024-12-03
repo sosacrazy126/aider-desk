@@ -10,7 +10,8 @@ export type MessageAction =
   | 'ask-question'
   | 'answer-question'
   | 'set-models'
-  | 'update-context-files';
+  | 'update-context-files'
+  | 'use-command-output';
 
 export interface Message {
   action: MessageAction;
@@ -126,4 +127,14 @@ export interface UpdateContextFilesMessage extends Message {
 
 export const isUpdateContextFilesMessage = (message: Message): message is UpdateContextFilesMessage => {
   return typeof message === 'object' && message !== null && 'action' in message && message.action === 'update-context-files';
+};
+
+export interface UseCommandOutputMessage extends Message {
+  action: 'use-command-output';
+  command: string;
+  finished: boolean;
+}
+
+export const isUseCommandOutputMessage = (message: Message): message is UseCommandOutputMessage => {
+  return typeof message === 'object' && message !== null && 'action' in message && message.action === 'use-command-output';
 };

@@ -21,6 +21,12 @@ export interface WarningData {
   warning: string;
 }
 
+export interface CommandOutputData {
+  baseDir: string;
+  command: string;
+  output: string;
+}
+
 export interface ErrorData {
   baseDir: string;
   error: string;
@@ -65,6 +71,7 @@ export interface ProjectSettings {
 }
 
 export interface ProjectData {
+  active?: boolean;
   baseDir: string;
   settings: ProjectSettings;
 }

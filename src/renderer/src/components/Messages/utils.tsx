@@ -1,6 +1,7 @@
 import React from 'react';
-import { CodeBlock } from 'components/CodeBlock';
-import { CodeInline } from 'components/CodeInline';
+import { showInfoNotification } from 'utils/notifications';
+import { CodeBlock } from './CodeBlock';
+import { CodeInline } from './CodeInline';
 
 const ALL_FENCES = [
   ['```', '```'],
@@ -147,4 +148,9 @@ export const parseMessageContent = (content: string, allFiles: string[]) => {
   }
 
   return parts;
+};
+
+export const copyToClipboard = (text: string) => {
+  navigator.clipboard.writeText(text);
+  showInfoNotification('Copied to clipboard');
 };
