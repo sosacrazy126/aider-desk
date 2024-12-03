@@ -1,4 +1,4 @@
-import { ModelsData } from '@common/types';
+import { ModelsData, UsageReportData } from '@common/types';
 
 export interface Message {
   id: string;
@@ -14,6 +14,7 @@ export interface PromptMessage extends Message {
 export interface ResponseMessage extends Message {
   type: 'response';
   processing: boolean;
+  usageReport?: UsageReportData;
 }
 
 export interface ReflectedMessage extends Message {

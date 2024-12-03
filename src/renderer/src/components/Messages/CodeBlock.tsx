@@ -56,7 +56,7 @@ const DIFF_VIEWER_STYLES = {
   },
 };
 
-const SEARCH_MARKER = /^<{5,9} SEARCH\s*$/m;
+const SEARCH_MARKER = /^<{5,9} SEARCH[^\n]*$/m;
 const DIVIDER_MARKER = /^={5,9}\s*$/m;
 const REPLACE_MARKER = /^>{5,9} REPLACE\s*$/m;
 

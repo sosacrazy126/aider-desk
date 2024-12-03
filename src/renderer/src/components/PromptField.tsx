@@ -50,11 +50,23 @@ type Props = {
   currentModel?: string;
   showFileDialog: (readOnly: boolean) => void;
   defaultEditFormat?: string;
+  totalCost?: number;
 };
 
 export const PromptField = React.forwardRef<PromptFieldRef, Props>(
   (
-    { baseDir, onSubmitted, processing = false, isActive = false, words = [], models = [], currentModel, showFileDialog, defaultEditFormat = 'code' }: Props,
+    {
+      baseDir,
+      onSubmitted,
+      processing = false,
+      isActive = false,
+      words = [],
+      models = [],
+      currentModel,
+      showFileDialog,
+      defaultEditFormat = 'code',
+      totalCost = 0,
+    }: Props,
     ref,
   ) => {
     const [text, setText] = useState('');
@@ -520,7 +532,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
               </button>
             )}
           </div>
-          <div className="relative flex items-center text-sm text-neutral-400">
+          <div className="relative flex items-center text-sm text-neutral-400 w-full">
             <div className="relative" ref={modelSelectorRef}>
               <button
                 onClick={() => setShowModelSelector(!showModelSelector)}
@@ -604,6 +616,8 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
                 </div>
               )}
             </div>
+            <div className="flex-grow" />
+            <span className="ml-4 mr-1 text-xxs text-neutral-400">Total cost: ${totalCost.toFixed(5)}</span>
           </div>
         </div>
         {suggestionsVisible && filteredSuggestions.length > 0 && (

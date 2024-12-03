@@ -49,6 +49,7 @@ export interface ResponseMessage extends Message {
   content: string;
   reflectedMessage?: string;
   finished: boolean;
+  usageReport?: string;
   editedFiles?: string[];
   commitHash?: string;
   commitMessage?: string;

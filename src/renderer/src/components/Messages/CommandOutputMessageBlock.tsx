@@ -1,15 +1,9 @@
-import { BiCopy, BiTerminal } from 'react-icons/bi';
-import { Tooltip } from 'react-tooltip';
-import { showInfoNotification } from 'utils/notifications';
+import { BiTerminal } from 'react-icons/bi';
 import { CommandOutputMessage } from 'types/message';
+import { CopyMessageButton } from './CopyMessageButton';
 
 type Props = {
   message: CommandOutputMessage;
-};
-
-const copyToClipboard = (text: string) => {
-  navigator.clipboard.writeText(text);
-  showInfoNotification('Copied to clipboard');
 };
 
 export const CommandOutputMessageBlock = ({ message }: Props) => {
@@ -27,13 +21,9 @@ export const CommandOutputMessageBlock = ({ message }: Props) => {
         </div>
       </div>
       {message.content && <div className="mt-2 p-2 bg-gray-950 border border-neutral-800 text-xs whitespace-pre-wrap">{message.content}</div>}
-      <BiCopy
-        data-tooltip-id={`copy-tooltip-${message.id}`}
-        data-tooltip-content="Copy to clipboard"
-        onClick={() => copyToClipboard(message.content)}
-        className="absolute top-2 right-2 h-4 w-4 text-neutral-600 opacity-0 group-hover:opacity-100 cursor-pointer hover:text-neutral-300 transition-opacity"
-      />
-      <Tooltip id={`copy-tooltip-${message.id}`} />
+      <div className="absolute top-2 right-2">
+        <CopyMessageButton content={message.content} className="text-neutral-600 hover:text-neutral-300" />
+      </div>
     </div>
   );
 };

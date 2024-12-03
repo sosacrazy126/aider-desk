@@ -14,6 +14,7 @@ export interface ResponseCompletedData {
   commitHash?: string;
   commitMessage?: string;
   diff?: string;
+  usageReport?: UsageReportData;
 }
 
 export interface WarningData {
@@ -93,4 +94,11 @@ export interface SettingsData {
   models: {
     preferred: string[];
   };
+}
+
+export interface UsageReportData {
+  sentTokens: number;
+  receivedTokens: number;
+  messageCost: number;
+  totalCost: number;
 }

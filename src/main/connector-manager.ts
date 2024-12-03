@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Server, Socket } from 'socket.io';
 import { Connector } from 'src/main/connector';
 import { ModelsData, QuestionData, ResponseChunkData, ResponseCompletedData } from '@common/types';
+import { parseUsageReport } from '@common/utils';
 import { SOCKET_PORT } from './constants';
 import {
   ErrorMessage,
@@ -222,6 +223,9 @@ class ConnectorManager {
     } else {
       logger.info(`Sending response completed to ${baseDir}`);
       logger.debug(`Message data: ${JSON.stringify(message)}`);
+
+      const usageReport = message.usageReport ? parseUsageReport(message.usageReport) : undefined;
+      logger.info(`Usage report: ${JSON.stringify(usageReport)}`);
       const data: ResponseCompletedData = {
         messageId: this.currentResponseMessageId,
         content: message.content,
@@ -231,6 +235,7 @@ class ConnectorManager {
         commitHash: message.commitHash,
         commitMessage: message.commitMessage,
         diff: message.diff,
+        usageReport,
       };
       this.mainWindow.webContents.send('response-completed', data);
       this.currentResponseMessageId = null;

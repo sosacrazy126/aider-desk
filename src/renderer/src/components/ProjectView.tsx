@@ -46,6 +46,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
   const [autocompletionData, setAutocompletionData] = useState<AutocompletionData | null>(null);
   const [currentModels, setCurrentModels] = useState<ModelsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [totalCost, setTotalCost] = useState(0);
   const processingMessageRef = useRef<ResponseMessage | null>(null);
   const promptFieldRef = useRef<PromptFieldRef>(null);
 
@@ -92,13 +93,18 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
       }
     };
 
-    const handleResponseCompleted = (_: IpcRendererEvent, { messageId }: ResponseCompletedData) => {
+    const handleResponseCompleted = (_: IpcRendererEvent, { messageId, usageReport }: ResponseCompletedData) => {
       const processingMessage = processingMessageRef.current;
       if (processingMessage && processingMessage.id === messageId) {
         processingMessage.processing = false;
+        processingMessage.usageReport = usageReport;
         setMessages((prevMessages) => prevMessages.map((message) => (message.id === messageId ? processingMessage : message)));
         setProcessing(false);
         processingMessageRef.current = null;
+
+        if (usageReport) {
+          setTotalCost(usageReport.totalCost);
+        }
       } else if (!processingMessage && processing) {
         setMessages((prevMessages) => prevMessages.filter((message) => message.type !== 'loading'));
         setProcessing(false);
@@ -240,6 +246,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
             models={autocompletionData?.models}
             currentModel={currentModels?.name}
             showFileDialog={showFileDialog}
+            totalCost={totalCost}
           />
         </div>
       </div>
