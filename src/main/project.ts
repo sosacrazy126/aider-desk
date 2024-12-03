@@ -192,6 +192,11 @@ export class Project {
     this.findMessageConnectors('drop-file').forEach((connector) => connector.sendDropFileMessage(pathToSend));
   }
 
+  public runCommand(command: string) {
+    logger.info('Running command:', { command });
+    this.findMessageConnectors('run-command').forEach((connector) => connector.sendRunCommandMessage(command));
+  }
+
   public updateContextFiles(contextFiles: ContextFile[]) {
     this.contextFiles = contextFiles;
 

@@ -11,7 +11,8 @@ export type MessageAction =
   | 'answer-question'
   | 'set-models'
   | 'update-context-files'
-  | 'use-command-output';
+  | 'use-command-output'
+  | 'run-command';
 
 export interface Message {
   action: MessageAction;
@@ -80,6 +81,11 @@ export interface DropFileMessage extends Message {
 export const isDropFileMessage = (message: Message): message is DropFileMessage => {
   return typeof message === 'object' && message !== null && 'action' in message && message.action === 'drop-file';
 };
+
+export interface RunCommandMessage extends Message {
+  action: 'run-command';
+  command: string;
+}
 
 export interface UpdateAutocompletionMessage extends Message {
   action: 'update-autocompletion';

@@ -1,10 +1,15 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { StaticTreeDataProvider, Tree, UncontrolledTreeEnvironment } from 'react-complex-tree';
-import { HiX, HiPlus } from 'react-icons/hi';
-import { TbPencilOff } from 'react-icons/tb';
+import { HiPlus, HiX } from 'react-icons/hi';
+import { MdOutlineRefresh } from 'react-icons/md';
+
 import { ContextFile } from '@common/types';
+import { TbPencilOff } from 'react-icons/tb';
+import { Tooltip } from 'react-tooltip';
 
 import './ContextFiles.css';
+
+const REFRESH_ANIMATION_DURATION = 2000;
 
 interface TreeItem {
   index: string;
@@ -61,6 +66,7 @@ type Props = {
 export const ContextFiles = ({ baseDir, showFileDialog }: Props) => {
   const [files, setFiles] = useState<ContextFile[]>([]);
   const [newlyAddedFiles, setNewlyAddedFiles] = useState<string[]>([]);
+  const [refreshingAnimation, setRefreshingAnimation] = useState(false);
 
   const sortedFiles = useMemo(() => {
     return [...files].sort((a, b) => a.path.localeCompare(b.path));
@@ -95,14 +101,36 @@ export const ContextFiles = ({ baseDir, showFileDialog }: Props) => {
     }
   };
 
+  const refreshRepoMap = () => {
+    window.api.runCommand(baseDir, '/map-refresh');
+    setRefreshingAnimation(true);
+    setTimeout(() => setRefreshingAnimation(false), REFRESH_ANIMATION_DURATION);
+  };
+
   return (
     <div className="flex-grow w-full p-2 space-y-2 overflow-auto">
       <div className="flex flex-col">
-        <div className="flex justify-between items-center mb-2">
-          <h3 className="text-md font-semibold uppercase pl-1">Context Files</h3>
-          <button onClick={showFileDialog} className="p-1 hover:bg-neutral-700 rounded-md" title="Add file">
+        <div className="flex items-center mb-2">
+          <h3 className="text-md font-semibold uppercase pl-1 flex-grow">Context Files</h3>
+          <button
+            onClick={refreshRepoMap}
+            className="p-1 hover:bg-neutral-700 rounded-md"
+            data-tooltip-id="refresh-map-tooltip"
+            data-tooltip-content="Refresh repository map"
+            disabled={refreshingAnimation}
+          >
+            <MdOutlineRefresh className={`w-5 h-5 ${refreshingAnimation ? 'animate-spin' : ''}`} />
+          </button>
+          <Tooltip id="refresh-map-tooltip" />
+          <button
+            onClick={showFileDialog}
+            className="p-1 hover:bg-neutral-700 rounded-md"
+            data-tooltip-id="add-file-tooltip"
+            data-tooltip-content="Add context file"
+          >
             <HiPlus className="w-5 h-5" />
           </button>
+          <Tooltip id="add-file-tooltip" />
         </div>
         <div className="flex-grow w-full">
           <UncontrolledTreeEnvironment

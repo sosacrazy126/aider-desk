@@ -87,4 +87,8 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, store: Store) => {
       store.saveProjectSettings(baseDir, projectSettings);
     }
   });
+
+  ipcMain.on('run-command', (_, baseDir: string, command: string) => {
+    projectManager.getProject(baseDir).runCommand(command);
+  });
 };

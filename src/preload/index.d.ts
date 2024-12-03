@@ -34,6 +34,7 @@ export interface ApplicationAPI {
   isValidPath: (baseDir: string, path: string) => Promise<boolean>;
   isProjectPath: (path: string) => Promise<boolean>;
   dropFile: (baseDir: string, path: string) => void;
+  runCommand: (baseDir: string, command: string) => void;
 
   addResponseChunkListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: ResponseChunkData) => void) => string;
   removeResponseChunkListener: (listenerId: string) => void;

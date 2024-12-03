@@ -52,6 +52,7 @@ const api: ApplicationAPI = {
   isValidPath: (baseDir: string, path: string) => ipcRenderer.invoke('is-valid-path', baseDir, path),
   isProjectPath: (path: string) => ipcRenderer.invoke('is-project-path', path),
   dropFile: (baseDir: string, path: string) => ipcRenderer.send('drop-file', baseDir, path),
+  runCommand: (baseDir: string, command: string) => ipcRenderer.send('run-command', baseDir, command),
 
   addResponseChunkListener: (baseDir, callback) => {
     const listenerId = uuidv4();

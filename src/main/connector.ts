@@ -1,6 +1,16 @@
 import { Socket } from 'socket.io';
 import { ContextFile } from '@common/types';
-import { AddFileMessage, AnswerQuestionMessage, DropFileMessage, EditFormat, Message, MessageAction, PromptMessage, SetModelsMessage } from './messages';
+import {
+  AddFileMessage,
+  AnswerQuestionMessage,
+  DropFileMessage,
+  EditFormat,
+  Message,
+  MessageAction,
+  PromptMessage,
+  RunCommandMessage,
+  SetModelsMessage,
+} from './messages';
 import logger from './logger';
 
 export class Connector {
@@ -62,6 +72,14 @@ export class Connector {
       action: 'set-models',
       name: mainModel,
       weakModel,
+    };
+    this.sendMessage(message);
+  }
+
+  public sendRunCommandMessage(command: string): void {
+    const message: RunCommandMessage = {
+      action: 'run-command',
+      command,
     };
     this.sendMessage(message);
   }

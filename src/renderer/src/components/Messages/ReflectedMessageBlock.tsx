@@ -22,10 +22,7 @@ export const ReflectedMessageBlock = ({ message, allFiles }: Props) => {
         <div className="mt-2">
           {parseMessageContent(message.content, allFiles)}
           <div className="absolute top-2 right-2">
-            <CopyMessageButton 
-              content={message.content} 
-              className="text-neutral-600 hover:text-neutral-300" 
-            />
+            <CopyMessageButton content={message.content} className="text-neutral-600 hover:text-neutral-300" />
           </div>
         </div>
       )}
