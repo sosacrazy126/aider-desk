@@ -223,6 +223,13 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
     });
   };
 
+  const clearMessages = () => {
+    const lastModelsMessage = messages.filter((message) => message.type === 'models').pop();
+    setMessages(lastModelsMessage ? [lastModelsMessage] : []);
+    setProcessing(false);
+    window.api.runCommand(project.baseDir, 'clear');
+  };
+
   return (
     <div className="flex h-full bg-neutral-900 relative">
       {loading && (
@@ -235,7 +242,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
         <div className="flex-grow overflow-y-auto">
           <Messages messages={messages} allFiles={autocompletionData?.allFiles} />
         </div>
-        <div className="relative bottom-0 w-full p-4 pb-2 flex-shrink-0 flex max-h-[50vh] border-t border-neutral-800">
+        <div className="relative bottom-0 w-full p-4 pb-2 flex-shrink-0 flex border-t border-neutral-800">
           <PromptField
             ref={promptFieldRef}
             baseDir={project.baseDir}
@@ -245,6 +252,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
             words={autocompletionData?.words}
             models={autocompletionData?.models}
             currentModel={currentModels?.name}
+            clearMessages={clearMessages}
             showFileDialog={showFileDialog}
             totalCost={totalCost}
           />

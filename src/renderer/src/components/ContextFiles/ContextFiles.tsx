@@ -102,13 +102,13 @@ export const ContextFiles = ({ baseDir, showFileDialog }: Props) => {
   };
 
   const refreshRepoMap = () => {
-    window.api.runCommand(baseDir, '/map-refresh');
+    window.api.runCommand(baseDir, 'map-refresh');
     setRefreshingAnimation(true);
     setTimeout(() => setRefreshingAnimation(false), REFRESH_ANIMATION_DURATION);
   };
 
   return (
-    <div className="flex-grow w-full p-2 space-y-2 overflow-auto">
+    <div className="flex-grow w-full p-2 space-y-2 overflow-auto scrollbar-thin scrollbar-thumb-neutral-700 scrollbar-track-neutral-900 scrollbar-rounded">
       <div className="flex flex-col">
         <div className="flex items-center mb-2">
           <h3 className="text-md font-semibold uppercase pl-1 flex-grow">Context Files</h3>

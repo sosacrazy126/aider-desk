@@ -125,7 +125,7 @@ export const Home = () => {
   return (
     <div className="flex flex-col h-screen p-[4px] bg-neutral-900">
       <div className="flex flex-col h-screen bg-neutral-900 border-2 border-neutral-600 bg-neutral-900/50">
-        <div className="flex border-b border-neutral-600 justify-between bg-neutral-900">
+        <div className="flex border-b-2 border-neutral-600 justify-between bg-neutral-900">
           <div className="flex items-center">
             {openProjects.map((project) => (
               <button
@@ -136,7 +136,6 @@ export const Home = () => {
                     ? 'bg-neutral-800 text-neutral-100 font-medium'
                     : 'bg-neutral-900 text-neutral-600 hover:bg-neutral-800/50 hover:text-neutral-300'
                 }
-                ${activeProject?.baseDir === project.baseDir ? 'after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-neutral-600' : ''}
               `}
                 onClick={() => setActiveProject(project.baseDir)}
               >

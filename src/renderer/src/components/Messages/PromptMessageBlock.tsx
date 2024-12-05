@@ -20,7 +20,7 @@ export const PromptMessageBlock = ({ message, allFiles }: Props) => {
         {message.editFormat === 'ask' && <FaRegQuestionCircle className="text-neutral-600 h-[18px]" />}
         {message.editFormat === 'architect' && <IoConstruct className="text-neutral-600 h-[18px]" />}
       </div>
-      <div className="flex-1">{parseMessageContent(message.content, allFiles)}</div>
+      <div className="flex-grow-1">{parseMessageContent(message.content, allFiles)}</div>
       <div className="absolute top-2 right-2">
         <CopyMessageButton content={message.content} className="text-neutral-600 hover:text-neutral-300" />
       </div>

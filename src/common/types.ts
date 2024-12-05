@@ -102,3 +102,8 @@ export interface UsageReportData {
   messageCost: number;
   totalCost: number;
 }
+
+export interface TokensCost {
+  tokens: number;
+  cost: number;
+}

@@ -77,7 +77,7 @@ export const AddFileDialog = ({ onClose, onAddFile, baseDir, initialReadOnly = f
     try {
       const result = await window.api.dialog.showOpenDialog({
         properties: ['openFile', 'multiSelections'],
-        defaultPath: baseDir,
+        defaultPath: initialReadOnly ? undefined : baseDir,
       });
 
       if (!result.canceled && result.filePaths.length > 0) {

@@ -26,6 +26,7 @@ const PLACEHOLDERS = [
 ];
 
 const COMMANDS = ['/code', '/ask', '/architect', '/add', '/model', '/read-only'];
+const CONFIRM_COMMANDS = ['/clear'];
 
 const EDIT_FORMATS = [
   { value: 'code', label: 'Code' },
@@ -41,31 +42,32 @@ export interface PromptFieldRef {
 
 type Props = {
   baseDir: string;
-  onSubmitted?: (prompt: string, editFormat?: string) => void;
-  processing?: boolean;
-  test?: string;
-  isActive?: boolean;
+  processing: boolean;
+  isActive: boolean;
   words?: string[];
   models?: string[];
   currentModel?: string;
-  showFileDialog: (readOnly: boolean) => void;
   defaultEditFormat?: string;
-  totalCost?: number;
+  totalCost: number;
+  onSubmitted: (prompt: string, editFormat?: string) => void;
+  showFileDialog: (readOnly: boolean) => void;
+  clearMessages: () => void;
 };
 
 export const PromptField = React.forwardRef<PromptFieldRef, Props>(
   (
     {
       baseDir,
-      onSubmitted,
       processing = false,
       isActive = false,
       words = [],
       models = [],
       currentModel,
-      showFileDialog,
       defaultEditFormat = 'code',
-      totalCost = 0,
+      totalCost,
+      showFileDialog,
+      onSubmitted,
+      clearMessages,
     }: Props,
     ref,
   ) => {
@@ -134,6 +136,10 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
           case '/model':
             setText('');
             setShowModelSelector(true);
+            break;
+          case '/clear':
+            setText('');
+            clearMessages();
             break;
         }
       },
@@ -385,7 +391,12 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
             if (!e.shiftKey) {
               e.preventDefault();
               if (!processing) {
-                handleSubmit();
+                const confirmCommandMatch = CONFIRM_COMMANDS.find((cmd) => text.startsWith(cmd));
+                if (confirmCommandMatch) {
+                  invokeCommand(confirmCommandMatch);
+                } else {
+                  handleSubmit();
+                }
               }
             }
             break;
@@ -506,7 +517,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
           </div>
         )}
         <div className="flex flex-col">
-          <div className="relative">
+          <div className="relative flex-shrink-0">
             <textarea
               ref={inputRef}
               value={text}
@@ -514,7 +525,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
               onKeyDown={handleKeyDown}
               placeholder={question ? '...or suggest something else' : placeholder}
               rows={Math.max(text.split('\n').length, 1)}
-              className="w-full px-2 py-2 border-2 border-gray-700 rounded-md focus:outline-none focus:border-gray-400 text-sm bg-gray-800 text-white placeholder-gray-500 resize-none overflow-y-auto transition-colors duration-200"
+              className="w-full px-2 py-2 border-2 border-gray-700 rounded-md focus:outline-none focus:border-gray-400 text-sm bg-gray-800 text-white placeholder-gray-600 resize-none overflow-y-auto transition-colors duration-200 max-h-[60vh] scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-gray-600 hover:scrollbar-thumb-gray-600"
             />
             {processing ? (
               <div className="absolute right-3 top-1/2 -translate-y-[12px] text-neutral-400">
@@ -617,7 +628,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
               )}
             </div>
             <div className="flex-grow" />
-            <span className="ml-4 mr-1 text-xxs text-neutral-400">Total cost: ${totalCost.toFixed(5)}</span>
+            <span className="ml-4 mr-1 text-xxs text-neutral-400">Session cost: ${totalCost.toFixed(5)}</span>
           </div>
         </div>
         {suggestionsVisible && filteredSuggestions.length > 0 && (

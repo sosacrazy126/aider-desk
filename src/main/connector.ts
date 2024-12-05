@@ -79,7 +79,7 @@ export class Connector {
   public sendRunCommandMessage(command: string): void {
     const message: RunCommandMessage = {
       action: 'run-command',
-      command,
+      command: `/${command}`,
     };
     this.sendMessage(message);
   }

@@ -12,7 +12,7 @@ export const ResponseMessageBlock = ({ message, allFiles }: Props) => {
 
   return (
     <div className={`${baseClasses} relative flex flex-col group`}>
-      <div className="flex-1 pb-2">{parseMessageContent(message.content, allFiles)}</div>
+      <div className="flex-1 pb-2 max-w-full">{parseMessageContent(message.content, allFiles)}</div>
       <div className="absolute top-2 right-2 flex items-center gap-2">
         <CopyMessageButton content={message.content} className="text-neutral-600 hover:text-neutral-300" />
       </div>
@@ -25,7 +25,7 @@ export const ResponseMessageBlock = ({ message, allFiles }: Props) => {
         >
           <span className="text-xs text-neutral-300 hover:text-neutral-100">
             {message.usageReport.sentTokens} tokens sent, {message.usageReport.receivedTokens} tokens received, cost: $
-            {message.usageReport.totalCost.toFixed(4)}
+            {message.usageReport.messageCost.toFixed(5)}
           </span>
         </div>
       )}

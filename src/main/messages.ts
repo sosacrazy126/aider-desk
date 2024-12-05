@@ -1,4 +1,4 @@
-import { ContextFileSourceType, ContextFile } from '@common/types';
+import { ContextFileSourceType, ContextFile, TokensCost } from '@common/types';
 
 export type MessageAction =
   | 'init'
@@ -12,7 +12,8 @@ export type MessageAction =
   | 'set-models'
   | 'update-context-files'
   | 'use-command-output'
-  | 'run-command';
+  | 'run-command'
+  | 'tokens-info';
 
 export interface Message {
   action: MessageAction;
@@ -144,4 +145,18 @@ export interface UseCommandOutputMessage extends Message {
 
 export const isUseCommandOutputMessage = (message: Message): message is UseCommandOutputMessage => {
   return typeof message === 'object' && message !== null && 'action' in message && message.action === 'use-command-output';
+};
+
+export interface TokensInfoMessage extends Message {
+  action: 'tokens-info';
+  info: {
+    files: Record<string, TokensCost>;
+    systemMessages: TokensCost;
+    chatHistory: TokensCost;
+    repoMap: TokensCost;
+  };
+}
+
+export const isTokensInfoMessage = (message: Message): message is TokensInfoMessage => {
+  return typeof message === 'object' && message !== null && 'action' in message && message.action === 'tokens-info';
 };

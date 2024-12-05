@@ -5,7 +5,7 @@ type Props = {
 };
 
 export const ModelsMessageBlock = ({ message }: Props) => {
-  const baseClasses = 'rounded-md p-3 mb-2 max-w-full break-words whitespace-pre-wrap text-xs bg-neutral-850 border border-neutral-800 text-gray-100';
+  const baseClasses = 'rounded-md px-3 py-1.5 mb-2 max-w-full break-words whitespace-pre-wrap text-xs bg-neutral-850 border border-neutral-800 text-gray-100';
 
   return (
     <div className={`${baseClasses} bg-gray-900 border-gray-600 text-neutral-300 relative group`}>
