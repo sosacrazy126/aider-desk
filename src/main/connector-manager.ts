@@ -1,27 +1,26 @@
-import { BrowserWindow } from 'electron';
-import { v4 as uuidv4 } from 'uuid';
-import { Server, Socket } from 'socket.io';
-import { Connector } from 'src/main/connector';
 import { ModelsData, QuestionData, ResponseChunkData, ResponseCompletedData } from '@common/types';
 import { parseUsageReport } from '@common/utils';
+import { BrowserWindow } from 'electron';
+import { Server, Socket } from 'socket.io';
+import { Connector } from 'src/main/connector';
+import { v4 as uuidv4 } from 'uuid';
 import { SOCKET_PORT } from './constants';
+import logger from './logger';
 import {
-  ErrorMessage,
   isAddFileMessage,
   isAskQuestionMessage,
-  isUseCommandOutputMessage,
   isDropFileMessage,
   isInitMessage,
   isResponseMessage,
   isSetModelsMessage,
   isUpdateAutocompletionMessage,
   isUpdateContextFilesMessage,
+  isUseCommandOutputMessage,
+  LogMessage,
   Message,
   ResponseMessage,
-  WarningMessage,
 } from './messages';
 import { projectManager } from './project-manager';
-import logger from './logger';
 
 class ConnectorManager {
   private static instance: ConnectorManager;
@@ -52,8 +51,7 @@ class ConnectorManager {
       logger.info('Socket.IO client connected');
 
       socket.on('message', (message) => this.processMessage(socket, message));
-      socket.on('warning', (message) => this.processWarningMessage(socket, message));
-      socket.on('error', (message) => this.processErrorMessage(socket, message));
+      socket.on('log', (message) => this.processLogMessage(socket, message));
 
       socket.on('disconnect', () => {
         logger.info('Socket.IO client disconnected');
@@ -162,31 +160,20 @@ class ConnectorManager {
           project.openCommandOutput(message.command);
         }
       } else {
-        logger.error('Unknown message type: ', message);
+        logger.warn('Unknown message type: ', message);
       }
     } catch (error) {
       logger.error('Socket.IO message parsing error:', { error });
     }
   };
 
-  private processWarningMessage = (socket: Socket, message: WarningMessage) => {
+  private processLogMessage = (socket: Socket, message: LogMessage) => {
     const connector = this.findConnectorBySocket(socket);
     if (!connector || !this.mainWindow) {
       return;
     }
 
-    this.mainWindow.webContents.send('warning', {
-      baseDir: connector.baseDir,
-      warning: message.message,
-    });
-  };
-
-  private processErrorMessage = (socket: Socket, message: ErrorMessage) => {
-    const connector = this.findConnectorBySocket(socket);
-    if (!connector || !this.mainWindow) {
-      return;
-    }
-    if (this.currentResponseMessageId) {
+    if (message.level === 'error' && this.currentResponseMessageId) {
       const data: ResponseCompletedData = {
         messageId: this.currentResponseMessageId,
         content: '',
@@ -196,9 +183,10 @@ class ConnectorManager {
       this.currentResponseMessageId = null;
     }
 
-    this.mainWindow.webContents.send('error', {
+    this.mainWindow.webContents.send('log', {
       baseDir: connector.baseDir,
-      error: message.message,
+      level: message.level,
+      message: message.message,
     });
   };
 

@@ -1,22 +1,20 @@
 import {
   isCommandOutputMessage,
-  isErrorMessage,
+  isLogMessage,
   isLoadingMessage,
   isModelsMessage,
   isPromptMessage,
   isReflectedMessage,
   isResponseMessage,
-  isWarningMessage,
   Message,
 } from 'types/message';
 import { CommandOutputMessageBlock } from './CommandOutputMessageBlock';
-import { ErrorMessageBlock } from './ErrorMessageBlock';
 import { LoadingMessageBlock } from './LoadingMessageBlock';
 import { ModelsMessageBlock } from './ModelsMessageBlock';
 import { PromptMessageBlock } from './PromptMessageBlock';
 import { ReflectedMessageBlock } from './ReflectedMessageBlock';
 import { ResponseMessageBlock } from './ResponseMessageBlock';
-import { WarningMessageBlock } from './WarningMessageBlock';
+import { LogMessageBlock } from './LogMessageBlock';
 
 type Props = {
   message: Message;
@@ -28,12 +26,8 @@ export const MessageBlock = ({ message, allFiles }: Props) => {
     return <LoadingMessageBlock message={message} />;
   }
 
-  if (isWarningMessage(message)) {
-    return <WarningMessageBlock message={message} />;
-  }
-
-  if (isErrorMessage(message)) {
-    return <ErrorMessageBlock message={message} />;
+  if (isLogMessage(message)) {
+    return <LogMessageBlock message={message} />;
   }
 
   if (isModelsMessage(message)) {

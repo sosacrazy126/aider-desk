@@ -42,8 +42,8 @@ export interface ApplicationAPI {
   addResponseCompletedListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: ResponseCompletedData) => void) => string;
   removeResponseCompletedListener: (listenerId: string) => void;
 
-  addErrorListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: ErrorData) => void) => string;
-  removeErrorListener: (listenerId: string) => void;
+  addLogListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: LogData) => void) => string;
+  removeLogListener: (listenerId: string) => void;
 
   addContextFilesUpdatedListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: ContextFilesUpdatedData) => void) => string;
   removeContextFilesUpdatedListener: (listenerId: string) => void;
@@ -56,9 +56,6 @@ export interface ApplicationAPI {
 
   addSetCurrentModelsListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: ModelsData & { baseDir: string }) => void) => string;
   removeSetCurrentModelsListener: (listenerId: string) => void;
-
-  addWarningListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: { baseDir: string; warning: string }) => void) => string;
-  removeWarningListener: (listenerId: string) => void;
 
   addCommandOutputListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: CommandOutputData) => void) => string;
   removeCommandOutputListener: (listenerId: string) => void;

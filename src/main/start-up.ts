@@ -91,7 +91,7 @@ export const performStartUp = async (updateProgress: UpdateProgressFunction): Pr
   }
 
   updateProgress({
-    step: 'Aider Desktop Setup',
+    step: 'AiderDesk Setup',
     message: 'Performing initial setup...',
   });
 
@@ -123,7 +123,7 @@ export const performStartUp = async (updateProgress: UpdateProgressFunction): Pr
 
     updateProgress?.({
       step: 'Cloning Repository',
-      message: 'Cloning Aider Desktop Connector repository...',
+      message: 'Cloning AiderDesk Connector repository...',
     });
 
     // Clone repository and switch to the correct branch

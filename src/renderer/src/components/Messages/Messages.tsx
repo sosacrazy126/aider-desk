@@ -9,24 +9,24 @@ type Props = {
 
 export const Messages = ({ messages, allFiles = [] }: Props) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [hasUserScrolled, setHasUserScrolled] = useState(false);
+  const [scrollingPaused, setScrollingPaused] = useState(false);
 
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+  const handleScroll = (e: React.WheelEvent<HTMLDivElement>) => {
     const element = e.currentTarget;
     const isAtBottom = element.scrollHeight - element.scrollTop === element.clientHeight;
-    setHasUserScrolled(!isAtBottom);
+    setScrollingPaused(!isAtBottom);
   };
 
   useEffect(() => {
     const hasLoadingMessage = messages.some((msg) => msg.type === 'loading');
     if (hasLoadingMessage) {
-      setHasUserScrolled(false);
+      setScrollingPaused(false);
     }
 
-    if (hasLoadingMessage || !hasUserScrolled) {
+    if (hasLoadingMessage || !scrollingPaused) {
       messagesEndRef.current?.scrollIntoView();
     }
-  }, [messages, hasUserScrolled]);
+  }, [messages, scrollingPaused]);
 
   return (
     <div
@@ -35,7 +35,7 @@ export const Messages = ({ messages, allFiles = [] }: Props) => {
       scrollbar-track-neutral-900
       scrollbar-thumb-neutral-700
       hover:scrollbar-thumb-neutral-600"
-      onScroll={handleScroll}
+      onWheel={handleScroll}
     >
       {messages.map((message, index) => (
         <MessageBlock key={index} message={message} allFiles={allFiles} />

@@ -49,7 +49,7 @@ type Props = {
   currentModel?: string;
   defaultEditFormat?: string;
   totalCost: number;
-  onSubmitted: (prompt: string, editFormat?: string) => void;
+  onSubmitted: (prompt: string, editFormat?: string, images?: string[]) => void;
   showFileDialog: (readOnly: boolean) => void;
   clearMessages: () => void;
 };
@@ -283,6 +283,16 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
         window.api.sendPrompt(baseDir, text, editFormat);
         onSubmitted?.(text, editFormat === defaultEditFormat ? undefined : editFormat);
         prepareForNextPrompt();
+      }
+    };
+
+    const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+      const items = e.clipboardData.items;
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+          window.api.runCommand(baseDir, 'paste');
+          break;
+        }
       }
     };
 
@@ -523,6 +533,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
               value={text}
               onChange={handleChange}
               onKeyDown={handleKeyDown}
+              onPaste={handlePaste}
               placeholder={question ? '...or suggest something else' : placeholder}
               rows={Math.max(text.split('\n').length, 1)}
               className="w-full px-2 py-2 border-2 border-gray-700 rounded-md focus:outline-none focus:border-gray-400 text-sm bg-gray-800 text-white placeholder-gray-600 resize-none overflow-y-auto transition-colors duration-200 max-h-[60vh] scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-gray-600 hover:scrollbar-thumb-gray-600"

@@ -6,13 +6,12 @@ import {
   CommandOutputData,
   ContextFile,
   ContextFilesUpdatedData,
-  ErrorData,
+  LogData,
   ModelsData,
   QuestionData,
   ResponseChunkData,
   ResponseCompletedData,
   SettingsData,
-  WarningData,
 } from '../common/types';
 import { ApplicationAPI } from './index.d';
 
@@ -22,13 +21,12 @@ export interface ResponseModelData extends ModelsData {
 
 const responseChunkListeners: Record<string, (event: Electron.IpcRendererEvent, data: ResponseChunkData) => void> = {};
 const responseFinishedListeners: Record<string, (event: Electron.IpcRendererEvent, data: ResponseCompletedData) => void> = {};
-const errorListeners: Record<string, (event: Electron.IpcRendererEvent, data: ErrorData) => void> = {};
 const contextFilesUpdatedListeners: Record<string, (event: Electron.IpcRendererEvent, data: { baseDir: string; files: ContextFile[] }) => void> = {};
 const updateAutocompletionListeners: Record<string, (event: Electron.IpcRendererEvent, data: AutocompletionData) => void> = {};
 const askQuestionListeners: Record<string, (event: Electron.IpcRendererEvent, data: QuestionData) => void> = {};
 const setCurrentModelsListeners: Record<string, (event: Electron.IpcRendererEvent, data: ModelsData & { baseDir: string }) => void> = {};
-const warningListeners: Record<string, (event: Electron.IpcRendererEvent, data: { baseDir: string; warning: string }) => void> = {};
 const commandOutputListeners: Record<string, (event: Electron.IpcRendererEvent, data: CommandOutputData) => void> = {};
+const logListeners: Record<string, (event: Electron.IpcRendererEvent, data: LogData) => void> = {};
 
 const api: ApplicationAPI = {
   loadSettings: () => ipcRenderer.invoke('load-settings'),
@@ -89,43 +87,6 @@ const api: ApplicationAPI = {
     if (callback) {
       ipcRenderer.removeListener('response-completed', callback);
       delete responseFinishedListeners[listenerId];
-    }
-  },
-
-  addWarningListener: (baseDir, callback) => {
-    const listenerId = uuidv4();
-    warningListeners[listenerId] = (event: Electron.IpcRendererEvent, data: WarningData) => {
-      if (data.baseDir !== baseDir) {
-        return;
-      }
-      callback(event, data);
-    };
-    ipcRenderer.on('warning', warningListeners[listenerId]);
-    return listenerId;
-  },
-  removeWarningListener: (listenerId) => {
-    const callback = warningListeners[listenerId];
-    if (callback) {
-      ipcRenderer.removeListener('warning', callback);
-      delete warningListeners[listenerId];
-    }
-  },
-
-  addErrorListener: (baseDir, callback) => {
-    const listenerId = uuidv4();
-    errorListeners[listenerId] = (event: Electron.IpcRendererEvent, data: ErrorData) => {
-      if (data.baseDir !== baseDir) {
-        return;
-      }
-      callback(event, data);
-    };
-    ipcRenderer.on('error', errorListeners[listenerId]);
-    return listenerId;
-  },
-  removeErrorListener: (listenerId) => {
-    if (errorListeners[listenerId]) {
-      ipcRenderer.removeListener('error', errorListeners[listenerId]);
-      delete errorListeners[listenerId];
     }
   },
 
@@ -221,6 +182,25 @@ const api: ApplicationAPI = {
     if (callback) {
       ipcRenderer.removeListener('command-output', callback);
       delete commandOutputListeners[listenerId];
+    }
+  },
+
+  addLogListener: (baseDir, callback) => {
+    const listenerId = uuidv4();
+    logListeners[listenerId] = (event: Electron.IpcRendererEvent, data: LogData) => {
+      if (data.baseDir !== baseDir) {
+        return;
+      }
+      callback(event, data);
+    };
+    ipcRenderer.on('log', logListeners[listenerId]);
+    return listenerId;
+  },
+  removeLogListener: (listenerId) => {
+    const callback = logListeners[listenerId];
+    if (callback) {
+      ipcRenderer.removeListener('log', callback);
+      delete logListeners[listenerId];
     }
   },
 };

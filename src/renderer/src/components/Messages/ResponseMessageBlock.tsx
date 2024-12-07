@@ -12,7 +12,9 @@ export const ResponseMessageBlock = ({ message, allFiles }: Props) => {
 
   return (
     <div className={`${baseClasses} relative flex flex-col group`}>
-      <div className="flex-1 pb-2 max-w-full">{parseMessageContent(message.content, allFiles)}</div>
+      <div className={`flex-1 max-w-full ${message.content ? 'pb-2' : ''}`}>
+        {message.content ? parseMessageContent(message.content, allFiles) : 'Thinking...'}
+      </div>
       <div className="absolute top-2 right-2 flex items-center gap-2">
         <CopyMessageButton content={message.content} className="text-neutral-600 hover:text-neutral-300" />
       </div>

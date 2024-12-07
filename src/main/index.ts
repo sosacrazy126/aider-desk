@@ -81,7 +81,7 @@ app.whenReady().then(async () => {
   });
 
   const progressBar = new ProgressBar({
-    text: 'Starting Aider Desktop...',
+    text: 'Starting AiderDesk...',
     detail: 'Initializing...',
     closeOnComplete: false,
     indeterminate: true,

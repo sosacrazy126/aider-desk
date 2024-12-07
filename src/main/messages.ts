@@ -19,12 +19,9 @@ export interface Message {
   action: MessageAction;
 }
 
-export interface WarningMessage {
+export interface LogMessage {
   message: string;
-}
-
-export interface ErrorMessage {
-  message: string;
+  level: 'info' | 'warning' | 'error';
 }
 
 export interface InitMessage {

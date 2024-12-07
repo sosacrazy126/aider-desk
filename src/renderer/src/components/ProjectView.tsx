@@ -1,13 +1,4 @@
-import {
-  AutocompletionData,
-  ModelsData,
-  ProjectData,
-  ResponseChunkData,
-  ResponseCompletedData,
-  ErrorData,
-  WarningData,
-  CommandOutputData,
-} from '@common/types';
+import { AutocompletionData, ModelsData, ProjectData, ResponseChunkData, ResponseCompletedData, LogData, CommandOutputData } from '@common/types';
 import { AddFileDialog } from 'components/AddFileDialog';
 import { ContextFiles } from 'components/ContextFiles';
 import { Messages } from 'components/Messages';
@@ -21,9 +12,8 @@ import {
   Message,
   ModelsMessage,
   PromptMessage,
-  ErrorMessage,
+  LogMessage,
   ResponseMessage,
-  WarningMessage,
   CommandOutputMessage,
   isCommandOutputMessage,
 } from 'types/message';
@@ -87,6 +77,9 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
         processingMessageRef.current = newResponseMessage;
         newMessages.push(newResponseMessage);
         setMessages((prevMessages) => prevMessages.filter((message) => message.type !== 'loading').concat(...newMessages));
+        if (!processing) {
+          setProcessing(true);
+        }
       } else {
         processingMessage.content += chunk;
         setMessages((prevMessages) => prevMessages.map((message) => (message.id === messageId ? processingMessage : message)));
@@ -133,24 +126,14 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
       });
     };
 
-    const handleWarning = (_: IpcRendererEvent, { warning }: WarningData) => {
-      const warningMessage: WarningMessage = {
+    const handleLog = (_: IpcRendererEvent, { level, message }: LogData) => {
+      const logMessage: LogMessage = {
         id: uuidv4(),
-        type: 'warning',
-        content: warning,
+        type: 'log',
+        level,
+        content: message,
       };
-      setMessages((prevMessages) => prevMessages.filter((message) => message.type !== 'loading').concat(warningMessage));
-      setProcessing(false);
-    };
-
-    const handleError = (_: IpcRendererEvent, { error }: ErrorData) => {
-      const errorMessage: ErrorMessage = {
-        id: uuidv4(),
-        type: 'error',
-        content: error,
-      };
-      setMessages((prevMessages) => prevMessages.filter((message) => message.type !== 'loading').concat(errorMessage));
-      setProcessing(false);
+      setMessages((prevMessages) => [...prevMessages, logMessage]);
     };
 
     const autocompletionListenerId = window.api.addUpdateAutocompletionListener(project.baseDir, (_, data) => {
@@ -161,9 +144,10 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
       setCurrentModels(data);
 
       if (data.error) {
-        const errorMessage: ErrorMessage = {
+        const errorMessage: LogMessage = {
           id: uuidv4(),
-          type: 'error',
+          type: 'log',
+          level: 'error',
           content: data.error,
         };
         setMessages((prevMessages) => [...prevMessages, errorMessage]);
@@ -181,8 +165,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
     const commandOutputListenerId = window.api.addCommandOutputListener(project.baseDir, handleCommandOutput);
     const responseChunkListenerId = window.api.addResponseChunkListener(project.baseDir, handleResponseChunk);
     const responseCompletedListenerId = window.api.addResponseCompletedListener(project.baseDir, handleResponseCompleted);
-    const warningListenerId = window.api.addWarningListener(project.baseDir, handleWarning);
-    const errorListenerId = window.api.addErrorListener(project.baseDir, handleError);
+    const logListenerId = window.api.addLogListener(project.baseDir, handleLog);
 
     return () => {
       window.api.removeUpdateAutocompletionListener(autocompletionListenerId);
@@ -190,8 +173,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
       window.api.removeCommandOutputListener(commandOutputListenerId);
       window.api.removeResponseChunkListener(responseChunkListenerId);
       window.api.removeResponseCompletedListener(responseCompletedListenerId);
-      window.api.removeWarningListener(warningListenerId);
-      window.api.removeErrorListener(errorListenerId);
+      window.api.removeLogListener(logListenerId);
     };
   }, [project.baseDir, processing]);
 

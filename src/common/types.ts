@@ -17,20 +17,16 @@ export interface ResponseCompletedData {
   usageReport?: UsageReportData;
 }
 
-export interface WarningData {
-  baseDir: string;
-  warning: string;
-}
-
 export interface CommandOutputData {
   baseDir: string;
   command: string;
   output: string;
 }
 
-export interface ErrorData {
+export interface LogData {
   baseDir: string;
-  error: string;
+  level: 'info' | 'warning' | 'error';
+  message: string;
 }
 
 export interface ContextFilesUpdatedData {
