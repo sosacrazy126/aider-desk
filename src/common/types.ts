@@ -103,3 +103,11 @@ export interface TokensCost {
   tokens: number;
   cost: number;
 }
+
+export interface TokensInfoData {
+  baseDir: string;
+  chatHistory: TokensCost;
+  files: Record<string, TokensCost>;
+  repoMap: TokensCost;
+  systemMessages: TokensCost;
+}

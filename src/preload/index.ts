@@ -12,6 +12,7 @@ import {
   ResponseChunkData,
   ResponseCompletedData,
   SettingsData,
+  TokensInfoData,
 } from '../common/types';
 import { ApplicationAPI } from './index.d';
 
@@ -27,6 +28,7 @@ const askQuestionListeners: Record<string, (event: Electron.IpcRendererEvent, da
 const setCurrentModelsListeners: Record<string, (event: Electron.IpcRendererEvent, data: ModelsData & { baseDir: string }) => void> = {};
 const commandOutputListeners: Record<string, (event: Electron.IpcRendererEvent, data: CommandOutputData) => void> = {};
 const logListeners: Record<string, (event: Electron.IpcRendererEvent, data: LogData) => void> = {};
+const tokensInfoListeners: Record<string, (event: Electron.IpcRendererEvent, data: TokensInfoData) => void> = {};
 
 const api: ApplicationAPI = {
   loadSettings: () => ipcRenderer.invoke('load-settings'),
@@ -201,6 +203,26 @@ const api: ApplicationAPI = {
     if (callback) {
       ipcRenderer.removeListener('log', callback);
       delete logListeners[listenerId];
+    }
+  },
+
+  addTokensInfoListener: (baseDir, callback) => {
+    const listenerId = uuidv4();
+    tokensInfoListeners[listenerId] = (event: Electron.IpcRendererEvent, data: TokensInfoData) => {
+      if (data.baseDir !== baseDir) {
+        return;
+      }
+      callback(event, data);
+    };
+    ipcRenderer.on('update-tokens-info', tokensInfoListeners[listenerId]);
+    return listenerId;
+  },
+
+  removeTokensInfoListener: (listenerId) => {
+    const callback = tokensInfoListeners[listenerId];
+    if (callback) {
+      ipcRenderer.removeListener('update-tokens-info', callback);
+      delete tokensInfoListeners[listenerId];
     }
   },
 };

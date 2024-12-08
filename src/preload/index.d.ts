@@ -1,14 +1,14 @@
 import {
   AutocompletionData,
+  ContextFilesUpdatedData,
   ModelsData,
   ProjectData,
   ProjectSettings,
   QuestionData,
   ResponseChunkData,
   ResponseCompletedData,
-  ErrorData,
   SettingsData,
-  ContextFilesUpdatedData,
+  TokensInfoData,
 } from '../common/types';
 import type { ElectronAPI } from '@electron-toolkit/preload';
 
@@ -59,6 +59,9 @@ export interface ApplicationAPI {
 
   addCommandOutputListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: CommandOutputData) => void) => string;
   removeCommandOutputListener: (listenerId: string) => void;
+
+  addTokensInfoListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: TokensInfoData) => void) => string;
+  removeTokensInfoListener: (listenerId: string) => void;
 }
 
 declare global {

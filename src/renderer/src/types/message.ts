@@ -1,8 +1,8 @@
-import { ModelsData, UsageReportData } from '@common/types';
+import { ModelsData, TokensInfoData, UsageReportData } from '@common/types';
 
 export interface Message {
   id: string;
-  type: 'prompt' | 'response' | 'loading' | 'models' | 'reflected-message' | 'command-output' | 'log';
+  type: 'prompt' | 'response' | 'loading' | 'models' | 'reflected-message' | 'command-output' | 'log' | 'tokens-info';
   content: string;
 }
 
@@ -40,6 +40,11 @@ export interface CommandOutputMessage extends Message {
   command: string;
 }
 
+export interface TokensInfoMessage extends Message {
+  type: 'tokens-info';
+  info: TokensInfoData;
+}
+
 export const isPromptMessage = (message: Message): message is PromptMessage => {
   return message.type === 'prompt';
 };
@@ -66,4 +71,8 @@ export const isReflectedMessage = (message: Message): message is ReflectedMessag
 
 export const isCommandOutputMessage = (message: Message): message is CommandOutputMessage => {
   return message.type === 'command-output';
+};
+
+export const isTokensInfoMessage = (message: Message): message is TokensInfoMessage => {
+  return message.type === 'tokens-info';
 };

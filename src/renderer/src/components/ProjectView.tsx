@@ -1,24 +1,34 @@
-import { AutocompletionData, ModelsData, ProjectData, ResponseChunkData, ResponseCompletedData, LogData, CommandOutputData } from '@common/types';
+import {
+  AutocompletionData,
+  CommandOutputData,
+  LogData,
+  ModelsData,
+  ProjectData,
+  ResponseChunkData,
+  ResponseCompletedData,
+  TokensInfoData,
+} from '@common/types';
 import { AddFileDialog } from 'components/AddFileDialog';
 import { ContextFiles } from 'components/ContextFiles';
 import { Messages } from 'components/Messages';
 import { PromptField, PromptFieldRef } from 'components/PromptField';
+import { TokensCostInfo } from 'components/TokensCostInfo';
 import { IpcRendererEvent } from 'electron';
 import { useEffect, useRef, useState } from 'react';
+import { CgSpinner } from 'react-icons/cg';
 import { ResizableBox } from 'react-resizable';
 import 'react-resizable/css/styles.css';
 import {
+  CommandOutputMessage,
+  isCommandOutputMessage,
   LoadingMessage,
+  LogMessage,
   Message,
   ModelsMessage,
   PromptMessage,
-  LogMessage,
   ResponseMessage,
-  CommandOutputMessage,
-  isCommandOutputMessage,
 } from 'types/message';
 import { v4 as uuidv4 } from 'uuid';
-import { CgSpinner } from 'react-icons/cg';
 
 type AddFileDialogOptions = {
   readOnly: boolean;
@@ -37,6 +47,8 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
   const [currentModels, setCurrentModels] = useState<ModelsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [totalCost, setTotalCost] = useState(0);
+  const [lastMessageCost, setLastMessageCost] = useState<number | undefined>(undefined);
+  const [tokensInfo, setTokensInfo] = useState<TokensInfoData | null>(null);
   const processingMessageRef = useRef<ResponseMessage | null>(null);
   const promptFieldRef = useRef<PromptFieldRef>(null);
 
@@ -97,6 +109,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
 
         if (usageReport) {
           setTotalCost(usageReport.totalCost);
+          setLastMessageCost(usageReport.messageCost);
         }
       } else if (!processingMessage && processing) {
         setMessages((prevMessages) => prevMessages.filter((message) => message.type !== 'loading'));
@@ -136,11 +149,11 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
       setMessages((prevMessages) => [...prevMessages, logMessage]);
     };
 
-    const autocompletionListenerId = window.api.addUpdateAutocompletionListener(project.baseDir, (_, data) => {
+    const handleUpdateAutocompletion = (_: IpcRendererEvent, data: AutocompletionData) => {
       setAutocompletionData(data);
-    });
+    };
 
-    const currentModelsListenerId = window.api.addSetCurrentModelsListener(project.baseDir, (_, data) => {
+    const handleSetCurrentModels = (_: IpcRendererEvent, data: ModelsData) => {
       setCurrentModels(data);
 
       if (data.error) {
@@ -160,12 +173,19 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
         };
         setMessages((prevMessages) => [...prevMessages, modelsMessage]);
       }
-    });
+    };
 
+    const handleTokensInfo = (_: IpcRendererEvent, data: TokensInfoData) => {
+      setTokensInfo(data);
+    };
+
+    const autocompletionListenerId = window.api.addUpdateAutocompletionListener(project.baseDir, handleUpdateAutocompletion);
+    const currentModelsListenerId = window.api.addSetCurrentModelsListener(project.baseDir, handleSetCurrentModels);
     const commandOutputListenerId = window.api.addCommandOutputListener(project.baseDir, handleCommandOutput);
     const responseChunkListenerId = window.api.addResponseChunkListener(project.baseDir, handleResponseChunk);
     const responseCompletedListenerId = window.api.addResponseCompletedListener(project.baseDir, handleResponseCompleted);
     const logListenerId = window.api.addLogListener(project.baseDir, handleLog);
+    const tokensInfoListenerId = window.api.addTokensInfoListener(project.baseDir, handleTokensInfo);
 
     return () => {
       window.api.removeUpdateAutocompletionListener(autocompletionListenerId);
@@ -174,6 +194,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
       window.api.removeResponseChunkListener(responseChunkListenerId);
       window.api.removeResponseCompletedListener(responseCompletedListenerId);
       window.api.removeLogListener(logListenerId);
+      window.api.removeTokensInfoListener(tokensInfoListenerId);
     };
   }, [project.baseDir, processing]);
 
@@ -212,6 +233,10 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
     window.api.runCommand(project.baseDir, 'clear');
   };
 
+  const refreshRepositoryMap = () => {
+    window.api.runCommand(project.baseDir, 'map-refresh');
+  };
+
   return (
     <div className="flex h-full bg-neutral-900 relative">
       {loading && (
@@ -236,7 +261,6 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
             currentModel={currentModels?.name}
             clearMessages={clearMessages}
             showFileDialog={showFileDialog}
-            totalCost={totalCost}
           />
         </div>
       </div>
@@ -249,14 +273,25 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
         resizeHandles={['w']}
         className="border-l border-neutral-800 flex flex-col flex-shrink-0"
       >
-        <ContextFiles
-          baseDir={project.baseDir}
-          showFileDialog={() =>
-            setAddFileDialogOptions({
-              readOnly: false,
-            })
-          }
-        />
+        <div className="flex flex-col h-full">
+          <div className="flex-grow">
+            <ContextFiles
+              baseDir={project.baseDir}
+              showFileDialog={() =>
+                setAddFileDialogOptions({
+                  readOnly: false,
+                })
+              }
+            />
+          </div>
+          <TokensCostInfo
+            tokensInfo={tokensInfo}
+            totalCost={totalCost}
+            lastMessageCost={lastMessageCost}
+            clearMessages={clearMessages}
+            refreshRepoMap={refreshRepositoryMap}
+          />
+        </div>
       </ResizableBox>
       {addFileDialogOptions && (
         <AddFileDialog

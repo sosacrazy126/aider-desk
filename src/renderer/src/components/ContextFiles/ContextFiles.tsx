@@ -1,15 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { StaticTreeDataProvider, Tree, UncontrolledTreeEnvironment } from 'react-complex-tree';
 import { HiPlus, HiX } from 'react-icons/hi';
-import { MdOutlineRefresh } from 'react-icons/md';
 
 import { ContextFile } from '@common/types';
 import { TbPencilOff } from 'react-icons/tb';
 import { Tooltip } from 'react-tooltip';
 
 import './ContextFiles.css';
-
-const REFRESH_ANIMATION_DURATION = 2000;
 
 interface TreeItem {
   index: string;
@@ -66,7 +63,6 @@ type Props = {
 export const ContextFiles = ({ baseDir, showFileDialog }: Props) => {
   const [files, setFiles] = useState<ContextFile[]>([]);
   const [newlyAddedFiles, setNewlyAddedFiles] = useState<string[]>([]);
-  const [refreshingAnimation, setRefreshingAnimation] = useState(false);
 
   const sortedFiles = useMemo(() => {
     return [...files].sort((a, b) => a.path.localeCompare(b.path));
@@ -101,27 +97,11 @@ export const ContextFiles = ({ baseDir, showFileDialog }: Props) => {
     }
   };
 
-  const refreshRepoMap = () => {
-    window.api.runCommand(baseDir, 'map-refresh');
-    setRefreshingAnimation(true);
-    setTimeout(() => setRefreshingAnimation(false), REFRESH_ANIMATION_DURATION);
-  };
-
   return (
     <div className="flex-grow w-full p-2 space-y-2 overflow-auto scrollbar-thin scrollbar-thumb-neutral-700 scrollbar-track-neutral-900 scrollbar-rounded">
       <div className="flex flex-col">
         <div className="flex items-center mb-2">
           <h3 className="text-md font-semibold uppercase pl-1 flex-grow">Context Files</h3>
-          <button
-            onClick={refreshRepoMap}
-            className="p-1 hover:bg-neutral-700 rounded-md"
-            data-tooltip-id="refresh-map-tooltip"
-            data-tooltip-content="Refresh repository map"
-            disabled={refreshingAnimation}
-          >
-            <MdOutlineRefresh className={`w-5 h-5 ${refreshingAnimation ? 'animate-spin' : ''}`} />
-          </button>
-          <Tooltip id="refresh-map-tooltip" />
           <button
             onClick={showFileDialog}
             className="p-1 hover:bg-neutral-700 rounded-md"

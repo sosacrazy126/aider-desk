@@ -1,4 +1,4 @@
-import { ModelsData, QuestionData, ResponseChunkData, ResponseCompletedData } from '@common/types';
+import { ModelsData, QuestionData, ResponseChunkData, ResponseCompletedData, TokensInfoData } from '@common/types';
 import { parseUsageReport } from '@common/utils';
 import { BrowserWindow } from 'electron';
 import { Server, Socket } from 'socket.io';
@@ -16,6 +16,7 @@ import {
   isUpdateAutocompletionMessage,
   isUpdateContextFilesMessage,
   isUseCommandOutputMessage,
+  isTokensInfoMessage,
   LogMessage,
   Message,
   ResponseMessage,
@@ -159,6 +160,17 @@ class ConnectorManager {
         } else {
           project.openCommandOutput(message.command);
         }
+      } else if (isTokensInfoMessage(message)) {
+        const connector = this.findConnectorBySocket(socket);
+        if (!connector || !this.mainWindow) {
+          return;
+        }
+
+        const data: TokensInfoData = {
+          baseDir: connector.baseDir,
+          ...message.info,
+        };
+        this.mainWindow.webContents.send('update-tokens-info', data);
       } else {
         logger.warn('Unknown message type: ', message);
       }
