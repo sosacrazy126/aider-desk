@@ -4,7 +4,7 @@ import { useSettings } from 'hooks/useSettings';
 import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { BiSend } from 'react-icons/bi';
 import { CgLock, CgLockUnlock } from 'react-icons/cg';
-import { MdKeyboardArrowUp } from 'react-icons/md';
+import { MdKeyboardArrowUp, MdStop } from 'react-icons/md';
 import { ModelSelector, ModelSelectorRef } from './ModelSelector';
 
 const PLACEHOLDERS = [
@@ -55,6 +55,7 @@ type Props = {
   scrapeWeb: (url: string) => void;
   question?: QuestionData | null;
   answerQuestion?: (answer: string) => void;
+  interruptResponse: () => void;
 };
 
 export const PromptField = React.forwardRef<PromptFieldRef, Props>(
@@ -73,6 +74,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
       scrapeWeb,
       question,
       answerQuestion,
+      interruptResponse,
     }: Props,
     ref,
   ) => {
@@ -309,6 +311,13 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      // Handle CTRL+C during processing
+      if (processing && e.ctrlKey && e.key === 'c') {
+        e.preventDefault();
+        interruptResponse();
+        return;
+      }
+
       if (question) {
         if (e.key === 'Tab') {
           e.preventDefault();
@@ -402,8 +411,6 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
       }
     };
 
-    // Removed answerQuestion method
-
     return (
       <div className="w-full relative">
         {question && (
@@ -455,14 +462,21 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
               className="w-full px-2 py-2 border-2 border-neutral-700 rounded-md focus:outline-none focus:border-neutral-500 text-sm bg-neutral-850 text-white placeholder-neutral-600 resize-none overflow-y-auto transition-colors duration-200 max-h-[60vh] scrollbar-thin scrollbar-track-neutral-800 scrollbar-thumb-neutral-600 hover:scrollbar-thumb-neutral-600"
             />
             {processing ? (
-              <div className="absolute right-3 top-1/2 -translate-y-[12px] text-neutral-400">
+              <div className="absolute right-3 top-1/2 -translate-y-[16px] flex items-center space-x-2 text-neutral-400">
+                <button
+                  onClick={interruptResponse}
+                  className="hover:text-neutral-300 hover:bg-neutral-700 rounded p-1 transition-colors duration-200"
+                  title="Stop response"
+                >
+                  <MdStop className="w-4 h-4" />
+                </button>
                 <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
               </div>
             ) : (
               <button
                 onClick={handleSubmit}
                 disabled={!text.trim()}
-                className={`absolute right-3 top-1/2 -translate-y-[12px] text-neutral-400 hover:text-neutral-300 transition-all duration-200
+                className={`absolute right-2 top-1/2 -translate-y-[16px] text-neutral-400 hover:text-neutral-300 hover:bg-neutral-700 rounded p-1 transition-all duration-200
                 ${!text.trim() ? 'opacity-0' : 'opacity-100'}`}
                 title="Send message (Enter)"
               >

@@ -300,6 +300,17 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
     }
   };
 
+  const handleInterruptResponse = () => {
+    window.api.interruptResponse(project.baseDir);
+    const interruptMessage: LogMessage = {
+      id: uuidv4(),
+      type: 'log',
+      level: 'warning',
+      content: 'Interrupted by user.',
+    };
+    setMessages((prevMessages) => [...prevMessages, interruptMessage]);
+  };
+
   return (
     <div className="flex h-full bg-neutral-900 relative">
       {loading && (
@@ -327,6 +338,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
             showFileDialog={showFileDialog}
             question={question}
             answerQuestion={answerQuestion}
+            interruptResponse={handleInterruptResponse}
           />
         </div>
       </div>

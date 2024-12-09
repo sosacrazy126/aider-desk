@@ -54,6 +54,7 @@ const api: ApplicationAPI = {
   dropFile: (baseDir: string, path: string) => ipcRenderer.send('drop-file', baseDir, path),
   runCommand: (baseDir: string, command: string) => ipcRenderer.send('run-command', baseDir, command),
   scrapeWeb: (baseDir: string, url: string) => ipcRenderer.invoke('scrape-web', baseDir, url),
+  interruptResponse: (baseDir: string) => ipcRenderer.send('interrupt-response', baseDir),
 
   addResponseChunkListener: (baseDir, callback) => {
     const listenerId = uuidv4();

@@ -14,7 +14,8 @@ export type MessageAction =
   | 'use-command-output'
   | 'run-command'
   | 'tokens-info'
-  | 'add-message';
+  | 'add-message'
+  | 'interrupt-response';
 
 export interface Message {
   action: MessageAction;
@@ -163,3 +164,11 @@ export interface AddMessageMessage extends Message {
   action: 'add-message';
   content: string;
 }
+
+export interface InterruptResponseMessage extends Message {
+  action: 'interrupt-response';
+}
+
+export const isInterruptResponseMessage = (message: Message): message is InterruptResponseMessage => {
+  return typeof message === 'object' && message !== null && 'action' in message && message.action === 'interrupt-response';
+};

@@ -6,6 +6,7 @@ import {
   AnswerQuestionMessage,
   DropFileMessage,
   EditFormat,
+  InterruptResponseMessage,
   Message,
   MessageAction,
   PromptMessage,
@@ -89,6 +90,13 @@ export class Connector {
     const message: AddMessageMessage = {
       action: 'add-message',
       content,
+    };
+    this.sendMessage(message);
+  }
+
+  public sendInterruptResponseMessage() {
+    const message: InterruptResponseMessage = {
+      action: 'interrupt-response',
     };
     this.sendMessage(message);
   }

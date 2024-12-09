@@ -296,4 +296,9 @@ export class Project {
   public addMessage(content: string) {
     this.findMessageConnectors('add-message').forEach((connector) => connector.sendAddMessageMessage(content));
   }
+
+  public interruptResponse() {
+    logger.info('Interrupting response:', { baseDir: this.baseDir });
+    this.findMessageConnectors('interrupt-response').forEach((connector) => connector.sendInterruptResponseMessage());
+  }
 }

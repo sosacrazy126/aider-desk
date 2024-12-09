@@ -5,6 +5,7 @@ import { EditFormat } from './messages';
 import { projectManager } from './project-manager';
 import { Store } from './store';
 import { scrapeWeb } from './web-scrapper';
+import logger from './logger';
 
 export const setupIpcHandlers = (mainWindow: BrowserWindow, store: Store) => {
   ipcMain.handle('load-settings', () => {
@@ -91,6 +92,10 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, store: Store) => {
 
   ipcMain.on('run-command', (_, baseDir: string, command: string) => {
     projectManager.getProject(baseDir).runCommand(command);
+  });
+
+  ipcMain.on('interrupt-response', (_, baseDir: string) => {
+    projectManager.getProject(baseDir).interruptResponse();
   });
 
   ipcMain.handle('scrape-web', async (_, baseDir: string, url: string) => {
