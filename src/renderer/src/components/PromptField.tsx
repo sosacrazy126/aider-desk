@@ -27,7 +27,7 @@ const PLACEHOLDERS = [
 ];
 
 const COMMANDS = ['/code', '/ask', '/architect', '/add', '/model', '/read-only'];
-const CONFIRM_COMMANDS = ['/clear'];
+const CONFIRM_COMMANDS = ['/clear', '/web'];
 
 const EDIT_FORMATS = [
   { value: 'code', label: 'Code' },
@@ -52,6 +52,9 @@ type Props = {
   onSubmitted: (prompt: string, editFormat?: string, images?: string[]) => void;
   showFileDialog: (readOnly: boolean) => void;
   clearMessages: () => void;
+  scrapeWeb: (url: string) => void;
+  question?: QuestionData | null;
+  answerQuestion?: (answer: string) => void;
 };
 
 export const PromptField = React.forwardRef<PromptFieldRef, Props>(
@@ -67,6 +70,9 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
       showFileDialog,
       onSubmitted,
       clearMessages,
+      scrapeWeb,
+      question,
+      answerQuestion,
     }: Props,
     ref,
   ) => {
@@ -79,7 +85,6 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
     const [highlightedSuggestionIndex, setHighlightedSuggestionIndex] = useState(-1);
     const [inputHistory, setInputHistory] = useState<string[]>([]);
     const [historyIndex, setHistoryIndex] = useState<number>(-1);
-    const [question, setQuestion] = useState<QuestionData | null>(null);
     const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
     const [showFormatSelector, setShowFormatSelector] = useState(false);
     const [editFormatLocked, setEditFormatLocked] = useState(false);
@@ -131,25 +136,26 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
             setText('');
             modelSelectorRef.current?.open();
             break;
+          case '/web': {
+            const url = text.replace('/web', '').trim();
+            setText('');
+            scrapeWeb(url);
+            break;
+          }
           case '/clear':
             setText('');
             clearMessages();
             break;
         }
       },
-      [showFileDialog, text],
+      [showFileDialog, text, scrapeWeb],
     );
 
     useEffect(() => {
-      const questionListenerId = window.api.addAskQuestionListener(baseDir, (_, data) => {
-        setQuestion(data);
-        setSelectedAnswer(data.defaultAnswer || 'y');
-      });
-
-      return () => {
-        window.api.removeAskQuestionListener(questionListenerId);
-      };
-    }, [baseDir]);
+      if (question) {
+        setSelectedAnswer(question.defaultAnswer || 'y');
+      }
+    }, [question]);
 
     useEffect(() => {
       if (processing) {
@@ -207,7 +213,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
       }
       if (newText.startsWith('/')) {
         // Show command suggestions when text starts with '/'
-        const matched = COMMANDS.filter((cmd) => cmd.toLowerCase().startsWith(newText.toLowerCase()));
+        const matched = [...new Set([...COMMANDS, ...CONFIRM_COMMANDS])].filter((cmd) => cmd.toLowerCase().startsWith(newText.toLowerCase()));
         setFilteredSuggestions(matched);
         setSuggestionsVisible(matched.length > 0);
       } else if (word.length > 0) {
@@ -260,15 +266,20 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
       setSuggestionsVisible(false);
       setHighlightedSuggestionIndex(-1);
       setHistoryIndex(-1);
-      if (!editFormatLocked) {
-        setEditFormat(defaultEditFormat);
-      }
     };
 
     const handleSubmit = () => {
       if (text) {
-        window.api.sendPrompt(baseDir, text, editFormat);
-        onSubmitted?.(text, editFormat === defaultEditFormat ? undefined : editFormat);
+        const confirmCommandMatch = CONFIRM_COMMANDS.find((cmd) => text.startsWith(cmd));
+        if (confirmCommandMatch) {
+          invokeCommand(confirmCommandMatch);
+        } else {
+          window.api.sendPrompt(baseDir, text, editFormat);
+          if (!editFormatLocked) {
+            setEditFormat(defaultEditFormat);
+          }
+          onSubmitted?.(text, editFormat === defaultEditFormat ? undefined : editFormat);
+        }
         prepareForNextPrompt();
       }
     };
@@ -310,7 +321,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
         }
         if (e.key === 'Enter' && !e.shiftKey && ANSWERS.includes(selectedAnswer?.toLowerCase() || 'y')) {
           e.preventDefault();
-          answerQuestion(selectedAnswer!);
+          answerQuestion?.(selectedAnswer!);
           return;
         }
       }
@@ -321,6 +332,8 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
             e.preventDefault();
             if (highlightedSuggestionIndex !== -1) {
               acceptSuggestion(filteredSuggestions[highlightedSuggestionIndex]);
+            } else if (!processing && !e.shiftKey) {
+              handleSubmit();
             }
             break;
           case 'ArrowUp':
@@ -356,12 +369,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
             if (!e.shiftKey) {
               e.preventDefault();
               if (!processing) {
-                const confirmCommandMatch = CONFIRM_COMMANDS.find((cmd) => text.startsWith(cmd));
-                if (confirmCommandMatch) {
-                  invokeCommand(confirmCommandMatch);
-                } else {
-                  handleSubmit();
-                }
+                handleSubmit();
               }
             }
             break;
@@ -394,45 +402,39 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
       }
     };
 
-    const answerQuestion = (answer: string) => {
-      if (question) {
-        window.api.answerQuestion(baseDir, answer);
-        setQuestion(null);
-        prepareForNextPrompt();
-      }
-    };
+    // Removed answerQuestion method
 
     return (
       <div className="w-full relative">
         {question && (
-          <div className="mb-2 p-4 bg-gray-800 rounded-md border border-gray-700">
+          <div className="mb-2 p-3 bg-neutral-800 rounded-md border border-neutral-700 text-sm">
             <div className="text-white mb-2">{question.text}</div>
-            {question.subject && <div className="text-gray-400 text-sm mb-3">{question.subject}</div>}
+            {question.subject && <div className="text-neutral-400 text-xs mb-3">{question.subject}</div>}
             <div className="flex gap-2">
               <button
-                onClick={() => answerQuestion('y')}
-                className={`px-2 py-0.5 text-sm rounded hover:bg-gray-700 border border-gray-600 ${selectedAnswer === 'y' ? 'bg-gray-700' : 'bg-gray-800'}`}
+                onClick={() => answerQuestion?.('y')}
+                className={`px-2 py-0.5 text-xs rounded hover:bg-neutral-700 border border-neutral-600 ${selectedAnswer === 'y' ? 'bg-neutral-700' : 'bg-neutral-800'}`}
                 title="Yes (Y)"
               >
                 (Y)es
               </button>
               <button
-                onClick={() => answerQuestion('n')}
-                className={`px-2 py-0.5 text-sm rounded hover:bg-gray-700 border border-gray-600 ${selectedAnswer === 'n' ? 'bg-gray-700' : 'bg-gray-800'}`}
+                onClick={() => answerQuestion?.('n')}
+                className={`px-2 py-0.5 text-xs rounded hover:bg-neutral-700 border border-neutral-600 ${selectedAnswer === 'n' ? 'bg-neutral-700' : 'bg-neutral-800'}`}
                 title="No (N)"
               >
                 (N)o
               </button>
               <button
-                onClick={() => answerQuestion('a')}
-                className={`px-2 py-0.5 text-sm rounded hover:bg-gray-700 border border-gray-600 ${selectedAnswer === 'a' ? 'bg-gray-700' : 'bg-gray-800'}`}
+                onClick={() => answerQuestion?.('a')}
+                className={`px-2 py-0.5 text-xs rounded hover:bg-neutral-700 border border-neutral-600 ${selectedAnswer === 'a' ? 'bg-neutral-700' : 'bg-neutral-800'}`}
                 title="Always (A)"
               >
                 (A)lways
               </button>
               <button
-                onClick={() => answerQuestion('d')}
-                className={`px-2 py-0.5 text-sm rounded hover:bg-gray-700 border border-gray-600 ${selectedAnswer === 'd' ? 'bg-gray-700' : 'bg-gray-800'}`}
+                onClick={() => answerQuestion?.('d')}
+                className={`px-2 py-0.5 text-xs rounded hover:bg-neutral-700 border border-neutral-600 ${selectedAnswer === 'd' ? 'bg-neutral-700' : 'bg-neutral-800'}`}
                 title="Don't ask again (D)"
               >
                 (D)on&apos;t ask again
@@ -450,7 +452,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
               onPaste={handlePaste}
               placeholder={question ? '...or suggest something else' : placeholder}
               rows={Math.max(text.split('\n').length, 1)}
-              className="w-full px-2 py-2 border-2 border-gray-700 rounded-md focus:outline-none focus:border-gray-400 text-sm bg-gray-800 text-white placeholder-gray-600 resize-none overflow-y-auto transition-colors duration-200 max-h-[60vh] scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-gray-600 hover:scrollbar-thumb-gray-600"
+              className="w-full px-2 py-2 border-2 border-neutral-700 rounded-md focus:outline-none focus:border-neutral-500 text-sm bg-neutral-850 text-white placeholder-neutral-600 resize-none overflow-y-auto transition-colors duration-200 max-h-[60vh] scrollbar-thin scrollbar-track-neutral-800 scrollbar-thumb-neutral-600 hover:scrollbar-thumb-neutral-600"
             />
             {processing ? (
               <div className="absolute right-3 top-1/2 -translate-y-[12px] text-neutral-400">
@@ -502,7 +504,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
                 )}
               </button>
               {showFormatSelector && (
-                <div className="absolute bottom-full left-4 mb-1 bg-gray-800 border border-gray-700 rounded-md shadow-lg z-10 ml-2">
+                <div className="absolute bottom-full left-4 mb-1 bg-neutral-900 border border-neutral-700 rounded-md shadow-lg z-10 ml-2">
                   {EDIT_FORMATS.map(({ label, value }) => (
                     <button
                       key={value}
@@ -513,7 +515,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
                           setEditFormatLocked(false);
                         }
                       }}
-                      className={`w-full px-3 py-1 text-left hover:bg-gray-700 transition-colors duration-200 text-xs
+                      className={`w-full px-3 py-1 text-left hover:bg-neutral-700 transition-colors duration-200 text-xs
                     ${value === editFormat ? 'text-white font-bold' : 'text-neutral-300'}`}
                     >
                       {label}

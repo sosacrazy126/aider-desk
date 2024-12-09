@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { TokensInfoData } from '@common/types';
-import { Tooltip } from 'react-tooltip';
 import { IoClose, IoChevronDown, IoChevronUp } from 'react-icons/io5';
 import { MdOutlineRefresh } from 'react-icons/md';
+import { StyledTooltip } from './common/StyledTooltip';
 
 type Props = {
   tokensInfo?: TokensInfoData | null;
@@ -59,7 +59,7 @@ export const TokensCostInfo = ({ tokensInfo, totalCost, lastMessageCost, clearMe
                 >
                   <MdOutlineRefresh className={`w-4 h-4 ${refreshingAnimation ? 'animate-spin' : ''}`} />
                 </button>
-                <Tooltip id="refresh-repo-map-tooltip" content="Refresh repository map" />
+                <StyledTooltip id="refresh-repo-map-tooltip" />
               </div>
             )}
           </div>
@@ -71,10 +71,11 @@ export const TokensCostInfo = ({ tokensInfo, totalCost, lastMessageCost, clearMe
                   onClick={clearMessages}
                   data-tooltip-id="clear-message-history"
                   className="p-0.5 hover:bg-neutral-700 rounded-md text-neutral-500 hover:text-neutral-300 transition-colors"
+                  data-tooltip-content="Clear message history"
                 >
                   <IoClose className="w-4 h-4" />
                 </button>
-                <Tooltip id="clear-message-history" content="Clear message history" />
+                <StyledTooltip id="clear-message-history" />
               </div>
             </div>
           )}

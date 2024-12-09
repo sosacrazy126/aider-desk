@@ -7,6 +7,7 @@ import {
   ResponseChunkData,
   ResponseCompletedData,
   TokensInfoData,
+  QuestionData,
 } from '@common/types';
 import { AddFileDialog } from 'components/AddFileDialog';
 import { ContextFiles } from 'components/ContextFiles';
@@ -49,6 +50,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
   const [totalCost, setTotalCost] = useState(0);
   const [lastMessageCost, setLastMessageCost] = useState<number | undefined>(undefined);
   const [tokensInfo, setTokensInfo] = useState<TokensInfoData | null>(null);
+  const [question, setQuestion] = useState<QuestionData | null>(null);
   const processingMessageRef = useRef<ResponseMessage | null>(null);
   const promptFieldRef = useRef<PromptFieldRef>(null);
 
@@ -179,6 +181,10 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
       setTokensInfo(data);
     };
 
+    const handleQuestion = (_: IpcRendererEvent, data: QuestionData) => {
+      setQuestion(data);
+    };
+
     const autocompletionListenerId = window.api.addUpdateAutocompletionListener(project.baseDir, handleUpdateAutocompletion);
     const currentModelsListenerId = window.api.addSetCurrentModelsListener(project.baseDir, handleSetCurrentModels);
     const commandOutputListenerId = window.api.addCommandOutputListener(project.baseDir, handleCommandOutput);
@@ -186,6 +192,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
     const responseCompletedListenerId = window.api.addResponseCompletedListener(project.baseDir, handleResponseCompleted);
     const logListenerId = window.api.addLogListener(project.baseDir, handleLog);
     const tokensInfoListenerId = window.api.addTokensInfoListener(project.baseDir, handleTokensInfo);
+    const questionListenerId = window.api.addAskQuestionListener(project.baseDir, handleQuestion);
 
     return () => {
       window.api.removeUpdateAutocompletionListener(autocompletionListenerId);
@@ -195,6 +202,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
       window.api.removeResponseCompletedListener(responseCompletedListenerId);
       window.api.removeLogListener(logListenerId);
       window.api.removeTokensInfoListener(tokensInfoListenerId);
+      window.api.removeAskQuestionListener(questionListenerId);
     };
   }, [project.baseDir, processing]);
 
@@ -237,6 +245,61 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
     window.api.runCommand(project.baseDir, 'map-refresh');
   };
 
+  const answerQuestion = (answer: string) => {
+    if (question) {
+      if (question.answerFunction) {
+        question.answerFunction(answer);
+      } else {
+        window.api.answerQuestion(project.baseDir, answer);
+      }
+      setQuestion(null);
+    }
+  };
+
+  const scrapeWeb = async (url: string) => {
+    setProcessing(true);
+    const loadingMessage: LoadingMessage = {
+      id: uuidv4(),
+      type: 'loading',
+      content: `Scraping ${url}...`,
+    };
+    setMessages((prevMessages) => [...prevMessages, loadingMessage]);
+
+    try {
+      await window.api.scrapeWeb(project.baseDir, url);
+      const infoMessage: LogMessage = {
+        id: uuidv4(),
+        level: 'info',
+        type: 'log',
+        content: `Content from ${url} has been added to the chat.`,
+      };
+      setMessages((prevMessages) => [...prevMessages, infoMessage]);
+    } catch (error) {
+      if (error instanceof Error) {
+        const getMessage = () => {
+          if (error.message.includes('Cannot navigate to invalid URL')) {
+            return `Invalid URL: ${url}`;
+          } else if (error.message.includes('npx playwright install')) {
+            return 'Playwright is not installed. Run `npx playwright install` in the terminal to install it and try again.';
+          } else {
+            return `Error during scraping: ${error.message}`;
+          }
+        };
+
+        const errorMessage: LogMessage = {
+          id: uuidv4(),
+          level: 'error',
+          type: 'log',
+          content: getMessage(),
+        };
+        setMessages((prevMessages) => [...prevMessages, errorMessage]);
+      }
+    } finally {
+      setMessages((prevMessages) => prevMessages.filter((message) => message !== loadingMessage));
+      setProcessing(false);
+    }
+  };
+
   return (
     <div className="flex h-full bg-neutral-900 relative">
       {loading && (
@@ -260,7 +323,10 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
             models={autocompletionData?.models}
             currentModel={currentModels?.name}
             clearMessages={clearMessages}
+            scrapeWeb={scrapeWeb}
             showFileDialog={showFileDialog}
+            question={question}
+            answerQuestion={answerQuestion}
           />
         </div>
       </div>
@@ -274,7 +340,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
         className="border-l border-neutral-800 flex flex-col flex-shrink-0"
       >
         <div className="flex flex-col h-full">
-          <div className="flex-grow">
+          <div className="flex-grow flex flex-col overflow-y-hidden">
             <ContextFiles
               baseDir={project.baseDir}
               showFileDialog={() =>

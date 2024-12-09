@@ -8,10 +8,8 @@ import { useState } from 'react';
 import { MdKeyboardArrowDown } from 'react-icons/md';
 import { VscCode } from 'react-icons/vsc';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
-import { BiCopy } from 'react-icons/bi';
-import { Tooltip } from 'react-tooltip';
-import { showInfoNotification } from 'utils/notifications';
 import ReactDiffViewer from 'react-diff-viewer-continued';
+import { CopyMessageButton } from './CopyMessageButton';
 
 const DIFF_VIEWER_STYLES = {
   variables: {
@@ -62,12 +60,6 @@ const REPLACE_MARKER = /^>{5,9} REPLACE\s*$/m;
 
 const isDiffContent = (content: string): boolean => {
   return SEARCH_MARKER.test(content);
-};
-
-const copyToClipboard = (e: React.MouseEvent, text: string) => {
-  e.stopPropagation();
-  navigator.clipboard.writeText(text);
-  showInfoNotification('Copied to clipboard');
 };
 
 const parseDiffContent = (content: string): { oldValue: string; newValue: string } => {
@@ -168,14 +160,7 @@ export const CodeBlock = ({ language, children, file, isComplete = true }: Props
                 {file}
               </span>
               <span className="flex items-center gap-2">
-                <BiCopy
-                  data-tooltip-id="copy-tooltip"
-                  data-tooltip-content="Copy to clipboard"
-                  onClick={(e) => copyToClipboard(e, children)}
-                  className="text-neutral-500 hover:text-neutral-300 cursor-pointer mr-2 focus:outline-none"
-                  size={14}
-                />
-                <Tooltip id="copy-tooltip" place="top" className="z-50" />
+                <CopyMessageButton content={children} className="text-neutral-500 hover:text-neutral-300 cursor-pointer mr-2 focus:outline-none" />
                 {!isComplete && <AiOutlineLoading3Quarters className="animate-spin text-neutral-500" size={14} />}
                 <span className="text-neutral-100 transition-transform duration-200" style={{ transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)' }}>
                   <MdKeyboardArrowDown size={16} />
@@ -190,14 +175,7 @@ export const CodeBlock = ({ language, children, file, isComplete = true }: Props
         ) : (
           <div className="relative">
             <div className="absolute right-0 top-1 flex items-center gap-2">
-              <BiCopy
-                data-tooltip-id="copy-tooltip"
-                data-tooltip-content="Copy to clipboard"
-                onClick={(e) => copyToClipboard(e, children)}
-                className="text-neutral-500 hover:text-neutral-300 cursor-pointer focus:outline-none"
-                size={14}
-              />
-              <Tooltip id="copy-tooltip" place="top" className="z-50" />
+              <CopyMessageButton content={children} className="text-neutral-500 hover:text-neutral-300 cursor-pointer mr-2 focus:outline-none" />
               {!isComplete && <AiOutlineLoading3Quarters className="animate-spin text-neutral-500" size={14} />}
             </div>
             {renderContent()}

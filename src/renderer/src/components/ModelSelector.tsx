@@ -90,7 +90,7 @@ export const ModelSelector = forwardRef<ModelSelectorRef, Props>(({ models, curr
       <div
         key={model}
         ref={index === highlightedModelIndex ? highlightedModelRef : undefined}
-        className={`flex items-center w-full hover:bg-gray-700 transition-colors duration-200 ${index === highlightedModelIndex ? 'bg-neutral-700' : 'text-neutral-300'}`}
+        className={`flex items-center w-full hover:bg-neutral-700 transition-colors duration-200 ${index === highlightedModelIndex ? 'bg-neutral-700' : 'text-neutral-300'}`}
       >
         <button
           onClick={() => onModelSelected(model)}
@@ -133,21 +133,21 @@ export const ModelSelector = forwardRef<ModelSelectorRef, Props>(({ models, curr
         <span>{currentModel || 'Loading...'}</span>
       </button>
       {showModelSelector && (
-        <div className="absolute bottom-full left-3 mb-1 bg-gray-800 border border-gray-700 rounded-md shadow-lg z-10 max-h-48 flex flex-col w-[600px]">
-          <div className="sticky top-0 p-2 border-b border-gray-700 bg-gray-800 z-10">
+        <div className="absolute bottom-full left-3 mb-1 bg-neutral-900 border border-neutral-700 rounded-md shadow-lg z-10 max-h-48 flex flex-col w-[600px]">
+          <div className="sticky top-0 p-2 border-b border-neutral-700 bg-neutral-900 rounded-md z-10">
             <input
               type="text"
               autoFocus={true}
               placeholder="Search models..."
-              className="w-full px-2 py-1 text-xs bg-gray-800 text-white rounded border border-gray-600 focus:outline-none focus:border-gray-500"
+              className="w-full px-2 py-1 text-xs bg-neutral-800 text-white rounded border border-neutral-600 focus:outline-none focus:border-neutral-500"
               value={modelSearchTerm}
               onChange={(e) => setModelSearchTerm(e.target.value)}
               onKeyDown={onModelSelectorSearchInputKeyDown}
             />
           </div>
-          <div className="overflow-y-auto scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-gray-700 hover:scrollbar-thumb-gray-600 max-h-48">
+          <div className="overflow-y-auto scrollbar-thin scrollbar-track-neutral-800 scrollbar-thumb-neutral-700 hover:scrollbar-thumb-neutral-600 max-h-48">
             {...settings.models.preferred.filter((model) => model.toLowerCase().includes(debouncedSearchTerm.toLowerCase())).map(renderModelItem)}
-            <div key="divider" className="border-t border-gray-700 my-1" />
+            <div key="divider" className="border-t border-neutral-700 my-1" />
             {...models
               .filter((model) => !settings.models.preferred.includes(model) && model.toLowerCase().includes(debouncedSearchTerm.toLowerCase()))
               .map(renderModelItem)}

@@ -130,7 +130,7 @@ export const Home = () => {
             {openProjects.map((project) => (
               <button
                 key={project.baseDir}
-                className={`text-sm pl-3 py-2 pr-1 transition-all duration-200 ease-in-out flex items-center gap-3 relative
+                className={`text-sm pl-3 py-2 pr-1 border-r border-neutral-800 transition-all duration-200 ease-in-out flex items-center gap-3 relative
                 ${
                   activeProject?.baseDir === project.baseDir
                     ? 'bg-neutral-800 text-neutral-100 font-medium'

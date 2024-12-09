@@ -13,7 +13,8 @@ export type MessageAction =
   | 'update-context-files'
   | 'use-command-output'
   | 'run-command'
-  | 'tokens-info';
+  | 'tokens-info'
+  | 'add-message';
 
 export interface Message {
   action: MessageAction;
@@ -157,3 +158,8 @@ export interface TokensInfoMessage extends Message {
 export const isTokensInfoMessage = (message: Message): message is TokensInfoMessage => {
   return typeof message === 'object' && message !== null && 'action' in message && message.action === 'tokens-info';
 };
+
+export interface AddMessageMessage extends Message {
+  action: 'add-message';
+  content: string;
+}

@@ -46,6 +46,7 @@ export interface QuestionData {
   text: string;
   subject?: string;
   defaultAnswer: string;
+  answerFunction?: (answer: string) => void;
 }
 
 export type ContextFileSourceType = 'companion' | 'aider' | 'app' | string;

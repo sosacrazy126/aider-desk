@@ -4,7 +4,7 @@ import { HiPlus, HiX } from 'react-icons/hi';
 
 import { ContextFile } from '@common/types';
 import { TbPencilOff } from 'react-icons/tb';
-import { Tooltip } from 'react-tooltip';
+import { StyledTooltip } from '../common/StyledTooltip';
 
 import './ContextFiles.css';
 
@@ -110,7 +110,7 @@ export const ContextFiles = ({ baseDir, showFileDialog }: Props) => {
           >
             <HiPlus className="w-5 h-5" />
           </button>
-          <Tooltip id="add-file-tooltip" />
+          <StyledTooltip id="add-file-tooltip" />
         </div>
         <div className="flex-grow w-full">
           <UncontrolledTreeEnvironment
@@ -141,7 +141,16 @@ export const ContextFiles = ({ baseDir, showFileDialog }: Props) => {
                   </div>
                   {!item.isFolder && (
                     <div className="flex items-center gap-1">
-                      {(item as TreeItem).file?.readOnly && <TbPencilOff className="w-4 h-4 text-neutral-400" />}
+                      {(item as TreeItem).file?.readOnly && (
+                        <>
+                          <TbPencilOff 
+                            className="w-4 h-4 text-neutral-400" 
+                            data-tooltip-id={`readonly-file-tooltip-${(item as TreeItem).file?.path}`} 
+                            data-tooltip-content="Read-only file" 
+                          />
+                          <StyledTooltip id={`readonly-file-tooltip-${(item as TreeItem).file?.path}`} />
+                        </>
+                      )}
                       <button onClick={dropFile(item as TreeItem)} className="px-1 py-1 rounded hover:bg-neutral-900 text-neutral-500 hover:text-red-800">
                         <HiX className="w-4 h-4" />
                       </button>

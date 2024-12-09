@@ -4,6 +4,7 @@ import { getFilePathSuggestions, isProjectPath, isValidPath } from './file-syste
 import { EditFormat } from './messages';
 import { projectManager } from './project-manager';
 import { Store } from './store';
+import { scrapeWeb } from './web-scrapper';
 
 export const setupIpcHandlers = (mainWindow: BrowserWindow, store: Store) => {
   ipcMain.handle('load-settings', () => {
@@ -90,5 +91,10 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, store: Store) => {
 
   ipcMain.on('run-command', (_, baseDir: string, command: string) => {
     projectManager.getProject(baseDir).runCommand(command);
+  });
+
+  ipcMain.handle('scrape-web', async (_, baseDir: string, url: string) => {
+    const content = await scrapeWeb(url);
+    projectManager.getProject(baseDir).addMessage(content);
   });
 };

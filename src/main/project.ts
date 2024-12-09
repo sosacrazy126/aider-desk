@@ -292,4 +292,8 @@ export class Project {
       output,
     });
   }
+
+  public addMessage(content: string) {
+    this.findMessageConnectors('add-message').forEach((connector) => connector.sendAddMessageMessage(content));
+  }
 }

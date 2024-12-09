@@ -2,6 +2,7 @@ import { Socket } from 'socket.io';
 import { ContextFile } from '@common/types';
 import {
   AddFileMessage,
+  AddMessageMessage,
   AnswerQuestionMessage,
   DropFileMessage,
   EditFormat,
@@ -80,6 +81,14 @@ export class Connector {
     const message: RunCommandMessage = {
       action: 'run-command',
       command: `/${command}`,
+    };
+    this.sendMessage(message);
+  }
+
+  public sendAddMessageMessage(content: string) {
+    const message: AddMessageMessage = {
+      action: 'add-message',
+      content,
     };
     this.sendMessage(message);
   }
