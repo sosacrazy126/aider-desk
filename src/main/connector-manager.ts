@@ -1,9 +1,7 @@
-import { ModelsData, QuestionData, ResponseChunkData, ResponseCompletedData, TokensInfoData } from '@common/types';
-import { parseUsageReport } from '@common/utils';
+import { ModelsData, QuestionData, TokensInfoData } from '@common/types';
 import { BrowserWindow } from 'electron';
 import { Server, Socket } from 'socket.io';
 import { Connector } from 'src/main/connector';
-import { v4 as uuidv4 } from 'uuid';
 import { SOCKET_PORT } from './constants';
 import logger from './logger';
 import {
@@ -13,13 +11,12 @@ import {
   isInitMessage,
   isResponseMessage,
   isSetModelsMessage,
+  isTokensInfoMessage,
   isUpdateAutocompletionMessage,
   isUpdateContextFilesMessage,
   isUseCommandOutputMessage,
-  isTokensInfoMessage,
   LogMessage,
   Message,
-  ResponseMessage,
 } from './messages';
 import { projectManager } from './project-manager';
 
@@ -74,6 +71,7 @@ class ConnectorManager {
       logger.debug('Message:', { message });
 
       if (isInitMessage(message)) {
+        logger.info('Initializing connector for base directory:', { baseDir: message.baseDir, listenTo: message.listenTo });
         const connector = new Connector(socket, message.baseDir, message.listenTo);
         this.connectors.push(connector);
 
@@ -87,7 +85,7 @@ class ConnectorManager {
         if (!connector) {
           return;
         }
-        this.processResponseMessage(connector.baseDir, message);
+        projectManager.getProject(connector.baseDir).processResponseMessage(message);
       } else if (isAddFileMessage(message)) {
         const connector = this.findConnectorBySocket(socket);
         if (!connector) {
@@ -145,8 +143,7 @@ class ConnectorManager {
         if (!connector) {
           return;
         }
-        const project = projectManager.getProject(connector.baseDir);
-        project.updateContextFiles(message.files);
+        projectManager.getProject(connector.baseDir).updateContextFiles(message.files);
       } else if (isUseCommandOutputMessage(message)) {
         logger.info('Use command output', { message });
 
@@ -185,64 +182,8 @@ class ConnectorManager {
       return;
     }
 
-    if (message.level === 'error' && this.currentResponseMessageId) {
-      const data: ResponseCompletedData = {
-        messageId: this.currentResponseMessageId,
-        content: '',
-        baseDir: connector.baseDir,
-      };
-      this.mainWindow.webContents.send('response-completed', data);
-      this.currentResponseMessageId = null;
-    }
-
-    this.mainWindow.webContents.send('log', {
-      baseDir: connector.baseDir,
-      level: message.level,
-      message: message.message,
-    });
-  };
-
-  private processResponseMessage = (baseDir: string, message: ResponseMessage) => {
-    if (!this.mainWindow) {
-      return;
-    }
-
-    if (!this.currentResponseMessageId) {
-      this.currentResponseMessageId = uuidv4();
-    }
-
-    if (!message.finished) {
-      logger.debug(`Sending response chunk to ${baseDir}`);
-      const data: ResponseChunkData = {
-        messageId: this.currentResponseMessageId,
-        baseDir,
-        chunk: message.content,
-        reflectedMessage: message.reflectedMessage,
-      };
-      this.mainWindow.webContents.send('response-chunk', data);
-    } else {
-      logger.info(`Sending response completed to ${baseDir}`);
-      logger.debug(`Message data: ${JSON.stringify(message)}`);
-
-      const usageReport = message.usageReport ? parseUsageReport(message.usageReport) : undefined;
-      logger.info(`Usage report: ${JSON.stringify(usageReport)}`);
-      const data: ResponseCompletedData = {
-        messageId: this.currentResponseMessageId,
-        content: message.content,
-        reflectedMessage: message.reflectedMessage,
-        baseDir,
-        editedFiles: message.editedFiles,
-        commitHash: message.commitHash,
-        commitMessage: message.commitMessage,
-        diff: message.diff,
-        usageReport,
-      };
-      this.mainWindow.webContents.send('response-completed', data);
-      this.currentResponseMessageId = null;
-
-      const project = projectManager.getProject(baseDir);
-      project.closeCommandOutput();
-    }
+    const project = projectManager.getProject(connector.baseDir);
+    project.sendLogMessage(message.level, message.message);
   };
 
   private removeConnector = (socket: Socket) => {

@@ -37,6 +37,7 @@ export interface ApplicationAPI {
   runCommand: (baseDir: string, command: string) => void;
   scrapeWeb: (baseDir: string, url: string) => Promise<string>;
   interruptResponse: (baseDir: string) => void;
+  applyEdits: (baseDir: string, edits: FileEdit[]) => void;
 
   addResponseChunkListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: ResponseChunkData) => void) => string;
   removeResponseChunkListener: (listenerId: string) => void;

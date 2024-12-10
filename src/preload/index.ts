@@ -6,6 +6,7 @@ import {
   CommandOutputData,
   ContextFile,
   ContextFilesUpdatedData,
+  FileEdit,
   LogData,
   ModelsData,
   QuestionData,
@@ -55,6 +56,7 @@ const api: ApplicationAPI = {
   runCommand: (baseDir: string, command: string) => ipcRenderer.send('run-command', baseDir, command),
   scrapeWeb: (baseDir: string, url: string) => ipcRenderer.invoke('scrape-web', baseDir, url),
   interruptResponse: (baseDir: string) => ipcRenderer.send('interrupt-response', baseDir),
+  applyEdits: (baseDir: string, edits: FileEdit[]) => ipcRenderer.send('apply-edits', baseDir, edits),
 
   addResponseChunkListener: (baseDir, callback) => {
     const listenerId = uuidv4();

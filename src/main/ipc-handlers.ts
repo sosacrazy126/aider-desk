@@ -1,11 +1,10 @@
-import { ProjectSettings, SettingsData } from '@common/types';
+import { FileEdit, ProjectSettings, SettingsData } from '@common/types';
 import { BrowserWindow, dialog, ipcMain } from 'electron';
 import { getFilePathSuggestions, isProjectPath, isValidPath } from './file-system';
 import { EditFormat } from './messages';
 import { projectManager } from './project-manager';
 import { Store } from './store';
 import { scrapeWeb } from './web-scrapper';
-import logger from './logger';
 
 export const setupIpcHandlers = (mainWindow: BrowserWindow, store: Store) => {
   ipcMain.handle('load-settings', () => {
@@ -96,6 +95,10 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, store: Store) => {
 
   ipcMain.on('interrupt-response', (_, baseDir: string) => {
     projectManager.getProject(baseDir).interruptResponse();
+  });
+
+  ipcMain.on('apply-edits', (_, baseDir: string, edits: FileEdit[]) => {
+    projectManager.getProject(baseDir).applyEdits(edits);
   });
 
   ipcMain.handle('scrape-web', async (_, baseDir: string, url: string) => {

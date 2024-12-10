@@ -12,7 +12,7 @@ const ALL_FENCES = [
   ['<sourcecode>', '</sourcecode>'],
 ] as const;
 
-export const parseMessageContent = (content: string, allFiles: string[]) => {
+export const parseMessageContent = (baseDir: string, content: string, allFiles: string[]) => {
   const parts: React.ReactNode[] = [];
   const lines = content.split('\n');
   let currentText = '';
@@ -33,7 +33,7 @@ export const parseMessageContent = (content: string, allFiles: string[]) => {
   const processCodeBlock = () => {
     if (codeContent.length > 0) {
       parts.push(
-        <CodeBlock key={parts.length} language={language} file={currentFile} isComplete={foundClosingFence}>
+        <CodeBlock key={parts.length} baseDir={baseDir} language={language} file={currentFile} isComplete={foundClosingFence}>
           {codeContent.join('\n').trim()}
         </CodeBlock>,
       );

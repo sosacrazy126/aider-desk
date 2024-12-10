@@ -3,11 +3,12 @@ import { Message } from 'types/message';
 import { MessageBlock } from './MessageBlock';
 
 type Props = {
+  baseDir: string;
   messages: Message[];
   allFiles?: string[];
 };
 
-export const Messages = ({ messages, allFiles = [] }: Props) => {
+export const Messages = ({ baseDir, messages, allFiles = [] }: Props) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [scrollingPaused, setScrollingPaused] = useState(false);
 
@@ -38,7 +39,7 @@ export const Messages = ({ messages, allFiles = [] }: Props) => {
       onWheel={handleScroll}
     >
       {messages.map((message, index) => (
-        <MessageBlock key={index} message={message} allFiles={allFiles} />
+        <MessageBlock key={index} baseDir={baseDir} message={message} allFiles={allFiles} />
       ))}
       <div ref={messagesEndRef} />
     </div>

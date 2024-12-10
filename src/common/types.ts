@@ -25,7 +25,7 @@ export interface CommandOutputData {
 
 export interface LogData {
   baseDir: string;
-  level: 'info' | 'warning' | 'error';
+  level: 'info' | 'warning' | 'error' | '';
   message: string;
 }
 
@@ -111,4 +111,10 @@ export interface TokensInfoData {
   files: Record<string, TokensCost>;
   repoMap: TokensCost;
   systemMessages: TokensCost;
+}
+
+export interface FileEdit {
+  path: string;
+  original: string;
+  updated: string;
 }

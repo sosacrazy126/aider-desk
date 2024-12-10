@@ -1,9 +1,10 @@
 import { Socket } from 'socket.io';
-import { ContextFile } from '@common/types';
+import { ContextFile, FileEdit } from '@common/types';
 import {
   AddFileMessage,
   AddMessageMessage,
   AnswerQuestionMessage,
+  ApplyEditsMessage,
   DropFileMessage,
   EditFormat,
   InterruptResponseMessage,
@@ -97,6 +98,14 @@ export class Connector {
   public sendInterruptResponseMessage() {
     const message: InterruptResponseMessage = {
       action: 'interrupt-response',
+    };
+    this.sendMessage(message);
+  }
+
+  public sendApplyEditsMessage(edits: FileEdit[]) {
+    const message: ApplyEditsMessage = {
+      action: 'apply-edits',
+      edits,
     };
     this.sendMessage(message);
   }

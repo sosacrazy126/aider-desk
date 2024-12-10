@@ -1,4 +1,4 @@
-import { ContextFileSourceType, ContextFile, TokensCost } from '@common/types';
+import { ContextFileSourceType, ContextFile, TokensCost, FileEdit } from '@common/types';
 
 export type MessageAction =
   | 'init'
@@ -15,7 +15,8 @@ export type MessageAction =
   | 'run-command'
   | 'tokens-info'
   | 'add-message'
-  | 'interrupt-response';
+  | 'interrupt-response'
+  | 'apply-edits';
 
 export interface Message {
   action: MessageAction;
@@ -23,7 +24,7 @@ export interface Message {
 
 export interface LogMessage {
   message: string;
-  level: 'info' | 'warning' | 'error';
+  level: 'info' | 'warning' | 'error' | 'loading';
 }
 
 export interface InitMessage {
@@ -172,3 +173,8 @@ export interface InterruptResponseMessage extends Message {
 export const isInterruptResponseMessage = (message: Message): message is InterruptResponseMessage => {
   return typeof message === 'object' && message !== null && 'action' in message && message.action === 'interrupt-response';
 };
+
+export interface ApplyEditsMessage extends Message {
+  action: 'apply-edits';
+  edits: FileEdit[];
+}

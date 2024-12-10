@@ -22,6 +22,7 @@ import 'react-resizable/css/styles.css';
 import {
   CommandOutputMessage,
   isCommandOutputMessage,
+  isLoadingMessage,
   LoadingMessage,
   LogMessage,
   Message,
@@ -65,6 +66,17 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
   useEffect(() => {
     if (messages.length > 0) {
       setLoading(false);
+    }
+  }, [messages]);
+
+  useEffect(() => {
+    const loadingMessageIndex = messages.findIndex(isLoadingMessage);
+    if (loadingMessageIndex !== -1) {
+      setMessages((prevMessages) => {
+        const newMessages = [...prevMessages];
+        newMessages.splice(loadingMessageIndex, 1);
+        return newMessages;
+      });
     }
   }, [messages]);
 
@@ -136,19 +148,28 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
             command,
             content: output,
           };
-          return prevMessages.filter((message) => message.type !== 'loading').concat(commandOutputMessage);
+          return prevMessages.filter((message) => !isLoadingMessage(message)).concat(commandOutputMessage);
         }
       });
     };
 
     const handleLog = (_: IpcRendererEvent, { level, message }: LogData) => {
-      const logMessage: LogMessage = {
-        id: uuidv4(),
-        type: 'log',
-        level,
-        content: message,
-      };
-      setMessages((prevMessages) => [...prevMessages, logMessage]);
+      if (level === 'loading') {
+        const loadingMessage: LoadingMessage = {
+          id: uuidv4(),
+          type: 'loading',
+          content: message,
+        };
+        setMessages((prevMessages) => [...prevMessages, loadingMessage]);
+      } else {
+        const logMessage: LogMessage = {
+          id: uuidv4(),
+          type: 'log',
+          level,
+          content: message,
+        };
+        setMessages((prevMessages) => [...prevMessages.filter((message) => !isLoadingMessage(message)), logMessage]);
+      }
     };
 
     const handleUpdateAutocompletion = (_: IpcRendererEvent, data: AutocompletionData) => {
@@ -321,7 +342,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
       )}
       <div className="flex flex-col flex-grow overflow-hidden">
         <div className="flex-grow overflow-y-auto">
-          <Messages messages={messages} allFiles={autocompletionData?.allFiles} />
+          <Messages baseDir={project.baseDir} messages={messages} allFiles={autocompletionData?.allFiles} />
         </div>
         <div className="relative bottom-0 w-full p-4 pb-2 flex-shrink-0 flex border-t border-neutral-800">
           <PromptField

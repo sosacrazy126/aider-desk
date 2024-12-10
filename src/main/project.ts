@@ -1,10 +1,12 @@
 import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
 import fs from 'fs/promises';
 import path from 'path';
+import { v4 as uuidv4 } from 'uuid';
 import { BrowserWindow } from 'electron';
 import treeKill from 'tree-kill';
-import { ContextFile, ModelsData, QuestionData } from '@common/types';
-import { EditFormat, MessageAction } from './messages';
+import { parseUsageReport } from '@common/utils';
+import { ContextFile, FileEdit, ModelsData, QuestionData, ResponseChunkData, ResponseCompletedData } from '@common/types';
+import { EditFormat, MessageAction, ResponseMessage } from './messages';
 import { Connector } from './connector';
 import { AIDER_DESKTOP_CONNECTOR_DIR, PYTHON_COMMAND } from './constants';
 import logger from './logger';
@@ -17,6 +19,7 @@ export class Project {
   private currentQuestion: QuestionData | null = null;
   private allTrackedFiles: string[] = [];
   private questionAnswers: Map<string, 'y' | 'n'> = new Map();
+  private currentResponseMessageId: string | null = null;
   public baseDir: string;
   public contextFiles: ContextFile[] = [];
   public addableFilePaths: string[] = [];
@@ -142,6 +145,44 @@ export class Project {
       this.answerQuestion('n');
     }
     this.findMessageConnectors('prompt').forEach((connector) => connector.sendPromptMessage(prompt, editFormat));
+  }
+
+  public processResponseMessage(message: ResponseMessage) {
+    if (!this.currentResponseMessageId) {
+      this.currentResponseMessageId = uuidv4();
+    }
+
+    if (!message.finished) {
+      logger.debug(`Sending response chunk to ${this.baseDir}`);
+      const data: ResponseChunkData = {
+        messageId: this.currentResponseMessageId,
+        baseDir: this.baseDir,
+        chunk: message.content,
+        reflectedMessage: message.reflectedMessage,
+      };
+      this.mainWindow!.webContents.send('response-chunk', data);
+    } else {
+      logger.info(`Sending response completed to ${this.baseDir}`);
+      logger.debug(`Message data: ${JSON.stringify(message)}`);
+
+      const usageReport = message.usageReport ? parseUsageReport(message.usageReport) : undefined;
+      logger.info(`Usage report: ${JSON.stringify(usageReport)}`);
+      const data: ResponseCompletedData = {
+        messageId: this.currentResponseMessageId,
+        content: message.content,
+        reflectedMessage: message.reflectedMessage,
+        baseDir: this.baseDir,
+        editedFiles: message.editedFiles,
+        commitHash: message.commitHash,
+        commitMessage: message.commitMessage,
+        diff: message.diff,
+        usageReport,
+      };
+      this.mainWindow!.webContents.send('response-completed', data);
+      this.currentResponseMessageId = null;
+
+      this.closeCommandOutput();
+    }
   }
 
   private getQuestionKey(question: QuestionData) {
@@ -293,6 +334,24 @@ export class Project {
     });
   }
 
+  public sendLogMessage(level: string, message: string) {
+    if (level === 'error' && this.currentResponseMessageId) {
+      const data: ResponseCompletedData = {
+        baseDir: this.baseDir,
+        messageId: this.currentResponseMessageId,
+        content: '',
+      };
+      this.mainWindow!.webContents.send('response-completed', data);
+      this.currentResponseMessageId = null;
+    }
+
+    this.mainWindow!.webContents.send('log', {
+      baseDir: this.baseDir,
+      level,
+      message,
+    });
+  }
+
   public addMessage(content: string) {
     this.findMessageConnectors('add-message').forEach((connector) => connector.sendAddMessageMessage(content));
   }
@@ -300,5 +359,10 @@ export class Project {
   public interruptResponse() {
     logger.info('Interrupting response:', { baseDir: this.baseDir });
     this.findMessageConnectors('interrupt-response').forEach((connector) => connector.sendInterruptResponseMessage());
+  }
+
+  public applyEdits(edits: FileEdit[]) {
+    logger.info('Applying edits:', { baseDir: this.baseDir, edits });
+    this.findMessageConnectors('apply-edits').forEach((connector) => connector.sendApplyEditsMessage(edits));
   }
 }

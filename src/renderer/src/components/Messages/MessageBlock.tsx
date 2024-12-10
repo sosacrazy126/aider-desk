@@ -17,11 +17,12 @@ import { ResponseMessageBlock } from './ResponseMessageBlock';
 import { LogMessageBlock } from './LogMessageBlock';
 
 type Props = {
+  baseDir: string;
   message: Message;
   allFiles: string[];
 };
 
-export const MessageBlock = ({ message, allFiles }: Props) => {
+export const MessageBlock = ({ baseDir, message, allFiles }: Props) => {
   if (isLoadingMessage(message)) {
     return <LoadingMessageBlock message={message} />;
   }
@@ -35,7 +36,7 @@ export const MessageBlock = ({ message, allFiles }: Props) => {
   }
 
   if (isReflectedMessage(message)) {
-    return <ReflectedMessageBlock message={message} allFiles={allFiles} />;
+    return <ReflectedMessageBlock baseDir={baseDir} message={message} allFiles={allFiles} />;
   }
 
   if (isCommandOutputMessage(message)) {
@@ -43,11 +44,11 @@ export const MessageBlock = ({ message, allFiles }: Props) => {
   }
 
   if (isPromptMessage(message)) {
-    return <PromptMessageBlock message={message} allFiles={allFiles} />;
+    return <PromptMessageBlock baseDir={baseDir} message={message} allFiles={allFiles} />;
   }
 
   if (isResponseMessage(message)) {
-    return <ResponseMessageBlock message={message} allFiles={allFiles} />;
+    return <ResponseMessageBlock baseDir={baseDir} message={message} allFiles={allFiles} />;
   }
 
   return null;

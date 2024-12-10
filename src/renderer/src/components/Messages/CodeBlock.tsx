@@ -1,14 +1,15 @@
+import { useState } from 'react';
 import Prism from 'prismjs';
 import 'prismjs/themes/prism-tomorrow.css';
 import 'prismjs/components/prism-typescript';
 import 'prismjs/components/prism-python';
 import 'prismjs/components/prism-bash';
 import 'prismjs/components/prism-json';
-import { useState } from 'react';
-import { MdKeyboardArrowDown } from 'react-icons/md';
+import { MdKeyboardArrowDown, MdUndo } from 'react-icons/md';
 import { VscCode } from 'react-icons/vsc';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 import ReactDiffViewer from 'react-diff-viewer-continued';
+import { IconButton } from '../common/IconButton';
 import { CopyMessageButton } from './CopyMessageButton';
 
 const DIFF_VIEWER_STYLES = {
@@ -73,34 +74,36 @@ const parseDiffContent = (content: string): { oldValue: string; newValue: string
   const replaceMatch = content.match(REPLACE_MARKER);
 
   if (!dividerMatch) {
-    const oldValue = content.substring(searchIndex).trim();
+    const oldValue = content.substring(searchIndex).replace(/^\n/, '');
     return { oldValue, newValue: '' };
   }
 
   const dividerIndex = dividerMatch.index!;
-  const oldValue = content.substring(searchIndex, dividerIndex).trim();
+  const oldValue = content.substring(searchIndex, dividerIndex).replace(/^\n/, '');
 
   if (!replaceMatch) {
     // We have old value complete and new value being streamed
-    const newValue = content.substring(dividerIndex + dividerMatch[0].length).trim();
+    const newValue = content.substring(dividerIndex + dividerMatch[0].length).replace(/^\n/, '');
     return { oldValue, newValue };
   }
 
   // We have complete diff
   const updatedIndex = replaceMatch.index!;
-  const newValue = content.substring(dividerIndex + dividerMatch[0].length, updatedIndex).trim();
+  const newValue = content.substring(dividerIndex + dividerMatch[0].length, updatedIndex).replace(/^\n/, '');
   return { oldValue, newValue };
 };
 
 type Props = {
+  baseDir: string;
   language: string;
   children: string;
   file?: string;
   isComplete?: boolean;
 };
 
-export const CodeBlock = ({ language, children, file, isComplete = true }: Props) => {
+export const CodeBlock = ({ baseDir, language, children, file, isComplete = true }: Props) => {
   const [isExpanded, setIsExpanded] = useState(true);
+  const [changesReverted, setChangesReverted] = useState(false);
   const isDiff = isDiffContent(children);
   const diffContent = isDiff ? parseDiffContent(children) : null;
 
@@ -149,6 +152,17 @@ export const CodeBlock = ({ language, children, file, isComplete = true }: Props
     }
   };
 
+  const handleRevertChanges = () => {
+    window.api.applyEdits(baseDir, [
+      {
+        path: file!,
+        original: diffContent?.newValue || '',
+        updated: diffContent?.oldValue || '',
+      },
+    ]);
+    setChangesReverted(true);
+  };
+
   return (
     <div className="mt-1 overflow-x-auto max-w-full">
       <div className="bg-gray-950 text-white rounded-md px-3 py-2 mb-4 overflow-x-auto text-xs">
@@ -160,7 +174,12 @@ export const CodeBlock = ({ language, children, file, isComplete = true }: Props
                 {file}
               </span>
               <span className="flex items-center gap-2">
-                <CopyMessageButton content={children} className="text-neutral-500 hover:text-neutral-300 cursor-pointer mr-2 focus:outline-none" />
+                {isDiff && file && diffContent?.oldValue && !changesReverted && (
+                  <div className="relative inline-block">
+                    <IconButton icon={<MdUndo size={16} />} onClick={handleRevertChanges} tooltip="Revert changes" />
+                  </div>
+                )}
+                <CopyMessageButton content={children} />
                 {!isComplete && <AiOutlineLoading3Quarters className="animate-spin text-neutral-500" size={14} />}
                 <span className="text-neutral-100 transition-transform duration-200" style={{ transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)' }}>
                   <MdKeyboardArrowDown size={16} />
@@ -175,7 +194,7 @@ export const CodeBlock = ({ language, children, file, isComplete = true }: Props
         ) : (
           <div className="relative">
             <div className="absolute right-0 top-1 flex items-center gap-2">
-              <CopyMessageButton content={children} className="text-neutral-500 hover:text-neutral-300 cursor-pointer mr-2 focus:outline-none" />
+              <CopyMessageButton content={children} />
               {!isComplete && <AiOutlineLoading3Quarters className="animate-spin text-neutral-500" size={14} />}
             </div>
             {renderContent()}
