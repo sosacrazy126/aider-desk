@@ -4,7 +4,6 @@
 
 .react-resizable {
   position: relative;
-  background-color: theme('colors.neutral.900');
 }
 
 .react-resizable-handle {

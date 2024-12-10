@@ -312,9 +312,9 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
   };
 
   return (
-    <div className="flex h-full bg-neutral-900 relative">
+    <div className="flex h-full bg-gradient-to-b from-neutral-950 to-neutral-900 relative">
       {loading && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-neutral-900 z-10">
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-neutral-950 to-neutral-900 z-10">
           <CgSpinner className="animate-spin w-10 h-10" />
           <div className="mt-2 text-sm text-center text-white">Loading...</div>
         </div>

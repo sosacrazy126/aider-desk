@@ -143,10 +143,10 @@ export const ContextFiles = ({ baseDir, showFileDialog }: Props) => {
                     <div className="flex items-center gap-1">
                       {(item as TreeItem).file?.readOnly && (
                         <>
-                          <TbPencilOff 
-                            className="w-4 h-4 text-neutral-400" 
-                            data-tooltip-id={`readonly-file-tooltip-${(item as TreeItem).file?.path}`} 
-                            data-tooltip-content="Read-only file" 
+                          <TbPencilOff
+                            className="w-4 h-4 text-neutral-400"
+                            data-tooltip-id={`readonly-file-tooltip-${(item as TreeItem).file?.path}`}
+                            data-tooltip-content="Read-only file"
                           />
                           <StyledTooltip id={`readonly-file-tooltip-${(item as TreeItem).file?.path}`} />
                         </>

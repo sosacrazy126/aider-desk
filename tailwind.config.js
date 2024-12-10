@@ -9,19 +9,6 @@ module.exports = {
         sans: ['Inter', ...defaultTheme.fontFamily.sans],
       },
       colors: {
-        background: {
-          DEFAULT: '#0a0a0a',
-          dark: '#060606',
-          light: '#1a1a1a',
-        },
-        primary: {
-          DEFAULT: '#3b82f6',
-          hover: '#2563eb',
-        },
-        secondary: {
-          DEFAULT: '#6366f1',
-          hover: '#4f46e5',
-        },
         neutral: {
           50: '#f8f9fa',    // Lightest, almost white
           100: '#f1f3f5',   // Very light gray

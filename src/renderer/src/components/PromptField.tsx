@@ -414,7 +414,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
     return (
       <div className="w-full relative">
         {question && (
-          <div className="mb-2 p-3 bg-neutral-800 rounded-md border border-neutral-700 text-sm">
+          <div className="mb-2 p-3 bg-gradient-to-b from-neutral-950 to-neutral-900 rounded-md border border-neutral-700 text-sm">
             <div className="text-white mb-2">{question.text}</div>
             {question.subject && <div className="text-neutral-400 text-xs mb-3">{question.subject}</div>}
             <div className="flex gap-2">
