@@ -2,6 +2,8 @@ import { QuestionData } from '@common/types';
 import { useClickOutside } from 'hooks/useClickOutside';
 import { useSettings } from 'hooks/useSettings';
 import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import TextareaAutosize from 'react-textarea-autosize';
+import getCaretCoordinates from 'textarea-caret';
 import { BiSend } from 'react-icons/bi';
 import { CgLock, CgLockUnlock } from 'react-icons/cg';
 import { MdKeyboardArrowUp, MdStop } from 'react-icons/md';
@@ -214,7 +216,6 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
         }
       }
       if (newText.startsWith('/')) {
-        // Show command suggestions when text starts with '/'
         const matched = [...new Set([...COMMANDS, ...CONFIRM_COMMANDS])].filter((cmd) => cmd.toLowerCase().startsWith(newText.toLowerCase()));
         setFilteredSuggestions(matched);
         setSuggestionsVisible(matched.length > 0);
@@ -227,18 +228,10 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
       }
 
       if (inputRef.current) {
-        const { selectionStart } = inputRef.current;
-        const textBeforeCursor = newText.substring(0, selectionStart);
-        const lines = textBeforeCursor.split('\n');
-        const currentLineNumber = lines.length - 1;
-        const currentLineText = lines[currentLineNumber];
-
-        const lineHeight = 20;
-        const charWidth = 8;
-
+        const caretPosition = getCaretCoordinates(inputRef.current, inputRef.current.selectionStart);
         setCursorPosition({
-          top: currentLineNumber * lineHeight,
-          left: currentLineText.length * charWidth,
+          top: caretPosition.top,
+          left: caretPosition.left,
         });
       }
     };
@@ -451,14 +444,15 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
         )}
         <div className="flex flex-col">
           <div className="relative flex-shrink-0">
-            <textarea
+            <TextareaAutosize
               ref={inputRef}
               value={text}
               onChange={handleChange}
               onKeyDown={handleKeyDown}
               onPaste={handlePaste}
               placeholder={question ? '...or suggest something else' : placeholder}
-              rows={Math.max(text.split('\n').length, 1)}
+              minRows={1}
+              maxRows={20}
               className="w-full px-2 py-2 border-2 border-neutral-700 rounded-md focus:outline-none focus:border-neutral-500 text-sm bg-neutral-850 text-white placeholder-neutral-600 resize-none overflow-y-auto transition-colors duration-200 max-h-[60vh] scrollbar-thin scrollbar-track-neutral-800 scrollbar-thumb-neutral-600 hover:scrollbar-thumb-neutral-600"
             />
             {processing ? (
