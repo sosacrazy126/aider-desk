@@ -65,9 +65,11 @@ export class Connector {
   };
 
   public sendDropFileMessage = (path: string) => {
+    const fullPath = path.startsWith(this.baseDir) ? path : `${this.baseDir}/${path}`;
+
     const message: DropFileMessage = {
       action: 'drop-file',
-      path,
+      path: fullPath,
     };
     this.sendMessage(message);
   };
