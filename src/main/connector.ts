@@ -56,7 +56,8 @@ export class Connector {
   public sendAddFileMessage = (contextFile: ContextFile) => {
     const message: AddFileMessage = {
       action: 'add-file',
-      path: contextFile.path,
+      // baseDir should be added only when contextFile.path does not start with baseDir ai!
+      path: this.baseDir + '/' + contextFile.path,
       readOnly: contextFile.readOnly,
     };
     this.sendMessage(message);
