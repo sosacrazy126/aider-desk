@@ -25,7 +25,7 @@ export interface CommandOutputData {
 
 export interface LogData {
   baseDir: string;
-  level: 'info' | 'warning' | 'error' | '';
+  level: 'info' | 'warning' | 'error' | 'loading';
   message: string;
 }
 

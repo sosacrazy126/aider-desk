@@ -29,7 +29,7 @@ const PLACEHOLDERS = [
 ];
 
 const COMMANDS = ['/code', '/ask', '/architect', '/add', '/model', '/read-only'];
-const CONFIRM_COMMANDS = ['/clear', '/web'];
+const CONFIRM_COMMANDS = ['/clear', '/web', '/undo'];
 
 const EDIT_FORMATS = [
   { value: 'code', label: 'Code' },
@@ -58,6 +58,7 @@ type Props = {
   question?: QuestionData | null;
   answerQuestion?: (answer: string) => void;
   interruptResponse: () => void;
+  undoCommit: () => void;
 };
 
 export const PromptField = React.forwardRef<PromptFieldRef, Props>(
@@ -77,6 +78,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
       question,
       answerQuestion,
       interruptResponse,
+      undoCommit,
     }: Props,
     ref,
   ) => {
@@ -150,9 +152,13 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
             setText('');
             clearMessages();
             break;
+          case '/undo':
+            setText('');
+            undoCommit();
+            break;
         }
       },
-      [showFileDialog, text, scrapeWeb],
+      [showFileDialog, text, scrapeWeb, undoCommit],
     );
 
     useEffect(() => {

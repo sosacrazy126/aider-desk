@@ -266,6 +266,10 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
     window.api.runCommand(project.baseDir, 'map-refresh');
   };
 
+  const undoCommit = () => {
+    window.api.runCommand(project.baseDir, 'undo');
+  };
+
   const answerQuestion = (answer: string) => {
     if (question) {
       if (question.answerFunction) {
@@ -360,6 +364,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
             question={question}
             answerQuestion={answerQuestion}
             interruptResponse={handleInterruptResponse}
+            undoCommit={undoCommit}
           />
         </div>
       </div>
