@@ -25,7 +25,6 @@ class ConnectorManager {
   private io: Server | null = null;
   private mainWindow: BrowserWindow | null = null;
   private connectors: Connector[] = [];
-  private currentResponseMessageId: string | null = null;
 
   private constructor() {}
 

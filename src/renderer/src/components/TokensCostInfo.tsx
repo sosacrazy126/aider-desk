@@ -80,7 +80,7 @@ export const TokensCostInfo = ({ tokensInfo, totalCost, lastMessageCost, clearMe
             </div>
           )}
         </div>
-        {lastMessageCost && renderLabelValue('Last message', `$${(lastMessageCost ?? 0).toFixed(5)}`)}
+        {lastMessageCost !== undefined && renderLabelValue('Last message', `$${(lastMessageCost ?? 0).toFixed(5)}`)}
         {renderLabelValue('Session', `$${totalCost.toFixed(5)}`)}
       </div>
     </div>

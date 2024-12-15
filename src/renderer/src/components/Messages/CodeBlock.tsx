@@ -174,7 +174,7 @@ export const CodeBlock = ({ baseDir, language, children, file, isComplete = true
                 {file}
               </span>
               <span className="flex items-center gap-2">
-                {isDiff && file && diffContent?.oldValue && !changesReverted && (
+                {isDiff && file && !!diffContent?.oldValue && !changesReverted && (
                   <div className="relative inline-block">
                     <IconButton icon={<MdUndo size={16} />} onClick={handleRevertChanges} tooltip="Revert changes" />
                   </div>

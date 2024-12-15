@@ -1,12 +1,13 @@
 import { QuestionData } from '@common/types';
 import { useClickOutside } from 'hooks/useClickOutside';
 import { useSettings } from 'hooks/useSettings';
-import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react';
 import TextareaAutosize from 'react-textarea-autosize';
 import getCaretCoordinates from 'textarea-caret';
 import { BiSend } from 'react-icons/bi';
 import { CgLock, CgLockUnlock } from 'react-icons/cg';
 import { MdKeyboardArrowUp, MdStop } from 'react-icons/md';
+import { useBooleanState } from 'hooks/useBooleanState';
 import { ModelSelector, ModelSelectorRef } from './ModelSelector';
 
 const PLACEHOLDERS = [
@@ -92,14 +93,14 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
     const [inputHistory, setInputHistory] = useState<string[]>([]);
     const [historyIndex, setHistoryIndex] = useState<number>(-1);
     const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
-    const [showFormatSelector, setShowFormatSelector] = useState(false);
+    const [formatSelectorVisible, showFormatSelector, hideFormatSelector] = useBooleanState(false);
     const [editFormatLocked, setEditFormatLocked] = useState(false);
     const { settings, setSettings, saveSettings } = useSettings();
     const inputRef = useRef<HTMLTextAreaElement>(null);
     const modelSelectorRef = useRef<ModelSelectorRef>(null);
     const formatSelectorRef = useRef<HTMLDivElement>(null);
 
-    useClickOutside(formatSelectorRef, () => setShowFormatSelector(false));
+    useClickOutside(formatSelectorRef, hideFormatSelector);
 
     useImperativeHandle(ref, () => ({
       focus: () => {
@@ -158,7 +159,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
             break;
         }
       },
-      [showFileDialog, text, scrapeWeb, undoCommit],
+      [text],
     );
 
     useEffect(() => {
@@ -200,6 +201,26 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
       }
     }, [text, invokeCommand]);
 
+    useLayoutEffect(() => {
+      if (!suggestionsVisible) {
+        return;
+      }
+      const timer = requestAnimationFrame(() => {
+        const input = inputRef.current;
+        if (input) {
+          const caretPosition = getCaretCoordinates(input, input.selectionStart);
+          setCursorPosition({
+            top: caretPosition.top,
+            left: caretPosition.left,
+          });
+        }
+      });
+
+      return () => {
+        cancelAnimationFrame(timer);
+      };
+    }, [suggestionsVisible, text]);
+
     const getCurrentWord = (text: string, cursorPosition: number) => {
       const textBeforeCursor = text.slice(0, cursorPosition);
       const words = textBeforeCursor.split(/\s/);
@@ -231,14 +252,6 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
         setSuggestionsVisible(matched.length > 0);
       } else {
         setSuggestionsVisible(false);
-      }
-
-      if (inputRef.current) {
-        const caretPosition = getCaretCoordinates(inputRef.current, inputRef.current.selectionStart);
-        setCursorPosition({
-          top: caretPosition.top,
-          left: caretPosition.left,
-        });
       }
     };
 
@@ -308,6 +321,14 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
       saveSettings(updatedSettings);
       inputRef.current?.focus();
     };
+
+    const toggleFormatSelectorVisible = useCallback(() => {
+      if (formatSelectorVisible) {
+        hideFormatSelector();
+      } else {
+        showFormatSelector();
+      }
+    }, [formatSelectorVisible]);
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
       // Handle CTRL+C during processing
@@ -488,7 +509,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
             <ModelSelector ref={modelSelectorRef} models={models} currentModel={currentModel} updateMainModel={updateMainModel} />
             <div className="relative" ref={formatSelectorRef}>
               <button
-                onClick={() => setShowFormatSelector(!showFormatSelector)}
+                onClick={toggleFormatSelectorVisible}
                 className="flex items-center hover:text-neutral-300 focus:outline-none transition-colors duration-200 text-xs ml-4"
               >
                 <MdKeyboardArrowUp className="w-3 h-3 mr-0.5" />
@@ -517,14 +538,14 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
                   </span>
                 )}
               </button>
-              {showFormatSelector && (
+              {formatSelectorVisible && (
                 <div className="absolute bottom-full left-4 mb-1 bg-neutral-900 border border-neutral-700 rounded-md shadow-lg z-10 ml-2">
                   {EDIT_FORMATS.map(({ label, value }) => (
                     <button
                       key={value}
                       onClick={() => {
                         setEditFormat(value);
-                        setShowFormatSelector(false);
+                        hideFormatSelector();
                         if (value !== defaultEditFormat) {
                           setEditFormatLocked(false);
                         }

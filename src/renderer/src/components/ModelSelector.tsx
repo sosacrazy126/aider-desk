@@ -1,6 +1,7 @@
+import { useBooleanState } from 'hooks/useBooleanState';
 import { useClickOutside } from 'hooks/useClickOutside';
 import { useSettings } from 'hooks/useSettings';
-import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { MdClose, MdKeyboardArrowUp } from 'react-icons/md';
 import { useDebounce } from 'react-use';
 
@@ -27,28 +28,34 @@ export const ModelSelector = forwardRef<ModelSelectorRef, Props>(({ models, curr
     [modelSearchTerm],
   );
   const [highlightedModelIndex, setHighlightedModelIndex] = useState(-1);
-  const [showModelSelector, setShowModelSelector] = useState(false);
+  const [visible, show, hide] = useBooleanState(false);
   const modelSelectorRef = useRef<HTMLDivElement>(null);
   const highlightedModelRef = useRef<HTMLDivElement>(null);
 
-  useClickOutside(modelSelectorRef, () => setShowModelSelector(false));
+  useClickOutside(modelSelectorRef, hide);
 
   useEffect(() => {
-    if (!showModelSelector) {
+    if (!visible) {
       setHighlightedModelIndex(-1);
       setModelSearchTerm('');
     }
-  }, [showModelSelector]);
+  }, [visible]);
 
   useImperativeHandle(ref, () => ({
-    open: () => {
-      setShowModelSelector(true);
-    },
+    open: show,
   }));
+
+  const toggleVisible = useCallback(() => {
+    if (visible) {
+      hide();
+    } else {
+      show();
+    }
+  }, [visible, hide, show]);
 
   const onModelSelected = (model: string) => {
     updateMainModel(model);
-    setShowModelSelector(false);
+    hide();
   };
 
   const onModelSelectorSearchInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -125,14 +132,11 @@ export const ModelSelector = forwardRef<ModelSelectorRef, Props>(({ models, curr
 
   return (
     <div className="relative" ref={modelSelectorRef}>
-      <button
-        onClick={() => setShowModelSelector(!showModelSelector)}
-        className="flex items-center hover:text-neutral-300 focus:outline-none transition-colors duration-200 text-xs"
-      >
+      <button onClick={toggleVisible} className="flex items-center hover:text-neutral-300 focus:outline-none transition-colors duration-200 text-xs">
         <MdKeyboardArrowUp className="w-3 h-3 mr-0.5" />
         <span>{currentModel || 'Loading...'}</span>
       </button>
-      {showModelSelector && (
+      {visible && (
         <div className="absolute bottom-full left-3 mb-1 bg-neutral-900 border border-neutral-700 rounded-md shadow-lg z-10 max-h-48 flex flex-col w-[600px]">
           <div className="sticky top-0 p-2 border-b border-neutral-700 bg-neutral-900 rounded-md z-10">
             <input

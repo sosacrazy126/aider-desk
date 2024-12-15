@@ -10,18 +10,18 @@ module.exports = {
       },
       colors: {
         neutral: {
-          50: '#f8f9fa',    // Lightest, almost white
-          100: '#f1f3f5',   // Very light gray
-          200: '#e9ecef',   // Light gray
-          300: '#dee2e6',   // Soft gray
-          400: '#ced4da',   // Medium light gray
-          500: '#adb5bd',   // Medium gray
-          600: '#6c757d',   // Muted gray
-          700: '#495057',   // Dark muted gray
-          800: '#343a40',   // Very dark gray
-          850: '#2d343a',   // Darkest gray
-          900: '#212529',   // Darkest gray, almost black
-          950: '#1c2025',   // Ultra dark, near black
+          50: '#f8f9fa',
+          100: '#f1f3f5',
+          200: '#999ba3',
+          300: '#8c8e95',
+          400: '#7b7d86',
+          500: '#585c75',
+          600: '#3d4166',
+          700: '#333652',
+          800: '#2a2c3f',
+          850: '#222431',
+          900: '#191a22',
+          950: '#141417',
         },
         gray: {
           50: '#f8f9fa',    // Lightest, almost white

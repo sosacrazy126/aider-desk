@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { ToastContainer } from 'react-toastify';
@@ -9,6 +9,7 @@ import { ROUTES } from 'utils/routes';
 
 const AnimatedRoutes = () => {
   const location = useLocation();
+
   return (
     <div style={{ position: 'relative', width: '100%', height: '100vh' }}>
       <AnimatePresence initial={true}>

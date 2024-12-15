@@ -71,7 +71,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
 
   useEffect(() => {
     const loadingMessageIndex = messages.findIndex(isLoadingMessage);
-    if (loadingMessageIndex !== -1) {
+    if (loadingMessageIndex !== -1 && loadingMessageIndex === messages.length - 2) {
       setMessages((prevMessages) => {
         const newMessages = [...prevMessages];
         newMessages.splice(loadingMessageIndex, 1);
