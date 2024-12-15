@@ -1,4 +1,4 @@
-# aider-desktop
+# aider-desk
 
 An Electron application with React and TypeScript
 

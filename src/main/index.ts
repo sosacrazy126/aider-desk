@@ -74,7 +74,7 @@ const createWindow = (store: Store) => {
 };
 
 app.whenReady().then(async () => {
-  electronApp.setAppUserModelId('com.hotovo.aider-desktop');
+  electronApp.setAppUserModelId('com.hotovo.aider-desk');
 
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window);

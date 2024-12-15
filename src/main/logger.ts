@@ -1,16 +1,23 @@
 import winston from 'winston';
+import DailyRotateFile from 'winston-daily-rotate-file';
 import { LOGS_DIR } from './constants';
 
 const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || 'info',
   format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
   transports: [
-    new winston.transports.File({
-      filename: `${LOGS_DIR}/error.log`,
+    new DailyRotateFile({
+      filename: `${LOGS_DIR}/error-%DATE%.log`,
+      datePattern: 'YYYY-MM-DD',
       level: 'error',
+      maxSize: '20m',
+      maxFiles: '14d',
     }),
-    new winston.transports.File({
-      filename: `${LOGS_DIR}/combined.log`,
+    new DailyRotateFile({
+      filename: `${LOGS_DIR}/combined-%DATE%.log`,
+      datePattern: 'YYYY-MM-DD',
+      maxSize: '20m',
+      maxFiles: '14d',
     }),
   ],
 });
