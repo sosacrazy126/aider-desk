@@ -712,16 +712,7 @@ def main(argv=None):
     argv = sys.argv[1:]
 
   watch_files = "--watch-files" in argv
-
-  # Extract server_url if provided
-  server_url = "http://localhost:24337"
-  if "--server-url" in argv:
-    try:
-      idx = argv.index("--server-url")
-      server_url = argv[idx + 1]
-    except IndexError:
-      pass
-
+  server_url = os.getenv("CONNECTOR_SERVER_URL", "http://localhost:24337")
   base_dir = os.getcwd()
   connector = Connector(base_dir, watch_files, server_url)
   asyncio.run(connector.start())

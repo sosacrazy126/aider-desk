@@ -8,7 +8,7 @@ import { parseUsageReport } from '@common/utils';
 import { ContextFile, FileEdit, ModelsData, QuestionData, ResponseChunkData, ResponseCompletedData } from '@common/types';
 import { EditFormat, MessageAction, ResponseMessage } from './messages';
 import { Connector } from './connector';
-import { AIDER_DESKTOP_CONNECTOR_DIR, PYTHON_COMMAND } from './constants';
+import { AIDER_DESKTOP_CONNECTOR_DIR, PYTHON_COMMAND, SOCKET_PORT } from './constants';
 import logger from './logger';
 
 export class Project {
@@ -74,6 +74,7 @@ export class Project {
       ...process.env,
       ...environmentVariables,
       PYTHONPATH: AIDER_DESKTOP_CONNECTOR_DIR,
+      CONNECTOR_SERVER_URL: `http://localhost:${SOCKET_PORT}`,
     };
 
     // Spawn without shell to have direct process control
