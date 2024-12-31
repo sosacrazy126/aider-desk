@@ -2,7 +2,7 @@ import path from 'path';
 import { app } from 'electron';
 import { is } from '@electron-toolkit/utils';
 
-export const AIDER_DESKTOP_DIR = `${app.getPath('userData')}${is.dev ? '-dev' : ''}`;
+export const AIDER_DESKTOP_DIR = app.getPath('userData');
 export const RESOURCES_DIR = is.dev ? path.join(__dirname, '../../resources') : process.resourcesPath;
 export const LOGS_DIR = `${AIDER_DESKTOP_DIR}/logs`;
 export const SETUP_COMPLETE_FILENAME = `${AIDER_DESKTOP_DIR}/setup-complete`;

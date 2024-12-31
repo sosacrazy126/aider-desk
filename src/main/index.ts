@@ -11,6 +11,10 @@ import { setupIpcHandlers } from './ipc-handlers';
 import { projectManager } from './project-manager';
 import { performStartUp, UpdateProgressData } from './start-up';
 
+if (is.dev) {
+  app.setPath('userData', `${app.getPath('userData')}-dev`);
+}
+
 const initStore = async (): Promise<Store> => {
   const store = new Store();
   await store.init();
@@ -168,4 +172,8 @@ process.on('SIGINT', () => {
   connectorManager.close();
   projectManager.close();
   process.exit(0);
+});
+
+process.on('exit', () => {
+  app.quit();
 });

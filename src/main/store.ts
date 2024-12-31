@@ -1,5 +1,4 @@
 import { WindowState, ProjectData, ProjectSettings, SettingsData } from '@common/types';
-import { is } from '@electron-toolkit/utils';
 
 const DEFAULT_SETTINGS: SettingsData = {
   aider: {
@@ -28,9 +27,7 @@ export class Store {
 
   async init(): Promise<void> {
     const ElectronStore = (await import('electron-store')).default;
-    this.store = new ElectronStore<StoreSchema>({
-      name: `aider-desktop-store${is.dev ? '-dev' : ''}`,
-    }) as unknown as CustomStore<StoreSchema>;
+    this.store = new ElectronStore<StoreSchema>() as unknown as CustomStore<StoreSchema>;
   }
 
   getSettings(): SettingsData {
