@@ -54,7 +54,7 @@ export class Connector {
   };
 
   public sendAddFileMessage = (contextFile: ContextFile) => {
-    const path = contextFile.path.startsWith(this.baseDir) ? contextFile.path : `${this.baseDir}/${contextFile.path}`;
+    const path = contextFile.readOnly || contextFile.path.startsWith(this.baseDir) ? contextFile.path : `${this.baseDir}/${contextFile.path}`;
 
     const message: AddFileMessage = {
       action: 'add-file',
@@ -65,11 +65,9 @@ export class Connector {
   };
 
   public sendDropFileMessage = (path: string) => {
-    const fullPath = path.startsWith(this.baseDir) ? path : `${this.baseDir}/${path}`;
-
     const message: DropFileMessage = {
       action: 'drop-file',
-      path: fullPath,
+      path,
     };
     this.sendMessage(message);
   };

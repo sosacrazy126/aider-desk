@@ -2,7 +2,7 @@ import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import { delay } from '@common/utils';
-import { AIDER_DESKTOP_DIR, SETUP_COMPLETE_FILENAME, PYTHON_VENV_DIR, AIDER_DESKTOP_CONNECTOR_REPOSITORY, AIDER_DESKTOP_CONNECTOR_BRANCH } from './constants';
+import { AIDER_DESKTOP_DIR, SETUP_COMPLETE_FILENAME, PYTHON_VENV_DIR, AIDER_DESKTOP_CONNECTOR_DIR, RESOURCES_DIR } from './constants';
 
 const isPythonInstalled = (): boolean => {
   try {
@@ -23,58 +23,45 @@ const getPythonVenvBinPath = (): string => {
   return process.platform === 'win32' ? path.join(PYTHON_VENV_DIR, 'Scripts') : path.join(PYTHON_VENV_DIR, 'bin');
 };
 
-const cloneRepository = (): string => {
-  const repoDir = path.join(AIDER_DESKTOP_DIR, 'aider');
-  if (!fs.existsSync(repoDir)) {
-    execSync(`git clone ${AIDER_DESKTOP_CONNECTOR_REPOSITORY} "${repoDir}"`, { stdio: 'inherit' });
+const setupAiderConnector = () => {
+  if (!fs.existsSync(AIDER_DESKTOP_CONNECTOR_DIR)) {
+    fs.mkdirSync(AIDER_DESKTOP_CONNECTOR_DIR, { recursive: true });
   }
-  execSync(`git -C "${repoDir}" checkout ${AIDER_DESKTOP_CONNECTOR_BRANCH}`, { stdio: 'inherit' });
-  return repoDir;
+
+  // Copy connector.py from resources
+  const sourceConnectorPath = path.join(RESOURCES_DIR, 'connector/connector.py');
+  const destConnectorPath = path.join(AIDER_DESKTOP_CONNECTOR_DIR, 'connector.py');
+  fs.copyFileSync(sourceConnectorPath, destConnectorPath);
+
+  installAiderConnectorRequirements();
 };
 
-const installRequirements = (repoDir: string): void => {
+const installAiderConnectorRequirements = (): void => {
   const pythonBinPath = getPythonVenvBinPath();
   const pip = process.platform === 'win32' ? 'pip.exe' : 'pip';
   const pipPath = path.join(pythonBinPath, pip);
 
-  execSync(`"${pipPath}" install -r "${path.join(repoDir, 'requirements.txt')}"`, {
-    stdio: 'inherit',
-    env: {
-      ...process.env,
-      VIRTUAL_ENV: PYTHON_VENV_DIR,
-      PATH: `${pythonBinPath}${path.delimiter}${process.env.PATH}`,
-    },
-  });
+  const packages = ['aider-chat --upgrade', 'python-socketio', 'websocket-client', 'nest-asyncio'];
+
+  for (const pkg of packages) {
+    execSync(`"${pipPath}" install ${pkg}`, {
+      stdio: 'inherit',
+      env: {
+        ...process.env,
+        VIRTUAL_ENV: PYTHON_VENV_DIR,
+        PATH: `${pythonBinPath}${path.delimiter}${process.env.PATH}`,
+      },
+    });
+  }
 };
 
 const performUpdateCheck = async (updateProgress: UpdateProgressFunction): Promise<void> => {
-  const repoDir = path.join(AIDER_DESKTOP_DIR, 'aider');
-
   updateProgress({
     step: 'Update Check',
-    message: 'Checking for updates...',
+    message: 'Updating Aider connector...',
   });
 
-  // Fetch latest changes
-  execSync(`git -C "${repoDir}" fetch`, { stdio: 'inherit' });
-
-  // Check if there are any changes
-  const localCommit = execSync(`git -C "${repoDir}" rev-parse HEAD`).toString().trim();
-  const remoteCommit = execSync(`git -C "${repoDir}" rev-parse origin/${AIDER_DESKTOP_CONNECTOR_BRANCH}`).toString().trim();
-
-  if (localCommit !== remoteCommit) {
-    updateProgress({
-      step: 'Update Check',
-      message: 'Updating to latest version...',
-    });
-
-    // Checkout latest changes
-    execSync(`git -C "${repoDir}" checkout ${AIDER_DESKTOP_CONNECTOR_BRANCH}`, { stdio: 'inherit' });
-    execSync(`git -C "${repoDir}" pull origin ${AIDER_DESKTOP_CONNECTOR_BRANCH}`, { stdio: 'inherit' });
-
-    // Reinstall requirements in case they changed
-    installRequirements(repoDir);
-  }
+  setupAiderConnector();
 };
 
 export type UpdateProgressData = {
@@ -97,7 +84,6 @@ export const performStartUp = async (updateProgress: UpdateProgressFunction): Pr
 
   await delay(2000);
 
-  // Create AIDER_DESKTOP_DIR if it doesn't exist
   if (!fs.existsSync(AIDER_DESKTOP_DIR)) {
     fs.mkdirSync(AIDER_DESKTOP_DIR, { recursive: true });
   }
@@ -121,21 +107,12 @@ export const performStartUp = async (updateProgress: UpdateProgressFunction): Pr
     // Create virtual environment
     createVirtualEnv();
 
-    updateProgress?.({
-      step: 'Cloning Repository',
-      message: 'Cloning AiderDesk Connector repository...',
-    });
-
-    // Clone repository and switch to the correct branch
-    const repoDir = cloneRepository();
-
     updateProgress({
-      step: 'Installing Dependencies',
-      message: 'Installing Python dependencies...',
+      step: 'Setting Up Connector',
+      message: 'Installing Aider connector...',
     });
 
-    // Install requirements
-    installRequirements(repoDir);
+    setupAiderConnector();
 
     updateProgress({
       step: 'Finishing Setup',

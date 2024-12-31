@@ -50,7 +50,7 @@ export class Project {
     this.currentCommand = null;
     this.currentQuestion = null;
 
-    const args = ['-m', 'aider.main'];
+    const args = ['-m', 'connector'];
     if (options) {
       const optionsArgs = (options.match(/(?:[^\s"]+|"[^"]*")+/g) as string[]) || [];
       if (model) {
@@ -62,14 +62,13 @@ export class Project {
       }
       args.push(...optionsArgs.map((option) => (option.startsWith('"') && option.endsWith('"') ? option.slice(1, -1) : option)));
     }
-    args.push(...['--no-check-update', '--connector', '--no-show-model-warnings']);
-    args.push(this.baseDir);
-
-    logger.info('Running Aider with args:', { args });
+    args.push(...['--no-check-update', '--no-show-model-warnings']);
 
     if (model) {
       args.push('--model', model);
     }
+
+    logger.info('Running Aider with args:', { args });
 
     const env = {
       ...process.env,
@@ -227,7 +226,7 @@ export class Project {
     const absolutePath = path.resolve(this.baseDir, filePath);
     const isOutsideProject = !absolutePath.startsWith(path.resolve(this.baseDir));
 
-    const pathToSend = file?.readOnly || isOutsideProject ? absolutePath : filePath;
+    const pathToSend = file?.readOnly || isOutsideProject ? absolutePath : filePath.startsWith(this.baseDir) ? filePath : `${this.baseDir}/${filePath}`;
 
     this.contextFiles = this.contextFiles.filter((file) => file.path !== filePath);
     this.findMessageConnectors('drop-file').forEach((connector) => connector.sendDropFileMessage(pathToSend));

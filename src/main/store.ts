@@ -6,7 +6,7 @@ const DEFAULT_SETTINGS: SettingsData = {
     environmentVariables: '',
   },
   models: {
-    preferred: ['claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022', 'gpt-4o', 'gemini-1.5-flash-002', 'deepseek/deepseek-coder'],
+    preferred: ['claude-3-5-sonnet-20241022', 'deepseek/deepseek-coder', 'claude-3-5-haiku-20241022'],
   },
 };
 
@@ -17,7 +17,7 @@ interface StoreSchema {
 }
 
 interface CustomStore<T> {
-  get<K extends keyof T>(key: K): T[K];
+  get<K extends keyof T>(key: K): T[K] | undefined;
   set<K extends keyof T>(key: K, value: T[K]): void;
 }
 
@@ -32,9 +32,6 @@ export class Store {
 
   getSettings(): SettingsData {
     const settings = this.store.get('settings');
-
-    settings.models = DEFAULT_SETTINGS.models;
-
     return settings || DEFAULT_SETTINGS;
   }
 
