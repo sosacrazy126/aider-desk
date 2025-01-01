@@ -1,16 +1,8 @@
 import { useState, useEffect } from 'react';
-import { SettingsData } from '../../../common/types';
+import { SettingsData } from '@common/types';
 
 export const useSettings = () => {
-  const [settings, setSettings] = useState<SettingsData>({
-    aider: {
-      options: '',
-      environmentVariables: '',
-    },
-    models: {
-      preferred: [],
-    },
-  });
+  const [settings, setSettings] = useState<SettingsData | null>(null);
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -21,7 +13,7 @@ export const useSettings = () => {
   }, []);
 
   const saveSettings = async (updatedSettings?: SettingsData) => {
-    await window.api.saveSettings(updatedSettings || settings);
+    await window.api.saveSettings(updatedSettings || settings!);
   };
 
   return { settings, setSettings, saveSettings };

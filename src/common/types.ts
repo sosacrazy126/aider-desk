@@ -84,6 +84,7 @@ export interface ModelsData {
 }
 
 export interface SettingsData {
+  onboardingFinished?: boolean;
   aider: {
     options: string;
     environmentVariables: string;

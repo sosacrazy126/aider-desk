@@ -1,4 +1,5 @@
 export const ROUTES = {
-  Home: '/',
+  Onboarding: '/onboarding',
+  Home: '/home',
   Settings: '/settings',
 } as const;

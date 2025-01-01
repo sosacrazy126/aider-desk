@@ -59,6 +59,10 @@ export const ModelSelector = forwardRef<ModelSelectorRef, Props>(({ models, curr
   };
 
   const onModelSelectorSearchInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!settings) {
+      return;
+    }
+
     const sortedModels = [...settings.models.preferred, ...models.filter((model) => !settings.models.preferred.includes(model))];
     const filteredModels = sortedModels.filter((model) => model.toLowerCase().includes(modelSearchTerm.toLowerCase()));
 
@@ -90,6 +94,10 @@ export const ModelSelector = forwardRef<ModelSelectorRef, Props>(({ models, curr
   };
 
   const renderModelItem = (model: string, index: number) => {
+    if (!settings) {
+      return null;
+    }
+
     const isPreferred = settings.models.preferred.includes(model);
     index = index + (isPreferred ? 0 : settings.models.preferred.length);
 
@@ -150,10 +158,10 @@ export const ModelSelector = forwardRef<ModelSelectorRef, Props>(({ models, curr
             />
           </div>
           <div className="overflow-y-auto scrollbar-thin scrollbar-track-neutral-800 scrollbar-thumb-neutral-700 hover:scrollbar-thumb-neutral-600 max-h-48">
-            {...settings.models.preferred.filter((model) => model.toLowerCase().includes(debouncedSearchTerm.toLowerCase())).map(renderModelItem)}
+            {settings?.models.preferred.filter((model) => model.toLowerCase().includes(debouncedSearchTerm.toLowerCase())).map(renderModelItem)}
             <div key="divider" className="border-t border-neutral-700 my-1" />
             {...models
-              .filter((model) => !settings.models.preferred.includes(model) && model.toLowerCase().includes(debouncedSearchTerm.toLowerCase()))
+              .filter((model) => !settings?.models.preferred.includes(model) && model.toLowerCase().includes(debouncedSearchTerm.toLowerCase()))
               .map(renderModelItem)}
           </div>
         </div>

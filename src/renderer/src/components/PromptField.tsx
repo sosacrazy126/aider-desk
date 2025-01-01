@@ -311,10 +311,10 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
     const updateMainModel = (model: string) => {
       window.api.updateMainModel(baseDir, model);
       const updatedSettings = {
-        ...settings,
+        ...settings!,
         models: {
-          ...settings.models,
-          preferred: [model, ...settings.models.preferred.filter((m) => m !== model)],
+          ...settings!.models,
+          preferred: [model, ...settings!.models.preferred.filter((m) => m !== model)],
         },
       };
       setSettings(updatedSettings);

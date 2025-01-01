@@ -4,11 +4,14 @@ import { useEffect, useState } from 'react';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Home } from 'pages/Home';
+import { Onboarding } from 'pages/Onboarding';
 import Settings from 'pages/Settings';
 import { ROUTES } from 'utils/routes';
+import { useSettings } from 'hooks/useSettings';
 
 const AnimatedRoutes = () => {
   const location = useLocation();
+  const { settings } = useSettings();
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100vh' }}>
@@ -21,9 +24,12 @@ const AnimatedRoutes = () => {
           transition={{ duration: 0.3 }}
         >
           <Routes location={location}>
+            <Route path={ROUTES.Onboarding} element={<Onboarding />} />
             <Route path={ROUTES.Home} element={<Home />} />
             <Route path={ROUTES.Settings} element={<Settings />} />
-            <Route path="/" element={<Navigate to={ROUTES.Home} replace />} />
+            {settings && (
+              <Route path="/" element={settings.onboardingFinished ? <Navigate to={ROUTES.Home} replace /> : <Navigate to={ROUTES.Onboarding} replace />} />
+            )}
           </Routes>
         </motion.div>
       </AnimatePresence>

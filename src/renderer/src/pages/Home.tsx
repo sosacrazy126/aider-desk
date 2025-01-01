@@ -100,12 +100,12 @@ export const Home = () => {
     void saveProjects(projects);
   };
 
-  const handleCloseProject = (projectBaseDir: string, e: React.MouseEvent) => {
+  const handleCloseProject = async (projectBaseDir: string, e: React.MouseEvent) => {
     e.stopPropagation();
 
     const projects = openProjects.filter((project) => project.baseDir !== projectBaseDir);
     if (activeProject?.baseDir === projectBaseDir) {
-      setActiveProject(projects.length > 0 ? projects[projects.length - 1].baseDir : null);
+      await setActiveProject(projects.length > 0 ? projects[projects.length - 1].baseDir : null);
     }
     setOpenProjects(projects);
     void saveProjects(projects);
