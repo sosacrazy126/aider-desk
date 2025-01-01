@@ -21,11 +21,11 @@ export const Settings = () => {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-lg font-bold text-neutral-100">Settings</h1>
           <div className="space-x-2">
-            <button onClick={handleSave} className="bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded">
-              Save
-            </button>
             <button onClick={handleCancel} className="bg-neutral-900 hover:bg-neutral-800 text-white px-4 py-2 rounded">
               Cancel
+            </button>
+            <button onClick={handleSave} className="bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded">
+              Save
             </button>
           </div>
         </div>
