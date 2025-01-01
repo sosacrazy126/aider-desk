@@ -21,7 +21,7 @@ export const Settings = () => {
       <div className="flex-1 container mx-auto p-4">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-lg font-bold text-neutral-100">Settings</h1>
-          <div className="space-x-2">
+          <div className="flex items-center space-x-2">
             <button onClick={handleCancel} className="bg-neutral-900 hover:bg-neutral-800 text-white px-4 py-2 rounded">
               Cancel
             </button>
