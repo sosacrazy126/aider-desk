@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { FaFolder } from 'react-icons/fa';
 import { ConfirmDialog } from './ConfirmDialog';
 import { AutocompletionInput } from './AutocompletionInput';
+import { Accordion } from './common/Accordion';
 
 type Props = {
   onClose: () => void;
@@ -13,6 +14,15 @@ export const OpenProjectDialog = ({ onClose, onAddProject }: Props) => {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isValidPath, setIsValidPath] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(true);
+  const [recentProjects, setRecentProjects] = useState<string[]>([]);
+
+  useEffect(() => {
+    const loadRecentProjects = async () => {
+      const projects = await window.api.getRecentProjects();
+      setRecentProjects(projects);
+    };
+    loadRecentProjects();
+  }, []);
 
   useEffect(() => {
     const updateSuggestions = async () => {
@@ -85,6 +95,26 @@ export const OpenProjectDialog = ({ onClose, onAddProject }: Props) => {
         }
         onSubmit={handleAddProject}
       />
+
+      {recentProjects.length > 0 && (
+        <Accordion className="mt-2" title={<div className="flex items-center gap-2 text-sm">Recent projects</div>}>
+          <div className="flex flex-col gap-1 max-h-48 overflow-y-auto">
+            {recentProjects.map((path) => (
+              <button
+                key={path}
+                onClick={() => {
+                  onAddProject(path);
+                  onClose();
+                }}
+                className="text-left p-1.5 rounded hover:bg-neutral-700/50 transition-colors truncate text-xs ml-2"
+                title={path}
+              >
+                {path}
+              </button>
+            ))}
+          </div>
+        </Accordion>
+      )}
     </ConfirmDialog>
   );
 };

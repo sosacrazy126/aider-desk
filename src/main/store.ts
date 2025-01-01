@@ -13,6 +13,7 @@ const DEFAULT_SETTINGS: SettingsData = {
 interface StoreSchema {
   windowState: WindowState;
   openProjects: ProjectData[];
+  recentProjects: string[]; // baseDir paths of recently closed projects
   settings: SettingsData;
 }
 
@@ -45,6 +46,29 @@ export class Store {
 
   setOpenProjects(projects: ProjectData[]): void {
     this.store.set('openProjects', projects);
+  }
+
+  getRecentProjects(): string[] {
+    const recentProjects = this.store.get('recentProjects') || [];
+    const openProjects = this.getOpenProjects().map((p) => p.baseDir);
+
+    return recentProjects.filter((baseDir) => !openProjects.includes(baseDir));
+  }
+
+  addRecentProject(baseDir: string): void {
+    const recentProjects = this.store.get('recentProjects') || [];
+
+    const filtered = recentProjects.filter((recentProject) => recentProject !== baseDir);
+    filtered.unshift(baseDir);
+    this.store.set('recentProjects', filtered.slice(0, 10));
+  }
+
+  removeRecentProject(baseDir: string): void {
+    const recent = this.getRecentProjects();
+    this.store.set(
+      'recentProjects',
+      recent.filter((p) => p !== baseDir),
+    );
   }
 
   getProjectSettings(baseDir: string): ProjectSettings | undefined {

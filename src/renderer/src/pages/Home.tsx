@@ -144,11 +144,7 @@ export const Home = () => {
         </div>
         {isOpenProjectDialogVisible && <OpenProjectDialog onClose={() => setIsOpenProjectDialogVisible(false)} onAddProject={handleAddProject} />}
         <div className="flex-grow overflow-hidden relative">
-          {openProjects.length > 0 ? (
-            renderProjectPanels()
-          ) : (
-            <NoProjectsOpen onOpenProject={() => setIsOpenProjectDialogVisible(true)} />
-          )}
+          {openProjects.length > 0 ? renderProjectPanels() : <NoProjectsOpen onOpenProject={() => setIsOpenProjectDialogVisible(true)} />}
         </div>
       </div>
     </div>

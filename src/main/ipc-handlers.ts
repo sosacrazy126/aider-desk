@@ -37,6 +37,7 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, store: Store) => {
 
   ipcMain.on('stop-project', (_, baseDir: string) => {
     projectManager.stopProject(baseDir);
+    store.addRecentProject(baseDir);
   });
 
   ipcMain.handle('show-open-dialog', async (_, options: Electron.OpenDialogSyncOptions) => {
@@ -53,6 +54,18 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, store: Store) => {
 
   ipcMain.handle('save-projects', async (_, projects) => {
     store.setOpenProjects(projects);
+  });
+
+  ipcMain.handle('get-recent-projects', async () => {
+    return store.getRecentProjects();
+  });
+
+  ipcMain.handle('add-recent-project', async (_, baseDir: string) => {
+    store.addRecentProject(baseDir);
+  });
+
+  ipcMain.handle('remove-recent-project', async (_, baseDir: string) => {
+    store.removeRecentProject(baseDir);
   });
 
   ipcMain.handle('get-project-settings', (_, baseDir: string) => {

@@ -36,6 +36,9 @@ export interface ApplicationAPI {
   dropFile: (baseDir: string, path: string) => void;
   runCommand: (baseDir: string, command: string) => void;
   scrapeWeb: (baseDir: string, url: string) => Promise<string>;
+  getRecentProjects: () => Promise<string[]>;
+  addRecentProject: (baseDir: string) => Promise<void>;
+  removeRecentProject: (baseDir: string) => Promise<void>;
   interruptResponse: (baseDir: string) => void;
   applyEdits: (baseDir: string, edits: FileEdit[]) => void;
 

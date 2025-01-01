@@ -55,6 +55,9 @@ const api: ApplicationAPI = {
   dropFile: (baseDir: string, path: string) => ipcRenderer.send('drop-file', baseDir, path),
   runCommand: (baseDir: string, command: string) => ipcRenderer.send('run-command', baseDir, command),
   scrapeWeb: (baseDir: string, url: string) => ipcRenderer.invoke('scrape-web', baseDir, url),
+  getRecentProjects: () => ipcRenderer.invoke('get-recent-projects'),
+  addRecentProject: (baseDir: string) => ipcRenderer.invoke('add-recent-project', baseDir),
+  removeRecentProject: (baseDir: string) => ipcRenderer.invoke('remove-recent-project', baseDir),
   interruptResponse: (baseDir: string) => ipcRenderer.send('interrupt-response', baseDir),
   applyEdits: (baseDir: string, edits: FileEdit[]) => ipcRenderer.send('apply-edits', baseDir, edits),
 
