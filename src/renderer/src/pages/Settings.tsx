@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { FaSave } from 'react-icons/fa';
 import { useSettings } from 'hooks/useSettings';
 import { AiderSettings } from 'components/settings/AiderSettings';
 
@@ -24,8 +25,9 @@ export const Settings = () => {
             <button onClick={handleCancel} className="bg-neutral-900 hover:bg-neutral-800 text-white px-4 py-2 rounded">
               Cancel
             </button>
-            <button onClick={handleSave} className="bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded">
-              Save
+            <button onClick={handleSave} className="bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded flex items-center space-x-2">
+              <FaSave />
+              <span>Save</span>
             </button>
           </div>
         </div>
