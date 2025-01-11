@@ -11,10 +11,6 @@ import { setupIpcHandlers } from './ipc-handlers';
 import { projectManager } from './project-manager';
 import { performStartUp, UpdateProgressData } from './start-up';
 
-if (is.dev) {
-  app.setPath('userData', `${app.getPath('userData')}-dev`);
-}
-
 const initStore = async (): Promise<Store> => {
   const store = new Store();
   await store.init();
@@ -30,7 +26,7 @@ const createWindow = (store: Store) => {
     y: lastWindowState.y,
     show: false,
     autoHideMenuBar: true,
-    ...(process.platform === 'linux' ? { icon } : {}),
+    icon,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
@@ -111,6 +107,7 @@ app.whenReady().then(async () => {
     },
     browserWindow: {
       width: 400,
+      icon,
       backgroundColor: '#1c2025',
       webPreferences: {
         nodeIntegration: true,

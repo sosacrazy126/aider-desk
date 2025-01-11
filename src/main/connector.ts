@@ -1,3 +1,4 @@
+import path from 'path';
 import { Socket } from 'socket.io';
 import { ContextFile, FileEdit } from '@common/types';
 import {
@@ -54,11 +55,11 @@ export class Connector {
   };
 
   public sendAddFileMessage = (contextFile: ContextFile) => {
-    const path = contextFile.readOnly || contextFile.path.startsWith(this.baseDir) ? contextFile.path : `${this.baseDir}/${contextFile.path}`;
+    const filePath = contextFile.readOnly || contextFile.path.startsWith(this.baseDir) ? contextFile.path : path.join(this.baseDir, contextFile.path);
 
     const message: AddFileMessage = {
       action: 'add-file',
-      path,
+      path: filePath,
       readOnly: contextFile.readOnly,
     };
     this.sendMessage(message);

@@ -24,7 +24,7 @@ export const ProjectTabs = ({ openProjects, activeProject, onAddProject, onSetAc
           `}
           onClick={() => onSetActiveProject(project.baseDir)}
         >
-          {project.baseDir.split('/').pop()}
+          {project.baseDir.split(/[\\/]/).pop()}
           <div
             className={`flex items-center justify-center rounded-full p-1 transition-colors duration-200
             ${activeProject?.baseDir === project.baseDir ? 'hover:bg-neutral-500/30' : 'hover:bg-neutral-600/30'}

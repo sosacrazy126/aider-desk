@@ -1,4 +1,5 @@
 import { WindowState, ProjectData, ProjectSettings, SettingsData } from '@common/types';
+import { normalizeBaseDir } from '@common/utils';
 
 const DEFAULT_SETTINGS: SettingsData = {
   aider: {
@@ -8,6 +9,10 @@ const DEFAULT_SETTINGS: SettingsData = {
   models: {
     preferred: ['claude-3-5-sonnet-20241022', 'deepseek/deepseek-coder', 'claude-3-5-haiku-20241022'],
   },
+};
+
+const compareBaseDirs = (baseDir1: string, baseDir2: string): boolean => {
+  return normalizeBaseDir(baseDir1) === normalizeBaseDir(baseDir2);
 };
 
 interface StoreSchema {
@@ -50,16 +55,17 @@ export class Store {
 
   getRecentProjects(): string[] {
     const recentProjects = this.store.get('recentProjects') || [];
-    const openProjects = this.getOpenProjects().map((p) => p.baseDir);
+    const openProjectBaseDirs = this.getOpenProjects().map((p) => p.baseDir);
 
-    return recentProjects.filter((baseDir) => !openProjects.includes(baseDir));
+    return recentProjects.filter((baseDir) => !openProjectBaseDirs.some((openProjectBaseDir) => compareBaseDirs(openProjectBaseDir, baseDir)));
   }
 
   addRecentProject(baseDir: string): void {
     const recentProjects = this.store.get('recentProjects') || [];
+    const filtered = recentProjects.filter((recentProject) => !compareBaseDirs(recentProject, baseDir));
 
-    const filtered = recentProjects.filter((recentProject) => recentProject !== baseDir);
     filtered.unshift(baseDir);
+
     this.store.set('recentProjects', filtered.slice(0, 10));
   }
 
@@ -67,19 +73,19 @@ export class Store {
     const recent = this.getRecentProjects();
     this.store.set(
       'recentProjects',
-      recent.filter((p) => p !== baseDir),
+      recent.filter((p) => !compareBaseDirs(p, baseDir)),
     );
   }
 
   getProjectSettings(baseDir: string): ProjectSettings | undefined {
     const projects = this.getOpenProjects();
-    const project = projects.find((p) => p.baseDir === baseDir);
+    const project = projects.find((p) => compareBaseDirs(p.baseDir, baseDir));
     return project?.settings;
   }
 
   saveProjectSettings(baseDir: string, settings: ProjectSettings): void {
     const projects = this.getOpenProjects();
-    const projectIndex = projects.findIndex((project) => project.baseDir === baseDir);
+    const projectIndex = projects.findIndex((project) => compareBaseDirs(project.baseDir, baseDir));
     if (projectIndex >= 0) {
       projects[projectIndex] = {
         ...projects[projectIndex],

@@ -22,7 +22,6 @@ export class Project {
   private currentResponseMessageId: string | null = null;
   public baseDir: string;
   public contextFiles: ContextFile[] = [];
-  public addableFilePaths: string[] = [];
   public models: ModelsData | null = null;
 
   constructor(mainWindow: BrowserWindow, baseDir: string) {
@@ -227,7 +226,7 @@ export class Project {
     const absolutePath = path.resolve(this.baseDir, filePath);
     const isOutsideProject = !absolutePath.startsWith(path.resolve(this.baseDir));
 
-    const pathToSend = file?.readOnly || isOutsideProject ? absolutePath : filePath.startsWith(this.baseDir) ? filePath : `${this.baseDir}/${filePath}`;
+    const pathToSend = file?.readOnly || isOutsideProject ? absolutePath : filePath.startsWith(this.baseDir) ? filePath : path.join(this.baseDir, filePath);
 
     this.contextFiles = this.contextFiles.filter((file) => file.path !== filePath);
     this.findMessageConnectors('drop-file').forEach((connector) => connector.sendDropFileMessage(pathToSend));

@@ -22,7 +22,7 @@ const createFileTree = (files: ContextFile[]) => {
   };
 
   files.forEach((file) => {
-    const pathParts = file.path.split('/');
+    const pathParts = file.path.split(/[\\/]/);
 
     let currentNode = tree.root;
     pathParts.forEach((part, partIndex) => {

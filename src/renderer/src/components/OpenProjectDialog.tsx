@@ -81,7 +81,7 @@ export const OpenProjectDialog = ({ onClose, onAddProject }: Props) => {
           setShowSuggestions(!isFromSuggestion);
           setProjectPath(value);
         }}
-        placeholder="Choose project directory"
+        placeholder="Type the path to your project or use icon to browse"
         autoFocus
         className="w-full p-3 pr-12 rounded-lg bg-neutral-900/50 border border-neutral-700/50 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-neutral-500/50 focus:ring-1 focus:ring-neutral-500/50 transition-colors"
         rightElement={

@@ -1,29 +1,52 @@
-import { execSync } from 'child_process';
+import { exec } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
+import { promisify } from 'util';
 import { delay } from '@common/utils';
 import { AIDER_DESKTOP_DIR, SETUP_COMPLETE_FILENAME, PYTHON_VENV_DIR, AIDER_DESKTOP_CONNECTOR_DIR, RESOURCES_DIR } from './constants';
 
-const isPythonInstalled = (): boolean => {
+const execAsync = promisify(exec);
+
+const checkPythonVersion = async (): Promise<void> => {
   try {
     const command = process.platform === 'win32' ? 'python --version' : 'python3 --version';
-    execSync(command);
-    return true;
-  } catch {
-    return false;
+    const { stdout } = await execAsync(command, {
+      windowsHide: true,
+    });
+
+    // Extract version number from output like "Python 3.10.12"
+    const versionMatch = stdout.match(/Python (\d+)\.(\d+)\.\d+/);
+    if (!versionMatch) {
+      throw new Error('Could not determine Python version');
+    }
+
+    const major = parseInt(versionMatch[1], 10);
+    const minor = parseInt(versionMatch[2], 10);
+
+    // Check if version is between 3.9 and 3.12
+    if (major !== 3 || minor < 9 || minor > 12) {
+      throw new Error(`Python version ${major}.${minor} is not supported. Please install Python 3.9-3.12.`);
+    }
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('version')) {
+      throw error;
+    }
+    throw new Error('Python is not installed. Please install Python 3.9-3.12 before running the application.');
   }
 };
 
-const createVirtualEnv = (): void => {
+const createVirtualEnv = async (): Promise<void> => {
   const command = process.platform === 'win32' ? 'python' : 'python3';
-  execSync(`${command} -m venv "${PYTHON_VENV_DIR}"`, { stdio: 'inherit' });
+  await execAsync(`${command} -m venv "${PYTHON_VENV_DIR}"`, {
+    windowsHide: true,
+  });
 };
 
 const getPythonVenvBinPath = (): string => {
   return process.platform === 'win32' ? path.join(PYTHON_VENV_DIR, 'Scripts') : path.join(PYTHON_VENV_DIR, 'bin');
 };
 
-const setupAiderConnector = () => {
+const setupAiderConnector = async () => {
   if (!fs.existsSync(AIDER_DESKTOP_CONNECTOR_DIR)) {
     fs.mkdirSync(AIDER_DESKTOP_CONNECTOR_DIR, { recursive: true });
   }
@@ -33,10 +56,10 @@ const setupAiderConnector = () => {
   const destConnectorPath = path.join(AIDER_DESKTOP_CONNECTOR_DIR, 'connector.py');
   fs.copyFileSync(sourceConnectorPath, destConnectorPath);
 
-  installAiderConnectorRequirements();
+  await installAiderConnectorRequirements();
 };
 
-const installAiderConnectorRequirements = (): void => {
+const installAiderConnectorRequirements = async (): Promise<void> => {
   const pythonBinPath = getPythonVenvBinPath();
   const pip = process.platform === 'win32' ? 'pip.exe' : 'pip';
   const pipPath = path.join(pythonBinPath, pip);
@@ -44,8 +67,8 @@ const installAiderConnectorRequirements = (): void => {
   const packages = ['aider-chat --upgrade', 'python-socketio', 'websocket-client', 'nest-asyncio'];
 
   for (const pkg of packages) {
-    execSync(`"${pipPath}" install ${pkg}`, {
-      stdio: 'inherit',
+    await execAsync(`"${pipPath}" install ${pkg}`, {
+      windowsHide: true,
       env: {
         ...process.env,
         VIRTUAL_ENV: PYTHON_VENV_DIR,
@@ -61,7 +84,7 @@ const performUpdateCheck = async (updateProgress: UpdateProgressFunction): Promi
     message: 'Updating Aider connector...',
   });
 
-  setupAiderConnector();
+  await setupAiderConnector();
 };
 
 export type UpdateProgressData = {
@@ -94,25 +117,21 @@ export const performStartUp = async (updateProgress: UpdateProgressFunction): Pr
       message: 'Verifying Python installation...',
     });
 
-    // Check Python installation
-    if (!isPythonInstalled()) {
-      throw new Error('Python is not installed. Please install Python 3.x before running the application.');
-    }
+    await checkPythonVersion();
 
     updateProgress({
       step: 'Creating Virtual Environment',
       message: 'Setting up Python virtual environment...',
     });
 
-    // Create virtual environment
-    createVirtualEnv();
+    await createVirtualEnv();
 
     updateProgress({
       step: 'Setting Up Connector',
-      message: 'Installing Aider connector...',
+      message: 'Installing Aider connector (this may take a while)...',
     });
 
-    setupAiderConnector();
+    await setupAiderConnector();
 
     updateProgress({
       step: 'Finishing Setup',

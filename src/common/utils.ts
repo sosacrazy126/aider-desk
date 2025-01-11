@@ -28,3 +28,8 @@ export const parseUsageReport = (report: string): UsageReportData => {
     totalCost,
   };
 };
+
+export const normalizeBaseDir = (baseDir: string): string => {
+  // On Windows, paths are case-insensitive so we normalize to lowercase
+  return process.platform === 'win32' ? baseDir.toLowerCase() : baseDir;
+};

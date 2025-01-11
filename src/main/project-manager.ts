@@ -1,5 +1,6 @@
 import { BrowserWindow } from 'electron';
 import { parse } from '@dotenvx/dotenvx';
+import { normalizeBaseDir } from '@common/utils';
 import { Project } from './project';
 import { Store } from './store';
 import logger from './logger';
@@ -33,8 +34,13 @@ class ProjectManager {
     project.runAider(settings.aider.options, environmentVariables, model);
   }
 
+  private findProject(baseDir: string): Project | undefined {
+    baseDir = normalizeBaseDir(baseDir);
+    return this.projects.find((project) => normalizeBaseDir(project.baseDir) === baseDir);
+  }
+
   public getProject(baseDir: string): Project {
-    let project = this.projects.find((project) => project.baseDir === baseDir);
+    let project = this.findProject(baseDir);
 
     if (!project) {
       logger.info('Creating new project', { baseDir });
@@ -60,7 +66,7 @@ class ProjectManager {
   }
 
   public stopProject(baseDir: string): void {
-    const project = this.projects.find((project) => project.baseDir === baseDir);
+    const project = this.findProject(baseDir);
 
     if (!project) {
       logger.warn('No project found to stop', { baseDir });

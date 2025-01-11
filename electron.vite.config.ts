@@ -7,7 +7,7 @@ export default defineConfig({
     plugins: [externalizeDepsPlugin(), tsconfigPaths()],
   },
   preload: {
-    plugins: [externalizeDepsPlugin()],
+    plugins: [externalizeDepsPlugin(), tsconfigPaths()],
   },
   renderer: {
     plugins: [react(), tsconfigPaths()],

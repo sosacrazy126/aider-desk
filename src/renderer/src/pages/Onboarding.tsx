@@ -49,7 +49,7 @@ export const Onboarding = () => {
               <li>Add your API keys for the LLM provider you want to use</li>
               <li>Set any additional options for Aider</li>
             </ul>
-            <p className="text-neutral-300 text-sm">You can also do that later in the settings menu.</p>
+            <p className="text-neutral-300 text-sm">You can also do that later in the Settings menu.</p>
             <AiderSettings settings={settings!} setSettings={setSettings} />
           </div>
         );

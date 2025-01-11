@@ -1,5 +1,6 @@
 import { electronAPI } from '@electron-toolkit/preload';
 import { contextBridge, ipcRenderer } from 'electron';
+import { normalizeBaseDir } from '@common/utils';
 import { v4 as uuidv4 } from 'uuid';
 import {
   AutocompletionData,
@@ -14,12 +15,12 @@ import {
   ResponseCompletedData,
   SettingsData,
   TokensInfoData,
-} from '../common/types';
+} from '@common/types';
 import { ApplicationAPI } from './index.d';
 
-export interface ResponseModelData extends ModelsData {
-  baseDir: string;
-}
+const compareBaseDirs = (baseDir1: string, baseDir2: string): boolean => {
+  return normalizeBaseDir(baseDir1) === normalizeBaseDir(baseDir2);
+};
 
 const responseChunkListeners: Record<string, (event: Electron.IpcRendererEvent, data: ResponseChunkData) => void> = {};
 const responseFinishedListeners: Record<string, (event: Electron.IpcRendererEvent, data: ResponseCompletedData) => void> = {};
@@ -64,7 +65,7 @@ const api: ApplicationAPI = {
   addResponseChunkListener: (baseDir, callback) => {
     const listenerId = uuidv4();
     responseChunkListeners[listenerId] = (event: Electron.IpcRendererEvent, data: ResponseChunkData) => {
-      if (data.baseDir !== baseDir) {
+      if (!compareBaseDirs(data.baseDir, baseDir)) {
         return;
       }
       callback(event, data);
@@ -83,7 +84,7 @@ const api: ApplicationAPI = {
   addResponseCompletedListener: (baseDir, callback) => {
     const listenerId = uuidv4();
     responseFinishedListeners[listenerId] = (event: Electron.IpcRendererEvent, data: ResponseCompletedData) => {
-      if (data.baseDir !== baseDir) {
+      if (!compareBaseDirs(data.baseDir, baseDir)) {
         return;
       }
       callback(event, data);
@@ -102,7 +103,7 @@ const api: ApplicationAPI = {
   addContextFilesUpdatedListener: (baseDir, callback) => {
     const listenerId = uuidv4();
     contextFilesUpdatedListeners[listenerId] = (event: Electron.IpcRendererEvent, data: ContextFilesUpdatedData) => {
-      if (data.baseDir !== baseDir) {
+      if (!compareBaseDirs(data.baseDir, baseDir)) {
         return;
       }
       callback(event, data);
@@ -121,7 +122,7 @@ const api: ApplicationAPI = {
   addUpdateAutocompletionListener: (baseDir, callback) => {
     const listenerId = uuidv4();
     updateAutocompletionListeners[listenerId] = (event: Electron.IpcRendererEvent, data: AutocompletionData) => {
-      if (data.baseDir !== baseDir) {
+      if (!compareBaseDirs(data.baseDir, baseDir)) {
         return;
       }
       callback(event, data);
@@ -140,7 +141,7 @@ const api: ApplicationAPI = {
   addAskQuestionListener: (baseDir, callback) => {
     const listenerId = uuidv4();
     askQuestionListeners[listenerId] = (event: Electron.IpcRendererEvent, data: QuestionData) => {
-      if (data.baseDir !== baseDir) {
+      if (!compareBaseDirs(data.baseDir, baseDir)) {
         return;
       }
       callback(event, data);
@@ -159,7 +160,7 @@ const api: ApplicationAPI = {
   addSetCurrentModelsListener: (baseDir, callback) => {
     const listenerId = uuidv4();
     setCurrentModelsListeners[listenerId] = (event: Electron.IpcRendererEvent, data: ModelsData & { baseDir: string }) => {
-      if (data.baseDir !== baseDir) {
+      if (!compareBaseDirs(data.baseDir, baseDir)) {
         return;
       }
       callback(event, data);
@@ -178,7 +179,7 @@ const api: ApplicationAPI = {
   addCommandOutputListener: (baseDir, callback) => {
     const listenerId = uuidv4();
     commandOutputListeners[listenerId] = (event: Electron.IpcRendererEvent, data: CommandOutputData) => {
-      if (data.baseDir !== baseDir) {
+      if (!compareBaseDirs(data.baseDir, baseDir)) {
         return;
       }
       callback(event, data);
@@ -197,7 +198,7 @@ const api: ApplicationAPI = {
   addLogListener: (baseDir, callback) => {
     const listenerId = uuidv4();
     logListeners[listenerId] = (event: Electron.IpcRendererEvent, data: LogData) => {
-      if (data.baseDir !== baseDir) {
+      if (!compareBaseDirs(data.baseDir, baseDir)) {
         return;
       }
       callback(event, data);
@@ -216,7 +217,7 @@ const api: ApplicationAPI = {
   addTokensInfoListener: (baseDir, callback) => {
     const listenerId = uuidv4();
     tokensInfoListeners[listenerId] = (event: Electron.IpcRendererEvent, data: TokensInfoData) => {
-      if (data.baseDir !== baseDir) {
+      if (!compareBaseDirs(data.baseDir, baseDir)) {
         return;
       }
       callback(event, data);
