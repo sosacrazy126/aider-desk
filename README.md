@@ -1,6 +1,6 @@
-# aider-desk
+# AiderDesk
 
-Supercharge your coding workflow with aider-desk, a sleek desktop application that brings the power of **aider** to your fingertips. Say hello to a user-friendly GUI, enhanced with project management, cost tracking, and structured message handling. Effortlessly leverage language models to accelerate your code-related tasks and boost your productivity.
+Supercharge your coding workflow with AiderDesk, a sleek desktop application that brings the power of [aider](https://aider.chat) to your fingertips. Say hello to a user-friendly GUI, enhanced with project management, cost tracking, and structured message handling. Effortlessly leverage language models to accelerate your code-related tasks and boost your productivity.
 
 ## Quick Demo
 
@@ -10,41 +10,41 @@ Supercharge your coding workflow with aider-desk, a sleek desktop application th
 
 This tool provides features you are familiar with from Aider and additionally:
 
-*   **Graphical User Interface (GUI):**
+*   **🖥️ Graphical User Interface (GUI)**
     *   Enjoy a user-friendly desktop application with a visual interface, replacing the command-line experience.
-*   **Project Management:**
+*   **📂 Project Management**
     *   Organize and manage multiple codebases as separate projects, allowing for better context and organization.
     *   Easily switch between different projects.
-*   **IDE Integration:**
+*   **🔌 IDE Integration**
     *   Seamlessly integrate with IntelliJ IDEA and VSCode to automatically manage context files
     *   [IntelliJ IDEA Plugin](https://github.com/hotovo/aider-desk-connector-intellij-plugin)
     *   [VSCode Extension](https://github.com/hotovo/aider-desk-connector-vscode-extension)
-*   **Manage Environment Variables:**
-    *   Manage environment variables for model API keys and others
-*   **Cost Tracking:**
+*   **🔑 Manage Aider Settings**
+    *   Manage environment variables for model API keys and other aider settings
+*   **💰 Cost Tracking**
     *   Monitor token usage and costs associated with AI interactions, providing transparency and control over expenses.
     *   Gain insights into the expenses of using language models.
-*   **Structured Message Handling:**
+*   **📨 Structured Message Handling**
     *   View different types of messages (code, prompts, responses, logs, command outputs) in a clear and organized manner, enhancing readability and understanding.
-*   **Enhanced File Management:**
+*   **📄 Enhanced File Management**
     *   Visually add, remove, and manage files within the project context, providing more control over the AI's context.
-*   **Flexible Model Switching:**
+*   **🔄 Flexible Model Switching**
     *   Easily switch between different language models during a single session
     *   Maintain conversation context when switching models
-*   **Code Diff Viewer:**
+*   **🔍 Code Diff Viewer**
     *   Easily review AI-generated code changes with an integrated diff viewer
     *   Side-by-side comparison of original and modified code
-*   **Revert Changes:**
+*   **⏪ Revert Changes**
     *   Undo specific AI-generated changes with a single click
     *   Revert changes that don't meet your expectations while keeping other modifications
-*   **Copy and Share:**
+*   **📋 Copy and Share**
     *   Quickly copy messages or code changes to clipboard with a single click
     *   Share specific code changes or conversations with team members
 
 ## Installation
 
 ### Requirements
-- Python 3.8-3.13 installed on your system
+- Python 3.9-3.12 installed on your system
 
 ### Quick Start
 1. Download the latest release for your platform from [Releases](https://github.com/hotovo/aider-desk/releases)
@@ -79,38 +79,47 @@ $ npm run build:linux
 
 ### Aider Desk Interface
 ![Aider Desk](docs/images/aider-desk.png)
+
 *Main application interface showing the chat interface, file management, and project overview*
 
 ### Configuration
 ![Configuration](docs/images/configuration.png)
+
 *Aider settings and preferences*
 
 ### Multiple Project Management
 ![Multiple Projects](docs/images/multiple-projects.png)
+
 *Managing and switching between multiple projects*
 
 ### Context File Management
 ![Context Files](docs/images/contex-files.png)
+
 *Managing files included in the AI context*
 
 ### Model Switching Interface
 ![Model Switching](docs/images/model-switching.png)
+
 *Switching between different AI models*
 
 ### Chat Mode Selection
 ![Chat Modes](docs/images/chat-modes.png)
+
 *Switching between different chat modes*
 
 ### Question answering and commands running support
 ![Commands](docs/images/commands.png)
+
 *Answering questions and running commands*
 
 ### Code Diff Viewer
 ![Code Diff](docs/images/code-diff.png)
+
 *Side-by-side code comparison and diff viewer*
 
 ### Cost Tracking
 ![Cost Tracking](docs/images/cost-tracking.png)
+
 *Token usage and cost tracking for session per project*
 
 ## Contributing
@@ -123,8 +132,8 @@ We welcome contributions from the community! Here's how you can help improve aid
    git checkout -b my-feature-branch
    ```
 3. **Commit your changes** with clear, descriptive messages
-4**Push your branch** to your fork
-5**Create a Pull Request** against the main branch of the original repository
+4. **Push your branch** to your fork
+5. **Create a Pull Request** against the main branch of the original repository
 
 Please follow these guidelines:
 - Keep PRs focused on a single feature or bugfix
