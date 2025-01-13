@@ -5,6 +5,7 @@ import ProgressBar from 'electron-progressbar';
 
 import { delay } from '@common/utils';
 import icon from '../../resources/icon.png?asset';
+import { setupAutoUpdater, checkForUpdates } from './auto-updater';
 import { Store } from './store';
 import { connectorManager } from './connector-manager';
 import { setupIpcHandlers } from './ipc-handlers';
@@ -79,6 +80,11 @@ app.whenReady().then(async () => {
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window);
   });
+
+  if (!is.dev) {
+    setupAutoUpdater();
+    await checkForUpdates();
+  }
 
   const progressBar = new ProgressBar({
     text: 'Starting AiderDesk...',
