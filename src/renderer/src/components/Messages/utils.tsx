@@ -4,6 +4,7 @@ import { CodeBlock } from './CodeBlock';
 import { CodeInline } from './CodeInline';
 
 const ALL_FENCES = [
+  ['````', '````'],
   ['```', '```'],
   ['<source>', '</source>'],
   ['<code>', '</code>'],
@@ -87,8 +88,8 @@ export const parseMessageContent = (baseDir: string, content: string, allFiles: 
         foundClosingFence = false;
 
         // Extract language for ``` fence
-        if (matchingFence[0] === '```') {
-          language = line.trim().slice(3).trim();
+        if (matchingFence[0].startsWith('```')) {
+          language = line.trim().slice(matchingFence[0].length).trim();
         }
         continue;
       }
