@@ -118,20 +118,30 @@ export class Project {
     return !!this.process;
   }
 
-  public killAider() {
+  public async killAider(): Promise<void> {
     if (this.process) {
       logger.info('Killing Aider...', { baseDir: this.baseDir });
       try {
-        treeKill(this.process.pid!, 'SIGKILL', (err) => {
-          if (err) {
-            logger.error('Error killing Aider process:', { error: err });
-          }
+        await new Promise<void>((resolve, reject) => {
+          treeKill(this.process!.pid!, 'SIGKILL', (err) => {
+            if (err) {
+              logger.error('Error killing Aider process:', { error: err });
+              reject(err);
+            } else {
+              resolve();
+            }
+          });
         });
+        this.currentCommand = null;
+        this.currentQuestion = null;
+        this.currentResponseMessageId = null;
       } catch (error: unknown) {
         logger.error('Error killing Aider process:', { error });
+        throw error;
+      } finally {
+        this.process = null;
       }
     }
-    this.process = null;
   }
 
   private findMessageConnectors(action: MessageAction): Connector[] {

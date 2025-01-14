@@ -35,9 +35,13 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, store: Store) => {
     projectManager.startProject(baseDir);
   });
 
-  ipcMain.on('stop-project', (_, baseDir: string) => {
-    projectManager.stopProject(baseDir);
+  ipcMain.on('stop-project', async (_, baseDir: string) => {
+    await projectManager.stopProject(baseDir);
     store.addRecentProject(baseDir);
+  });
+
+  ipcMain.on('restart-project', async (_, baseDir: string) => {
+    await projectManager.restartProject(baseDir);
   });
 
   ipcMain.handle('show-open-dialog', async (_, options: Electron.OpenDialogSyncOptions) => {

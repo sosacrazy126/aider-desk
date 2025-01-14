@@ -336,6 +336,17 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
     setMessages((prevMessages) => [...prevMessages, interruptMessage]);
   };
 
+  const restartProject = () => {
+    setLoading(true);
+    setMessages([]);
+    setLastMessageCost(0);
+    setTotalCost(0);
+    setProcessing(false);
+    setTokensInfo(null);
+    setQuestion(null);
+    void window.api.restartProject(project.baseDir);
+  };
+
   return (
     <div className="flex h-full bg-gradient-to-b from-neutral-950 to-neutral-900 relative">
       {loading && (
@@ -394,6 +405,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
             lastMessageCost={lastMessageCost}
             clearMessages={clearMessages}
             refreshRepoMap={refreshRepositoryMap}
+            restartProject={restartProject}
           />
         </div>
       </ResizableBox>

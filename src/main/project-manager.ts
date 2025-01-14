@@ -30,7 +30,10 @@ class ProjectManager {
     const model = this.store!.getProjectSettings(project.baseDir)?.mainModel;
     const environmentVariables = parse(settings.aider.environmentVariables);
 
-    logger.info('Running Aider for project', { baseDir: project.baseDir, model });
+    logger.info('Running Aider for project', {
+      baseDir: project.baseDir,
+      model,
+    });
     project.runAider(settings.aider.options, environmentVariables, model);
   }
 
@@ -65,7 +68,7 @@ class ProjectManager {
     this.runAiderForProject(project);
   }
 
-  public stopProject(baseDir: string): void {
+  public async stopProject(baseDir: string) {
     const project = this.findProject(baseDir);
 
     if (!project) {
@@ -73,14 +76,17 @@ class ProjectManager {
       return;
     }
     logger.info('Stopping project', { baseDir });
-    project.killAider();
+    await project.killAider();
   }
 
-  public close(): void {
+  public async restartProject(baseDir: string): Promise<void> {
+    await this.stopProject(baseDir);
+    this.startProject(baseDir);
+  }
+
+  public async close(): Promise<void> {
     logger.info('Stopping all projects');
-    this.projects.forEach((project) => {
-      project.killAider();
-    });
+    await Promise.all(this.projects.map((project) => project.killAider()));
     this.projects = [];
   }
 }

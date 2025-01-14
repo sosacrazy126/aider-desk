@@ -17,6 +17,7 @@ export interface ApplicationAPI {
   saveSettings: (settings: SettingsData) => Promise<void>;
   startProject: (baseDir: string) => void;
   stopProject: (baseDir: string) => void;
+  restartProject: (baseDir: string) => void;
   sendPrompt: (baseDir: string, prompt: string, editFormat?: string) => void;
   answerQuestion: (baseDir: string, answer: string) => void;
   loadInputHistory: (baseDir: string) => Promise<string[]>;

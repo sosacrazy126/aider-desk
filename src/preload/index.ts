@@ -37,6 +37,7 @@ const api: ApplicationAPI = {
   saveSettings: (settings: SettingsData) => ipcRenderer.invoke('save-settings', settings),
   startProject: (baseDir: string) => ipcRenderer.send('start-project', baseDir),
   stopProject: (baseDir: string) => ipcRenderer.send('stop-project', baseDir),
+  restartProject: (baseDir: string) => ipcRenderer.send('restart-project', baseDir),
   sendPrompt: (baseDir: string, prompt: string, editFormat?: string) => ipcRenderer.send('send-prompt', baseDir, prompt, editFormat),
   answerQuestion: (baseDir: string, answer: string) => ipcRenderer.send('answer-question', baseDir, answer),
   loadInputHistory: (baseDir: string) => ipcRenderer.invoke('load-input-history', baseDir),
