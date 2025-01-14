@@ -17,7 +17,7 @@ export const Settings = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen h-full bg-neutral-900 text-neutral-100">
+    <div className="flex flex-col min-h-screen h-full bg-neutral-900 text-neutral-100 overflow-y-auto">
       <div className="flex-1 container mx-auto p-4">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-lg font-bold text-neutral-100">Settings</h1>

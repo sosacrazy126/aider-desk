@@ -59,8 +59,8 @@ export const Onboarding = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen p-[4px] bg-gradient-to-b from-neutral-950 to-neutral-900">
-      <div className="flex flex-col h-screen border-2 border-neutral-600">
+    <div className="flex flex-col h-screen p-[4px] bg-gradient-to-b from-neutral-950 to-neutral-900 overflow-y-auto">
+      <div className="flex flex-col flex-1 border-2 border-neutral-600">
         <div className="flex-1 flex flex-col justify-center items-center p-4">
           <div className="max-w-2xl w-full">
             {renderStep()}
