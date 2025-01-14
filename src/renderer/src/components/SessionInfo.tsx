@@ -12,7 +12,7 @@ type Props = {
   refreshRepoMap?: () => void;
 };
 
-export const TokensCostInfo = ({ tokensInfo, totalCost, lastMessageCost, clearMessages, refreshRepoMap }: Props) => {
+export const SessionInfo = ({ tokensInfo, totalCost, lastMessageCost, clearMessages, refreshRepoMap }: Props) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [refreshingAnimation, setRefreshingAnimation] = useState(false);
   const REFRESH_ANIMATION_DURATION = 2000;

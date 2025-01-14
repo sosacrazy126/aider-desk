@@ -13,7 +13,7 @@ import { AddFileDialog } from 'components/AddFileDialog';
 import { ContextFiles } from 'components/ContextFiles';
 import { Messages } from 'components/Messages';
 import { PromptField, PromptFieldRef } from 'components/PromptField';
-import { TokensCostInfo } from 'components/TokensCostInfo';
+import { SessionInfo } from 'components/SessionInfo';
 import { IpcRendererEvent } from 'electron';
 import { useEffect, useRef, useState } from 'react';
 import { CgSpinner } from 'react-icons/cg';
@@ -388,7 +388,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
               }
             />
           </div>
-          <TokensCostInfo
+          <SessionInfo
             tokensInfo={tokensInfo}
             totalCost={totalCost}
             lastMessageCost={lastMessageCost}
