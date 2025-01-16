@@ -10,11 +10,11 @@ const NOTIFICATION_OPTIONS: ToastOptions = {
   draggable: true,
   theme: 'dark',
   progressStyle: {
-    backgroundColor: '#495057', // neutral-700 from tailwind.config.js
-    color: '#495057',
+    backgroundColor: '#333652', // neutral-700 from tailwind.config.js
+    color: '#333652',
   },
   style: {
-    backgroundColor: '#212529',
+    backgroundColor: '#222431',
     color: '#f1f3f5',
     border: '1px solid #343a40',
     borderRadius: '0.375rem',
@@ -38,7 +38,7 @@ export const showErrorNotification = (message: string) => {
     ...NOTIFICATION_OPTIONS,
     style: {
       ...NOTIFICATION_OPTIONS.style,
-      color: '#fecaca',
+      color: '#dd7171',
     },
   });
 };

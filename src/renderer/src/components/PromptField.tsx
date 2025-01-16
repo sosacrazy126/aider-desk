@@ -7,6 +7,7 @@ import { BiSend } from 'react-icons/bi';
 import { CgLock, CgLockUnlock } from 'react-icons/cg';
 import { MdKeyboardArrowUp, MdStop } from 'react-icons/md';
 import { useBooleanState } from 'hooks/useBooleanState';
+import { showErrorNotification } from 'utils/notifications';
 
 const PLACEHOLDERS = [
   'How can I help you today?',
@@ -278,6 +279,11 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
 
     const handleSubmit = () => {
       if (text) {
+        if (text.startsWith('/') && ![...COMMANDS, ...CONFIRM_COMMANDS].some((cmd) => text.startsWith(cmd))) {
+          showErrorNotification('Invalid command');
+          return;
+        }
+
         const confirmCommandMatch = CONFIRM_COMMANDS.find((cmd) => text.startsWith(cmd));
         if (confirmCommandMatch) {
           invokeCommand(confirmCommandMatch);
