@@ -26,11 +26,11 @@ import {
   LoadingMessage,
   LogMessage,
   Message,
-  ModelsMessage,
   PromptMessage,
   ResponseMessage,
 } from 'types/message';
 import { v4 as uuidv4 } from 'uuid';
+import { ProjectBar, ProjectTopBarRef } from 'components/ProjectBar';
 
 type AddFileDialogOptions = {
   readOnly: boolean;
@@ -46,7 +46,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
   const [processing, setProcessing] = useState(false);
   const [addFileDialogOptions, setAddFileDialogOptions] = useState<AddFileDialogOptions | null>(null);
   const [autocompletionData, setAutocompletionData] = useState<AutocompletionData | null>(null);
-  const [currentModels, setCurrentModels] = useState<ModelsData | null>(null);
+  const [modelsData, setModelsData] = useState<ModelsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [totalCost, setTotalCost] = useState(0);
   const [lastMessageCost, setLastMessageCost] = useState<number | undefined>(undefined);
@@ -54,6 +54,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
   const [question, setQuestion] = useState<QuestionData | null>(null);
   const processingMessageRef = useRef<ResponseMessage | null>(null);
   const promptFieldRef = useRef<PromptFieldRef>(null);
+  const projectTopBarRef = useRef<ProjectTopBarRef>(null);
 
   useEffect(() => {
     window.api.startProject(project.baseDir);
@@ -64,10 +65,10 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
   }, [project.baseDir]);
 
   useEffect(() => {
-    if (messages.length > 0) {
+    if (messages.length > 0 || modelsData) {
       setLoading(false);
     }
-  }, [messages]);
+  }, [messages, modelsData]);
 
   useEffect(() => {
     const loadingMessageIndex = messages.findIndex(isLoadingMessage);
@@ -177,7 +178,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
     };
 
     const handleSetCurrentModels = (_: IpcRendererEvent, data: ModelsData) => {
-      setCurrentModels(data);
+      setModelsData(data);
 
       if (data.error) {
         const errorMessage: LogMessage = {
@@ -187,14 +188,6 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
           content: data.error,
         };
         setMessages((prevMessages) => [...prevMessages, errorMessage]);
-      } else {
-        const modelsMessage: ModelsMessage = {
-          id: uuidv4(),
-          type: 'models',
-          content: '',
-          models: data,
-        };
-        setMessages((prevMessages) => [...prevMessages, modelsMessage]);
       }
     };
 
@@ -344,6 +337,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
     setProcessing(false);
     setTokensInfo(null);
     setQuestion(null);
+    setModelsData(null);
     void window.api.restartProject(project.baseDir);
   };
 
@@ -356,6 +350,9 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
         </div>
       )}
       <div className="flex flex-col flex-grow overflow-hidden">
+        <div className="px-4 py-2 border-b border-neutral-800 bg-neutral-900">
+          <ProjectBar ref={projectTopBarRef} baseDir={project.baseDir} modelsData={modelsData} allModels={autocompletionData?.models} />
+        </div>
         <div className="flex-grow overflow-y-auto">
           <Messages baseDir={project.baseDir} messages={messages} allFiles={autocompletionData?.allFiles} />
         </div>
@@ -367,8 +364,6 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
             processing={processing}
             isActive={isActive}
             words={autocompletionData?.words}
-            models={autocompletionData?.models}
-            currentModel={currentModels?.name}
             clearMessages={clearMessages}
             scrapeWeb={scrapeWeb}
             showFileDialog={showFileDialog}
@@ -376,6 +371,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
             answerQuestion={answerQuestion}
             interruptResponse={handleInterruptResponse}
             undoCommit={undoCommit}
+            openModelSelector={() => projectTopBarRef.current?.openMainModelSelector()}
           />
         </div>
       </div>

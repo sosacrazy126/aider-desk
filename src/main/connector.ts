@@ -76,7 +76,7 @@ export class Connector {
   public sendSetModelsMessage(mainModel: string, weakModel: string): void {
     const message: SetModelsMessage = {
       action: 'set-models',
-      name: mainModel,
+      mainModel,
       weakModel,
     };
     this.sendMessage(message);

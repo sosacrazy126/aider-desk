@@ -41,7 +41,7 @@ export class Project {
     this.connectors = this.connectors.filter((c) => c !== connector);
   }
 
-  public runAider(options: string, environmentVariables: Record<string, string>, model?: string): void {
+  public runAider(options: string, environmentVariables: Record<string, string>, mainModel?: string, weakModel?: string): void {
     if (this.process) {
       return;
     }
@@ -52,7 +52,7 @@ export class Project {
     const args = ['-m', 'connector'];
     if (options) {
       const optionsArgs = (options.match(/(?:[^\s"]+|"[^"]*")+/g) as string[]) || [];
-      if (model) {
+      if (mainModel) {
         // Only remove existing --model if we're adding a new one
         const modelIndex = optionsArgs.indexOf('--model');
         if (modelIndex !== -1 && modelIndex + 1 < optionsArgs.length) {
@@ -63,8 +63,11 @@ export class Project {
     }
     args.push(...['--no-check-update', '--no-show-model-warnings']);
 
-    if (model) {
-      args.push('--model', model);
+    if (mainModel) {
+      args.push('--model', mainModel);
+    }
+    if (weakModel) {
+      args.push('--weak-model', weakModel);
     }
 
     logger.info('Running Aider with args:', { args });
@@ -319,6 +322,11 @@ export class Project {
   public updateMainModel(model: string) {
     logger.info('Updating main model:', model);
     this.findMessageConnectors('set-models').forEach((connector) => connector.sendSetModelsMessage(model, this.models!.weakModel));
+  }
+
+  public updateWeakModel(model: string) {
+    logger.info('Updating weak model:', model);
+    this.findMessageConnectors('set-models').forEach((connector) => connector.sendSetModelsMessage(this.models!.mainModel, model));
   }
 
   public getAddableFiles(): string[] {

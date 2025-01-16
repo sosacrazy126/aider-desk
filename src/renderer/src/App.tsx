@@ -7,7 +7,7 @@ import { Home } from 'pages/Home';
 import { Onboarding } from 'pages/Onboarding';
 import Settings from 'pages/Settings';
 import { ROUTES } from 'utils/routes';
-import { useSettings } from 'hooks/useSettings';
+import { SettingsProvider, useSettings } from 'context/SettingsContext';
 
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -47,8 +47,10 @@ const App = () => {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: isVisible ? 1 : 0 }} transition={{ duration: 0.5, ease: 'easeIn' }}>
       <Router>
-        <AnimatedRoutes />
-        <ToastContainer />
+        <SettingsProvider>
+          <AnimatedRoutes />
+          <ToastContainer />
+        </SettingsProvider>
       </Router>
     </motion.div>
   );

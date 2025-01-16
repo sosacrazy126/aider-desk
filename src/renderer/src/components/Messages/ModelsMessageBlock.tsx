@@ -1,5 +1,3 @@
-import { ModelsMessage } from 'types/message';
-
 type Props = {
   message: ModelsMessage;
 };
@@ -12,7 +10,7 @@ export const ModelsMessageBlock = ({ message }: Props) => {
       <div className="flex items-center space-x-3">
         <div className="flex items-center space-x-1">
           <span className="opacity-60 text-xs">Main model:</span>
-          <span className="text-neutral-400">{message.models.name}</span>
+          <span className="text-neutral-400">{message.models.mainModel}</span>
         </div>
         <div className="h-3 w-px bg-neutral-600/50"></div>
         <div className="flex items-center space-x-1">

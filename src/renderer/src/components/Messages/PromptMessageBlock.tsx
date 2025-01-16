@@ -17,9 +17,9 @@ export const PromptMessageBlock = ({ baseDir, message, allFiles }: Props) => {
   return (
     <div className={`${baseClasses} relative flex items-start gap-3 group`}>
       <div className="flex items-center">
-        {(message.editFormat === 'code' || !message.editFormat) && <CgTerminal className="text-neutral-600 h-[18px]" />}
-        {message.editFormat === 'ask' && <FaRegQuestionCircle className="text-neutral-600 h-[18px]" />}
-        {message.editFormat === 'architect' && <IoConstruct className="text-neutral-600 h-[18px]" />}
+        {(message.editFormat === 'code' || !message.editFormat) && <CgTerminal className="text-neutral-200 h-[18px]" />}
+        {message.editFormat === 'ask' && <FaRegQuestionCircle className="text-neutral-200 h-[18px]" />}
+        {message.editFormat === 'architect' && <IoConstruct className="text-neutral-200 h-[18px]" />}
       </div>
       <div className="flex-grow-1">{parseMessageContent(baseDir, message.content, allFiles)}</div>
       <div className="absolute top-2 right-2">

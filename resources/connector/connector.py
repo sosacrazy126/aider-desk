@@ -346,16 +346,17 @@ class Connector:
         await self.drop_file(path)
 
       elif action == "set-models":
-        model_name = message.get('name')
-        if not model_name:
+        main_model = message.get('mainModel')
+        weak_model = message.get('weakModel')
+        if not main_model:
           return
 
-        main_model = models.Model(model_name)
-        models.sanity_check_models(self.coder.io, main_model)
+        model = models.Model(main_model, weak_model=weak_model)
+        models.sanity_check_models(self.coder.io, model)
 
         self.coder = Coder.create(
           from_coder=self.coder,
-          main_model=main_model
+          main_model=model
         )
         for line in self.coder.get_announcements():
           self.coder.io.tool_output(line)
@@ -614,7 +615,7 @@ class Connector:
 
       await self.sio.emit("message", {
         "action": "set-models",
-        "name": self.coder.main_model.name,
+        "mainModel": self.coder.main_model.name,
         "weakModel": self.coder.main_model.weak_model.name,
         "maxChatHistoryTokens": self.coder.main_model.max_chat_history_tokens,
         "info": info,

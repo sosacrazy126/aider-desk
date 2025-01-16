@@ -66,6 +66,7 @@ export interface WindowState {
 
 export interface ProjectSettings {
   mainModel?: string;
+  weakModel?: string;
 }
 
 export interface ProjectData {
@@ -76,7 +77,7 @@ export interface ProjectData {
 
 export interface ModelsData {
   baseDir: string;
-  name: string;
+  mainModel: string;
   weakModel: string;
   maxChatHistoryTokens?: number;
   info?: Record<string, unknown>;

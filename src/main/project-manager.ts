@@ -27,14 +27,16 @@ class ProjectManager {
 
   private runAiderForProject(project: Project): void {
     const settings = this.store!.getSettings();
-    const model = this.store!.getProjectSettings(project.baseDir)?.mainModel;
+    const mainModel = this.store!.getProjectSettings(project.baseDir)?.mainModel;
+    const weakModel = this.store!.getProjectSettings(project.baseDir)?.weakModel;
     const environmentVariables = parse(settings.aider.environmentVariables);
 
     logger.info('Running Aider for project', {
       baseDir: project.baseDir,
-      model,
+      mainModel,
+      weakModel,
     });
-    project.runAider(settings.aider.options, environmentVariables, model);
+    project.runAider(settings.aider.options, environmentVariables, mainModel, weakModel);
   }
 
   private findProject(baseDir: string): Project | undefined {

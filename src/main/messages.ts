@@ -117,7 +117,7 @@ export interface AnswerQuestionMessage extends Message {
 
 export interface SetModelsMessage extends Message {
   action: 'set-models';
-  name: string;
+  mainModel: string;
   weakModel: string;
   maxChatHistoryTokens?: number;
   info?: Record<string, unknown>;

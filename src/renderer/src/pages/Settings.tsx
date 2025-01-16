@@ -1,15 +1,26 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaSave } from 'react-icons/fa';
-import { useSettings } from 'hooks/useSettings';
+import { useSettings } from 'context/SettingsContext';
 import { AiderSettings } from 'components/settings/AiderSettings';
+import { SettingsData } from '@common/types';
 
 export const Settings = () => {
   const navigate = useNavigate();
-  const { settings, setSettings, saveSettings } = useSettings();
+  const { settings: originalSettings, saveSettings } = useSettings();
+  const [localSettings, setLocalSettings] = useState<SettingsData | null>(null);
+
+  useEffect(() => {
+    if (originalSettings) {
+      setLocalSettings(originalSettings);
+    }
+  }, [originalSettings]);
 
   const handleSave = async () => {
-    await saveSettings();
-    navigate(-1);
+    if (localSettings) {
+      await saveSettings(localSettings);
+      navigate(-1);
+    }
   };
 
   const handleCancel = () => {
@@ -32,11 +43,11 @@ export const Settings = () => {
           </div>
         </div>
 
-        {settings && (
+        {localSettings && (
           <div className="bg-neutral-850 shadow-lg rounded-lg p-6 space-y-6">
             <div className="space-y-4">
               <h2 className="text-lg font-semibold text-neutral-100">Aider</h2>
-              <AiderSettings settings={settings} setSettings={setSettings} />
+              <AiderSettings settings={localSettings} setSettings={setLocalSettings} />
             </div>
           </div>
         )}

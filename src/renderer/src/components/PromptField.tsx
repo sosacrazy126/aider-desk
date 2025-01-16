@@ -1,6 +1,5 @@
 import { QuestionData } from '@common/types';
 import { useClickOutside } from 'hooks/useClickOutside';
-import { useSettings } from 'hooks/useSettings';
 import React, { useCallback, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react';
 import TextareaAutosize from 'react-textarea-autosize';
 import getCaretCoordinates from 'textarea-caret';
@@ -8,7 +7,6 @@ import { BiSend } from 'react-icons/bi';
 import { CgLock, CgLockUnlock } from 'react-icons/cg';
 import { MdKeyboardArrowUp, MdStop } from 'react-icons/md';
 import { useBooleanState } from 'hooks/useBooleanState';
-import { ModelSelector, ModelSelectorRef } from './ModelSelector';
 
 const PLACEHOLDERS = [
   'How can I help you today?',
@@ -49,8 +47,7 @@ type Props = {
   processing: boolean;
   isActive: boolean;
   words?: string[];
-  models?: string[];
-  currentModel?: string;
+  openModelSelector?: () => void;
   defaultEditFormat?: string;
   onSubmitted: (prompt: string, editFormat?: string, images?: string[]) => void;
   showFileDialog: (readOnly: boolean) => void;
@@ -69,8 +66,6 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
       processing = false,
       isActive = false,
       words = [],
-      models = [],
-      currentModel,
       defaultEditFormat = 'code',
       showFileDialog,
       onSubmitted,
@@ -80,6 +75,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
       answerQuestion,
       interruptResponse,
       undoCommit,
+      openModelSelector,
     }: Props,
     ref,
   ) => {
@@ -95,9 +91,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
     const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
     const [formatSelectorVisible, showFormatSelector, hideFormatSelector] = useBooleanState(false);
     const [editFormatLocked, setEditFormatLocked] = useState(false);
-    const { settings, setSettings, saveSettings } = useSettings();
     const inputRef = useRef<HTMLTextAreaElement>(null);
-    const modelSelectorRef = useRef<ModelSelectorRef>(null);
     const formatSelectorRef = useRef<HTMLDivElement>(null);
 
     useClickOutside(formatSelectorRef, hideFormatSelector);
@@ -141,7 +135,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
             break;
           case '/model':
             setText('');
-            modelSelectorRef.current?.open();
+            openModelSelector?.();
             break;
           case '/web': {
             const url = text.replace('/web', '').trim();
@@ -306,20 +300,6 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
           break;
         }
       }
-    };
-
-    const updateMainModel = (model: string) => {
-      window.api.updateMainModel(baseDir, model);
-      const updatedSettings = {
-        ...settings!,
-        models: {
-          ...settings!.models,
-          preferred: [model, ...settings!.models.preferred.filter((m) => m !== model)],
-        },
-      };
-      setSettings(updatedSettings);
-      saveSettings(updatedSettings);
-      inputRef.current?.focus();
     };
 
     const toggleFormatSelectorVisible = useCallback(() => {
@@ -506,11 +486,10 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
             )}
           </div>
           <div className="relative flex items-center text-sm text-neutral-400 w-full">
-            <ModelSelector ref={modelSelectorRef} models={models} currentModel={currentModel} updateMainModel={updateMainModel} />
             <div className="relative" ref={formatSelectorRef}>
               <button
                 onClick={toggleFormatSelectorVisible}
-                className="flex items-center hover:text-neutral-300 focus:outline-none transition-colors duration-200 text-xs ml-4"
+                className="flex items-center hover:text-neutral-300 focus:outline-none transition-colors duration-200 text-xs"
               >
                 <MdKeyboardArrowUp className="w-3 h-3 mr-0.5" />
                 <span className="capitalize">{editFormat}</span>
@@ -539,7 +518,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
                 )}
               </button>
               {formatSelectorVisible && (
-                <div className="absolute bottom-full left-4 mb-1 bg-neutral-900 border border-neutral-700 rounded-md shadow-lg z-10 ml-2">
+                <div className="absolute bottom-full mb-1 bg-neutral-900 border border-neutral-700 rounded-md shadow-lg z-10 ml-2">
                   {EDIT_FORMATS.map(({ label, value }) => (
                     <button
                       key={value}

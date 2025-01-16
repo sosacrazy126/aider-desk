@@ -106,6 +106,16 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, store: Store) => {
     }
   });
 
+  ipcMain.on('update-weak-model', (_, baseDir: string, model: string) => {
+    projectManager.getProject(baseDir).updateWeakModel(model);
+
+    const projectSettings = store.getProjectSettings(baseDir);
+    if (projectSettings) {
+      projectSettings.weakModel = model;
+      store.saveProjectSettings(baseDir, projectSettings);
+    }
+  });
+
   ipcMain.on('run-command', (_, baseDir: string, command: string) => {
     projectManager.getProject(baseDir).runCommand(command);
   });

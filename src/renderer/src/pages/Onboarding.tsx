@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { HiArrowRight } from 'react-icons/hi2';
 import { useNavigate } from 'react-router-dom';
-import { useSettings } from 'hooks/useSettings';
+import { useSettings } from 'context/SettingsContext';
 import { AiderSettings } from 'components/settings/AiderSettings';
 
 export const Onboarding = () => {
   const navigate = useNavigate();
-  const { settings, setSettings, saveSettings } = useSettings();
+  const { settings, saveSettings } = useSettings();
   const [step, setStep] = useState(1);
 
   const handleNext = async () => {
@@ -50,7 +50,7 @@ export const Onboarding = () => {
               <li>Set any additional options for Aider</li>
             </ul>
             <p className="text-neutral-300 text-sm">You can also do that later in the Settings menu.</p>
-            <AiderSettings settings={settings!} setSettings={setSettings} />
+            <AiderSettings settings={settings!} setSettings={saveSettings} />
           </div>
         );
       default:

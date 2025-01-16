@@ -27,6 +27,7 @@ export interface ApplicationAPI {
   loadProjects: () => Promise<ProjectData[]>;
   saveProjects: (projects: ProjectData[]) => Promise<void>;
   updateMainModel: (baseDir: string, model: string) => void;
+  updateWeakModel: (baseDir: string, model: string) => void;
   getProjectSettings: (baseDir: string) => Promise<ProjectSettings>;
   saveProjectSettings: (baseDir: string, settings: ProjectSettings) => Promise<void>;
   getFilePathSuggestions: (currentPath: string, directoriesOnly?: boolean) => Promise<string[]>;

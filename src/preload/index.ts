@@ -47,6 +47,7 @@ const api: ApplicationAPI = {
   loadProjects: () => ipcRenderer.invoke('load-projects'),
   saveProjects: (projects) => ipcRenderer.invoke('save-projects', projects),
   updateMainModel: (baseDir, model) => ipcRenderer.send('update-main-model', baseDir, model),
+  updateWeakModel: (baseDir, model) => ipcRenderer.send('update-weak-model', baseDir, model),
   getProjectSettings: (baseDir) => ipcRenderer.invoke('get-project-settings', baseDir),
   saveProjectSettings: (baseDir, settings) => ipcRenderer.invoke('save-project-settings', baseDir, settings),
   getFilePathSuggestions: (currentPath: string, directoriesOnly = false) => ipcRenderer.invoke('get-file-path-suggestions', currentPath, directoriesOnly),
