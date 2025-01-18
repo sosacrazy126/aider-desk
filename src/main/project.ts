@@ -1,5 +1,7 @@
 import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
+import { createHash } from 'crypto';
 import fs from 'fs/promises';
+import { unlinkSync } from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { BrowserWindow } from 'electron';
@@ -9,7 +11,7 @@ import { ContextFile, FileEdit, ModelsData, QuestionData, ResponseChunkData, Res
 import { Store } from './store';
 import { EditFormat, MessageAction, ResponseMessage } from './messages';
 import { Connector } from './connector';
-import { AIDER_DESKTOP_CONNECTOR_DIR, PYTHON_COMMAND, SOCKET_PORT } from './constants';
+import { AIDER_DESKTOP_CONNECTOR_DIR, PID_FILES_DIR, PYTHON_COMMAND, SOCKET_PORT } from './constants';
 import logger from './logger';
 
 export class Project {
@@ -46,10 +48,61 @@ export class Project {
     this.connectors = this.connectors.filter((c) => c !== connector);
   }
 
-  public runAider(options: string, environmentVariables: Record<string, string>, mainModel?: string, weakModel?: string | null): void {
+  private getAiderProcessPidFilePath(): string {
+    const hash = createHash('sha256').update(this.baseDir).digest('hex');
+    return path.join(PID_FILES_DIR, `${hash}.pid`);
+  }
+
+  private async writeAiderProcessPidFile(): Promise<void> {
+    if (!this.process?.pid) {
+      return;
+    }
+
+    try {
+      await fs.mkdir(PID_FILES_DIR, { recursive: true });
+      await fs.writeFile(this.getAiderProcessPidFilePath(), this.process.pid.toString());
+    } catch (error) {
+      logger.error('Failed to write PID file:', { error });
+    }
+  }
+
+  private removeAiderProcessPidFile() {
+    try {
+      unlinkSync(this.getAiderProcessPidFilePath());
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+        logger.error('Failed to remove PID file:', { error });
+      }
+    }
+  }
+
+  private async checkAndCleanupPidFile(): Promise<void> {
+    const pidFilePath = this.getAiderProcessPidFilePath();
+    try {
+      if (await fs.stat(pidFilePath).catch(() => null)) {
+        const pid = parseInt(await fs.readFile(pidFilePath, 'utf8'));
+        await new Promise<void>((resolve, reject) => {
+          treeKill(pid, 'SIGKILL', (err) => {
+            if (err && !err.message.includes('No such process')) {
+              reject(err);
+            } else {
+              resolve();
+            }
+          });
+        });
+        await fs.unlink(pidFilePath);
+      }
+    } catch (error) {
+      logger.error('Error cleaning up old PID file:', { error });
+    }
+  }
+
+  public async runAider(options: string, environmentVariables: Record<string, string>, mainModel?: string, weakModel?: string | null): Promise<void> {
     if (this.process) {
       return;
     }
+
+    await this.checkAndCleanupPidFile();
 
     this.currentCommand = null;
     this.currentQuestion = null;
@@ -87,7 +140,7 @@ export class Project {
     // Spawn without shell to have direct process control
     this.process = spawn(PYTHON_COMMAND, args, {
       cwd: this.baseDir,
-      detached: true,
+      detached: false,
       env,
     });
 
@@ -120,6 +173,8 @@ export class Project {
     this.process.on('close', (code) => {
       logger.info('Aider process exited:', { baseDir: this.baseDir, code });
     });
+
+    void this.writeAiderProcessPidFile();
   }
 
   public isStarted() {
@@ -136,6 +191,7 @@ export class Project {
               logger.error('Error killing Aider process:', { error: err });
               reject(err);
             } else {
+              this.removeAiderProcessPidFile();
               resolve();
             }
           });

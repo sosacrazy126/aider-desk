@@ -58,9 +58,9 @@ const createWindow = (store: Store) => {
   connectorManager.init(mainWindow);
   projectManager.init(mainWindow, store);
 
-  app.on('before-quit', () => {
+  app.on('before-quit', async () => {
     connectorManager.close();
-    projectManager.close();
+    await projectManager.close();
   });
 
   // HMR for renderer base on electron-vite cli.
@@ -171,9 +171,9 @@ app.on('window-all-closed', () => {
 });
 
 // Handle CTRL+C (SIGINT)
-process.on('SIGINT', () => {
+process.on('SIGINT', async () => {
   connectorManager.close();
-  projectManager.close();
+  await projectManager.close();
   process.exit(0);
 });
 
