@@ -7,20 +7,27 @@ type Props = {
   baseDir: string;
   allModels?: string[];
   modelsData: ModelsData | null;
+  architectMode: boolean;
 };
 
 export type ProjectTopBarRef = {
   openMainModelSelector: () => void;
 };
 
-export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(({ baseDir, allModels = [], modelsData }, ref) => {
+export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(({ baseDir, allModels = [], modelsData, architectMode }, ref) => {
   const mainModelSelectorRef = useRef<ModelSelectorRef>(null);
+  const architectModelSelectorRef = useRef<ModelSelectorRef>(null);
 
   useImperativeHandle(ref, () => ({
     openMainModelSelector: () => {
-      mainModelSelectorRef.current?.open();
+      if (architectMode) {
+        architectModelSelectorRef.current?.open();
+      } else {
+        mainModelSelectorRef.current?.open();
+      }
     },
   }));
+
   const { settings, saveSettings } = useSettings();
 
   const updatePreferredModels = useCallback(
@@ -41,19 +48,25 @@ export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(({ baseDir, 
   );
 
   const updateMainModel = useCallback(
-    (model: string) => {
-      window.api.updateMainModel(baseDir, model);
-
-      updatePreferredModels(model);
+    (mainModel: string) => {
+      window.api.updateMainModel(baseDir, mainModel);
+      updatePreferredModels(mainModel);
     },
     [baseDir, updatePreferredModels],
   );
 
   const updateWeakModel = useCallback(
-    (model: string) => {
-      window.api.updateWeakModel(baseDir, model);
+    (weakModel: string) => {
+      window.api.updateWeakModel(baseDir, weakModel);
+      updatePreferredModels(weakModel);
+    },
+    [baseDir, updatePreferredModels],
+  );
 
-      updatePreferredModels(model);
+  const updateArchitectModel = useCallback(
+    (architectModel: string) => {
+      window.api.updateArchitectModel(baseDir, architectModel);
+      updatePreferredModels(architectModel);
     },
     [baseDir, updatePreferredModels],
   );
@@ -62,8 +75,22 @@ export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(({ baseDir, 
     <div className="relative group">
       {modelsData && (
         <div className="flex items-center space-x-3">
+          {architectMode && (
+            <>
+              <div className="flex items-center space-x-1">
+                <span className="text-xs">Architect model:</span>
+                <ModelSelector
+                  ref={architectModelSelectorRef}
+                  models={allModels}
+                  selectedModel={modelsData.architectModel || modelsData.mainModel}
+                  onChange={updateArchitectModel}
+                />
+              </div>
+              <div className="h-3 w-px bg-neutral-600/50"></div>
+            </>
+          )}
           <div className="flex items-center space-x-1">
-            <span className="text-xs">Main model:</span>
+            <span className="text-xs">{architectMode ? 'Editor model:' : 'Main model:'}</span>
             <ModelSelector ref={mainModelSelectorRef} models={allModels} selectedModel={modelsData.mainModel} onChange={updateMainModel} />
           </div>
           <div className="h-3 w-px bg-neutral-600/50"></div>

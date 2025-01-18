@@ -321,10 +321,11 @@ class Connector:
       if action == "prompt":
         prompt = message.get('prompt')
         edit_format = message.get('editFormat')
+        architect_model = message.get('architectModel')
         if not prompt:
           return
 
-        await self.run_prompt(prompt, edit_format)
+        await self.run_prompt(prompt, edit_format, architect_model)
 
       elif action == "answer-question":
         global confirmation_result
@@ -412,17 +413,27 @@ class Connector:
     self.coder.io.reset_state()
     self.interrupted = False
 
-  async def run_prompt(self, prompt, edit_format=None):
+  async def run_prompt(self, prompt, edit_format=None, architect_model=None):
     self.coder.io.add_to_input_history(prompt)
 
-    self.running_coder = self.coder
-    if edit_format:
+    coder_model = self.coder.main_model
+
+    if edit_format and edit_format != "code":
+      running_model = self.coder.main_model
+      if edit_format == "architect" and architect_model:
+        running_model = models.Model(architect_model, weak_model=coder_model.weak_model.name, editor_model=coder_model.name)
+        models.sanity_check_models(self.coder.io, running_model)
+
       self.running_coder = Coder.create(
         from_coder=self.coder,
         edit_format=edit_format,
+        main_model=running_model,
         summarize_from_coder=False
       )
+    else:
+      self.running_coder = self.coder
 
+    self.coder.io.tool_output("here6")
     whole_content = ""
 
     async def run_stream_async():
@@ -477,6 +488,7 @@ class Connector:
       self.coder = Coder.create(
         edit_format=self.coder.edit_format,
         summarize_from_coder=False,
+        main_model=coder_model,
         from_coder=self.running_coder,
       )
     await self.send_update_context_files()

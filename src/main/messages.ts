@@ -43,7 +43,8 @@ export type EditFormat = 'code' | 'ask' | 'architect';
 export interface PromptMessage extends Message {
   action: 'prompt';
   prompt: string;
-  editFormat?: EditFormat;
+  editFormat: EditFormat | null;
+  architectModel: string | null;
 }
 
 export interface ResponseMessage extends Message {
@@ -118,7 +119,7 @@ export interface AnswerQuestionMessage extends Message {
 export interface SetModelsMessage extends Message {
   action: 'set-models';
   mainModel: string;
-  weakModel: string;
+  weakModel: string | null;
   maxChatHistoryTokens?: number;
   info?: Record<string, unknown>;
   hasError?: boolean;

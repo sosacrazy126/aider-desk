@@ -6,6 +6,7 @@ import { BrowserWindow } from 'electron';
 import treeKill from 'tree-kill';
 import { parseUsageReport } from '@common/utils';
 import { ContextFile, FileEdit, ModelsData, QuestionData, ResponseChunkData, ResponseCompletedData } from '@common/types';
+import { Store } from './store';
 import { EditFormat, MessageAction, ResponseMessage } from './messages';
 import { Connector } from './connector';
 import { AIDER_DESKTOP_CONNECTOR_DIR, PYTHON_COMMAND, SOCKET_PORT } from './constants';
@@ -13,6 +14,7 @@ import logger from './logger';
 
 export class Project {
   private mainWindow: BrowserWindow | null = null;
+  private store: Store | null = null;
   private process?: ChildProcessWithoutNullStreams | null = null;
   private connectors: Connector[] = [];
   private currentCommand: string | null = null;
@@ -24,13 +26,16 @@ export class Project {
   public contextFiles: ContextFile[] = [];
   public models: ModelsData | null = null;
 
-  constructor(mainWindow: BrowserWindow, baseDir: string) {
+  constructor(mainWindow: Electron.CrossProcessExports.BrowserWindow, store: Store, baseDir: string) {
     this.mainWindow = mainWindow;
+    this.store = store;
     this.baseDir = baseDir;
   }
 
   public addConnector(connector: Connector) {
-    logger.info('Adding connector for base directory:', { baseDir: this.baseDir });
+    logger.info('Adding connector for base directory:', {
+      baseDir: this.baseDir,
+    });
     this.connectors.push(connector);
     if (connector.listenTo.includes('add-file')) {
       this.contextFiles.forEach(connector.sendAddFileMessage);
@@ -41,7 +46,7 @@ export class Project {
     this.connectors = this.connectors.filter((c) => c !== connector);
   }
 
-  public runAider(options: string, environmentVariables: Record<string, string>, mainModel?: string, weakModel?: string): void {
+  public runAider(options: string, environmentVariables: Record<string, string>, mainModel?: string, weakModel?: string | null): void {
     if (this.process) {
       return;
     }
@@ -152,11 +157,19 @@ export class Project {
   }
 
   public sendPrompt(prompt: string, editFormat?: EditFormat): void {
-    logger.info('Sending prompt:', { baseDir: this.baseDir, prompt });
+    logger.info('Sending prompt:', {
+      baseDir: this.baseDir,
+      prompt,
+      editFormat,
+    });
     if (this.currentQuestion) {
       this.answerQuestion('n');
     }
-    this.findMessageConnectors('prompt').forEach((connector) => connector.sendPromptMessage(prompt, editFormat));
+    this.findMessageConnectors('prompt').forEach((connector) => connector.sendPromptMessage(prompt, editFormat, this.getArchitectModel()));
+  }
+
+  private getArchitectModel(): string | null {
+    return this.store?.getProjectSettings(this.baseDir)?.architectModel || null;
   }
 
   public processResponseMessage(message: ResponseMessage) {
@@ -206,7 +219,11 @@ export class Project {
       return;
     }
 
-    logger.info('Answering question:', { baseDir: this.baseDir, question: this.currentQuestion, answer });
+    logger.info('Answering question:', {
+      baseDir: this.baseDir,
+      question: this.currentQuestion,
+      answer,
+    });
 
     const yesNoAnswer = answer.toLowerCase() === 'a' || answer.toLowerCase() === 'y' ? 'y' : 'n';
     if (answer.toLowerCase() === 'd' || answer.toLowerCase() === 'a') {
@@ -223,7 +240,10 @@ export class Project {
   }
 
   public addFile(contextFile: ContextFile): void {
-    logger.info('Adding file:', { path: contextFile.path, readOnly: contextFile.readOnly });
+    logger.info('Adding file:', {
+      path: contextFile.path,
+      readOnly: contextFile.readOnly,
+    });
     const existingFile = this.contextFiles.find((file) => file.path === contextFile.path);
     if (!existingFile) {
       this.contextFiles.push(contextFile);
@@ -299,9 +319,17 @@ export class Project {
 
     const storedAnswer = this.questionAnswers.get(this.getQuestionKey(questionData));
 
-    logger.info('Asking question:', { baseDir: this.baseDir, question: questionData, answer: storedAnswer });
+    logger.info('Asking question:', {
+      baseDir: this.baseDir,
+      question: questionData,
+      answer: storedAnswer,
+    });
     if (storedAnswer) {
-      logger.info('Found stored answer for question:', { baseDir: this.baseDir, question: questionData, answer: storedAnswer });
+      logger.info('Found stored answer for question:', {
+        baseDir: this.baseDir,
+        question: questionData,
+        answer: storedAnswer,
+      });
       // Auto-answer based on stored preference
       this.answerQuestion(storedAnswer);
       return;
@@ -315,18 +343,29 @@ export class Project {
   }
 
   public setCurrentModels(modelsData: ModelsData) {
-    this.models = modelsData;
+    this.models = {
+      ...modelsData,
+      architectModel: modelsData.architectModel !== undefined ? modelsData.architectModel : this.getArchitectModel(),
+    };
     this.mainWindow?.webContents.send('set-current-models', this.models);
   }
 
-  public updateMainModel(model: string) {
-    logger.info('Updating main model:', model);
-    this.findMessageConnectors('set-models').forEach((connector) => connector.sendSetModelsMessage(model, this.models!.weakModel));
+  public updateModels(mainModel: string, weakModel: string | null) {
+    logger.info('Updating models:', {
+      mainModel,
+      weakModel,
+    });
+    this.findMessageConnectors('set-models').forEach((connector) => connector.sendSetModelsMessage(mainModel, weakModel));
   }
 
-  public updateWeakModel(model: string) {
-    logger.info('Updating weak model:', model);
-    this.findMessageConnectors('set-models').forEach((connector) => connector.sendSetModelsMessage(this.models!.mainModel, model));
+  public setArchitectModel(architectModel: string) {
+    logger.info('Setting architect model', {
+      architectModel,
+    });
+    this.setCurrentModels({
+      ...this.models!,
+      architectModel,
+    });
   }
 
   public getAddableFiles(): string[] {

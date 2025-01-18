@@ -50,7 +50,9 @@ type Props = {
   words?: string[];
   openModelSelector?: () => void;
   defaultEditFormat?: string;
-  onSubmitted: (prompt: string, editFormat?: string, images?: string[]) => void;
+  editFormat: string;
+  setEditFormat: (format: string) => void;
+  onSubmitted: (prompt: string) => void;
   showFileDialog: (readOnly: boolean) => void;
   clearMessages: () => void;
   scrapeWeb: (url: string) => void;
@@ -68,6 +70,8 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
       isActive = false,
       words = [],
       defaultEditFormat = 'code',
+      editFormat,
+      setEditFormat,
       showFileDialog,
       onSubmitted,
       clearMessages,
@@ -81,7 +85,6 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
     ref,
   ) => {
     const [text, setText] = useState('');
-    const [editFormat, setEditFormat] = useState<string | undefined>(defaultEditFormat);
     const [suggestionsVisible, setSuggestionsVisible] = useState(false);
     const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
     const [cursorPosition, setCursorPosition] = useState({ top: 0, left: 0 });
@@ -292,7 +295,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
           if (!editFormatLocked) {
             setEditFormat(defaultEditFormat);
           }
-          onSubmitted?.(text, editFormat === defaultEditFormat ? undefined : editFormat);
+          onSubmitted?.(text);
         }
         prepareForNextPrompt();
       }
@@ -499,7 +502,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
               >
                 <MdKeyboardArrowUp className="w-3 h-3 mr-0.5" />
                 <span className="capitalize">{editFormat}</span>
-                {editFormat !== defaultEditFormat && (
+                {editFormat !== 'code' && (
                   <span className="ml-1">
                     {editFormatLocked ? (
                       <CgLock
@@ -531,7 +534,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
                       onClick={() => {
                         setEditFormat(value);
                         hideFormatSelector();
-                        if (value !== defaultEditFormat) {
+                        if (value !== 'code') {
                           setEditFormatLocked(false);
                         }
                       }}

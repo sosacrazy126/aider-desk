@@ -37,11 +37,12 @@ export class Connector {
     this.socket.emit('message', message);
   };
 
-  public sendPromptMessage(prompt: string, editFormat?: EditFormat): void {
+  public sendPromptMessage(prompt: string, editFormat: EditFormat | null = null, architectModel: string | null = null): void {
     const message: PromptMessage = {
       action: 'prompt',
       prompt,
       editFormat,
+      architectModel,
     };
     this.sendMessage(message);
   }
@@ -73,7 +74,7 @@ export class Connector {
     this.sendMessage(message);
   };
 
-  public sendSetModelsMessage(mainModel: string, weakModel: string): void {
+  public sendSetModelsMessage(mainModel: string, weakModel: string | null): void {
     const message: SetModelsMessage = {
       action: 'set-models',
       mainModel,

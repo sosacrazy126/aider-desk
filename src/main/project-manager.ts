@@ -49,7 +49,7 @@ class ProjectManager {
 
     if (!project) {
       logger.info('Creating new project', { baseDir });
-      project = new Project(this.mainWindow!, baseDir);
+      project = new Project(this.mainWindow!, this.store!, baseDir);
       this.projects.push(project);
     }
 

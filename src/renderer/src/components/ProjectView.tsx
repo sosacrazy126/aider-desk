@@ -52,6 +52,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
   const [lastMessageCost, setLastMessageCost] = useState<number | undefined>(undefined);
   const [tokensInfo, setTokensInfo] = useState<TokensInfoData | null>(null);
   const [question, setQuestion] = useState<QuestionData | null>(null);
+  const [editFormat, setEditFormat] = useState<string>('code');
   const processingMessageRef = useRef<ResponseMessage | null>(null);
   const promptFieldRef = useRef<PromptFieldRef>(null);
   const projectTopBarRef = useRef<ProjectTopBarRef>(null);
@@ -226,7 +227,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
     promptFieldRef.current?.focus();
   };
 
-  const handlePromptSubmit = (prompt: string, editFormat?: string) => {
+  const handlePromptSubmit = (prompt: string) => {
     setProcessing(true);
     const promptMessage: PromptMessage = {
       id: uuidv4(),
@@ -351,7 +352,13 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
       )}
       <div className="flex flex-col flex-grow overflow-hidden">
         <div className="px-4 py-2 border-b border-neutral-800 bg-neutral-900">
-          <ProjectBar ref={projectTopBarRef} baseDir={project.baseDir} modelsData={modelsData} allModels={autocompletionData?.models} />
+          <ProjectBar
+            ref={projectTopBarRef}
+            baseDir={project.baseDir}
+            modelsData={modelsData}
+            allModels={autocompletionData?.models}
+            architectMode={editFormat === 'architect'}
+          />
         </div>
         <div className="flex-grow overflow-y-auto">
           <Messages baseDir={project.baseDir} messages={messages} allFiles={autocompletionData?.allFiles} />
@@ -362,6 +369,8 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
             baseDir={project.baseDir}
             onSubmitted={handlePromptSubmit}
             processing={processing}
+            editFormat={editFormat}
+            setEditFormat={setEditFormat}
             isActive={isActive}
             words={autocompletionData?.words}
             clearMessages={clearMessages}
