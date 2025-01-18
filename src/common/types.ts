@@ -79,7 +79,7 @@ export interface ProjectData {
 export interface ModelsData {
   baseDir: string;
   mainModel: string;
-  weakModel: string;
+  weakModel?: string | null;
   architectModel?: string | null;
   maxChatHistoryTokens?: number;
   info?: Record<string, unknown>;

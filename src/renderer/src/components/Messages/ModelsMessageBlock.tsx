@@ -1,3 +1,5 @@
+import { ModelsMessage } from 'types/message';
+
 type Props = {
   message: ModelsMessage;
 };

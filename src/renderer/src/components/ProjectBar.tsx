@@ -96,7 +96,7 @@ export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(({ baseDir, 
           <div className="h-3 w-px bg-neutral-600/50"></div>
           <div className="flex items-center space-x-1">
             <span className="text-xs">Weak model:</span>
-            <ModelSelector models={allModels} selectedModel={modelsData.weakModel} onChange={updateWeakModel} />
+            <ModelSelector models={allModels} selectedModel={modelsData.weakModel || modelsData.mainModel} onChange={updateWeakModel} />
           </div>
           {modelsData.maxChatHistoryTokens && (
             <>
