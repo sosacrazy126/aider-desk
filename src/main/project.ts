@@ -97,7 +97,7 @@ export class Project {
     }
   }
 
-  public async runAider(options: string, environmentVariables: Record<string, string>, mainModel?: string, weakModel?: string | null): Promise<void> {
+  public async runAider(options: string, environmentVariables: Record<string, string>, mainModel: string, weakModel?: string | null): Promise<void> {
     if (this.process) {
       return;
     }
@@ -110,20 +110,17 @@ export class Project {
     const args = ['-m', 'connector'];
     if (options) {
       const optionsArgs = (options.match(/(?:[^\s"]+|"[^"]*")+/g) as string[]) || [];
-      if (mainModel) {
-        // Only remove existing --model if we're adding a new one
-        const modelIndex = optionsArgs.indexOf('--model');
-        if (modelIndex !== -1 && modelIndex + 1 < optionsArgs.length) {
-          optionsArgs.splice(modelIndex, 2);
-        }
+      // remove existing --model defined by user
+      const modelIndex = optionsArgs.indexOf('--model');
+      if (modelIndex !== -1 && modelIndex + 1 < optionsArgs.length) {
+        optionsArgs.splice(modelIndex, 2);
       }
       args.push(...optionsArgs.map((option) => (option.startsWith('"') && option.endsWith('"') ? option.slice(1, -1) : option)));
     }
     args.push(...['--no-check-update', '--no-show-model-warnings']);
 
-    if (mainModel) {
-      args.push('--model', mainModel);
-    }
+    args.push('--model', mainModel);
+
     if (weakModel) {
       args.push('--weak-model', weakModel);
     }

@@ -2,7 +2,7 @@ import { BrowserWindow } from 'electron';
 import { parse } from '@dotenvx/dotenvx';
 import { normalizeBaseDir } from '@common/utils';
 import { Project } from './project';
-import { Store } from './store';
+import { DEFAULT_MAIN_MODEL, Store } from './store';
 import logger from './logger';
 
 class ProjectManager {
@@ -27,7 +27,7 @@ class ProjectManager {
 
   private runAiderForProject(project: Project): void {
     const settings = this.store!.getSettings();
-    const mainModel = this.store!.getProjectSettings(project.baseDir).mainModel;
+    const mainModel = this.store!.getProjectSettings(project.baseDir).mainModel || DEFAULT_MAIN_MODEL;
     const weakModel = this.store!.getProjectSettings(project.baseDir).weakModel;
     const environmentVariables = parse(settings.aider.environmentVariables);
 

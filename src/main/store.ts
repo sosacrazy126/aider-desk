@@ -1,18 +1,20 @@
 import { WindowState, ProjectData, ProjectSettings, SettingsData } from '@common/types';
 import { normalizeBaseDir } from '@common/utils';
 
+export const DEFAULT_MAIN_MODEL = 'gpt-4o';
+
 const DEFAULT_SETTINGS: SettingsData = {
   aider: {
     options: '',
     environmentVariables: '',
   },
   models: {
-    preferred: ['claude-3-5-sonnet-20241022', 'deepseek/deepseek-coder', 'claude-3-5-haiku-20241022'],
+    preferred: ['gpt-4o', 'claude-3-5-sonnet-20241022', 'deepseek/deepseek-coder', 'claude-3-5-haiku-20241022'],
   },
 };
 
 const DEFAULT_PROJECT_SETTINGS: ProjectSettings = {
-  mainModel: 'claude-3-5-sonnet-20241022',
+  mainModel: DEFAULT_MAIN_MODEL,
 };
 
 const compareBaseDirs = (baseDir1: string, baseDir2: string): boolean => {
@@ -84,7 +86,10 @@ export class Store {
   getProjectSettings(baseDir: string): ProjectSettings {
     const projects = this.getOpenProjects();
     const project = projects.find((p) => compareBaseDirs(p.baseDir, baseDir));
-    return project?.settings || DEFAULT_PROJECT_SETTINGS;
+    return {
+      ...DEFAULT_PROJECT_SETTINGS,
+      ...project?.settings,
+    };
   }
 
   saveProjectSettings(baseDir: string, settings: ProjectSettings): void {
