@@ -65,7 +65,7 @@ export interface WindowState {
 }
 
 export interface ProjectSettings {
-  mainModel?: string;
+  mainModel: string;
   weakModel?: string | null;
   architectModel?: string | null;
 }
@@ -73,7 +73,7 @@ export interface ProjectSettings {
 export interface ProjectData {
   active?: boolean;
   baseDir: string;
-  settings: ProjectSettings;
+  settings?: ProjectSettings;
 }
 
 export interface ModelsData {

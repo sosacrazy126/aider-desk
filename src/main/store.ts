@@ -11,6 +11,10 @@ const DEFAULT_SETTINGS: SettingsData = {
   },
 };
 
+const DEFAULT_PROJECT_SETTINGS: ProjectSettings = {
+  mainModel: 'claude-3-5-sonnet-20241022',
+};
+
 const compareBaseDirs = (baseDir1: string, baseDir2: string): boolean => {
   return normalizeBaseDir(baseDir1) === normalizeBaseDir(baseDir2);
 };
@@ -77,10 +81,10 @@ export class Store {
     );
   }
 
-  getProjectSettings(baseDir: string): ProjectSettings | undefined {
+  getProjectSettings(baseDir: string): ProjectSettings {
     const projects = this.getOpenProjects();
     const project = projects.find((p) => compareBaseDirs(p.baseDir, baseDir));
-    return project?.settings;
+    return project?.settings || DEFAULT_PROJECT_SETTINGS;
   }
 
   saveProjectSettings(baseDir: string, settings: ProjectSettings): void {

@@ -27,8 +27,8 @@ class ProjectManager {
 
   private runAiderForProject(project: Project): void {
     const settings = this.store!.getSettings();
-    const mainModel = this.store!.getProjectSettings(project.baseDir)?.mainModel;
-    const weakModel = this.store!.getProjectSettings(project.baseDir)?.weakModel;
+    const mainModel = this.store!.getProjectSettings(project.baseDir).mainModel;
+    const weakModel = this.store!.getProjectSettings(project.baseDir).weakModel;
     const environmentVariables = parse(settings.aider.environmentVariables);
 
     logger.info('Running Aider for project', {

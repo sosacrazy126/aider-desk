@@ -92,7 +92,6 @@ export const Home = () => {
   const handleAddProject = (baseDir: string) => {
     const newProject: ProjectData = {
       baseDir: baseDir.endsWith('/') ? baseDir.slice(0, -1) : baseDir,
-      settings: {},
       active: true,
     };
     const projects = [...openProjects.map((project) => ({ ...project, active: false })), newProject];

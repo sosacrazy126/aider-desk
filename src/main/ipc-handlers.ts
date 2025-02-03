@@ -98,36 +98,30 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, store: Store) => {
 
   ipcMain.on('update-main-model', (_, baseDir: string, mainModel: string) => {
     const projectSettings = store.getProjectSettings(baseDir);
-    if (projectSettings) {
-      const clearWeakModel = projectSettings.weakModel === projectSettings.mainModel;
+    const clearWeakModel = projectSettings.weakModel === projectSettings.mainModel;
 
-      projectSettings.mainModel = mainModel;
-      if (clearWeakModel) {
-        projectSettings.weakModel = null;
-      }
-
-      store.saveProjectSettings(baseDir, projectSettings);
+    projectSettings.mainModel = mainModel;
+    if (clearWeakModel) {
+      projectSettings.weakModel = null;
     }
+
+    store.saveProjectSettings(baseDir, projectSettings);
     projectManager.getProject(baseDir).updateModels(mainModel, projectSettings?.weakModel || null);
   });
 
   ipcMain.on('update-weak-model', (_, baseDir: string, weakModel: string) => {
     const projectSettings = store.getProjectSettings(baseDir);
-    if (projectSettings) {
-      projectSettings.weakModel = weakModel;
-      store.saveProjectSettings(baseDir, projectSettings);
-    }
+    projectSettings.weakModel = weakModel;
+    store.saveProjectSettings(baseDir, projectSettings);
 
     const project = projectManager.getProject(baseDir);
-    project.updateModels(projectSettings?.mainModel || project.models?.mainModel || weakModel, weakModel);
+    project.updateModels(projectSettings.mainModel, weakModel);
   });
 
   ipcMain.on('update-architect-model', (_, baseDir: string, architectModel: string) => {
     const projectSettings = store.getProjectSettings(baseDir);
-    if (projectSettings) {
-      projectSettings.architectModel = architectModel;
-      store.saveProjectSettings(baseDir, projectSettings);
-    }
+    projectSettings.architectModel = architectModel;
+    store.saveProjectSettings(baseDir, projectSettings);
 
     const project = projectManager.getProject(baseDir);
     project.setArchitectModel(architectModel);

@@ -225,7 +225,7 @@ export class Project {
   }
 
   private getArchitectModel(): string | null {
-    return this.store?.getProjectSettings(this.baseDir)?.architectModel || null;
+    return this.store?.getProjectSettings(this.baseDir).architectModel || null;
   }
 
   public processResponseMessage(message: ResponseMessage) {
