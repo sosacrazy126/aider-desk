@@ -5,8 +5,7 @@ import { ProjectTabs } from 'components/ProjectTabs';
 import { ProjectData } from '@common/types';
 import { ProjectView } from 'components/ProjectView';
 import { OpenProjectDialog } from 'components/OpenProjectDialog';
-import { useNavigate } from 'react-router-dom';
-import { ROUTES } from 'utils/routes';
+import { SettingsDialog } from 'components/SettingsDialog';
 
 export const Home = () => {
   const [openProjects, setOpenProjects] = useState<ProjectData[]>([]);
@@ -14,7 +13,7 @@ export const Home = () => {
   const [isOpenProjectDialogVisible, setIsOpenProjectDialogVisible] = useState(false);
   const [isCtrlPressed, setIsCtrlPressed] = useState(false);
   const [isTabbing, setIsTabbing] = useState(false);
-  const navigate = useNavigate();
+  const [showSettings, setShowSettings] = useState(false);
   const activeProject = openProjects.find((project) => project.active) || openProjects[0];
 
   useEffect(() => {
@@ -118,7 +117,9 @@ export const Home = () => {
       <div
         key={project.baseDir}
         className="absolute top-0 left-0 w-full h-full"
-        style={{ display: activeProject?.baseDir === project.baseDir ? 'block' : 'none' }}
+        style={{
+          display: activeProject?.baseDir === project.baseDir ? 'block' : 'none',
+        }}
       >
         <ProjectView key={project.baseDir} project={project} isActive={activeProject?.baseDir === project.baseDir} />
       </div>
@@ -137,12 +138,13 @@ export const Home = () => {
           />
           <button
             className="px-4 py-2 text-neutral-400 hover:text-neutral-200 hover:bg-neutral-700/30 transition-colors duration-200 flex items-center justify-center"
-            onClick={() => navigate(ROUTES.Settings)}
+            onClick={() => setShowSettings(true)}
           >
             <MdSettings className="h-5 w-5" />
           </button>
         </div>
         {isOpenProjectDialogVisible && <OpenProjectDialog onClose={() => setIsOpenProjectDialogVisible(false)} onAddProject={handleAddProject} />}
+        {showSettings && <SettingsDialog onClose={() => setShowSettings(false)} />}
         <div className="flex-grow overflow-hidden relative">
           {openProjects.length > 0 ? renderProjectPanels() : <NoProjectsOpen onOpenProject={() => setIsOpenProjectDialogVisible(true)} />}
         </div>

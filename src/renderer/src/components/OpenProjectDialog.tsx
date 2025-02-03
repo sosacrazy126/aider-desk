@@ -21,7 +21,7 @@ export const OpenProjectDialog = ({ onClose, onAddProject }: Props) => {
       const projects = await window.api.getRecentProjects();
       setRecentProjects(projects);
     };
-    loadRecentProjects();
+    void loadRecentProjects();
   }, []);
 
   useEffect(() => {
@@ -41,7 +41,7 @@ export const OpenProjectDialog = ({ onClose, onAddProject }: Props) => {
       setIsValidPath(isValid);
     };
 
-    updateSuggestions();
+    void updateSuggestions();
   }, [projectPath, showSuggestions]);
 
   const handleSelectProject = async () => {

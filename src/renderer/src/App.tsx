@@ -5,7 +5,6 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Home } from 'pages/Home';
 import { Onboarding } from 'pages/Onboarding';
-import Settings from 'pages/Settings';
 import { ROUTES } from 'utils/routes';
 import { SettingsProvider, useSettings } from 'context/SettingsContext';
 
@@ -26,7 +25,6 @@ const AnimatedRoutes = () => {
           <Routes location={location}>
             <Route path={ROUTES.Onboarding} element={<Onboarding />} />
             <Route path={ROUTES.Home} element={<Home />} />
-            <Route path={ROUTES.Settings} element={<Settings />} />
             {settings && (
               <Route path="/" element={settings.onboardingFinished ? <Navigate to={ROUTES.Home} replace /> : <Navigate to={ROUTES.Onboarding} replace />} />
             )}

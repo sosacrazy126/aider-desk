@@ -1,58 +1,34 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { FaSave } from 'react-icons/fa';
-import { useSettings } from 'context/SettingsContext';
 import { AiderSettings } from 'components/settings/AiderSettings';
 import { SettingsData } from '@common/types';
+import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/react';
 
-export const Settings = () => {
-  const navigate = useNavigate();
-  const { settings: originalSettings, saveSettings } = useSettings();
-  const [localSettings, setLocalSettings] = useState<SettingsData | null>(null);
+type Props = {
+  settings: SettingsData;
+  updateSettings: (settings: SettingsData) => void;
+};
 
-  useEffect(() => {
-    if (originalSettings) {
-      setLocalSettings(originalSettings);
-    }
-  }, [originalSettings]);
-
-  const handleSave = async () => {
-    if (localSettings) {
-      await saveSettings(localSettings);
-      navigate(-1);
-    }
-  };
-
-  const handleCancel = () => {
-    navigate(-1);
-  };
-
+export const Settings = ({ settings, updateSettings }: Props) => {
   return (
-    <div className="flex flex-col min-h-screen h-full bg-neutral-900 text-neutral-100 overflow-y-auto">
-      <div className="flex-1 container mx-auto p-4">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-lg font-bold text-neutral-100">Settings</h1>
-          <div className="flex items-center space-x-2">
-            <button onClick={handleCancel} className="bg-neutral-900 hover:bg-neutral-800 text-white px-4 py-2 rounded">
-              Cancel
-            </button>
-            <button onClick={handleSave} className="bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded flex items-center space-x-2">
-              <FaSave />
-              <span>Save</span>
-            </button>
+    <TabGroup className="flex flex-col flex-1 min-h-0">
+      <TabList className="flex space-x-2  backdrop-blur-sm border border-neutral-800 rounded-t-lg">
+        <Tab
+          className={({ selected }) =>
+            `px-4 py-2 text-sm font-medium border-b-2 rounded-t-md transition-colors duration-200 bg-neutral-850 uppercase ${
+              selected ? 'border-neutral-600 text-neutral-100' : 'border-transparent text-neutral-400 hover:border-neutral-400/50 hover:text-neutral-200'
+            }`
+          }
+        >
+          Aider
+        </Tab>
+      </TabList>
+      <TabPanels className="flex flex-col flex-1 overflow-hidden">
+        <TabPanel className="flex flex-col flex-1 min-h-0 bg-neutral-900/50 backdrop-blur-sm border border-neutral-800 rounded-tr-lg rounded-b-lg mt-[-1px]">
+          <div className="p-6 overflow-y-auto">
+            <AiderSettings settings={settings} setSettings={updateSettings} />
           </div>
-        </div>
-
-        {localSettings && (
-          <div className="bg-neutral-850 shadow-lg rounded-lg p-6 space-y-6">
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-neutral-100">Aider</h2>
-              <AiderSettings settings={localSettings} setSettings={setLocalSettings} />
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+        </TabPanel>
+      </TabPanels>
+    </TabGroup>
   );
 };
 

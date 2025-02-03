@@ -48,7 +48,7 @@ export const AiderSettings = ({ settings, setSettings }: Props) => {
         </p>
       </div>
 
-      <div className="space-y-1">
+      <div className="space-y-1 mt-4">
         <label className="block text-sm font-medium text-neutral-100">Environment Variables</label>
         <textarea
           value={settings.aider.environmentVariables}
