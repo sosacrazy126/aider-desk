@@ -24,8 +24,11 @@ export interface ApplicationAPI {
   dialog: {
     showOpenDialog: (options: Electron.OpenDialogSyncOptions) => Promise<Electron.OpenDialogReturnValue>;
   };
-  loadProjects: () => Promise<ProjectData[]>;
+  getOpenProjects: () => Promise<ProjectData[]>;
+  addOpenProject: (baseDir: string) => Promise<ProjectData[]>;
   saveProjects: (projects: ProjectData[]) => Promise<void>;
+  setActiveProject: (baseDir: string) => Promise<ProjectData[]>;
+  removeOpenProject: (baseDir: string) => Promise<ProjectData[]>;
   updateMainModel: (baseDir: string, model: string) => void;
   updateWeakModel: (baseDir: string, model: string) => void;
   updateArchitectModel: (baseDir: string, model: string) => void;

@@ -7,7 +7,7 @@ type Props = {
   activeProject: ProjectData | undefined;
   onAddProject: () => void;
   onSetActiveProject: (baseDir: string) => void;
-  onCloseProject: (projectBaseDir: string, e: React.MouseEvent) => void;
+  onCloseProject: (projectBaseDir: string) => void;
 };
 
 export const ProjectTabs = ({ openProjects, activeProject, onAddProject, onSetActiveProject, onCloseProject }: Props) => {
@@ -34,7 +34,10 @@ export const ProjectTabs = ({ openProjects, activeProject, onAddProject, onSetAc
               className={`flex items-center justify-center rounded-full p-1 transition-colors duration-200
               ${activeProject?.baseDir === project.baseDir ? 'hover:bg-neutral-500/30' : 'hover:bg-neutral-600/30'}
             `}
-              onClick={(e) => onCloseProject(project.baseDir, e)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onCloseProject(project.baseDir);
+              }}
             >
               <MdClose className="h-3.5 w-3.5 opacity-60 group-hover:opacity-100 transition-opacity duration-200" />
             </div>

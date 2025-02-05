@@ -51,7 +51,8 @@ class ConnectorManager {
       socket.on('log', (message) => this.processLogMessage(socket, message));
 
       socket.on('disconnect', () => {
-        logger.info('Socket.IO client disconnected');
+        const connector = this.findConnectorBySocket(socket);
+        logger.info('Socket.IO client disconnected', { baseDir: connector?.baseDir });
         this.removeConnector(socket);
       });
     });
@@ -67,7 +68,7 @@ class ConnectorManager {
   private processMessage = (socket: Socket, message: Message) => {
     try {
       logger.info('Received message from client', { action: message.action });
-      logger.debug('Message:', { message });
+      logger.debug('Message:', { message: JSON.stringify(message).slice(0, 1000) });
 
       if (isInitMessage(message)) {
         logger.info('Initializing connector for base directory:', { baseDir: message.baseDir, listenTo: message.listenTo });

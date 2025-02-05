@@ -1,5 +1,6 @@
 import { WindowState, ProjectData, ProjectSettings, SettingsData } from '@common/types';
 import { normalizeBaseDir } from '@common/utils';
+import logger from './logger';
 
 export const DEFAULT_MAIN_MODEL = 'gpt-4o';
 
@@ -13,7 +14,7 @@ const DEFAULT_SETTINGS: SettingsData = {
   },
 };
 
-const DEFAULT_PROJECT_SETTINGS: ProjectSettings = {
+export const DEFAULT_PROJECT_SETTINGS: ProjectSettings = {
   mainModel: DEFAULT_MAIN_MODEL,
 };
 
@@ -94,6 +95,11 @@ export class Store {
 
   saveProjectSettings(baseDir: string, settings: ProjectSettings): void {
     const projects = this.getOpenProjects();
+
+    logger.info('Projects', {
+      projects,
+    });
+
     const projectIndex = projects.findIndex((project) => compareBaseDirs(project.baseDir, baseDir));
     if (projectIndex >= 0) {
       projects[projectIndex] = {
@@ -101,6 +107,15 @@ export class Store {
         settings,
       };
       this.setOpenProjects(projects);
+      logger.info(`Project settings saved for baseDir: ${baseDir}`, {
+        baseDir,
+        settings,
+      });
+    } else {
+      logger.warn(`No project found for baseDir: ${baseDir}`, {
+        baseDir,
+        settings,
+      });
     }
   }
 

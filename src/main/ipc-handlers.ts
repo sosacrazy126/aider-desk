@@ -1,9 +1,10 @@
-import { FileEdit, ProjectSettings, SettingsData } from '@common/types';
+import { FileEdit, ProjectSettings, SettingsData, ProjectData } from '@common/types';
+import { normalizeBaseDir } from '@common/utils';
 import { BrowserWindow, dialog, ipcMain } from 'electron';
 import { getFilePathSuggestions, isProjectPath, isValidPath } from './file-system';
 import { EditFormat } from './messages';
 import { projectManager } from './project-manager';
-import { Store } from './store';
+import { DEFAULT_PROJECT_SETTINGS, Store } from './store';
 import { scrapeWeb } from './web-scrapper';
 
 export const setupIpcHandlers = (mainWindow: BrowserWindow, store: Store) => {
@@ -52,12 +53,54 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, store: Store) => {
     return await projectManager.getProject(baseDir).loadInputHistory();
   });
 
-  ipcMain.handle('load-projects', async () => {
+  ipcMain.handle('get-open-projects', async () => {
+    return store.getOpenProjects();
+  });
+
+  ipcMain.handle('add-open-project', async (_, baseDir: string) => {
+    const projects = store.getOpenProjects();
+    const existingProject = projects.find((p) => normalizeBaseDir(p.baseDir) === normalizeBaseDir(baseDir));
+
+    if (!existingProject) {
+      const newProject: ProjectData = {
+        baseDir: baseDir.endsWith('/') ? baseDir.slice(0, -1) : baseDir,
+        settings: DEFAULT_PROJECT_SETTINGS,
+        active: true,
+      };
+      const updatedProjects = [...projects.map((p) => ({ ...p, active: false })), newProject];
+      store.setOpenProjects(updatedProjects);
+    }
     return store.getOpenProjects();
   });
 
   ipcMain.handle('save-projects', async (_, projects) => {
     store.setOpenProjects(projects);
+  });
+
+  ipcMain.handle('remove-open-project', async (_, baseDir: string) => {
+    const projects = store.getOpenProjects();
+    const updatedProjects = projects.filter((project) => normalizeBaseDir(project.baseDir) !== normalizeBaseDir(baseDir));
+
+    if (updatedProjects.length > 0) {
+      // Set the last project as active if the current active project was removed
+      if (!updatedProjects.some((p) => p.active)) {
+        updatedProjects[updatedProjects.length - 1].active = true;
+      }
+    }
+
+    store.setOpenProjects(updatedProjects);
+    return updatedProjects;
+  });
+
+  ipcMain.handle('set-active-project', async (_, baseDir: string) => {
+    const projects = store.getOpenProjects();
+    const updatedProjects = projects.map((project) => ({
+      ...project,
+      active: normalizeBaseDir(project.baseDir) === normalizeBaseDir(baseDir),
+    }));
+
+    store.setOpenProjects(updatedProjects);
+    return updatedProjects;
   });
 
   ipcMain.handle('get-recent-projects', async () => {

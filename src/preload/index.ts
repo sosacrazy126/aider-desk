@@ -44,8 +44,11 @@ const api: ApplicationAPI = {
   dialog: {
     showOpenDialog: (options: Electron.OpenDialogSyncOptions) => ipcRenderer.invoke('show-open-dialog', options),
   },
-  loadProjects: () => ipcRenderer.invoke('load-projects'),
+  getOpenProjects: () => ipcRenderer.invoke('get-open-projects'),
+  addOpenProject: (baseDir: string) => ipcRenderer.invoke('add-open-project', baseDir),
   saveProjects: (projects) => ipcRenderer.invoke('save-projects', projects),
+  setActiveProject: (baseDir) => ipcRenderer.invoke('set-active-project', baseDir),
+  removeOpenProject: (baseDir: string) => ipcRenderer.invoke('remove-open-project', baseDir),
   updateMainModel: (baseDir, model) => ipcRenderer.send('update-main-model', baseDir, model),
   updateWeakModel: (baseDir, model) => ipcRenderer.send('update-weak-model', baseDir, model),
   updateArchitectModel: (baseDir, model) => ipcRenderer.send('update-architect-model', baseDir, model),

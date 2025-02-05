@@ -19,8 +19,8 @@ export const Home = () => {
   useEffect(() => {
     const loadProjects = async () => {
       try {
-        const loadedProjects = await window.api.loadProjects();
-        setOpenProjects(loadedProjects);
+        const openProjects = await window.api.getOpenProjects();
+        setOpenProjects(openProjects);
       } catch (error) {
         console.error('Error loading projects:', error);
       }
@@ -29,15 +29,9 @@ export const Home = () => {
     void loadProjects();
   }, []);
 
-  const setActiveProject = async (baseDir: string | null) => {
-    const projects = openProjects.map((project) => {
-      if (project.baseDir === baseDir) {
-        return { ...project, active: true };
-      }
-      return { ...project, active: false };
-    });
+  const setActiveProject = async (baseDir: string) => {
+    const projects = await window.api.setActiveProject(baseDir);
     setOpenProjects(projects);
-    void saveProjects(projects);
   };
 
   const handleKeyDown = useCallback(
@@ -81,34 +75,14 @@ export const Home = () => {
     };
   }, [handleKeyDown, handleKeyUp]);
 
-  const saveProjects = async (projects: ProjectData[]) => {
-    try {
-      await window.api.saveProjects(projects);
-    } catch (error) {
-      console.error('Error saving projects:', error);
-    }
+  const handleAddProject = async (baseDir: string) => {
+    const projects = await window.api.addOpenProject(baseDir);
+    setOpenProjects(projects);
   };
 
-  const handleAddProject = (baseDir: string) => {
-    const newProject: ProjectData = {
-      baseDir: baseDir.endsWith('/') ? baseDir.slice(0, -1) : baseDir,
-      active: true,
-    };
-    const projects = [...openProjects.map((project) => ({ ...project, active: false })), newProject];
-    setOpenProjects(projects);
-    setIsOpenProjectDialogVisible(false);
-    void saveProjects(projects);
-  };
-
-  const handleCloseProject = async (projectBaseDir: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-
-    const projects = openProjects.filter((project) => project.baseDir !== projectBaseDir);
-    if (activeProject?.baseDir === projectBaseDir) {
-      await setActiveProject(projects.length > 0 ? projects[projects.length - 1].baseDir : null);
-    }
-    setOpenProjects(projects);
-    void saveProjects(projects);
+  const handleCloseProject = async (projectBaseDir: string) => {
+    const updatedProjects = await window.api.removeOpenProject(projectBaseDir);
+    setOpenProjects(updatedProjects);
   };
 
   const renderProjectPanels = () =>
