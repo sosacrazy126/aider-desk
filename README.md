@@ -2,6 +2,19 @@
 
 Supercharge your coding workflow with AiderDesk, a sleek desktop application that brings the power of [aider](https://aider.chat) to your fingertips. Say hello to a user-friendly GUI, enhanced with project management, cost tracking, and structured message handling. Effortlessly leverage language models to accelerate your code-related tasks and boost your productivity.
 
+## Introduction
+
+Aider, the powerful console-based tool, has long empowered developers with advanced AI capabilities to streamline coding workflows. However, working exclusively in the terminal can sometimes limit accessibility and ease of use. AiderDesk transforms this experience by bringing Aider’s capabilities into a sleek, intuitive desktop application. With AiderDesk, you not only retain all the functionalities of the original console tool but also benefit from a visually enriched environment that simplifies project management, file organization, and cost tracking. Whether you're managing multiple codebases, integrating with popular IDEs, or tracking AI interaction costs, AiderDesk elevates your coding workflow to a new level of efficiency and productivity.
+
+## Key Benefits
+
+*  Intuitive GUI: Replace command-line complexities with a visual interface that is easy to navigate.
+*  Automatic context management: Automatically manage your context files using the connector plugins for [IntellijIDEA](https://plugins.jetbrains.com/plugin/26313-aiderdesk-connector)/[VSCode](https://marketplace.visualstudio.com/items?itemName=hotovo-sk.aider-desk-connector)
+*  Streamlined Project Management: Organize and work on multiple projects effortlessly.
+*  IDE Integration: Automatically manage context files in IntelliJ IDEA and VSCode.
+*  Cost Transparency: Track token usage and associated costs with detailed insights.
+*  Enhanced Collaboration: Quickly copy, share, and review AI-generated code changes with built-in tools.
+
 ## Quick Demo
 
 [![Demo Video](https://img.youtube.com/vi/9JkUwn9rk2g/0.jpg)](https://www.youtube.com/watch?v=9JkUwn9rk2g)
@@ -17,8 +30,8 @@ This tool provides features you are familiar with from Aider and additionally:
     *   Easily switch between different projects.
 *   **🔌 IDE Integration**
     *   Seamlessly integrate with IntelliJ IDEA and VSCode to automatically manage context files
-    *   [IntelliJ IDEA Plugin](https://github.com/hotovo/aider-desk-connector-intellij-plugin)
-    *   [VSCode Extension](https://github.com/hotovo/aider-desk-connector-vscode-extension)
+    *   IntelliJ IDEA [Plugin](https://plugins.jetbrains.com/plugin/26313-aiderdesk-connector)/[GitHub](https://github.com/hotovo/aider-desk-connector-intellij-plugin)
+    *   VSCode [Extension](https://marketplace.visualstudio.com/items?itemName=hotovo-sk.aider-desk-connector)/[GitHub](https://github.com/hotovo/aider-desk-connector-vscode-extension)
 *   **🔑 Manage Aider Settings**
     *   Manage environment variables for model API keys and other aider settings
 *   **💰 Cost Tracking**
