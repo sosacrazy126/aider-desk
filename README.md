@@ -110,7 +110,7 @@ This tool provides features you are familiar with from Aider and additionally:
 
 *Token usage and cost tracking for session per project*
 
-### Development Setup
+## Development Setup
 If you want to run from source, you can follow these steps:
 
 ```bash
