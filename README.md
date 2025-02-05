@@ -50,8 +50,55 @@ This tool provides features you are familiar with from Aider and additionally:
 1. Download the latest release for your platform from [Releases](https://github.com/hotovo/aider-desk/releases)
 2. Run the downloaded executable
 
+## Screenshots
+
+### Aider Desk Interface
+![Aider Desk](docs/images/aider-desk.png)
+
+*Main application interface showing the chat interface, file management, and project overview*
+
+### Configuration
+![Configuration](docs/images/settings.png)
+
+*Aider settings and preferences*
+
+### Multiple Project Management
+![Multiple Projects](docs/images/multiple-projects.gif)
+
+*Manage and switch between multiple projects*
+
+### Context File Management
+![Context Files](docs/images/contex-files.png)
+
+*Manage files included in the AI context*
+
+### Model Switching Interface
+![Model Switching](docs/images/model-selector.gif)
+
+*Switch between different models*
+
+### Chat Mode Selection
+![Chat Modes](docs/images/chat-modes.gif)
+
+*Switch between different chat modes*
+
+### Question answering and commands running support
+![Commands](docs/images/commands.gif)
+
+*Answer questions and run commands*
+
+### Code Diff Viewer
+![Code Diff](docs/images/code-diff.png)
+
+*Side-by-side code comparison and diff viewer*
+
+### Cost Tracking
+![Cost Tracking](docs/images/cost-tracking.png)
+
+*Token usage and cost tracking for session per project*
+
 ### Development Setup
-If you want to run from source (or there is no executable for your platform), you can follow these steps:
+If you want to run from source, you can follow these steps:
 
 ```bash
 # Clone the repository
@@ -74,53 +121,6 @@ $ npm run build:mac
 # For Linux
 $ npm run build:linux
 ```
-
-## Screenshots
-
-### Aider Desk Interface
-![Aider Desk](docs/images/aider-desk.png)
-
-*Main application interface showing the chat interface, file management, and project overview*
-
-### Configuration
-![Configuration](docs/images/configuration.png)
-
-*Aider settings and preferences*
-
-### Multiple Project Management
-![Multiple Projects](docs/images/multiple-projects.png)
-
-*Managing and switching between multiple projects*
-
-### Context File Management
-![Context Files](docs/images/contex-files.png)
-
-*Managing files included in the AI context*
-
-### Model Switching Interface
-![Model Switching](docs/images/model-switching.png)
-
-*Switching between different AI models*
-
-### Chat Mode Selection
-![Chat Modes](docs/images/chat-modes.png)
-
-*Switching between different chat modes*
-
-### Question answering and commands running support
-![Commands](docs/images/commands.png)
-
-*Answering questions and running commands*
-
-### Code Diff Viewer
-![Code Diff](docs/images/code-diff.png)
-
-*Side-by-side code comparison and diff viewer*
-
-### Cost Tracking
-![Cost Tracking](docs/images/cost-tracking.png)
-
-*Token usage and cost tracking for session per project*
 
 ## Contributing
 

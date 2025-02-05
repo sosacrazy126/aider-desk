@@ -40,7 +40,7 @@
     "electron-progressbar": "^2.2.1",
     "electron-store": "^10.0.0",
     "electron-updater": "^6.1.7",
-    "framer-motion": "^11.11.17",
+    "framer-motion": "^11.18.2",
     "marked-react": "^2.0.0",
     "match-sorter": "^8.0.0",
     "playwright-core": "^1.49.0",
