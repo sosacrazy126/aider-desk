@@ -73,10 +73,6 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, store: Store) => {
     return store.getOpenProjects();
   });
 
-  ipcMain.handle('save-projects', async (_, projects) => {
-    store.setOpenProjects(projects);
-  });
-
   ipcMain.handle('remove-open-project', async (_, baseDir: string) => {
     const projects = store.getOpenProjects();
     const updatedProjects = projects.filter((project) => normalizeBaseDir(project.baseDir) !== normalizeBaseDir(baseDir));

@@ -26,7 +26,6 @@ export interface ApplicationAPI {
   };
   getOpenProjects: () => Promise<ProjectData[]>;
   addOpenProject: (baseDir: string) => Promise<ProjectData[]>;
-  saveProjects: (projects: ProjectData[]) => Promise<void>;
   setActiveProject: (baseDir: string) => Promise<ProjectData[]>;
   removeOpenProject: (baseDir: string) => Promise<ProjectData[]>;
   updateMainModel: (baseDir: string, model: string) => void;

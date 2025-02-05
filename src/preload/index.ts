@@ -46,7 +46,6 @@ const api: ApplicationAPI = {
   },
   getOpenProjects: () => ipcRenderer.invoke('get-open-projects'),
   addOpenProject: (baseDir: string) => ipcRenderer.invoke('add-open-project', baseDir),
-  saveProjects: (projects) => ipcRenderer.invoke('save-projects', projects),
   setActiveProject: (baseDir) => ipcRenderer.invoke('set-active-project', baseDir),
   removeOpenProject: (baseDir: string) => ipcRenderer.invoke('remove-open-project', baseDir),
   updateMainModel: (baseDir, model) => ipcRenderer.send('update-main-model', baseDir, model),
