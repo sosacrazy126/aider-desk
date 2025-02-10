@@ -62,6 +62,7 @@ export const OpenProjectDialog = ({ onClose, onAddProject }: Props) => {
   const handleAddProject = () => {
     if (projectPath && isValidPath) {
       onAddProject(projectPath);
+      onClose();
     }
   };
 
