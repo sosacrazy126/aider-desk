@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { useState, useRef, useEffect, ReactNode } from 'react';
 
 type Props = {
   value: string;
@@ -6,7 +7,7 @@ type Props = {
   onChange: (value: string, isFromSuggestion: boolean) => void;
   placeholder?: string;
   className?: string;
-  rightElement?: React.ReactNode;
+  rightElement?: ReactNode;
   autoFocus?: boolean;
   onSubmit?: () => void;
 };
@@ -78,6 +79,48 @@ export const AutocompletionInput = ({ value, suggestions, onChange, placeholder,
     }
   };
 
+  const renderSuggestions = () => {
+    if (!showSuggestions || suggestions.length === 0) {
+      return null;
+    }
+
+    const inputRect = inputRef.current?.getBoundingClientRect();
+    if (!inputRect) {
+      return null;
+    }
+
+    const style = {
+      position: 'absolute' as const,
+      top: `${inputRect.bottom + window.scrollY}px`,
+      left: `${inputRect.left + window.scrollX}px`,
+      width: `${inputRect.width}px`,
+      zIndex: 1000, // Ensure it's above other elements
+    };
+
+    return createPortal(
+      <div
+        className="w-full mt-1 p-0.5 bg-neutral-800 border border-neutral-700 rounded-lg shadow-lg max-h-48 overflow-y-auto scrollbar-thin scrollbar-track-neutral-800 scrollbar-thumb-neutral-600 scrollbar-thumb-rounded-full"
+        style={style}
+      >
+        {suggestions.map((suggestion, index) => (
+          <div
+            id={`suggestion-${index}`}
+            key={suggestion}
+            className={`px-3 py-1 text-sm cursor-pointer hover:bg-neutral-700 ${index === selectedIndex ? 'bg-neutral-700' : ''}`}
+            onMouseEnter={() => setSelectedIndex(index)}
+            onMouseDown={() => {
+              onChange(suggestion, true);
+              setShowSuggestions(false);
+            }}
+          >
+            {suggestion}
+          </div>
+        ))}
+      </div>,
+      document.body,
+    );
+  };
+
   return (
     <div className="relative">
       <input
@@ -92,24 +135,7 @@ export const AutocompletionInput = ({ value, suggestions, onChange, placeholder,
         autoFocus={autoFocus}
       />
       {rightElement}
-      {showSuggestions && suggestions.length > 0 && (
-        <div className="absolute w-full mt-1 py-0.5 bg-neutral-800 border border-neutral-700 rounded-lg shadow-lg max-h-48 overflow-y-auto scrollbar-thin scrollbar-track-neutral-800 scrollbar-thumb-neutral-600 scrollbar-thumb-rounded-full">
-          {suggestions.map((suggestion, index) => (
-            <div
-              id={`suggestion-${index}`}
-              key={suggestion}
-              className={`px-3 py-1 text-sm cursor-pointer hover:bg-neutral-700 ${index === selectedIndex ? 'bg-neutral-700' : ''}`}
-              onMouseEnter={() => setSelectedIndex(index)}
-              onMouseDown={() => {
-                onChange(suggestion, true);
-                setShowSuggestions(false);
-              }}
-            >
-              {suggestion}
-            </div>
-          ))}
-        </div>
-      )}
+      {renderSuggestions()}
     </div>
   );
 };
