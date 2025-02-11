@@ -38,6 +38,7 @@ export const ConfirmDialog = ({
           </button>
           <button
             onClick={onConfirm}
+            autoFocus={true}
             disabled={disabled}
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
               disabled ? 'bg-neutral-700/50 text-neutral-500 cursor-not-allowed' : `${confirmButtonClass} text-white shadow-lg shadow-amber-900/20`

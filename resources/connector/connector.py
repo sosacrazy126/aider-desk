@@ -433,7 +433,6 @@ class Connector:
     else:
       self.running_coder = self.coder
 
-    self.coder.io.tool_output("here6")
     whole_content = ""
 
     async def run_stream_async():

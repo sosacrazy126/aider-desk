@@ -17,6 +17,7 @@ import { SessionInfo } from 'components/SessionInfo';
 import { IpcRendererEvent } from 'electron';
 import { useEffect, useRef, useState } from 'react';
 import { CgSpinner } from 'react-icons/cg';
+import { ConfirmDialog } from 'components/ConfirmDialog';
 import { ResizableBox } from 'react-resizable';
 import 'react-resizable/css/styles.css';
 import {
@@ -53,9 +54,11 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
   const [tokensInfo, setTokensInfo] = useState<TokensInfoData | null>(null);
   const [question, setQuestion] = useState<QuestionData | null>(null);
   const [editFormat, setEditFormat] = useState<string>('code');
+  const [showFrozenDialog, setShowFrozenDialog] = useState(false);
   const processingMessageRef = useRef<ResponseMessage | null>(null);
   const promptFieldRef = useRef<PromptFieldRef>(null);
   const projectTopBarRef = useRef<ProjectTopBarRef>(null);
+  const frozenTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     window.api.startProject(project.baseDir);
@@ -70,6 +73,13 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
       setLoading(false);
     }
   }, [messages, modelsData]);
+
+  useEffect(() => {
+    if (!processing && frozenTimeoutRef.current) {
+      clearTimeout(frozenTimeoutRef.current);
+      frozenTimeoutRef.current = null;
+    }
+  }, [processing]);
 
   useEffect(() => {
     const loadingMessageIndex = messages.findIndex(isLoadingMessage);
@@ -328,9 +338,16 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
       content: 'Interrupted by user.',
     };
     setMessages((prevMessages) => [...prevMessages, interruptMessage]);
+
+    frozenTimeoutRef.current = setTimeout(() => {
+      if (processing) {
+        setShowFrozenDialog(true);
+      }
+    }, 5000);
   };
 
   const restartProject = () => {
+    setShowFrozenDialog(false);
     setLoading(true);
     setMessages([]);
     setLastMessageCost(0);
@@ -414,6 +431,18 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
           />
         </div>
       </ResizableBox>
+      {showFrozenDialog && (
+        <ConfirmDialog
+          title="AIDER FROZEN?"
+          onConfirm={restartProject}
+          onCancel={() => setShowFrozenDialog(false)}
+          confirmButtonText="Restart"
+          cancelButtonText="Wait"
+          closeOnEscape={false}
+        >
+          Aider process seems to be frozen. Would you like to restart the session?
+        </ConfirmDialog>
+      )}
       {addFileDialogOptions && (
         <AddFileDialog
           baseDir={project.baseDir}
