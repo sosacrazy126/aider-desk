@@ -3,12 +3,12 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { promisify } from 'util';
 import { delay } from '@common/utils';
-import { AIDER_DESKTOP_DIR, SETUP_COMPLETE_FILENAME, PYTHON_VENV_DIR, AIDER_DESKTOP_CONNECTOR_DIR, RESOURCES_DIR } from './constants';
+import { AIDER_DESK_DIR, SETUP_COMPLETE_FILENAME, PYTHON_VENV_DIR, AIDER_DESK_CONNECTOR_DIR, RESOURCES_DIR } from './constants';
 
 const execAsync = promisify(exec);
 
 const getPythonExecutable = (): string => {
-  const envPython = process.env.AIDER_DESKTOP_PYTHON;
+  const envPython = process.env.AIDER_DESK_PYTHON;
   if (envPython) {
     return envPython;
   }
@@ -27,7 +27,7 @@ const checkPythonVersion = async (): Promise<void> => {
     const versionMatch = stdout.match(/Python (\d+)\.(\d+)\.\d+/);
     if (!versionMatch) {
       throw new Error(
-        `Could not determine Python version (output: '${stdout}'). You can specify a specific Python executable by setting the AIDER_DESKTOP_PYTHON environment variable.`,
+        `Could not determine Python version (output: '${stdout}'). You can specify a specific Python executable by setting the AIDER_DESK_PYTHON environment variable.`,
       );
     }
 
@@ -37,7 +37,7 @@ const checkPythonVersion = async (): Promise<void> => {
     // Check if version is between 3.9 and 3.12
     if (major !== 3 || minor < 9 || minor > 12) {
       throw new Error(
-        `Python version ${major}.${minor} is not supported. Please install Python 3.9-3.12. You can specify a specific Python executable by setting the AIDER_DESKTOP_PYTHON environment variable.`,
+        `Python version ${major}.${minor} is not supported. Please install Python 3.9-3.12. You can specify a specific Python executable by setting the AIDER_DESK_PYTHON environment variable.`,
       );
     }
   } catch (error) {
@@ -45,7 +45,7 @@ const checkPythonVersion = async (): Promise<void> => {
       throw error;
     }
     throw new Error(
-      `Python is not installed or an error occurred. Please install Python 3.9-3.12 or set the AIDER_DESKTOP_PYTHON environment variable. Original error: ${error}`,
+      `Python is not installed or an error occurred. Please install Python 3.9-3.12 or set the AIDER_DESK_PYTHON environment variable. Original error: ${error}`,
     );
   }
 };
@@ -62,13 +62,13 @@ const getPythonVenvBinPath = (): string => {
 };
 
 const setupAiderConnector = async () => {
-  if (!fs.existsSync(AIDER_DESKTOP_CONNECTOR_DIR)) {
-    fs.mkdirSync(AIDER_DESKTOP_CONNECTOR_DIR, { recursive: true });
+  if (!fs.existsSync(AIDER_DESK_CONNECTOR_DIR)) {
+    fs.mkdirSync(AIDER_DESK_CONNECTOR_DIR, { recursive: true });
   }
 
   // Copy connector.py from resources
   const sourceConnectorPath = path.join(RESOURCES_DIR, 'connector/connector.py');
-  const destConnectorPath = path.join(AIDER_DESKTOP_CONNECTOR_DIR, 'connector.py');
+  const destConnectorPath = path.join(AIDER_DESK_CONNECTOR_DIR, 'connector.py');
   fs.copyFileSync(sourceConnectorPath, destConnectorPath);
 
   await installAiderConnectorRequirements();
@@ -122,8 +122,8 @@ export const performStartUp = async (updateProgress: UpdateProgressFunction): Pr
 
   await delay(2000);
 
-  if (!fs.existsSync(AIDER_DESKTOP_DIR)) {
-    fs.mkdirSync(AIDER_DESKTOP_DIR, { recursive: true });
+  if (!fs.existsSync(AIDER_DESK_DIR)) {
+    fs.mkdirSync(AIDER_DESK_DIR, { recursive: true });
   }
 
   try {

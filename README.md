@@ -63,6 +63,26 @@ This tool provides features you are familiar with from Aider and additionally:
 1. Download the latest release for your platform from [Releases](https://github.com/hotovo/aider-desk/releases)
 2. Run the downloaded executable
 
+### Troubleshooting
+
+#### Python Version Detection
+
+If you encounter issues with the application not detecting the correct Python version, you can specify the path to the desired Python executable using the `AIDER_DESK_PYTHON` environment variable. This is typically only needed on the initial run/setup of AiderDesk.
+
+For example, on macOS or Linux:
+
+```bash
+export AIDER_DESK_PYTHON=/usr/bin/python3.10
+```
+
+Or on Windows:
+
+```powershell
+$env:AIDER_DESK_PYTHON = "C:\Path\To\Python310\python.exe"
+```
+
+Replace `/usr/bin/python3.10` or `C:\Path\To\Python310\python.exe` with the actual path to your Python executable.
+
 ## Screenshots
 
 ### Aider Desk Interface

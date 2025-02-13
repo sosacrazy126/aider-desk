@@ -11,7 +11,7 @@ import { ContextFile, FileEdit, ModelsData, QuestionData, ResponseChunkData, Res
 import { Store } from './store';
 import { EditFormat, MessageAction, ResponseMessage } from './messages';
 import { Connector } from './connector';
-import { AIDER_DESKTOP_CONNECTOR_DIR, PID_FILES_DIR, PYTHON_COMMAND, SOCKET_PORT } from './constants';
+import { AIDER_DESK_CONNECTOR_DIR, PID_FILES_DIR, PYTHON_COMMAND, SOCKET_PORT } from './constants';
 import logger from './logger';
 
 export class Project {
@@ -130,7 +130,7 @@ export class Project {
     const env = {
       ...process.env,
       ...environmentVariables,
-      PYTHONPATH: AIDER_DESKTOP_CONNECTOR_DIR,
+      PYTHONPATH: AIDER_DESK_CONNECTOR_DIR,
       CONNECTOR_SERVER_URL: `http://localhost:${SOCKET_PORT}`,
     };
 
