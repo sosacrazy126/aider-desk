@@ -7,9 +7,18 @@ import { AIDER_DESKTOP_DIR, SETUP_COMPLETE_FILENAME, PYTHON_VENV_DIR, AIDER_DESK
 
 const execAsync = promisify(exec);
 
+const getPythonExecutable = (): string => {
+  const envPython = process.env.AIDER_DESKTOP_PYTHON;
+  if (envPython) {
+    return envPython;
+  }
+  return process.platform === 'win32' ? 'python' : 'python3';
+};
+
 const checkPythonVersion = async (): Promise<void> => {
+  const pythonExecutable = getPythonExecutable();
   try {
-    const command = process.platform === 'win32' ? 'python --version' : 'python3 --version';
+    const command = `${pythonExecutable} --version`;
     const { stdout } = await execAsync(command, {
       windowsHide: true,
     });
@@ -17,7 +26,9 @@ const checkPythonVersion = async (): Promise<void> => {
     // Extract version number from output like "Python 3.10.12"
     const versionMatch = stdout.match(/Python (\d+)\.(\d+)\.\d+/);
     if (!versionMatch) {
-      throw new Error('Could not determine Python version');
+      throw new Error(
+        `Could not determine Python version (output: '${stdout}'). You can specify a specific Python executable by setting the AIDER_DESKTOP_PYTHON environment variable.`,
+      );
     }
 
     const major = parseInt(versionMatch[1], 10);
@@ -25,13 +36,17 @@ const checkPythonVersion = async (): Promise<void> => {
 
     // Check if version is between 3.9 and 3.12
     if (major !== 3 || minor < 9 || minor > 12) {
-      throw new Error(`Python version ${major}.${minor} is not supported. Please install Python 3.9-3.12.`);
+      throw new Error(
+        `Python version ${major}.${minor} is not supported. Please install Python 3.9-3.12. You can specify a specific Python executable by setting the AIDER_DESKTOP_PYTHON environment variable.`,
+      );
     }
   } catch (error) {
     if (error instanceof Error && error.message.includes('version')) {
       throw error;
     }
-    throw new Error('Python is not installed. Please install Python 3.9-3.12 before running the application.');
+    throw new Error(
+      `Python is not installed or an error occurred. Please install Python 3.9-3.12 or set the AIDER_DESKTOP_PYTHON environment variable. Original error: ${error}`,
+    );
   }
 };
 
