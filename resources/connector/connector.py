@@ -455,6 +455,10 @@ class Connector:
         "content": chunk
       }, False)
 
+    if not whole_content:
+      # if there was no content, use the partial_response_content value (case for non streaming models)
+      whole_content = self.running_coder.partial_response_content
+
     # Send final response with complete data
     response_data = {
       "action": "response",

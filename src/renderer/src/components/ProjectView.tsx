@@ -124,23 +124,33 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
       }
     };
 
-    const handleResponseCompleted = (_: IpcRendererEvent, { messageId, usageReport }: ResponseCompletedData) => {
+    const handleResponseCompleted = (_: IpcRendererEvent, { messageId, usageReport, content }: ResponseCompletedData) => {
       const processingMessage = processingMessageRef.current;
-      if (processingMessage && processingMessage.id === messageId) {
+
+      // If no processing message exists, find the last response message
+      if (!processingMessage) {
+        const newResponseMessage: ResponseMessage = {
+          id: messageId,
+          type: 'response',
+          content,
+          processing: false,
+          usageReport,
+        };
+        setMessages((prevMessages) => prevMessages.filter((message) => message.type !== 'loading').concat(newResponseMessage));
+      } else if (processingMessage && processingMessage.id === messageId) {
         processingMessage.processing = false;
         processingMessage.usageReport = usageReport;
+        processingMessage.content = content;
         setMessages((prevMessages) => prevMessages.map((message) => (message.id === messageId ? processingMessage : message)));
-        setProcessing(false);
-        processingMessageRef.current = null;
 
-        if (usageReport) {
-          setTotalCost(usageReport.totalCost);
-          setLastMessageCost(usageReport.messageCost);
-        }
-      } else if (!processingMessage && processing) {
-        setMessages((prevMessages) => prevMessages.filter((message) => message.type !== 'loading'));
-        setProcessing(false);
+        processingMessageRef.current = null;
       }
+
+      if (usageReport) {
+        setTotalCost(usageReport.totalCost);
+        setLastMessageCost(usageReport.messageCost);
+      }
+      setProcessing(false);
     };
 
     const handleCommandOutput = (_: IpcRendererEvent, { command, output }: CommandOutputData) => {
