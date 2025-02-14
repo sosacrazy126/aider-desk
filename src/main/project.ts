@@ -154,13 +154,12 @@ export class Project {
     this.process.stderr.on('data', (data) => {
       const output = data.toString();
       if (output.startsWith('Warning:')) {
+        logger.debug(data);
         return;
       }
       if (output.startsWith('usage:')) {
-        this.mainWindow?.webContents.send('error', {
-          baseDir: this.baseDir,
-          error: output.includes('error:') ? output.substring(output.indexOf('error:')) : output,
-        });
+        logger.debug(output);
+        this.sendLogMessage('error', output.includes('error:') ? output.substring(output.indexOf('error:')) : output);
         return;
       }
 

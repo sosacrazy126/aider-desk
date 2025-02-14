@@ -398,6 +398,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
             interruptResponse={handleInterruptResponse}
             undoCommit={undoCommit}
             openModelSelector={() => projectTopBarRef.current?.openMainModelSelector()}
+            disabled={!modelsData}
           />
         </div>
       </div>

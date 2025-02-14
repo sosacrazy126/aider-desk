@@ -60,6 +60,7 @@ type Props = {
   answerQuestion?: (answer: string) => void;
   interruptResponse: () => void;
   undoCommit: () => void;
+  disabled?: boolean;
 };
 
 export const PromptField = React.forwardRef<PromptFieldRef, Props>(
@@ -81,6 +82,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
       interruptResponse,
       undoCommit,
       openModelSelector,
+      disabled = false,
     }: Props,
     ref,
   ) => {
@@ -172,18 +174,6 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
       }
       void loadHistory();
     }, [processing, baseDir]);
-
-    useEffect(() => {
-      if (isActive && inputRef.current) {
-        inputRef.current.focus();
-      }
-    }, [isActive]);
-
-    useEffect(() => {
-      if (isActive && inputRef.current) {
-        inputRef.current.focus();
-      }
-    }, [isActive]);
 
     useEffect(() => {
       if (isActive && inputRef.current) {
@@ -467,6 +457,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
               onKeyDown={handleKeyDown}
               onPaste={handlePaste}
               placeholder={question ? '...or suggest something else' : placeholder}
+              disabled={disabled}
               minRows={1}
               maxRows={20}
               className="w-full px-2 py-2 pr- border-2 border-neutral-700 rounded-md focus:outline-none focus:border-neutral-500 text-sm bg-neutral-850 text-white placeholder-neutral-600 resize-none overflow-y-auto transition-colors duration-200 max-h-[60vh] scrollbar-thin scrollbar-track-neutral-800 scrollbar-thumb-neutral-600 hover:scrollbar-thumb-neutral-600"
