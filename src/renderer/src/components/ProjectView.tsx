@@ -114,7 +114,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
         };
         processingMessageRef.current = newResponseMessage;
         newMessages.push(newResponseMessage);
-        setMessages((prevMessages) => prevMessages.filter((message) => message.type !== 'loading').concat(...newMessages));
+        setMessages((prevMessages) => prevMessages.filter((message) => !isLoadingMessage(message)).concat(...newMessages));
         if (!processing) {
           setProcessing(true);
         }
@@ -136,7 +136,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
           processing: false,
           usageReport,
         };
-        setMessages((prevMessages) => prevMessages.filter((message) => message.type !== 'loading').concat(newResponseMessage));
+        setMessages((prevMessages) => prevMessages.filter((message) => !isLoadingMessage(message)).concat(newResponseMessage));
       } else if (processingMessage && processingMessage.id === messageId) {
         processingMessage.processing = false;
         processingMessage.usageReport = usageReport;
