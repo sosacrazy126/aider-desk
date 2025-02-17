@@ -356,8 +356,9 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
     }, 5000);
   };
 
-  const handleModelChanged = () => {
+  const handleModelChange = () => {
     promptFieldRef.current?.focus();
+    setModelsData(null);
   };
 
   const restartProject = () => {
@@ -389,7 +390,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
             modelsData={modelsData}
             allModels={autocompletionData?.models}
             architectMode={editFormat === 'architect'}
-            onModelChange={handleModelChanged}
+            onModelChange={handleModelChange}
           />
         </div>
         <div className="flex-grow overflow-y-auto">

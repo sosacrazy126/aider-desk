@@ -77,7 +77,9 @@ export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(({ baseDir, 
 
   return (
     <div className="relative group">
-      {modelsData && (
+      {!modelsData ? (
+        <div className="text-xs">Loading model...</div>
+      ) : (
         <div className="flex items-center space-x-3">
           {architectMode && (
             <>
