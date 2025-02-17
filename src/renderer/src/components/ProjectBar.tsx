@@ -8,13 +8,14 @@ type Props = {
   allModels?: string[];
   modelsData: ModelsData | null;
   architectMode: boolean;
+  onModelChange?: () => void;
 };
 
 export type ProjectTopBarRef = {
   openMainModelSelector: () => void;
 };
 
-export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(({ baseDir, allModels = [], modelsData, architectMode }, ref) => {
+export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(({ baseDir, allModels = [], modelsData, architectMode, onModelChange }, ref) => {
   const mainModelSelectorRef = useRef<ModelSelectorRef>(null);
   const architectModelSelectorRef = useRef<ModelSelectorRef>(null);
 
@@ -51,24 +52,27 @@ export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(({ baseDir, 
     (mainModel: string) => {
       window.api.updateMainModel(baseDir, mainModel);
       updatePreferredModels(mainModel);
+      onModelChange?.();
     },
-    [baseDir, updatePreferredModels],
+    [baseDir, onModelChange, updatePreferredModels],
   );
 
   const updateWeakModel = useCallback(
     (weakModel: string) => {
       window.api.updateWeakModel(baseDir, weakModel);
       updatePreferredModels(weakModel);
+      onModelChange?.();
     },
-    [baseDir, updatePreferredModels],
+    [baseDir, onModelChange, updatePreferredModels],
   );
 
   const updateArchitectModel = useCallback(
     (architectModel: string) => {
       window.api.updateArchitectModel(baseDir, architectModel);
       updatePreferredModels(architectModel);
+      onModelChange?.();
     },
-    [baseDir, updatePreferredModels],
+    [baseDir, onModelChange, updatePreferredModels],
   );
 
   return (

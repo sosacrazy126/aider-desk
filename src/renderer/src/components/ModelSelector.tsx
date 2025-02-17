@@ -63,14 +63,15 @@ export const ModelSelector = forwardRef<ModelSelectorRef, Props>(({ models, sele
       return;
     }
 
-    const sortedModels = [...settings.models.preferred, ...models.filter((model) => !settings.models.preferred.includes(model))];
+    const visiblePreferredModels = debouncedSearchTerm ? [] : settings.models.preferred;
+    const sortedModels = [...visiblePreferredModels, ...models.filter((model) => !visiblePreferredModels.includes(model))];
     const filteredModels = sortedModels.filter((model) => model.toLowerCase().includes(modelSearchTerm.toLowerCase()));
 
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
         setHighlightedModelIndex((prev) => {
-          const newIndex = prev < filteredModels.length - 1 ? prev + 1 : 0;
+          const newIndex = Math.min(prev + 1, filteredModels.length - 2);
           setTimeout(() => highlightedModelRef.current?.scrollIntoView({ block: 'nearest' }), 0);
           return newIndex;
         });
@@ -78,7 +79,7 @@ export const ModelSelector = forwardRef<ModelSelectorRef, Props>(({ models, sele
       case 'ArrowUp':
         e.preventDefault();
         setHighlightedModelIndex((prev) => {
-          const newIndex = prev > 0 ? prev - 1 : filteredModels.length - 1;
+          const newIndex = Math.max(prev - 1, 0);
           setTimeout(() => highlightedModelRef.current?.scrollIntoView({ block: 'nearest' }), 0);
           return newIndex;
         });
@@ -103,7 +104,7 @@ export const ModelSelector = forwardRef<ModelSelectorRef, Props>(({ models, sele
     }
 
     const isPreferred = settings.models.preferred.includes(model);
-    index = index + (isPreferred ? 0 : settings.models.preferred.length);
+    index = index + (isPreferred || debouncedSearchTerm ? 0 : settings.models.preferred.length);
 
     const handleRemovePreferredModel = (e: React.MouseEvent) => {
       e.stopPropagation();
@@ -152,7 +153,7 @@ export const ModelSelector = forwardRef<ModelSelectorRef, Props>(({ models, sele
         <MdKeyboardArrowUp className="w-3 h-3 ml-1 transform rotate-180" />
       </button>
       {visible && (
-        <div className="absolute top-full left-0 mt-1 bg-neutral-900 border border-neutral-700 rounded-md shadow-lg z-10 max-h-48 flex flex-col w-[600px]">
+        <div className="absolute top-full left-0 mt-1 bg-neutral-900 border border-neutral-700 rounded-md shadow-lg z-10 flex flex-col w-[600px]">
           <div className="sticky top-0 p-2 border-b border-neutral-700 bg-neutral-900 rounded-md z-10">
             <input
               type="text"
@@ -165,8 +166,12 @@ export const ModelSelector = forwardRef<ModelSelectorRef, Props>(({ models, sele
             />
           </div>
           <div className="overflow-y-auto scrollbar-thin scrollbar-track-neutral-800 scrollbar-thumb-neutral-700 hover:scrollbar-thumb-neutral-600 max-h-48">
-            {settings?.models.preferred.filter((model) => model.toLowerCase().includes(debouncedSearchTerm.toLowerCase())).map(renderModelItem)}
-            <div key="divider" className="border-t border-neutral-700 my-1" />
+            {!debouncedSearchTerm && (
+              <>
+                {settings?.models.preferred.map(renderModelItem)}
+                <div key="divider" className="border-t border-neutral-700 my-1" />
+              </>
+            )}
             {...models
               .filter((model) => !settings?.models.preferred.includes(model) && model.toLowerCase().includes(debouncedSearchTerm.toLowerCase()))
               .map(renderModelItem)}
