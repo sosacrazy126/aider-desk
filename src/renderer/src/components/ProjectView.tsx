@@ -157,7 +157,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
       setMessages((prevMessages) => {
         const lastMessage = prevMessages[prevMessages.length - 1];
 
-        if (isCommandOutputMessage(lastMessage) && lastMessage.command === command) {
+        if (lastMessage && isCommandOutputMessage(lastMessage) && lastMessage.command === command) {
           const updatedLastMessage: CommandOutputMessage = {
             ...lastMessage,
             content: lastMessage.content + output,
@@ -282,6 +282,10 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
 
   const undoCommit = () => {
     window.api.runCommand(project.baseDir, 'undo');
+  };
+
+  const runTests = (testCmd?: string) => {
+    window.api.runCommand(project.baseDir, `test ${testCmd || ''}`);
   };
 
   const answerQuestion = (answer: string) => {
@@ -413,6 +417,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
             answerQuestion={answerQuestion}
             interruptResponse={handleInterruptResponse}
             undoCommit={undoCommit}
+            runTests={runTests}
             openModelSelector={() => projectTopBarRef.current?.openMainModelSelector()}
             disabled={!modelsData}
           />

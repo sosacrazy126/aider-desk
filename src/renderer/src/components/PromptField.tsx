@@ -29,7 +29,7 @@ const PLACEHOLDERS = [
 ];
 
 const COMMANDS = ['/code', '/ask', '/architect', '/add', '/model', '/read-only'];
-const CONFIRM_COMMANDS = ['/clear', '/web', '/undo'];
+const CONFIRM_COMMANDS = ['/clear', '/web', '/undo', '/test'];
 
 const EDIT_FORMATS = [
   { value: 'code', label: 'Code' },
@@ -60,6 +60,7 @@ type Props = {
   answerQuestion?: (answer: string) => void;
   interruptResponse: () => void;
   undoCommit: () => void;
+  runTests: (testCmd?: string) => void;
   disabled?: boolean;
 };
 
@@ -81,6 +82,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
       answerQuestion,
       interruptResponse,
       undoCommit,
+      runTests,
       openModelSelector,
       disabled = false,
     }: Props,
@@ -120,7 +122,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
     };
 
     const invokeCommand = useCallback(
-      (command: string): void => {
+      (command: string, args?: string): void => {
         switch (command) {
           case '/code':
           case '/ask':
@@ -157,9 +159,14 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
             setText('');
             undoCommit();
             break;
+          case '/test': {
+            console.log('ARRGS: ' + args);
+            runTests(args);
+            break;
+          }
         }
       },
-      [text],
+      [text, runTests],
     );
 
     useEffect(() => {
@@ -279,7 +286,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
 
         const confirmCommandMatch = CONFIRM_COMMANDS.find((cmd) => text.startsWith(cmd));
         if (confirmCommandMatch) {
-          invokeCommand(confirmCommandMatch);
+          invokeCommand(confirmCommandMatch, text.split(' ').slice(1).join(' '));
         } else {
           window.api.sendPrompt(baseDir, text, editFormat);
           if (!editFormatLocked) {

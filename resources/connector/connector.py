@@ -561,7 +561,12 @@ class Connector:
     await self.send_tokens_info()
 
   async def run_command(self, command):
+    if command.startswith("/test"):
+      self.coder.io.running_shell_command = True
+      self.coder.io.tool_output("Running " + command[6:])
+
     self.coder.commands.run(command)
+    self.coder.io.running_shell_command = False
     if command.startswith("/paste"):
       await asyncio.sleep(0.1)
       await self.send_update_context_files()

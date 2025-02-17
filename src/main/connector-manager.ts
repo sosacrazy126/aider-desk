@@ -145,7 +145,7 @@ class ConnectorManager {
         }
         projectManager.getProject(connector.baseDir).updateContextFiles(message.files);
       } else if (isUseCommandOutputMessage(message)) {
-        logger.info('Use command output', { message });
+        logger.info('Use command output', { ...message });
 
         const connector = this.findConnectorBySocket(socket);
         if (!connector || !this.mainWindow) {
