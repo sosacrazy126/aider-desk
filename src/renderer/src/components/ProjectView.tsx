@@ -128,7 +128,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
       const processingMessage = processingMessageRef.current;
 
       // If no processing message exists, find the last response message
-      if (!processingMessage) {
+      if (!processingMessage && content) {
         const newResponseMessage: ResponseMessage = {
           id: messageId,
           type: 'response',
