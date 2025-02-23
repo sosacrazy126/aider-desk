@@ -42,6 +42,7 @@ class ConnectorManager {
         origin: '*',
         methods: ['GET', 'POST'],
       },
+      pingTimeout: 120000,
     });
 
     this.io.on('connection', (socket) => {
