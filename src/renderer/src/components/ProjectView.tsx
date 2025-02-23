@@ -144,6 +144,8 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
         setMessages((prevMessages) => prevMessages.map((message) => (message.id === messageId ? processingMessage : message)));
 
         processingMessageRef.current = null;
+      } else {
+        setMessages((prevMessages) => prevMessages.filter((message) => !isLoadingMessage(message)));
       }
 
       if (usageReport) {

@@ -277,7 +277,14 @@ class Connector:
     await self.send_current_models()
 
   async def on_message(self, data):
-    await self.process_message(data)
+    try:
+      # Create a list of coroutines to run concurrently
+      coroutines = [self.process_message(data)]
+
+      # Run the coroutines concurrently and wait for them to complete
+      await asyncio.gather(*coroutines)
+    except Exception as e:
+      self.coder.io.tool_error(f"Exception in on_message: {str(e)}")
 
   async def on_disconnect(self):
     """Handle disconnection event."""
@@ -433,27 +440,38 @@ class Connector:
     else:
       self.running_coder = self.coder
 
+    q = asyncio.Queue()
+    sentinel = object()  # special marker for end-of-stream
+
+    def blocking_run_stream():
+        try:
+            for chunk in self.running_coder.run_stream(prompt):
+                # Push the chunk onto the queue in a thread-safe way
+                self.loop.call_soon_threadsafe(q.put_nowait, chunk)
+            # Signal that the stream is finished
+            self.loop.call_soon_threadsafe(q.put_nowait, sentinel)
+        except Exception as e:
+            # Optionally push an exception and the sentinel to terminate the stream
+            self.loop.call_soon_threadsafe(q.put_nowait, e)
+            self.loop.call_soon_threadsafe(q.put_nowait, sentinel)
+
+    # Offload the blocking generator to a thread
+    self.loop.run_in_executor(None, blocking_run_stream)
+
     whole_content = ""
-
-    async def run_stream_async():
-      try:
-        for chunk in self.running_coder.run_stream(prompt):
-          # add small sleeps here to allow other coroutines to run
-          await asyncio.sleep(0.01)
-          if self.interrupted:
+    while True:
+        chunk = await q.get()
+        if chunk is sentinel:
             break
-          else:
-            yield chunk
-      except Exception as e:
-        self.coder.io.tool_error(str(e))
-
-    async for chunk in run_stream_async():
-      whole_content += chunk
-      await self.send_action({
-        "action": "response",
-        "finished": False,
-        "content": chunk
-      }, False)
+        if isinstance(chunk, Exception):
+            raise chunk  # or handle it as needed
+        whole_content += chunk
+        await self.send_action({
+            "action": "response",
+            "finished": False,
+            "content": chunk
+        })
+        await asyncio.sleep(0.01)
 
     if not whole_content:
       # if there was no content, use the partial_response_content value (case for non streaming models)
