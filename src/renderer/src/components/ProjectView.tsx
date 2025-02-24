@@ -140,7 +140,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
       } else if (processingMessage && processingMessage.id === messageId) {
         processingMessage.processing = false;
         processingMessage.usageReport = usageReport;
-        processingMessage.content = content;
+        processingMessage.content = content || processingMessage.content;
         setMessages((prevMessages) => prevMessages.map((message) => (message.id === messageId ? processingMessage : message)));
       } else {
         setMessages((prevMessages) => prevMessages.filter((message) => !isLoadingMessage(message)));
@@ -150,8 +150,6 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
         setTotalCost(usageReport.totalCost);
         setLastMessageCost(usageReport.messageCost);
       }
-
-      processingMessageRef.current = null;
 
       setProcessing(false);
     };

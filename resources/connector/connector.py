@@ -174,11 +174,7 @@ class ConnectorInputOutput(InputOutput):
       if prompt:
         changed_files = ", ".join(sorted(self.connector.file_watcher.changed_files))
         wait_for_async(self.connector, self.connector.send_log_message("info", f"Detected changes in files: {changed_files}."))
-        wait_for_async(self.connector, self.connector.send_action({
-          "action": "response",
-          "finished": False,
-          "content": ""
-        }))
+        wait_for_async(self.connector, self.connector.send_log_message("loading", "Processing changes..."))
         self.connector.loop.create_task(process_changes())
 
 def create_coder(connector):
@@ -501,11 +497,7 @@ class Connector:
       current_reflection = 0
       while self.running_coder.reflected_message and not self.interrupted:
         prompt = self.running_coder.reflected_message
-        await self.send_action({
-          "action": "response",
-          "finished": False,
-          "content": ""
-        })
+        await self.send_log_message("loading", "Reflecting message...")
 
         # use default coder to run the reflection
         self.running_coder = self.coder

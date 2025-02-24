@@ -452,6 +452,7 @@ export class Project {
         content: '',
       };
       this.mainWindow!.webContents.send('response-completed', data);
+      this.currentResponseMessageId = null;
     }
 
     this.mainWindow!.webContents.send('log', {
