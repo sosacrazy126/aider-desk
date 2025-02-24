@@ -209,6 +209,8 @@ export class Project {
   }
 
   public sendPrompt(prompt: string, editFormat?: EditFormat): void {
+    this.currentResponseMessageId = null;
+
     logger.info('Sending prompt:', {
       baseDir: this.baseDir,
       prompt,
@@ -450,7 +452,6 @@ export class Project {
         content: '',
       };
       this.mainWindow!.webContents.send('response-completed', data);
-      this.currentResponseMessageId = null;
     }
 
     this.mainWindow!.webContents.send('log', {

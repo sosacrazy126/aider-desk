@@ -82,17 +82,6 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
   }, [processing]);
 
   useEffect(() => {
-    const loadingMessageIndex = messages.findIndex(isLoadingMessage);
-    if (loadingMessageIndex !== -1 && loadingMessageIndex === messages.length - 2) {
-      setMessages((prevMessages) => {
-        const newMessages = [...prevMessages];
-        newMessages.splice(loadingMessageIndex, 1);
-        return newMessages;
-      });
-    }
-  }, [messages]);
-
-  useEffect(() => {
     const handleResponseChunk = (_: IpcRendererEvent, { messageId, chunk, reflectedMessage }: ResponseChunkData) => {
       const processingMessage = processingMessageRef.current;
       if (!processingMessage || processingMessage.id !== messageId) {
@@ -127,23 +116,32 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
     const handleResponseCompleted = (_: IpcRendererEvent, { messageId, usageReport, content }: ResponseCompletedData) => {
       const processingMessage = processingMessageRef.current;
 
-      // If no processing message exists, find the last response message
       if (!processingMessage && content) {
-        const newResponseMessage: ResponseMessage = {
-          id: messageId,
-          type: 'response',
-          content,
-          processing: false,
-          usageReport,
-        };
-        setMessages((prevMessages) => prevMessages.filter((message) => !isLoadingMessage(message)).concat(newResponseMessage));
+        setMessages((prevMessages) => {
+          // If no processing message exists, find the last response message
+          const responseMessage = prevMessages.find((message) => message.id === messageId) as ResponseMessage | undefined;
+          if (responseMessage) {
+            responseMessage.content = content;
+            responseMessage.processing = false;
+            responseMessage.usageReport = usageReport;
+            return prevMessages.map((message) => (message.id === messageId ? responseMessage : message));
+          } else {
+            // If no response message exists, create a new one
+            const newResponseMessage: ResponseMessage = {
+              id: messageId,
+              type: 'response',
+              content,
+              processing: false,
+              usageReport,
+            };
+            return prevMessages.filter((message) => !isLoadingMessage(message)).concat(newResponseMessage);
+          }
+        });
       } else if (processingMessage && processingMessage.id === messageId) {
         processingMessage.processing = false;
         processingMessage.usageReport = usageReport;
         processingMessage.content = content;
         setMessages((prevMessages) => prevMessages.map((message) => (message.id === messageId ? processingMessage : message)));
-
-        processingMessageRef.current = null;
       } else {
         setMessages((prevMessages) => prevMessages.filter((message) => !isLoadingMessage(message)));
       }
@@ -152,6 +150,9 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
         setTotalCost(usageReport.totalCost);
         setLastMessageCost(usageReport.messageCost);
       }
+
+      processingMessageRef.current = null;
+
       setProcessing(false);
     };
 
@@ -182,7 +183,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
         const loadingMessage: LoadingMessage = {
           id: uuidv4(),
           type: 'loading',
-          content: message,
+          content: message || 'Thinking...',
         };
         setMessages((prevMessages) => [...prevMessages, loadingMessage]);
       } else {
