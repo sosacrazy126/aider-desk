@@ -1,4 +1,5 @@
 import { toast } from 'react-toastify';
+
 import type { ToastOptions } from 'react-toastify';
 
 const NOTIFICATION_OPTIONS: ToastOptions = {
@@ -18,6 +19,7 @@ const NOTIFICATION_OPTIONS: ToastOptions = {
     color: '#f1f3f5',
     border: '1px solid #343a40',
     borderRadius: '0.375rem',
+    fontFamily: '"Sono", monospace',
     fontSize: '0.75rem',
   },
   icon: false,
