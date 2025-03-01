@@ -1,6 +1,6 @@
-import { MdAdd, MdClose } from 'react-icons/md';
 import { ProjectData } from '@common/types';
 import { Tab, TabGroup, TabList } from '@headlessui/react';
+import { MdAdd, MdClose } from 'react-icons/md';
 
 type Props = {
   openProjects: ProjectData[];

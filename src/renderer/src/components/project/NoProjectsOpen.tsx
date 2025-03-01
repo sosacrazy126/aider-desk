@@ -1,5 +1,5 @@
 // @ts-expect-error TypeScript is not aware of asset import
-import icon from '../../../../resources/icon.png?asset';
+import icon from '../../../../../resources/icon.png?asset';
 
 type Props = {
   onOpenProject: () => void;

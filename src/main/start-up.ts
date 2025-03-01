@@ -2,7 +2,9 @@ import { exec } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import { promisify } from 'util';
+
 import { delay } from '@common/utils';
+
 import { AIDER_DESK_DIR, SETUP_COMPLETE_FILENAME, PYTHON_VENV_DIR, AIDER_DESK_CONNECTOR_DIR, RESOURCES_DIR } from './constants';
 
 const execAsync = promisify(exec);

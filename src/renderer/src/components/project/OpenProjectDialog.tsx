@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { FaFolder } from 'react-icons/fa';
-import { ConfirmDialog } from './ConfirmDialog';
-import { AutocompletionInput } from './AutocompletionInput';
-import { Accordion } from './common/Accordion';
+
+import { AutocompletionInput } from '@/components/AutocompletionInput';
+import { Accordion } from '@/components/common/Accordion';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 type Props = {
   onClose: () => void;

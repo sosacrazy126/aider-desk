@@ -1,7 +1,3 @@
-import { electronAPI } from '@electron-toolkit/preload';
-import { contextBridge, ipcRenderer } from 'electron';
-import { normalizeBaseDir } from '@common/utils';
-import { v4 as uuidv4 } from 'uuid';
 import {
   AutocompletionData,
   CommandOutputData,
@@ -9,13 +5,20 @@ import {
   ContextFilesUpdatedData,
   FileEdit,
   LogData,
+  McpServerConfig,
   ModelsData,
   QuestionData,
   ResponseChunkData,
   ResponseCompletedData,
   SettingsData,
   TokensInfoData,
+  ToolData,
 } from '@common/types';
+import { normalizeBaseDir } from '@common/utils';
+import { electronAPI } from '@electron-toolkit/preload';
+import { contextBridge, ipcRenderer } from 'electron';
+import { v4 as uuidv4 } from 'uuid';
+
 import { ApplicationAPI } from './index.d';
 
 const compareBaseDirs = (baseDir1: string, baseDir2: string): boolean => {
@@ -31,6 +34,7 @@ const setCurrentModelsListeners: Record<string, (event: Electron.IpcRendererEven
 const commandOutputListeners: Record<string, (event: Electron.IpcRendererEvent, data: CommandOutputData) => void> = {};
 const logListeners: Record<string, (event: Electron.IpcRendererEvent, data: LogData) => void> = {};
 const tokensInfoListeners: Record<string, (event: Electron.IpcRendererEvent, data: TokensInfoData) => void> = {};
+const toolListeners: Record<string, (event: Electron.IpcRendererEvent, data: ToolData) => void> = {};
 
 const api: ApplicationAPI = {
   loadSettings: () => ipcRenderer.invoke('load-settings'),
@@ -61,6 +65,7 @@ const api: ApplicationAPI = {
   dropFile: (baseDir: string, path: string) => ipcRenderer.send('drop-file', baseDir, path),
   runCommand: (baseDir: string, command: string) => ipcRenderer.send('run-command', baseDir, command),
   scrapeWeb: (baseDir: string, url: string) => ipcRenderer.invoke('scrape-web', baseDir, url),
+  loadMcpServerTools: (serverName: string, config: McpServerConfig) => ipcRenderer.invoke('load-mcp-server-tools', serverName, config),
   getRecentProjects: () => ipcRenderer.invoke('get-recent-projects'),
   addRecentProject: (baseDir: string) => ipcRenderer.invoke('add-recent-project', baseDir),
   removeRecentProject: (baseDir: string) => ipcRenderer.invoke('remove-recent-project', baseDir),
@@ -236,6 +241,25 @@ const api: ApplicationAPI = {
     if (callback) {
       ipcRenderer.removeListener('update-tokens-info', callback);
       delete tokensInfoListeners[listenerId];
+    }
+  },
+
+  addToolListener: (baseDir, callback) => {
+    const listenerId = uuidv4();
+    toolListeners[listenerId] = (event: Electron.IpcRendererEvent, data: ToolData) => {
+      if (!compareBaseDirs(data.baseDir, baseDir)) {
+        return;
+      }
+      callback(event, data);
+    };
+    ipcRenderer.on('tool', toolListeners[listenerId]);
+    return listenerId;
+  },
+  removeToolListener: (listenerId) => {
+    const callback = toolListeners[listenerId];
+    if (callback) {
+      ipcRenderer.removeListener('tool', callback);
+      delete toolListeners[listenerId];
     }
   },
 };

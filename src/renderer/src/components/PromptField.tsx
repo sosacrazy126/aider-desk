@@ -1,13 +1,13 @@
 import { QuestionData } from '@common/types';
-import { useClickOutside } from 'hooks/useClickOutside';
 import React, { useCallback, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react';
+import { BiSend } from 'react-icons/bi';
+import { MdStop } from 'react-icons/md';
 import TextareaAutosize from 'react-textarea-autosize';
 import getCaretCoordinates from 'textarea-caret';
-import { BiSend } from 'react-icons/bi';
-import { CgLock, CgLockUnlock } from 'react-icons/cg';
-import { MdKeyboardArrowUp, MdStop } from 'react-icons/md';
-import { useBooleanState } from 'hooks/useBooleanState';
-import { showErrorNotification } from 'utils/notifications';
+
+import { showErrorNotification } from '@/utils/notifications';
+import { FormatSelector } from '@/components/FormatSelector';
+import { McpSelector } from '@/components/McpSelector';
 
 const PLACEHOLDERS = [
   'How can I help you today?',
@@ -30,12 +30,6 @@ const PLACEHOLDERS = [
 
 const COMMANDS = ['/code', '/ask', '/architect', '/add', '/model', '/read-only'];
 const CONFIRM_COMMANDS = ['/clear', '/web', '/undo', '/test'];
-
-const EDIT_FORMATS = [
-  { value: 'code', label: 'Code' },
-  { value: 'ask', label: 'Ask' },
-  { value: 'architect', label: 'Architect' },
-];
 
 const ANSWERS = ['y', 'n', 'a', 'd'];
 
@@ -97,12 +91,8 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
     const [inputHistory, setInputHistory] = useState<string[]>([]);
     const [historyIndex, setHistoryIndex] = useState<number>(-1);
     const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
-    const [formatSelectorVisible, showFormatSelector, hideFormatSelector] = useBooleanState(false);
     const [editFormatLocked, setEditFormatLocked] = useState(false);
     const inputRef = useRef<HTMLTextAreaElement>(null);
-    const formatSelectorRef = useRef<HTMLDivElement>(null);
-
-    useClickOutside(formatSelectorRef, hideFormatSelector);
 
     useImperativeHandle(ref, () => ({
       focus: () => {
@@ -308,14 +298,6 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
       }
     };
 
-    const toggleFormatSelectorVisible = useCallback(() => {
-      if (formatSelectorVisible) {
-        hideFormatSelector();
-      } else {
-        showFormatSelector();
-      }
-    }, [formatSelectorVisible]);
-
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
       // Handle CTRL+C during processing
       if (processing && e.ctrlKey && e.key === 'c') {
@@ -493,59 +475,23 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
             )}
           </div>
           <div className="relative flex items-center text-sm text-neutral-400 w-full">
-            <div className="relative" ref={formatSelectorRef}>
-              <button
-                onClick={toggleFormatSelectorVisible}
-                className="flex items-center hover:text-neutral-300 focus:outline-none transition-colors duration-200 text-xs"
-              >
-                <MdKeyboardArrowUp className="w-3 h-3 mr-0.5" />
-                <span className="capitalize">{editFormat}</span>
-                {editFormat !== 'code' && (
-                  <span className="ml-1">
-                    {editFormatLocked ? (
-                      <CgLock
-                        className="w-4 h-4 focus:outline-none"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setEditFormatLocked(false);
-                          inputRef.current?.focus();
-                        }}
-                      />
-                    ) : (
-                      <CgLockUnlock
-                        className="w-4 h-4 focus:outline-none"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setEditFormatLocked(true);
-                          inputRef.current?.focus();
-                        }}
-                      />
-                    )}
-                  </span>
-                )}
-              </button>
-              {formatSelectorVisible && (
-                <div className="absolute bottom-full mb-1 bg-neutral-900 border border-neutral-700 rounded-md shadow-lg z-10 ml-2">
-                  {EDIT_FORMATS.map(({ label, value }) => (
-                    <button
-                      key={value}
-                      onClick={() => {
-                        setEditFormat(value);
-                        hideFormatSelector();
-                        if (value !== 'code') {
-                          setEditFormatLocked(false);
-                        }
-                      }}
-                      className={`w-full px-3 py-1 text-left hover:bg-neutral-700 transition-colors duration-200 text-xs
-                    ${value === editFormat ? 'text-white font-bold' : 'text-neutral-300'}`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              )}
+            <div className="flex-grow">
+              <FormatSelector
+                editFormat={editFormat}
+                editFormatLocked={editFormatLocked}
+                onFormatChange={(format) => {
+                  setEditFormat(format);
+                  if (format !== 'code') {
+                    setEditFormatLocked(false);
+                  }
+                }}
+                onLockChange={(locked) => {
+                  setEditFormatLocked(locked);
+                  inputRef.current?.focus();
+                }}
+              />
             </div>
-            <div className="flex-grow" />
+            <McpSelector />
           </div>
         </div>
         {suggestionsVisible && filteredSuggestions.length > 0 && (

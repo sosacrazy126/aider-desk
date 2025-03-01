@@ -1,6 +1,9 @@
 import path from 'path';
-import { Socket } from 'socket.io';
+
 import { ContextFile, FileEdit } from '@common/types';
+import { Socket } from 'socket.io';
+
+import logger from './logger';
 import {
   AddFileMessage,
   AddMessageMessage,
@@ -15,7 +18,6 @@ import {
   RunCommandMessage,
   SetModelsMessage,
 } from './messages';
-import logger from './logger';
 
 export class Connector {
   socket: Socket;
@@ -91,10 +93,12 @@ export class Connector {
     this.sendMessage(message);
   }
 
-  public sendAddMessageMessage(content: string) {
+  public sendAddMessageMessage(content: string, role: 'user' | 'assistant' = 'user', acknowledge = true) {
     const message: AddMessageMessage = {
       action: 'add-message',
       content,
+      role,
+      acknowledge,
     };
     this.sendMessage(message);
   }

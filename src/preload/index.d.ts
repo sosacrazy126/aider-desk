@@ -10,6 +10,7 @@ import {
   SettingsData,
   TokensInfoData,
 } from '../common/types';
+
 import type { ElectronAPI } from '@electron-toolkit/preload';
 
 export interface ApplicationAPI {
@@ -41,6 +42,7 @@ export interface ApplicationAPI {
   dropFile: (baseDir: string, path: string) => void;
   runCommand: (baseDir: string, command: string) => void;
   scrapeWeb: (baseDir: string, url: string) => Promise<string>;
+  loadMcpServerTools: (serverName: string, config: McpServerConfig) => Promise<McpTool[] | null>;
   getRecentProjects: () => Promise<string[]>;
   addRecentProject: (baseDir: string) => Promise<void>;
   removeRecentProject: (baseDir: string) => Promise<void>;
@@ -73,6 +75,9 @@ export interface ApplicationAPI {
 
   addTokensInfoListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: TokensInfoData) => void) => string;
   removeTokensInfoListener: (listenerId: string) => void;
+
+  addToolListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: ToolData) => void) => string;
+  removeToolListener: (listenerId: string) => void;
 }
 
 declare global {

@@ -1,9 +1,9 @@
+import { ContextFile } from '@common/types';
 import React, { useEffect, useMemo, useState } from 'react';
 import { StaticTreeDataProvider, Tree, UncontrolledTreeEnvironment } from 'react-complex-tree';
 import { HiPlus, HiX } from 'react-icons/hi';
-
-import { ContextFile } from '@common/types';
 import { TbPencilOff } from 'react-icons/tb';
+
 import { StyledTooltip } from '../common/StyledTooltip';
 
 import './ContextFiles.css';

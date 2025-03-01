@@ -67,8 +67,9 @@ export default tseslint.config({ ignores: ['dist', 'node_modules', 'out'] }, {
           'sibling',
           'index',
           'type'
-        ]
-      }
+        ],
+        'newlines-between': 'always',
+      },
     ],
 
     '@typescript-eslint/no-unused-vars': [

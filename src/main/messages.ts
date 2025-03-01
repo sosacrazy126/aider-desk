@@ -1,4 +1,4 @@
-import { ContextFileSourceType, ContextFile, TokensCost, FileEdit } from '@common/types';
+import { ContextFileSourceType, ContextFile, TokensCost, FileEdit, UsageReportData } from '@common/types';
 
 export type MessageAction =
   | 'init'
@@ -52,7 +52,7 @@ export interface ResponseMessage extends Message {
   content: string;
   reflectedMessage?: string;
   finished: boolean;
-  usageReport?: string;
+  usageReport?: string | UsageReportData;
   editedFiles?: string[];
   commitHash?: string;
   commitMessage?: string;
@@ -165,6 +165,8 @@ export const isTokensInfoMessage = (message: Message): message is TokensInfoMess
 export interface AddMessageMessage extends Message {
   action: 'add-message';
   content: string;
+  role: 'user' | 'assistant';
+  acknowledge: boolean;
 }
 
 export interface InterruptResponseMessage extends Message {

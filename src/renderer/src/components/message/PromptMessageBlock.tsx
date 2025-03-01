@@ -1,9 +1,11 @@
 import { CgTerminal } from 'react-icons/cg';
 import { FaRegQuestionCircle } from 'react-icons/fa';
 import { IoConstruct } from 'react-icons/io5';
-import { PromptMessage } from 'types/message';
+
 import { CopyMessageButton } from './CopyMessageButton';
 import { parseMessageContent } from './utils';
+
+import { PromptMessage } from '@/types/message';
 
 type Props = {
   baseDir: string;

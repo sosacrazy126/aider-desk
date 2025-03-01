@@ -1,12 +1,13 @@
-import { HashRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useState } from 'react';
+import { HashRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
+
+import { Onboarding } from '@/pages/Onboarding';
+import { Home } from '@/pages/Home';
+import { SettingsProvider, useSettings } from '@/context/SettingsContext';
 import 'react-toastify/dist/ReactToastify.css';
-import { Home } from 'pages/Home';
-import { Onboarding } from 'pages/Onboarding';
-import { ROUTES } from 'utils/routes';
-import { SettingsProvider, useSettings } from 'context/SettingsContext';
+import { ROUTES } from '@/utils/routes';
 
 const AnimatedRoutes = () => {
   const location = useLocation();

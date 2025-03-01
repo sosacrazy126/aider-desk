@@ -372,10 +372,16 @@ class Connector:
         if not content:
           return
 
+        role = message.get('role', 'user')
+        acknowledge = message.get('acknowledge', True)
+
         self.coder.cur_messages += [
-          dict(role="user", content=content),
-          dict(role="assistant", content="Ok."),
+          dict(role=role, content=content)
         ]
+        if role == "user" and acknowledge:
+          self.coder.cur_messages += [
+            dict(role="assistant", content="Ok."),
+          ]
         await self.send_tokens_info()
 
       elif action == "interrupt-response":
@@ -570,29 +576,39 @@ class Connector:
       await self.send_autocompletion()
 
   async def send_autocompletion(self):
-    inchat_files = self.coder.get_inchat_relative_files()
-    read_only_files = [self.coder.get_rel_fname(fname) for fname in self.coder.abs_read_only_fnames]
-    rel_fnames = sorted(set(inchat_files + read_only_files))
-    auto_completer = AutoCompleter(
-      root=self.coder.root,
-      rel_fnames=rel_fnames,
-      addable_rel_fnames=self.coder.get_addable_relative_files(),
-      commands=None,
-      encoding=self.coder.io.encoding,
-      abs_read_only_fnames=self.coder.abs_read_only_fnames,
-    )
-    auto_completer.tokenize()
+    try:
+      inchat_files = self.coder.get_inchat_relative_files()
+      read_only_files = [self.coder.get_rel_fname(fname) for fname in self.coder.abs_read_only_fnames]
+      rel_fnames = sorted(set(inchat_files + read_only_files))
+      auto_completer = AutoCompleter(
+        root=self.coder.root,
+        rel_fnames=rel_fnames,
+        addable_rel_fnames=self.coder.get_addable_relative_files(),
+        commands=None,
+        encoding=self.coder.io.encoding,
+        abs_read_only_fnames=self.coder.abs_read_only_fnames,
+      )
+      auto_completer.tokenize()
 
-    words = [word[0] if isinstance(word, tuple) else word for word in auto_completer.words]
-    words = list(words) + [fname.split('/')[-1] for fname in rel_fnames]
+      words = [word[0] if isinstance(word, tuple) else word for word in auto_completer.words]
+      words = list(words) + [fname.split('/')[-1] for fname in rel_fnames]
 
-    if self.sio:
-      await self.sio.emit("message", {
-        "action": "update-autocompletion",
-        "words": words,
-        "allFiles": self.coder.get_all_relative_files(),
-        "models": sorted(set(models.fuzzy_match_models("") + [model_settings.name for model_settings in models.MODEL_SETTINGS]))
-      })
+      if self.sio:
+        await self.sio.emit("message", {
+          "action": "update-autocompletion",
+          "words": words,
+          "allFiles": self.coder.get_all_relative_files(),
+          "models": sorted(set(models.fuzzy_match_models("") + [model_settings.name for model_settings in models.MODEL_SETTINGS]))
+        })
+    except Exception as e:
+      self.coder.io.tool_error(f"Error in send_autocompletion: {str(e)}")
+      if self.sio:
+        await self.sio.emit("message", {
+          "action": "update-autocompletion",
+          "words": [],
+          "allFiles": [],
+          "models": sorted(set(models.fuzzy_match_models("") + [model_settings.name for model_settings in models.MODEL_SETTINGS]))
+        })
 
   async def send_update_context_files(self):
     if self.sio:

@@ -1,3 +1,5 @@
+import type { JsonSchema } from '@n8n/json-schema-to-zod';
+
 export interface ResponseChunkData {
   messageId: string;
   baseDir: string;
@@ -27,6 +29,13 @@ export interface LogData {
   baseDir: string;
   level: 'info' | 'warning' | 'error' | 'loading';
   message: string;
+}
+
+export interface ToolData {
+  baseDir: string;
+  name: string;
+  args: Record<string, unknown>;
+  usageReport?: UsageReportData;
 }
 
 export interface ContextFilesUpdatedData {
@@ -95,6 +104,19 @@ export interface SettingsData {
   models: {
     preferred: string[];
   };
+  mcpConfig: McpConfig;
+}
+
+export interface McpConfig {
+  provider: 'openai' | 'anthropic';
+  anthropicApiKey: string;
+  openAiApiKey: string;
+  maxIterations: number;
+  minTimeBetweenToolCalls: number; // in milliseconds
+  mcpServers: {
+    [key: string]: McpServerConfig;
+  };
+  disabledServers: string[];
 }
 
 export interface UsageReportData {
@@ -102,6 +124,7 @@ export interface UsageReportData {
   receivedTokens: number;
   messageCost: number;
   totalCost: number;
+  mcpToolsCost?: number;
 }
 
 export interface TokensCost {
@@ -121,4 +144,17 @@ export interface FileEdit {
   path: string;
   original: string;
   updated: string;
+}
+
+export interface McpTool {
+  serverName: string;
+  name: string;
+  description?: string;
+  inputSchema: JsonSchema;
+}
+
+export interface McpServerConfig {
+  command: string;
+  args: string[];
+  env?: Readonly<Record<string, string>>;
 }

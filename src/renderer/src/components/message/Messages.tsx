@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { Message } from 'types/message';
+
 import { MessageBlock } from './MessageBlock';
+
+import { Message } from '@/types/message';
 
 type Props = {
   baseDir: string;

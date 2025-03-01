@@ -1,5 +1,5 @@
-import { createPortal } from 'react-dom';
 import { useState, useRef, useEffect, ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 
 type Props = {
   value: string;

@@ -1,23 +1,26 @@
-import { FileEdit, ProjectSettings, SettingsData, ProjectData } from '@common/types';
+import { FileEdit, ProjectSettings, SettingsData, ProjectData, McpServerConfig } from '@common/types';
 import { normalizeBaseDir } from '@common/utils';
 import { BrowserWindow, dialog, ipcMain } from 'electron';
+import { McpClient } from 'src/main/mcp-client';
+
 import { getFilePathSuggestions, isProjectPath, isValidPath } from './file-system';
 import { EditFormat } from './messages';
 import { projectManager } from './project-manager';
 import { DEFAULT_PROJECT_SETTINGS, Store } from './store';
 import { scrapeWeb } from './web-scrapper';
 
-export const setupIpcHandlers = (mainWindow: BrowserWindow, store: Store) => {
+export const setupIpcHandlers = (mainWindow: BrowserWindow, store: Store, mcpClient: McpClient) => {
   ipcMain.handle('load-settings', () => {
     return store.getSettings();
   });
 
   ipcMain.handle('save-settings', (_, settings: SettingsData) => {
     store.saveSettings(settings);
+    void mcpClient.init();
   });
 
   ipcMain.on('send-prompt', (_, baseDir: string, prompt: string, editFormat?: EditFormat) => {
-    projectManager.getProject(baseDir).sendPrompt(prompt, editFormat);
+    void projectManager.getProject(baseDir).sendPrompt(prompt, editFormat);
   });
 
   ipcMain.on('answer-question', (_, baseDir: string, answer: string) => {
@@ -181,5 +184,9 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, store: Store) => {
   ipcMain.handle('scrape-web', async (_, baseDir: string, url: string) => {
     const content = await scrapeWeb(url);
     projectManager.getProject(baseDir).addMessage(content);
+  });
+
+  ipcMain.handle('load-mcp-server-tools', async (_, serverName: string, config: McpServerConfig) => {
+    return await mcpClient.getMcpServerTools(serverName, config);
   });
 };

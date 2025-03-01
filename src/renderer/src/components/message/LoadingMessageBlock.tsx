@@ -1,4 +1,4 @@
-import { Message } from 'types/message';
+import { Message } from '@/types/message';
 
 type Props = {
   message: Message;

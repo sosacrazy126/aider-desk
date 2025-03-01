@@ -1,11 +1,12 @@
+import { ProjectData } from '@common/types';
 import { useCallback, useEffect, useState } from 'react';
 import { MdSettings } from 'react-icons/md';
-import { NoProjectsOpen } from 'components/NoProjectsOpen';
-import { ProjectTabs } from 'components/ProjectTabs';
-import { ProjectData } from '@common/types';
-import { ProjectView } from 'components/ProjectView';
-import { OpenProjectDialog } from 'components/OpenProjectDialog';
-import { SettingsDialog } from 'components/SettingsDialog';
+
+import { NoProjectsOpen } from '@/components/project/NoProjectsOpen';
+import { OpenProjectDialog } from '@/components/project/OpenProjectDialog';
+import { ProjectTabs } from '@/components/project/ProjectTabs';
+import { ProjectView } from '@/components/project/ProjectView';
+import { SettingsDialog } from '@/components/settings/SettingsDialog';
 
 export const Home = () => {
   const [openProjects, setOpenProjects] = useState<ProjectData[]>([]);

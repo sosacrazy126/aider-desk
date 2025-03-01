@@ -1,5 +1,5 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { SettingsData } from '@common/types';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 type SettingsContextType = {
   settings: SettingsData | null;

@@ -1,18 +1,21 @@
 import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
 import { createHash } from 'crypto';
-import fs from 'fs/promises';
 import { unlinkSync } from 'fs';
+import fs from 'fs/promises';
 import path from 'path';
-import { v4 as uuidv4 } from 'uuid';
+
+import { ContextFile, FileEdit, ModelsData, QuestionData, ResponseChunkData, ResponseCompletedData, ToolData, UsageReportData } from '@common/types';
+import { parseUsageReport } from '@common/utils';
 import { BrowserWindow } from 'electron';
 import treeKill from 'tree-kill';
-import { parseUsageReport } from '@common/utils';
-import { ContextFile, FileEdit, ModelsData, QuestionData, ResponseChunkData, ResponseCompletedData } from '@common/types';
-import { Store } from './store';
-import { EditFormat, MessageAction, ResponseMessage } from './messages';
+import { v4 as uuidv4 } from 'uuid';
+
 import { Connector } from './connector';
+import { McpClient } from './mcp-client';
 import { AIDER_DESK_CONNECTOR_DIR, PID_FILES_DIR, PYTHON_COMMAND, SOCKET_PORT } from './constants';
 import logger from './logger';
+import { EditFormat, MessageAction, ResponseMessage } from './messages';
+import { Store } from './store';
 
 export class Project {
   private mainWindow: BrowserWindow | null = null;
@@ -27,11 +30,13 @@ export class Project {
   public baseDir: string;
   public contextFiles: ContextFile[] = [];
   public models: ModelsData | null = null;
+  private mcpClient: McpClient;
 
-  constructor(mainWindow: Electron.CrossProcessExports.BrowserWindow, store: Store, baseDir: string) {
+  constructor(mainWindow: BrowserWindow, baseDir: string, store: Store, mcpClient: McpClient) {
     this.mainWindow = mainWindow;
     this.store = store;
     this.baseDir = baseDir;
+    this.mcpClient = mcpClient;
   }
 
   public addConnector(connector: Connector) {
@@ -208,7 +213,7 @@ export class Project {
     return this.connectors.filter((connector) => connector.listenTo.includes(action));
   }
 
-  public sendPrompt(prompt: string, editFormat?: EditFormat): void {
+  public async sendPrompt(prompt: string, editFormat?: EditFormat): Promise<void> {
     this.currentResponseMessageId = null;
 
     logger.info('Sending prompt:', {
@@ -219,6 +224,14 @@ export class Project {
     if (this.currentQuestion) {
       this.answerQuestion('n');
     }
+
+    const mcpPrompt = await this.mcpClient.runPrompt(this, prompt);
+    if (!mcpPrompt) {
+      return;
+    }
+
+    prompt = mcpPrompt;
+
     this.findMessageConnectors('prompt').forEach((connector) => connector.sendPromptMessage(prompt, editFormat, this.getArchitectModel()));
   }
 
@@ -244,7 +257,11 @@ export class Project {
       logger.info(`Sending response completed to ${this.baseDir}`);
       logger.debug(`Message data: ${JSON.stringify(message)}`);
 
-      const usageReport = message.usageReport ? parseUsageReport(message.usageReport) : undefined;
+      const usageReport = message.usageReport
+        ? typeof message.usageReport === 'string'
+          ? parseUsageReport(message.usageReport)
+          : message.usageReport
+        : undefined;
       logger.info(`Usage report: ${JSON.stringify(usageReport)}`);
       const data: ResponseCompletedData = {
         messageId: this.currentResponseMessageId,
@@ -462,8 +479,8 @@ export class Project {
     });
   }
 
-  public addMessage(content: string) {
-    this.findMessageConnectors('add-message').forEach((connector) => connector.sendAddMessageMessage(content));
+  public addMessage(content: string, role: 'user' | 'assistant' = 'user', acknowledge = true) {
+    this.findMessageConnectors('add-message').forEach((connector) => connector.sendAddMessageMessage(content, role, acknowledge));
   }
 
   public interruptResponse() {
@@ -474,5 +491,16 @@ export class Project {
   public applyEdits(edits: FileEdit[]) {
     logger.info('Applying edits:', { baseDir: this.baseDir, edits });
     this.findMessageConnectors('apply-edits').forEach((connector) => connector.sendApplyEditsMessage(edits));
+  }
+
+  public sendToolMessage(name: string, args: Record<string, unknown>, usageReport?: UsageReportData) {
+    logger.info('Sending tool message:', { baseDir: this.baseDir, name, args, usageReport });
+    const data: ToolData = {
+      baseDir: this.baseDir,
+      name,
+      args,
+      usageReport,
+    };
+    this.mainWindow!.webContents.send('tool', data);
   }
 }

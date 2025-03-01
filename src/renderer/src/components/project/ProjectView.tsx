@@ -8,18 +8,14 @@ import {
   ResponseCompletedData,
   TokensInfoData,
   QuestionData,
+  ToolData,
 } from '@common/types';
-import { AddFileDialog } from 'components/AddFileDialog';
-import { ContextFiles } from 'components/ContextFiles';
-import { Messages } from 'components/Messages';
-import { PromptField, PromptFieldRef } from 'components/PromptField';
-import { SessionInfo } from 'components/SessionInfo';
 import { IpcRendererEvent } from 'electron';
 import { useEffect, useRef, useState } from 'react';
 import { CgSpinner } from 'react-icons/cg';
-import { ConfirmDialog } from 'components/ConfirmDialog';
 import { ResizableBox } from 'react-resizable';
-import 'react-resizable/css/styles.css';
+import { v4 as uuidv4 } from 'uuid';
+
 import {
   CommandOutputMessage,
   isCommandOutputMessage,
@@ -29,9 +25,16 @@ import {
   Message,
   PromptMessage,
   ResponseMessage,
-} from 'types/message';
-import { v4 as uuidv4 } from 'uuid';
-import { ProjectBar, ProjectTopBarRef } from 'components/ProjectBar';
+  ToolMessage,
+} from '@/types/message';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { ContextFiles } from '@/components/ContextFiles';
+import { Messages } from '@/components/message/Messages';
+import { AddFileDialog } from '@/components/project/AddFileDialog';
+import { ProjectBar, ProjectTopBarRef } from '@/components/project/ProjectBar';
+import { PromptField, PromptFieldRef } from '@/components/PromptField';
+import { SessionInfo } from '@/components/SessionInfo';
+import 'react-resizable/css/styles.css';
 
 type AddFileDialogOptions = {
   readOnly: boolean;
@@ -51,6 +54,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
   const [loading, setLoading] = useState(true);
   const [totalCost, setTotalCost] = useState(0);
   const [lastMessageCost, setLastMessageCost] = useState<number | undefined>(undefined);
+  const [mcpToolsCost, setMcpToolsCost] = useState(0);
   const [tokensInfo, setTokensInfo] = useState<TokensInfoData | null>(null);
   const [question, setQuestion] = useState<QuestionData | null>(null);
   const [editFormat, setEditFormat] = useState<string>('code');
@@ -116,7 +120,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
     const handleResponseCompleted = (_: IpcRendererEvent, { messageId, usageReport, content }: ResponseCompletedData) => {
       const processingMessage = processingMessageRef.current;
 
-      if (!processingMessage && content) {
+      if (content) {
         setMessages((prevMessages) => {
           // If no processing message exists, find the last response message
           const responseMessage = prevMessages.find((message) => message.id === messageId) as ResponseMessage | undefined;
@@ -149,6 +153,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
       if (usageReport) {
         setTotalCost(usageReport.totalCost);
         setLastMessageCost(usageReport.messageCost);
+        setMcpToolsCost((prev) => prev + (usageReport.mcpToolsCost ?? 0));
       }
 
       setProcessing(false);
@@ -176,6 +181,38 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
       });
     };
 
+    const handleTool = (_: IpcRendererEvent, { name, args, usageReport }: ToolData) => {
+      if (name === 'aider') {
+        const promptMessage: PromptMessage = {
+          id: uuidv4(),
+          type: 'prompt',
+          editFormat: 'code',
+          content: args.prompt as string,
+        };
+        setMessages((prevMessages) => {
+          const loadingMessages = prevMessages.filter(isLoadingMessage);
+          const nonLoadingMessages = prevMessages.filter((message) => !isLoadingMessage(message));
+          return [...nonLoadingMessages, promptMessage, ...loadingMessages];
+        });
+        if (usageReport) {
+          setMcpToolsCost((prev) => prev + (usageReport.mcpToolsCost ?? 0));
+        }
+      } else {
+        const toolMessage: ToolMessage = {
+          id: uuidv4(),
+          type: 'tool',
+          toolName: name,
+          args,
+          content: '',
+        };
+        setMessages((prevMessages) => {
+          const loadingMessages = prevMessages.filter(isLoadingMessage);
+          const nonLoadingMessages = prevMessages.filter((message) => !isLoadingMessage(message));
+          return [...nonLoadingMessages, toolMessage, ...loadingMessages];
+        });
+      }
+    };
+
     const handleLog = (_: IpcRendererEvent, { level, message }: LogData) => {
       if (level === 'loading') {
         const loadingMessage: LoadingMessage = {
@@ -192,6 +229,10 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
           content: message,
         };
         setMessages((prevMessages) => [...prevMessages.filter((message) => !isLoadingMessage(message)), logMessage]);
+
+        if (level === 'error') {
+          setProcessing(false);
+        }
       }
     };
 
@@ -229,6 +270,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
     const logListenerId = window.api.addLogListener(project.baseDir, handleLog);
     const tokensInfoListenerId = window.api.addTokensInfoListener(project.baseDir, handleTokensInfo);
     const questionListenerId = window.api.addAskQuestionListener(project.baseDir, handleQuestion);
+    const toolListenerId = window.api.addToolListener(project.baseDir, handleTool);
 
     return () => {
       window.api.removeUpdateAutocompletionListener(autocompletionListenerId);
@@ -239,6 +281,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
       window.api.removeLogListener(logListenerId);
       window.api.removeTokensInfoListener(tokensInfoListenerId);
       window.api.removeAskQuestionListener(questionListenerId);
+      window.api.removeToolListener(toolListenerId);
     };
   }, [project.baseDir, processing]);
 
@@ -376,6 +419,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
     setTokensInfo(null);
     setQuestion(null);
     setModelsData(null);
+    processingMessageRef.current = null;
     void window.api.restartProject(project.baseDir);
   };
 
@@ -448,6 +492,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
             tokensInfo={tokensInfo}
             totalCost={totalCost}
             lastMessageCost={lastMessageCost}
+            mcpToolsCost={mcpToolsCost}
             clearMessages={clearMessages}
             refreshRepoMap={refreshRepositoryMap}
             restartProject={restartProject}

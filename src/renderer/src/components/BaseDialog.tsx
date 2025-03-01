@@ -1,5 +1,5 @@
-import { ReactNode, useEffect, useRef } from 'react';
 import { FocusTrap } from 'focus-trap-react';
+import { ReactNode, useEffect, useRef } from 'react';
 
 type Props = {
   title: string;

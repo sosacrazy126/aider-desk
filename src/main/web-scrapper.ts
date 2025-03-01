@@ -1,5 +1,5 @@
-import { chromium } from 'playwright-core';
 import * as cheerio from 'cheerio';
+import { chromium } from 'playwright-core';
 
 interface ScraperOptions {
   verifySSL?: boolean;

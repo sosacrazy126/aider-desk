@@ -1,19 +1,21 @@
-import { useState } from 'react';
 import { TokensInfoData } from '@common/types';
+import { useState } from 'react';
 import { IoClose, IoChevronDown, IoChevronUp } from 'react-icons/io5';
 import { MdOutlineRefresh } from 'react-icons/md';
+
 import { StyledTooltip } from './common/StyledTooltip';
 
 type Props = {
   tokensInfo?: TokensInfoData | null;
   totalCost: number;
   lastMessageCost?: number;
+  mcpToolsCost?: number;
   clearMessages?: () => void;
   refreshRepoMap?: () => void;
   restartProject?: () => void;
 };
 
-export const SessionInfo = ({ tokensInfo, totalCost, lastMessageCost, clearMessages, refreshRepoMap, restartProject }: Props) => {
+export const SessionInfo = ({ tokensInfo, totalCost, lastMessageCost, mcpToolsCost, clearMessages, refreshRepoMap, restartProject }: Props) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [refreshingAnimation, setRefreshingAnimation] = useState(false);
   const REFRESH_ANIMATION_DURATION = 2000;
@@ -82,8 +84,9 @@ export const SessionInfo = ({ tokensInfo, totalCost, lastMessageCost, clearMessa
           )}
         </div>
         {lastMessageCost !== undefined && renderLabelValue('Last message', `$${(lastMessageCost ?? 0).toFixed(5)}`)}
+        {(mcpToolsCost && renderLabelValue('MCP tools', `$${(mcpToolsCost ?? 0).toFixed(5)}`)) || null}
         <div className="flex items-center h-[20px]">
-          <div className="flex-1">{renderLabelValue('Session', `$${totalCost.toFixed(5)}`)}</div>
+          <div className="flex-1">{renderLabelValue('Session', `$${(totalCost + (mcpToolsCost ?? 0)).toFixed(5)}`)}</div>
           <div className="ml-0 max-w-0 group-hover:max-w-xs opacity-0 group-hover:opacity-100 group-hover:px-1 group-hover:ml-1 transition-all duration-300 overflow-hidden">
             {restartProject && (
               <button

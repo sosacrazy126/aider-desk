@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { HiArrowRight } from 'react-icons/hi2';
 import { useNavigate } from 'react-router-dom';
-import { useSettings } from 'context/SettingsContext';
-import { AiderSettings } from 'components/settings/AiderSettings';
+
+import { useSettings } from '@/context/SettingsContext';
+import { AiderSettings } from '@/components/settings/AiderSettings';
 
 export const Onboarding = () => {
   const navigate = useNavigate();

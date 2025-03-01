@@ -1,15 +1,17 @@
-import { useState } from 'react';
 import Prism from 'prismjs';
+import { useState } from 'react';
 import 'prismjs/themes/prism-tomorrow.css';
 import 'prismjs/components/prism-typescript';
 import 'prismjs/components/prism-python';
 import 'prismjs/components/prism-bash';
 import 'prismjs/components/prism-json';
+import ReactDiffViewer from 'react-diff-viewer-continued';
+import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 import { MdKeyboardArrowDown, MdUndo } from 'react-icons/md';
 import { VscCode } from 'react-icons/vsc';
-import { AiOutlineLoading3Quarters } from 'react-icons/ai';
-import ReactDiffViewer from 'react-diff-viewer-continued';
+
 import { IconButton } from '../common/IconButton';
+
 import { CopyMessageButton } from './CopyMessageButton';
 
 const DIFF_VIEWER_STYLES = {
@@ -176,10 +178,15 @@ export const CodeBlock = ({ baseDir, language, children, file, isComplete = true
               <span className="flex items-center gap-2">
                 {isDiff && file && !!diffContent?.oldValue && !changesReverted && (
                   <div className="relative inline-block">
-                    <IconButton icon={<MdUndo size={16} />} onClick={handleRevertChanges} tooltip="Revert changes" />
+                    <IconButton
+                      icon={<MdUndo size={16} />}
+                      onClick={handleRevertChanges}
+                      tooltip="Revert changes"
+                      className="opacity-0 group-hover:opacity-100"
+                    />
                   </div>
                 )}
-                <CopyMessageButton content={children} />
+                <CopyMessageButton content={children} className="opacity-0 group-hover:opacity-100" />
                 {!isComplete && <AiOutlineLoading3Quarters className="animate-spin text-neutral-500" size={14} />}
                 <span className="text-neutral-100 transition-transform duration-200" style={{ transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)' }}>
                   <MdKeyboardArrowDown size={16} />

@@ -1,9 +1,10 @@
-import { useBooleanState } from 'hooks/useBooleanState';
-import { useClickOutside } from 'hooks/useClickOutside';
-import { useSettings } from 'context/SettingsContext';
 import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { MdClose, MdKeyboardArrowUp } from 'react-icons/md';
 import { useDebounce } from 'react-use';
+
+import { useClickOutside } from '@/hooks/useClickOutside';
+import { useBooleanState } from '@/hooks/useBooleanState';
+import { useSettings } from '@/context/SettingsContext';
 
 export type ModelSelectorRef = {
   open: () => void;

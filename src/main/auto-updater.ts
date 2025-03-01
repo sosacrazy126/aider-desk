@@ -1,5 +1,6 @@
 import { dialog, MessageBoxOptions } from 'electron';
 import { autoUpdater, UpdateDownloadedEvent } from 'electron-updater';
+
 import logger from './logger';
 
 export const setupAutoUpdater = (): void => {

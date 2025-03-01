@@ -1,5 +1,7 @@
 import { ReactNode } from 'react';
+
 import { BaseDialog } from './BaseDialog';
+import { Button } from './common/Button';
 
 type Props = {
   title: string;
@@ -33,19 +35,12 @@ export const ConfirmDialog = ({
       width={width}
       footer={
         <>
-          <button onClick={onCancel} className="px-4 py-2 rounded-lg text-neutral-300 hover:text-white hover:bg-neutral-700/50 transition-colors">
+          <Button onClick={onCancel} variant="text">
             {cancelButtonText}
-          </button>
-          <button
-            onClick={onConfirm}
-            autoFocus={true}
-            disabled={disabled}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              disabled ? 'bg-neutral-700/50 text-neutral-500 cursor-not-allowed' : `${confirmButtonClass} text-white shadow-lg shadow-amber-900/20`
-            }`}
-          >
+          </Button>
+          <Button onClick={onConfirm} autoFocus={true} disabled={disabled} variant="contained" className={confirmButtonClass}>
             {confirmButtonText}
-          </button>
+          </Button>
         </>
       }
       closeOnEscape={closeOnEscape}

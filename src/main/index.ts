@@ -1,16 +1,19 @@
 import { join } from 'path';
-import { app, shell, BrowserWindow, dialog } from 'electron';
-import { electronApp, optimizer, is } from '@electron-toolkit/utils';
-import ProgressBar from 'electron-progressbar';
 
 import { delay } from '@common/utils';
+import { electronApp, optimizer, is } from '@electron-toolkit/utils';
+import { app, shell, BrowserWindow, dialog } from 'electron';
+import ProgressBar from 'electron-progressbar';
+import { McpClient } from 'src/main/mcp-client';
+
 import icon from '../../resources/icon.png?asset';
+
 import { setupAutoUpdater, checkForUpdates } from './auto-updater';
-import { Store } from './store';
 import { connectorManager } from './connector-manager';
 import { setupIpcHandlers } from './ipc-handlers';
 import { projectManager } from './project-manager';
 import { performStartUp, UpdateProgressData } from './start-up';
+import { Store } from './store';
 
 const initStore = async (): Promise<Store> => {
   const store = new Store();
@@ -18,7 +21,7 @@ const initStore = async (): Promise<Store> => {
   return store;
 };
 
-const createWindow = (store: Store) => {
+const initWindow = (store: Store) => {
   const lastWindowState = store.getWindowState();
   const mainWindow = new BrowserWindow({
     width: lastWindowState.width,
@@ -55,8 +58,12 @@ const createWindow = (store: Store) => {
   mainWindow.on('maximize', saveWindowState);
   mainWindow.on('unmaximize', saveWindowState);
 
+  const mcpClient = new McpClient(store);
+  void mcpClient.init();
+
   connectorManager.init(mainWindow);
-  projectManager.init(mainWindow, store);
+  projectManager.init(mainWindow, store, mcpClient);
+  setupIpcHandlers(mainWindow, store, mcpClient);
 
   app.on('before-quit', async () => {
     connectorManager.close();
@@ -66,9 +73,9 @@ const createWindow = (store: Store) => {
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-    mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL']);
+    void mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL']);
   } else {
-    mainWindow.loadFile(join(__dirname, '../renderer/index.html'));
+    void mainWindow.loadFile(join(__dirname, '../renderer/index.html'));
   }
 
   return mainWindow;
@@ -149,17 +156,13 @@ app.whenReady().then(async () => {
   }
 
   const store = await initStore();
-  const mainWindow = createWindow(store);
+  initWindow(store);
 
-  projectManager.init(mainWindow, store);
-  setupIpcHandlers(mainWindow, store);
   progressBar.close();
 
   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) {
-      const mainWindow = createWindow(store);
-      projectManager.init(mainWindow, store);
-      setupIpcHandlers(mainWindow, store);
+      initWindow(store);
     }
   });
 });

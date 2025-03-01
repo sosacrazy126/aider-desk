@@ -1,7 +1,8 @@
 import { ModelsData } from '@common/types';
-import { useSettings } from 'context/SettingsContext';
 import React, { useCallback, useImperativeHandle, useRef } from 'react';
-import { ModelSelector, ModelSelectorRef } from './ModelSelector';
+
+import { ModelSelector, ModelSelectorRef } from '@/components/ModelSelector';
+import { useSettings } from '@/context/SettingsContext';
 
 type Props = {
   baseDir: string;

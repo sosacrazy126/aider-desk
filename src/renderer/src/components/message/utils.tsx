@@ -1,7 +1,9 @@
 import React from 'react';
-import { showInfoNotification } from 'utils/notifications';
+
 import { CodeBlock } from './CodeBlock';
 import { CodeInline } from './CodeInline';
+
+import { showInfoNotification } from '@/utils/notifications';
 
 const ALL_FENCES = [
   ['````', '````'],

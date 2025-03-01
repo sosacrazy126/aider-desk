@@ -1,6 +1,7 @@
 import path from 'path';
-import { app } from 'electron';
+
 import { is } from '@electron-toolkit/utils';
+import { app } from 'electron';
 
 if (is.dev) {
   app.setPath('userData', `${app.getPath('userData')}-dev`);

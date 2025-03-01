@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { Message } from 'types/message';
 import { MdKeyboardArrowDown, MdKeyboardArrowRight } from 'react-icons/md';
-import { parseMessageContent } from './utils';
+
 import { CopyMessageButton } from './CopyMessageButton';
+import { parseMessageContent } from './utils';
+
+import { Message } from '@/types/message';
 
 type Props = {
   baseDir: string;

@@ -1,6 +1,8 @@
 import { BiCopy } from 'react-icons/bi';
-import { showInfoNotification } from 'utils/notifications';
+
 import { IconButton } from '../common/IconButton';
+
+import { showInfoNotification } from '@/utils/notifications';
 
 type Props = {
   content: string;
@@ -13,5 +15,12 @@ export const CopyMessageButton = ({ content, className }: Props) => {
     showInfoNotification('Copied to clipboard');
   };
 
-  return <IconButton icon={<BiCopy className={`h-4 w-4 ${className}`} />} onClick={copyToClipboard} tooltip="Copy to clipboard" />;
+  return (
+    <IconButton
+      icon={<BiCopy className={`h-4 w-4 ${className}`} />}
+      onClick={copyToClipboard}
+      tooltip="Copy to clipboard"
+      className="opacity-0 group-hover:opacity-100"
+    />
+  );
 };

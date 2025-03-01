@@ -2,7 +2,7 @@ import { ModelsData, TokensInfoData, UsageReportData } from '@common/types';
 
 export interface Message {
   id: string;
-  type: 'prompt' | 'response' | 'loading' | 'models' | 'reflected-message' | 'command-output' | 'log' | 'tokens-info';
+  type: 'prompt' | 'response' | 'loading' | 'models' | 'reflected-message' | 'command-output' | 'log' | 'tokens-info' | 'tool';
   content: string;
 }
 
@@ -45,6 +45,13 @@ export interface TokensInfoMessage extends Message {
   info: TokensInfoData;
 }
 
+export interface ToolMessage extends Message {
+  type: 'tool';
+  toolName: string;
+  args: Record<string, unknown>;
+  content: '';
+}
+
 export const isPromptMessage = (message: Message): message is PromptMessage => {
   return message.type === 'prompt';
 };
@@ -75,4 +82,8 @@ export const isCommandOutputMessage = (message: Message): message is CommandOutp
 
 export const isTokensInfoMessage = (message: Message): message is TokensInfoMessage => {
   return message.type === 'tokens-info';
+};
+
+export const isToolMessage = (message: Message): message is ToolMessage => {
+  return message.type === 'tool';
 };

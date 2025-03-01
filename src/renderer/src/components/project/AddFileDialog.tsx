@@ -1,9 +1,10 @@
+import { matchSorter } from 'match-sorter';
 import { useState, useEffect } from 'react';
 import { FaFolder } from 'react-icons/fa';
 import { RiCheckboxBlankLine, RiCheckboxFill } from 'react-icons/ri';
-import { matchSorter } from 'match-sorter';
-import { ConfirmDialog } from './ConfirmDialog';
-import { AutocompletionInput } from './AutocompletionInput';
+
+import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { AutocompletionInput } from '@/components/AutocompletionInput';
 
 type Props = {
   baseDir: string;

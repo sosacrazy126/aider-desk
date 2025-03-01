@@ -1,4 +1,4 @@
-import { ModelsMessage } from 'types/message';
+import { ModelsMessage } from '@/types/message';
 
 type Props = {
   message: ModelsMessage;

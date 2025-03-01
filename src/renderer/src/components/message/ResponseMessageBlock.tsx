@@ -1,6 +1,7 @@
-import { ResponseMessage } from 'types/message';
 import { CopyMessageButton } from './CopyMessageButton';
 import { parseMessageContent } from './utils';
+
+import { ResponseMessage } from '@/types/message';
 
 type Props = {
   baseDir: string;

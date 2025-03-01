@@ -1,6 +1,8 @@
-import { LogMessage } from 'types/message';
 import { FaInfoCircle, FaExclamationTriangle, FaExclamationCircle } from 'react-icons/fa';
+
 import { CopyMessageButton } from './CopyMessageButton';
+
+import { LogMessage } from '@/types/message';
 
 type Props = {
   message: LogMessage;

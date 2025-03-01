@@ -1,15 +1,18 @@
-import { BrowserWindow } from 'electron';
-import { parse } from '@dotenvx/dotenvx';
 import { normalizeBaseDir } from '@common/utils';
+import { parse } from '@dotenvx/dotenvx';
+import { BrowserWindow } from 'electron';
+import { McpClient } from 'src/main/mcp-client';
+
+import logger from './logger';
 import { Project } from './project';
 import { DEFAULT_MAIN_MODEL, Store } from './store';
-import logger from './logger';
 
 class ProjectManager {
   private static instance: ProjectManager;
   private projects: Project[] = [];
   private mainWindow: BrowserWindow | null = null;
   private store: Store | null = null;
+  private mcpClient: McpClient | null = null;
 
   private constructor() {}
 
@@ -20,9 +23,10 @@ class ProjectManager {
     return ProjectManager.instance;
   }
 
-  public init(mainWindow: BrowserWindow, store: Store): void {
+  public init(mainWindow: BrowserWindow, store: Store, mcpClient: McpClient): void {
     this.mainWindow = mainWindow;
     this.store = store;
+    this.mcpClient = mcpClient;
   }
 
   private runAiderForProject(project: Project): void {
@@ -36,7 +40,7 @@ class ProjectManager {
       mainModel,
       weakModel,
     });
-    project.runAider(settings.aider.options, environmentVariables, mainModel, weakModel);
+    void project.runAider(settings.aider.options, environmentVariables, mainModel, weakModel);
   }
 
   private findProject(baseDir: string): Project | undefined {
@@ -49,7 +53,7 @@ class ProjectManager {
 
     if (!project) {
       logger.info('Creating new project', { baseDir });
-      project = new Project(this.mainWindow!, this.store!, baseDir);
+      project = new Project(this.mainWindow!, baseDir, this.store!, this.mcpClient!);
       this.projects.push(project);
     }
 

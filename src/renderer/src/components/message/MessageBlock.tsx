@@ -1,3 +1,11 @@
+import { CommandOutputMessageBlock } from './CommandOutputMessageBlock';
+import { LoadingMessageBlock } from './LoadingMessageBlock';
+import { LogMessageBlock } from './LogMessageBlock';
+import { ModelsMessageBlock } from './ModelsMessageBlock';
+import { PromptMessageBlock } from './PromptMessageBlock';
+import { ReflectedMessageBlock } from './ReflectedMessageBlock';
+import { ResponseMessageBlock } from './ResponseMessageBlock';
+
 import {
   isCommandOutputMessage,
   isLogMessage,
@@ -7,14 +15,9 @@ import {
   isReflectedMessage,
   isResponseMessage,
   Message,
-} from 'types/message';
-import { CommandOutputMessageBlock } from './CommandOutputMessageBlock';
-import { LoadingMessageBlock } from './LoadingMessageBlock';
-import { ModelsMessageBlock } from './ModelsMessageBlock';
-import { PromptMessageBlock } from './PromptMessageBlock';
-import { ReflectedMessageBlock } from './ReflectedMessageBlock';
-import { ResponseMessageBlock } from './ResponseMessageBlock';
-import { LogMessageBlock } from './LogMessageBlock';
+  isToolMessage,
+} from '@/types/message';
+import { ToolMessageBlock } from '@/components/message/ToolMessageBlock';
 
 type Props = {
   baseDir: string;
@@ -49,6 +52,10 @@ export const MessageBlock = ({ baseDir, message, allFiles }: Props) => {
 
   if (isResponseMessage(message)) {
     return <ResponseMessageBlock baseDir={baseDir} message={message} allFiles={allFiles} />;
+  }
+
+  if (isToolMessage(message)) {
+    return <ToolMessageBlock message={message} />;
   }
 
   return null;

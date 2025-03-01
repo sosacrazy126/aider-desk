@@ -1,5 +1,6 @@
-import { WindowState, ProjectData, ProjectSettings, SettingsData } from '@common/types';
+import { WindowState, ProjectData, ProjectSettings, SettingsData, McpConfig } from '@common/types';
 import { normalizeBaseDir } from '@common/utils';
+
 import logger from './logger';
 
 export const DEFAULT_MAIN_MODEL = 'gpt-4o';
@@ -11,6 +12,15 @@ const DEFAULT_SETTINGS: SettingsData = {
   },
   models: {
     preferred: ['gpt-4o', 'claude-3-5-sonnet-20241022', 'deepseek/deepseek-coder', 'claude-3-5-haiku-20241022'],
+  },
+  mcpConfig: {
+    provider: 'openai',
+    anthropicApiKey: '',
+    openAiApiKey: '',
+    maxIterations: 10,
+    minTimeBetweenToolCalls: 0,
+    mcpServers: {},
+    disabledServers: [],
   },
 };
 
@@ -27,6 +37,7 @@ interface StoreSchema {
   openProjects: ProjectData[];
   recentProjects: string[]; // baseDir paths of recently closed projects
   settings: SettingsData;
+  mcpConfig?: McpConfig;
 }
 
 interface CustomStore<T> {
@@ -45,7 +56,22 @@ export class Store {
 
   getSettings(): SettingsData {
     const settings = this.store.get('settings');
-    return settings || DEFAULT_SETTINGS;
+    return {
+      ...DEFAULT_SETTINGS,
+      ...settings,
+      aider: {
+        ...DEFAULT_SETTINGS.aider,
+        ...settings?.aider,
+      },
+      models: {
+        ...DEFAULT_SETTINGS.models,
+        ...settings?.models,
+      },
+      mcpConfig: {
+        ...DEFAULT_SETTINGS.mcpConfig,
+        ...settings?.mcpConfig,
+      },
+    };
   }
 
   saveSettings(settings: SettingsData): void {

@@ -2,6 +2,7 @@ import { ModelsData, QuestionData, TokensInfoData } from '@common/types';
 import { BrowserWindow } from 'electron';
 import { Server, Socket } from 'socket.io';
 import { Connector } from 'src/main/connector';
+
 import { SOCKET_PORT } from './constants';
 import logger from './logger';
 import {

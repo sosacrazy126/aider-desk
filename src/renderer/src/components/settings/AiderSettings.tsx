@@ -1,5 +1,8 @@
 import { SettingsData } from '@common/types';
 
+import { Input } from '@/components/common/Input';
+import { TextArea } from '@/components/common/TextArea';
+
 const OPTIONS_PLACEHOLDER = 'e.g. --no-auto-commits --cache-prompts';
 
 const ENV_VARIABLES_PLACEHOLDER = `#################
@@ -23,8 +26,8 @@ export const AiderSettings = ({ settings, setSettings }: Props) => {
   return (
     <>
       <div className="space-y-1">
-        <label className="block text-sm font-medium text-neutral-100">Options</label>
-        <input
+        <Input
+          label="Options"
           type="text"
           value={settings.aider.options}
           spellCheck={false}
@@ -37,7 +40,6 @@ export const AiderSettings = ({ settings, setSettings }: Props) => {
               },
             })
           }
-          className="w-full p-2 bg-neutral-800 border-2 border-neutral-600 rounded focus:outline-none focus:border-neutral-200 text-neutral-100 text-sm placeholder-neutral-500"
           placeholder={OPTIONS_PLACEHOLDER}
         />
         <p className="text-xs text-neutral-200">
@@ -49,8 +51,8 @@ export const AiderSettings = ({ settings, setSettings }: Props) => {
       </div>
 
       <div className="space-y-1 mt-4">
-        <label className="block text-sm font-medium text-neutral-100">Environment Variables</label>
-        <textarea
+        <TextArea
+          label="Environment Variables"
           value={settings.aider.environmentVariables}
           onChange={(e) =>
             setSettings({
@@ -62,7 +64,7 @@ export const AiderSettings = ({ settings, setSettings }: Props) => {
             })
           }
           spellCheck={false}
-          className="w-full p-2 bg-neutral-800 border-2 border-neutral-600 rounded focus:outline-none focus:border-neutral-200 text-neutral-100 min-h-[300px] text-sm placeholder-neutral-500"
+          className="min-h-[300px]"
           placeholder={ENV_VARIABLES_PLACEHOLDER}
         />
         <p className="text-xs text-neutral-400">
