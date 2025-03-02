@@ -1,71 +1,49 @@
-# AiderDesk
+# ✨ AiderDesk
 
-Supercharge your coding workflow with AiderDesk, a sleek desktop application that brings the power of [aider](https://aider.chat) to your fingertips. Say hello to a user-friendly GUI, enhanced with project management, cost tracking, and structured message handling. Effortlessly leverage language models to accelerate your code-related tasks and boost your productivity.
+**Supercharge your coding workflow** with AiderDesk, a sleek desktop application that brings the power of [aider](https://aider.chat) to your fingertips with a modern GUI. Leverage AI to accelerate your coding tasks while enjoying seamless project management, cost tracking, and IDE integration.
 
-## Introduction
+## 🚀 Introduction
 
-Aider, the powerful console-based tool, has long empowered developers with advanced AI capabilities to streamline coding workflows. However, working exclusively in the terminal can sometimes limit accessibility and ease of use. AiderDesk transforms this experience by bringing Aider’s capabilities into a sleek, intuitive desktop application. With AiderDesk, you not only retain all the functionalities of the original console tool but also benefit from a visually enriched environment that simplifies project management, file organization, and cost tracking. Whether you're managing multiple codebases, integrating with popular IDEs, or tracking AI interaction costs, AiderDesk elevates your coding workflow to a new level of efficiency and productivity.
+Transform your AI coding experience with AiderDesk - all the power of the Aider console tool in an intuitive desktop interface. Whether you're managing multiple projects, integrating with your favorite IDE, or tracking costs, AiderDesk elevates your productivity to new heights.
 
-## Key Benefits
 
-*  Intuitive GUI: Replace command-line complexities with a visual interface that is easy to navigate.
-*  Automatic context management: Automatically manage your context files using the connector plugins for [IntellijIDEA](https://plugins.jetbrains.com/plugin/26313-aiderdesk-connector)/[VSCode](https://marketplace.visualstudio.com/items?itemName=hotovo-sk.aider-desk-connector)
-*  Streamlined Project Management: Organize and work on multiple projects effortlessly.
-*  IDE Integration: Automatically manage context files in IntelliJ IDEA and VSCode.
-*  Cost Transparency: Track token usage and associated costs with detailed insights.
-*  Enhanced Collaboration: Quickly copy, share, and review AI-generated code changes with built-in tools.
+## 🎬 Quick Demo
 
-## Quick Demo
+<div align="left">
+  <a href="https://www.youtube.com/watch?v=9JkUwn9rk2g">
+    <img src="https://img.youtube.com/vi/9JkUwn9rk2g/0.jpg" alt="Demo Video" width=400">
+  </a>
+</div>
 
-[![Demo Video](https://img.youtube.com/vi/9JkUwn9rk2g/0.jpg)](https://www.youtube.com/watch?v=9JkUwn9rk2g)
+## ✨ Key Features
 
-## Features
+*   **🖥️ Intuitive GUI** - Replace command-line complexities with a sleek visual interface
+*   **📂 Project Management** - Organize and switch between multiple codebases effortlessly
+*   **🔌 IDE Integration** - Automatically manage context files in:
+    * IntelliJ IDEA ([Plugin](https://plugins.jetbrains.com/plugin/26313-aiderdesk-connector) | [GitHub](https://github.com/hotovo/aider-desk-connector-intellij-plugin))
+    * VSCode ([Extension](https://marketplace.visualstudio.com/items?itemName=hotovo-sk.aider-desk-connector) | [GitHub](https://github.com/hotovo/aider-desk-connector-vscode-extension))
+*   **🧩 MCP Support** - Connect to Model Context Protocol servers for enhanced AI capabilities
+*   **🔑 Settings Management** - Easily configure API keys and environment variables
+*   **💰 Cost Tracking** - Monitor token usage and expenses with detailed insights
+*   **📨 Structured Messages** - View code, prompts, and outputs in a clear, organized manner
+*   **📄 Visual File Management** - Add, remove, and manage context files with ease
+*   **🔄 Model Switching** - Seamlessly switch between different AI models while preserving context
+*   **🔍 Code Diff Viewer** - Review changes with side-by-side comparison
+*   **⏪ One-Click Reverts** - Undo specific AI-generated changes while keeping others
+*   **📋 Easy Sharing** - Copy and share code changes or conversations instantly
 
-This tool provides features you are familiar with from Aider and additionally:
+## 📥 Installation
 
-*   **🖥️ Graphical User Interface (GUI)**
-    *   Enjoy a user-friendly desktop application with a visual interface, replacing the command-line experience.
-*   **📂 Project Management**
-    *   Organize and manage multiple codebases as separate projects, allowing for better context and organization.
-    *   Easily switch between different projects.
-*   **🔌 IDE Integration**
-    *   Seamlessly integrate with IntelliJ IDEA and VSCode to automatically manage context files
-    *   IntelliJ IDEA [Plugin](https://plugins.jetbrains.com/plugin/26313-aiderdesk-connector)/[GitHub](https://github.com/hotovo/aider-desk-connector-intellij-plugin)
-    *   VSCode [Extension](https://marketplace.visualstudio.com/items?itemName=hotovo-sk.aider-desk-connector)/[GitHub](https://github.com/hotovo/aider-desk-connector-vscode-extension)
-*   **🔑 Manage Aider Settings**
-    *   Manage environment variables for model API keys and other aider settings
-*   **💰 Cost Tracking**
-    *   Monitor token usage and costs associated with AI interactions, providing transparency and control over expenses.
-    *   Gain insights into the expenses of using language models.
-*   **📨 Structured Message Handling**
-    *   View different types of messages (code, prompts, responses, logs, command outputs) in a clear and organized manner, enhancing readability and understanding.
-*   **📄 Enhanced File Management**
-    *   Visually add, remove, and manage files within the project context, providing more control over the AI's context.
-*   **🔄 Flexible Model Switching**
-    *   Easily switch between different language models during a single session
-    *   Maintain conversation context when switching models
-*   **🔍 Code Diff Viewer**
-    *   Easily review AI-generated code changes with an integrated diff viewer
-    *   Side-by-side comparison of original and modified code
-*   **⏪ Revert Changes**
-    *   Undo specific AI-generated changes with a single click
-    *   Revert changes that don't meet your expectations while keeping other modifications
-*   **📋 Copy and Share**
-    *   Quickly copy messages or code changes to clipboard with a single click
-    *   Share specific code changes or conversations with team members
-
-## Installation
-
-### Requirements
+### 📋 Requirements
 - Python 3.9-3.12 installed on your system
 
-### Quick Start
+### 🚀 Quick Start
 1. Download the latest release for your platform from [Releases](https://github.com/hotovo/aider-desk/releases)
 2. Run the downloaded executable
 
-### Troubleshooting
+### 🔧 Troubleshooting
 
-#### Python Version Detection
+#### 🐍 Python Version Detection
 
 If you encounter issues with the application not detecting the correct Python version, you can specify the path to the desired Python executable using the `AIDER_DESK_PYTHON` environment variable. This is typically only needed on the initial run/setup of AiderDesk.
 
@@ -83,54 +61,70 @@ $env:AIDER_DESK_PYTHON = "C:\Path\To\Python310\python.exe"
 
 Replace `/usr/bin/python3.10` or `C:\Path\To\Python310\python.exe` with the actual path to your Python executable.
 
-## Screenshots
+## 📸 Screenshots
 
-### Aider Desk Interface
-![Aider Desk](docs/images/aider-desk.png)
+<div align="center">
 
-*Main application interface showing the chat interface, file management, and project overview*
+### 🖥️ Aider Desk Interface
+<img src="docs/images/aider-desk.png" alt="Aider Desk" width="800"/>
+<p><em>Main application interface showing the chat interface, file management, and project overview</em></p>
 
-### Configuration
-![Configuration](docs/images/settings.png)
+### ⚙️ Configuration
+<img src="docs/images/settings.png" alt="Configuration" width="800"/>
+<p><em>Aider settings and preferences</em></p>
 
-*Aider settings and preferences*
+### 📂 Multiple Project Management
+<img src="docs/images/multiple-projects.gif" alt="Multiple Projects" width="800"/>
+<p><em>Manage and switch between multiple projects</em></p>
 
-### Multiple Project Management
-![Multiple Projects](docs/images/multiple-projects.gif)
+### 📄 Context File Management
+<img src="docs/images/contex-files.png" alt="Context Files" width="200"/>
+<p><em>Manage files included in the AI context</em></p>
 
-*Manage and switch between multiple projects*
+### 🔄 Model Switching Interface
+<img src="docs/images/model-selector.gif" alt="Model Switching" width="800"/>
+<p><em>Switch between different models</em></p>
 
-### Context File Management
-![Context Files](docs/images/contex-files.png)
+### 💬 Chat Mode Selection
+<img src="docs/images/chat-modes.gif" alt="Chat Modes" width="800"/>
+<p><em>Switch between different chat modes</em></p>
 
-*Manage files included in the AI context*
+### 🤖 Question Answering and Commands
+<img src="docs/images/commands.gif" alt="Commands" width="800"/>
+<p><em>Answer questions and run commands</em></p>
 
-### Model Switching Interface
-![Model Switching](docs/images/model-selector.gif)
+### 🔍 Code Diff Viewer
+<img src="docs/images/code-diff.png" alt="Code Diff" width="600"/>
+<p><em>Side-by-side code comparison and diff viewer</em></p>
 
-*Switch between different models*
+### 💰 Cost Tracking
+<img src="docs/images/cost-tracking.png" alt="Cost Tracking" width="300"/>
+<p><em>Token usage and cost tracking for session per project</em></p>
 
-### Chat Mode Selection
-![Chat Modes](docs/images/chat-modes.gif)
+### 🧩 MCP Server Integration
+<img src="docs/images/mcp-servers.gif" alt="MCP Servers" width="800"/>
+<p><em>Configure and manage Model Context Protocol servers for enhanced AI capabilities</em></p>
 
-*Switch between different chat modes*
+</div>
 
-### Question answering and commands running support
-![Commands](docs/images/commands.gif)
+## 🧩 Model Context Protocol (MCP) Support (Experimental)
 
-*Answer questions and run commands*
+AiderDesk integrates with the [Model Context Protocol](https://github.com/model-context-protocol/mcp) (MCP), enhancing your coding workflow with external tools and context:
 
-### Code Diff Viewer
-![Code Diff](docs/images/code-diff.png)
+### What is MCP?
 
-*Side-by-side code comparison and diff viewer*
+MCP connects AI models to external tools like web browsers, documentation systems, and specialized programming utilities. AiderDesk can use these tools to gather information, then pass the results to Aider for implementing actual code changes.
 
-### Cost Tracking
-![Cost Tracking](docs/images/cost-tracking.png)
+### Key Features:
 
-*Token usage and cost tracking for session per project*
+- **Tool Integration**: Connect to browsers (like Brave), documentation systems, and language-specific tools
+- **Provider Options**: Choose between OpenAI and Anthropic models
+- **Flexible Configuration**: Enable/disable servers, customize settings, and control usage
+- **Seamless Workflow**: MCP tools gather information, then Aider implements the code changes
 
-## Development Setup
+AiderDesk should work with any MCP-compatible server, including Brave Browser and custom language-specific tools.
+
+## 👨‍💻 Development Setup
 If you want to run from source, you can follow these steps:
 
 ```bash
@@ -155,7 +149,7 @@ $ npm run build:mac
 $ npm run build:linux
 ```
 
-## Contributing
+## 🤝 Contributing
 
 We welcome contributions from the community! Here's how you can help improve aider-desk:
 
