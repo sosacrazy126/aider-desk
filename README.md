@@ -101,13 +101,13 @@ Replace `/usr/bin/python3.10` or `C:\Path\To\Python310\python.exe` with the actu
 <img src="docs/images/cost-tracking.png" alt="Cost Tracking" width="300"/>
 <p><em>Token usage and cost tracking for session per project</em></p>
 
-### 🧩 MCP Server Integration
+### 🛠️ MCP Server Integration
 <img src="docs/images/mcp-servers.gif" alt="MCP Servers" width="800"/>
 <p><em>Configure and manage Model Context Protocol servers for enhanced AI capabilities</em></p>
 
 </div>
 
-## 🧩 Model Context Protocol (MCP) Support (Experimental)
+## 🛠️ Model Context Protocol (MCP) Support (Experimental)
 
 AiderDesk integrates with the [Model Context Protocol](https://github.com/model-context-protocol/mcp) (MCP), enhancing your coding workflow with external tools and context:
 
@@ -117,12 +117,12 @@ MCP connects AI models to external tools like web browsers, documentation system
 
 ### Key Features:
 
-- **Tool Integration**: Connect to browsers (like Brave), documentation systems, and language-specific tools
+- **Tool Integration**: Connect to browsers, documentation systems, and language-specific tools
 - **Provider Options**: Choose between OpenAI and Anthropic models
 - **Flexible Configuration**: Enable/disable servers, customize settings, and control usage
 - **Seamless Workflow**: MCP tools gather information, then Aider implements the code changes
 
-AiderDesk should work with any MCP-compatible server, including Brave Browser and custom language-specific tools.
+AiderDesk should work with any MCP-compatible server, including Brave API MCP server for searching the web and custom language-specific tools.
 
 ## 👨‍💻 Development Setup
 If you want to run from source, you can follow these steps:
