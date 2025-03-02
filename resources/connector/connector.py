@@ -559,6 +559,15 @@ class Connector:
     await self.send_tokens_info()
 
   async def run_command(self, command):
+    if command == "/map":
+      repo_map = self.coder.get_repo_map()
+      await asyncio.sleep(0.1)
+      if repo_map:
+        await self.send_log_message("info", repo_map)
+      else:
+        await self.send_log_message("info", "No repo map available.")
+      return
+
     if command.startswith("/test"):
       self.coder.io.running_shell_command = True
       self.coder.io.tool_output("Running " + command[6:])
@@ -573,7 +582,9 @@ class Connector:
       await self.send_tokens_info()
     elif command.startswith("/map-refresh"):
       await asyncio.sleep(0.1)
+      await self.send_log_message("info", "The repo map has been refreshed.")
       await self.send_autocompletion()
+
 
   async def send_autocompletion(self):
     try:

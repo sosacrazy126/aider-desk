@@ -29,7 +29,7 @@ const PLACEHOLDERS = [
 ];
 
 const COMMANDS = ['/code', '/ask', '/architect', '/add', '/model', '/read-only'];
-const CONFIRM_COMMANDS = ['/clear', '/web', '/undo', '/test'];
+const CONFIRM_COMMANDS = ['/clear', '/web', '/undo', '/test', '/map-refresh', '/map'];
 
 const ANSWERS = ['y', 'n', 'a', 'd'];
 
@@ -53,7 +53,7 @@ type Props = {
   question?: QuestionData | null;
   answerQuestion?: (answer: string) => void;
   interruptResponse: () => void;
-  undoCommit: () => void;
+  runCommand: (command: string) => void;
   runTests: (testCmd?: string) => void;
   disabled?: boolean;
 };
@@ -75,7 +75,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
       question,
       answerQuestion,
       interruptResponse,
-      undoCommit,
+      runCommand,
       runTests,
       openModelSelector,
       disabled = false,
@@ -145,13 +145,13 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
             setText('');
             clearMessages();
             break;
-          case '/undo':
-            setText('');
-            undoCommit();
-            break;
           case '/test': {
-            console.log('ARRGS: ' + args);
             runTests(args);
+            break;
+          }
+          default: {
+            setText('');
+            runCommand(command.slice(1));
             break;
           }
         }

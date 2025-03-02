@@ -317,19 +317,16 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
     const lastModelsMessage = messages.filter((message) => message.type === 'models').pop();
     setMessages(lastModelsMessage ? [lastModelsMessage] : []);
     setProcessing(false);
+    processingMessageRef.current = null;
     window.api.runCommand(project.baseDir, 'clear');
   };
 
-  const refreshRepositoryMap = () => {
-    window.api.runCommand(project.baseDir, 'map-refresh');
-  };
-
-  const undoCommit = () => {
-    window.api.runCommand(project.baseDir, 'undo');
+  const runCommand = (command: string) => {
+    window.api.runCommand(project.baseDir, command);
   };
 
   const runTests = (testCmd?: string) => {
-    window.api.runCommand(project.baseDir, `test ${testCmd || ''}`);
+    runCommand(`test ${testCmd || ''}`);
   };
 
   const answerQuestion = (answer: string) => {
@@ -461,7 +458,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
             question={question}
             answerQuestion={answerQuestion}
             interruptResponse={handleInterruptResponse}
-            undoCommit={undoCommit}
+            runCommand={runCommand}
             runTests={runTests}
             openModelSelector={() => projectTopBarRef.current?.openMainModelSelector()}
             disabled={!modelsData}
@@ -494,7 +491,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
             lastMessageCost={lastMessageCost}
             mcpToolsCost={mcpToolsCost}
             clearMessages={clearMessages}
-            refreshRepoMap={refreshRepositoryMap}
+            refreshRepoMap={() => runCommand('map-refresh')}
             restartProject={restartProject}
           />
         </div>
