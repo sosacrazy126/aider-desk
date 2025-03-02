@@ -104,7 +104,7 @@ export class Project {
 
   public async runAider(options: string, environmentVariables: Record<string, string>, mainModel: string, weakModel?: string | null): Promise<void> {
     if (this.process) {
-      return;
+      await this.killAider();
     }
 
     await this.checkAndCleanupPidFile();
