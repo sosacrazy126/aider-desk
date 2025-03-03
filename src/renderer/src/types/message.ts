@@ -49,7 +49,7 @@ export interface ToolMessage extends Message {
   type: 'tool';
   toolName: string;
   args: Record<string, unknown>;
-  content: '';
+  content: string; // Empty while executing, contains result when complete
 }
 
 export const isPromptMessage = (message: Message): message is PromptMessage => {

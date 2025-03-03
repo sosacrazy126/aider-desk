@@ -34,7 +34,8 @@ export interface LogData {
 export interface ToolData {
   baseDir: string;
   name: string;
-  args: Record<string, unknown>;
+  args?: Record<string, unknown>;
+  response?: string;
   usageReport?: UsageReportData;
 }
 

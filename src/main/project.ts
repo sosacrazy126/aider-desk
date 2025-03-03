@@ -493,12 +493,13 @@ export class Project {
     this.findMessageConnectors('apply-edits').forEach((connector) => connector.sendApplyEditsMessage(edits));
   }
 
-  public sendToolMessage(name: string, args: Record<string, unknown>, usageReport?: UsageReportData) {
-    logger.info('Sending tool message:', { baseDir: this.baseDir, name, args, usageReport });
+  public sendToolMessage(name: string, args?: Record<string, unknown>, response?: string, usageReport?: UsageReportData) {
+    logger.info('Sending tool message:', { baseDir: this.baseDir, name, args, response, usageReport });
     const data: ToolData = {
       baseDir: this.baseDir,
       name,
       args,
+      response,
       usageReport,
     };
     this.mainWindow!.webContents.send('tool', data);

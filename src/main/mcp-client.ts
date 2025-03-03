@@ -197,11 +197,11 @@ export class McpClient {
 
   async runPrompt(project: Project, prompt: string): Promise<string | null> {
     const { mcpConfig } = this.store.getSettings();
-    logger.info('McpConfig:', mcpConfig);
+    logger.debug('McpConfig:', mcpConfig);
     // Get MCP server tools
     const mcpServerTools = this.clients
       .filter((clientHolder) => !mcpConfig.disabledServers.includes(clientHolder.serverName))
-      .flatMap((clientHolder) => clientHolder.tools.map((tool) => convertMpcToolToLangchainTool(clientHolder.client, tool)));
+      .flatMap((clientHolder) => clientHolder.tools.map((tool) => convertMpcToolToLangchainTool(project, clientHolder.client, tool)));
 
     if (!mcpServerTools.length) {
       logger.info('No tools found for prompt, returning original prompt');
@@ -212,7 +212,7 @@ export class McpClient {
     const aiderTool = createAiderTool();
     const allTools = [...mcpServerTools, aiderTool];
 
-    logger.info('Running prompt with tools:', {
+    logger.debug('Running prompt with tools:', {
       prompt,
       tools: allTools.map((tool) => tool.name),
     });
@@ -237,7 +237,7 @@ export class McpClient {
 
       while (iteration < mcpConfig.maxIterations) {
         iteration++;
-        logger.info(`Running prompt iteration ${iteration}`, { messages });
+        logger.debug(`Running prompt iteration ${iteration}`, { messages });
 
         // Get LLM response which may contain tool calls
         const aiMessage = await llmWithTools.invoke(messages);
@@ -279,10 +279,10 @@ export class McpClient {
             return prompt;
           }
 
-          logger.info('Aider tool called. Sending prompt to Aider.');
+          logger.debug('Aider tool called. Sending prompt to Aider.');
           // If Aider tool is called, use its prompt as the response
           const aiderPrompt = aiderToolCall.args.prompt as string;
-          project.sendToolMessage('aider', { prompt: aiderPrompt }, usageReport);
+          project.sendToolMessage('aider', { prompt: aiderPrompt }, undefined, usageReport);
 
           return aiderPrompt;
         }
@@ -310,7 +310,7 @@ export class McpClient {
 
           const toolResponse = await selectedTool.invoke(toolCall);
 
-          logger.info(`Tool ${toolCall.name} returned response`, { toolResponse });
+          logger.debug(`Tool ${toolCall.name} returned response`, { toolResponse });
           if (!toolResponse) {
             logger.warn(`Tool ${toolCall.name} didn't return a response`);
             return null;
@@ -340,7 +340,7 @@ export class McpClient {
 
   private async initMcpClient(serverName: string, serverConfig: McpServerConfig): Promise<ClientHolder> {
     logger.info(`Initializing MCP client for server: ${serverName}`);
-    logger.info(`Server configuration: ${JSON.stringify(serverConfig)}`);
+    logger.debug(`Server configuration: ${JSON.stringify(serverConfig)}`);
 
     // NOTE: Some servers (e.g. Brave) seem to require PATH to be set.
     const env = { ...serverConfig.env };
@@ -368,14 +368,14 @@ export class McpClient {
       },
     );
 
-    logger.info(`Connecting to MCP server: ${serverName}`);
+    logger.debug(`Connecting to MCP server: ${serverName}`);
     await client.connect(transport);
-    logger.info(`Connected to MCP server: ${serverName}`);
+    logger.debug(`Connected to MCP server: ${serverName}`);
 
     // Get tools from this server
-    logger.info(`Fetching tools for MCP server: ${serverName}`);
+    logger.debug(`Fetching tools for MCP server: ${serverName}`);
     const tools = (await client.listTools()) as unknown as { tools: McpTool[] };
-    logger.info(`Found ${tools.tools.length} tools for MCP server: ${serverName}`);
+    logger.debug(`Found ${tools.tools.length} tools for MCP server: ${serverName}`);
 
     const clientHolder: ClientHolder = {
       client,
@@ -391,7 +391,7 @@ export class McpClient {
   }
 }
 
-const convertMpcToolToLangchainTool = (client: Client, toolDef: McpTool): StructuredTool => {
+const convertMpcToolToLangchainTool = (project: Project, client: Client, toolDef: McpTool): StructuredTool => {
   return tool(
     async (params: unknown) => {
       const response = await client.callTool({
@@ -399,20 +399,30 @@ const convertMpcToolToLangchainTool = (client: Client, toolDef: McpTool): Struct
         arguments: params as Record<string, unknown>,
       });
 
-      logger.info(`Tool ${toolDef.name} returned response`, { response });
+      logger.debug(`Tool ${toolDef.name} returned response`, { response });
 
-      if (!response?.content) {
-        return null;
-      } else if (Array.isArray(response.content)) {
-        return (
-          response.content
-            .filter(isTextContent)
-            .map((textContent) => (typeof textContent === 'string' ? textContent : textContent.text))
-            .join('\n\n') ?? null
-        );
-      } else {
-        return response.content;
+      const extractContent = (response) => {
+        if (!response?.content) {
+          return null;
+        } else if (Array.isArray(response.content)) {
+          return (
+            response.content
+              .filter(isTextContent)
+              .map((textContent) => (typeof textContent === 'string' ? textContent : textContent.text))
+              .join('\n\n') ?? null
+          );
+        } else {
+          return response.content;
+        }
+      };
+
+      const content = extractContent(response);
+
+      if (content) {
+        project.sendToolMessage(toolDef.name, undefined, content);
       }
+
+      return content;
     },
     {
       name: toolDef.name,

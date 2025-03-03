@@ -2,6 +2,8 @@
 
 ## [0.3.2]
 
+- added result of MCP tool to the tool message
+
 ## [0.3.1]
 
 - using python executable to install packages instead of pip

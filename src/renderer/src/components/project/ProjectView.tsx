@@ -20,6 +20,7 @@ import {
   CommandOutputMessage,
   isCommandOutputMessage,
   isLoadingMessage,
+  isToolMessage,
   LoadingMessage,
   LogMessage,
   Message,
@@ -181,13 +182,13 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
       });
     };
 
-    const handleTool = (_: IpcRendererEvent, { name, args, usageReport }: ToolData) => {
+    const handleTool = (_: IpcRendererEvent, { name, args, response, usageReport }: ToolData) => {
       if (name === 'aider') {
         const promptMessage: PromptMessage = {
           id: uuidv4(),
           type: 'prompt',
           editFormat: 'code',
-          content: args.prompt as string,
+          content: args!.prompt as string,
         };
         setMessages((prevMessages) => {
           const loadingMessages = prevMessages.filter(isLoadingMessage);
@@ -197,7 +198,24 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
         if (usageReport) {
           setMcpToolsCost((prev) => prev + (usageReport.mcpToolsCost ?? 0));
         }
-      } else {
+      } else if (response) {
+        // update the last tool message with the response
+        setMessages((prevMessages) => {
+          const lastToolMessage = prevMessages.findLast((message) => isToolMessage(message) && message.toolName === name);
+
+          return prevMessages.map((message) => {
+            if (message === lastToolMessage) {
+              return {
+                ...message,
+                content: response,
+              };
+            } else {
+              return message;
+            }
+          });
+        });
+      } else if (args) {
+        // create a tool message with the args
         const toolMessage: ToolMessage = {
           id: uuidv4(),
           type: 'tool',
