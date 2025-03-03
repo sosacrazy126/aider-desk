@@ -63,18 +63,18 @@ Replace `/usr/bin/python3.10` or `C:\Path\To\Python310\python.exe` with the actu
 
 #### 🚫 Disabling Auto Updates
 
-If you want to disable automatic updates, you can set the `NO_AUTO_UPDATE` environment variable to `true`. This is useful in environments where you want to control when updates are applied.
+If you want to disable automatic updates, you can set the `AIDER_DESK_NO_AUTO_UPDATE` environment variable to `true`. This is useful in environments where you want to control when updates are applied.
 
 For example, on macOS or Linux:
 
 ```bash
-export NO_AUTO_UPDATE=true
+export AIDER_DESK_NO_AUTO_UPDATE=true
 ```
 
 Or on Windows:
 
 ```powershell
-$env:NO_AUTO_UPDATE = "true"
+$env:AIDER_DESK_NO_AUTO_UPDATE = "true"
 ```
 
 ## 📸 Screenshots

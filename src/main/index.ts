@@ -88,7 +88,7 @@ app.whenReady().then(async () => {
     optimizer.watchWindowShortcuts(window);
   });
 
-  if (!is.dev && process.env.NO_AUTO_UPDATE !== 'true') {
+  if (!is.dev && process.env.AIDER_DESK_NO_AUTO_UPDATE !== 'true') {
     setupAutoUpdater();
     await checkForUpdates();
   }
