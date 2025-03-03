@@ -88,7 +88,7 @@ app.whenReady().then(async () => {
     optimizer.watchWindowShortcuts(window);
   });
 
-  if (!is.dev) {
+  if (!is.dev && process.env.NO_AUTO_UPDATE !== 'true') {
     setupAutoUpdater();
     await checkForUpdates();
   }
