@@ -57,6 +57,9 @@ module.exports = {
       animation: {
         'fade-in': 'fade-in 0.3s ease-out',
       },
+      backgroundImage: {
+        'slider-track': 'linear-gradient(to right, var(--slider-filled-color) 0%, var(--slider-filled-color) var(--slider-percentage), var(--slider-empty-color) var(--slider-percentage), var(--slider-empty-color) 100%)',
+      },
     },
     fontSize: {
       xxs: '0.7rem',
@@ -75,5 +78,22 @@ module.exports = {
   },
   plugins: [
     require('tailwind-scrollbar')({ nocompatible: true }),
+    function({ addBase, theme }) {
+      const extractColorVars = (colorObj, colorGroup = '') => {
+        return Object.keys(colorObj).reduce((vars, colorKey) => {
+          const value = colorObj[colorKey];
+
+          const newVars = typeof value === 'string'
+            ? { [`--tw-color${colorGroup}-${colorKey}`]: value }
+            : extractColorVars(value, `-${colorKey}`);
+
+          return { ...vars, ...newVars };
+        }, {});
+      };
+
+      addBase({
+        ':root': extractColorVars(theme('colors')),
+      });
+    },
   ],
 };

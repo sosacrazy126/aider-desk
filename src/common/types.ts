@@ -118,6 +118,7 @@ export interface McpConfig {
     [key: string]: McpServerConfig;
   };
   disabledServers: string[];
+  systemPrompt: string;
 }
 
 export interface UsageReportData {

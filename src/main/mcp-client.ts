@@ -14,22 +14,6 @@ import logger from './logger';
 import { Store } from './store';
 import { Project } from './project';
 
-const MCP_TOOLS_SYSTEM_PROMPT = `
-  You can use tools available to get context related to <OriginalPrompt>. Don't force any tools, if not specifically mentioned to use some tool.
-
-  IMPORTANT RULE FOR 'aider' TOOL:
-  - The 'aider' tool is SPECIFICALLY for performing coding tasks on various programming languages.
-  - STRICTLY FORBIDDEN: Do NOT mention ANY programming language names (like Python, JavaScript, Java, C++, etc.) in the prompt.
-  - Do NOT reference language-specific features, libraries, or syntax in the prompt other than those in the <OriginalPrompt>.
-  - When a coding task is required, ALWAYS use the Aider tool as the FINAL response.
-  - After using the Aider tool, NO further responses are allowed.
-  - The Aider tool's prompt should contain the complete instructions for the coding task based on the <OriginalPrompt>.
-  - Do NOT suggest implementation details specific to any programming language.
-  - Do NOT post any code with the task - use only natural language to describe task if not mentioned in the <OriginalPrompt>.
-
-  Never ask any additional questions.
-`;
-
 const PROVIDER_MODELS = {
   openai: 'gpt-4o-mini',
   anthropic: 'claude-3-7-sonnet-20250219',
@@ -224,7 +208,7 @@ export class McpClient {
         toolsByName[tool.name] = tool;
       });
 
-      const messages = [new SystemMessage(MCP_TOOLS_SYSTEM_PROMPT), new HumanMessage(`<OriginalPrompt>${prompt}</OriginalPrompt>`)];
+      const messages = [new SystemMessage(mcpConfig.systemPrompt), new HumanMessage(`<OriginalPrompt>${prompt}</OriginalPrompt>`)];
       const usageReport: UsageReportData = {
         sentTokens: 0,
         receivedTokens: 0,

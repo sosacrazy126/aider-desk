@@ -10,6 +10,7 @@ import { Input } from '@/components/common/Input';
 import { Button } from '@/components/common/Button';
 import { Slider } from '@/components/common/Slider';
 import { InfoIcon } from '@/components/common/InfoIcon';
+import { TextArea } from '@/components/common/TextArea';
 
 type Props = {
   settings: SettingsData;
@@ -61,6 +62,14 @@ export const McpSettings = ({ settings, setSettings }: Props) => {
     setSettings({ ...settings, mcpConfig: updatedMcpConfig });
   };
 
+  const handleSystemPromptChanged = (newSystemPrompt: string) => {
+    const updatedMcpConfig = {
+      ...settings.mcpConfig,
+      systemPrompt: newSystemPrompt,
+    };
+    setSettings({ ...settings, mcpConfig: updatedMcpConfig });
+  };
+
   const handleServerConfigSave = (newServerName: string, newServerConfig: McpServerConfig) => {
     const updatedMcpServers = {
       ...settings.mcpConfig.mcpServers,
@@ -99,63 +108,75 @@ export const McpSettings = ({ settings, setSettings }: Props) => {
         />
       ) : (
         <>
-          <div>
-            <Select
-              label="Provider"
-              value={mcpConfig.provider}
-              onChange={(value) => handleProviderChanged(value as 'openai' | 'anthropic')}
-              options={[
-                { value: 'openai', label: 'OpenAI' },
-                { value: 'anthropic', label: 'Anthropic' },
-              ]}
-            />
-          </div>
-          <div className="mt-2">
-            <Input
-              label="API Key"
-              type="password"
-              value={mcpConfig.provider === 'openai' ? mcpConfig.openAiApiKey : mcpConfig.anthropicApiKey}
-              onChange={(e) => handleApiKeyChanged(e.target.value)}
-              className="w-full p-2 border rounded"
-            />
-          </div>
-          <div className="mt-4 flex space-x-8">
+          <div className="flex space-x-4">
             <div className="flex-1">
-              <Slider
-                label={
-                  <div className="flex items-center">
-                    <span>Max Iterations</span>
-                    <InfoIcon className="ml-1" tooltip="Maximum number of iterations for MCP tool calls. Helps control computational resources." />
-                  </div>
-                }
-                min={1}
-                max={20}
-                value={mcpConfig.maxIterations}
-                onChange={handleMaxIterationsChanged}
+              <div>
+                <Select
+                  label="Provider"
+                  value={mcpConfig.provider}
+                  onChange={(value) => handleProviderChanged(value as 'openai' | 'anthropic')}
+                  options={[
+                    { value: 'openai', label: 'OpenAI' },
+                    { value: 'anthropic', label: 'Anthropic' },
+                  ]}
+                />
+              </div>
+              <div className="mt-2">
+                <Input
+                  label="API Key"
+                  type="password"
+                  value={mcpConfig.provider === 'openai' ? mcpConfig.openAiApiKey : mcpConfig.anthropicApiKey}
+                  onChange={(e) => handleApiKeyChanged(e.target.value)}
+                  className="w-full p-2 border rounded"
+                />
+              </div>
+              <div className="mt-4">
+                <Slider
+                  label={
+                    <div className="flex items-center">
+                      <span>Max Iterations</span>
+                      <InfoIcon className="ml-1" tooltip="Maximum number of iterations for MCP tool calls. Helps control computational resources." />
+                    </div>
+                  }
+                  min={1}
+                  max={20}
+                  value={mcpConfig.maxIterations}
+                  onChange={handleMaxIterationsChanged}
+                />
+              </div>
+              <div className="mt-4">
+                <Input
+                  label={
+                    <div className="flex items-center">
+                      <span>Min Time Between Tool Calls (ms)</span>
+                      <InfoIcon
+                        className="ml-1"
+                        tooltip="Sets the minimum time between tool calls to prevent rate limiting (e.g., for Brave or other API-constrained services)."
+                      />
+                    </div>
+                  }
+                  type="number"
+                  min={0}
+                  max={10000}
+                  step={100}
+                  value={mcpConfig.minTimeBetweenToolCalls.toString()}
+                  onChange={(e) => handleDelayBetweenIterationsChanged(Number(e.target.value))}
+                />
+              </div>
+            </div>
+            <div className="flex-1 flex flex-col">
+              <TextArea
+                label="System Prompt"
+                value={mcpConfig.systemPrompt}
+                onChange={(e) => handleSystemPromptChanged(e.target.value)}
+                rows={5}
+                className="flex-grow resize-none"
               />
             </div>
-            <div className="flex-1">
-              <Input
-                label={
-                  <div className="flex items-center">
-                    <span>Min Time Between Tool Calls (ms)</span>
-                    <InfoIcon
-                      className="ml-1"
-                      tooltip="Sets the minimum time between tool calls to prevent rate limiting (e.g., for Brave or other API-constrained services)."
-                    />
-                  </div>
-                }
-                type="number"
-                min={0}
-                max={10000}
-                step={100}
-                value={mcpConfig.minTimeBetweenToolCalls.toString()}
-                onChange={(e) => handleDelayBetweenIterationsChanged(Number(e.target.value))}
-              />
-            </div>
           </div>
+          {/* Removed the Max Iterations section as it's now in the first column */}
           <div className="mt-4">
-            <h3 className="text-sm font-semibold mb-2">MCP Servers</h3>
+            <h3 className="text-sm font-semibold mb-2 mt-4">MCP Servers</h3>
             {Object.keys(mcpConfig.mcpServers).length === 0 ? (
               <div className="text-xs text-gray-500 mb-2">No MCP servers configured.</div>
             ) : (

@@ -21,6 +21,20 @@ const DEFAULT_SETTINGS: SettingsData = {
     minTimeBetweenToolCalls: 0,
     mcpServers: {},
     disabledServers: [],
+    systemPrompt: `You can use tools available to get context related to <OriginalPrompt>. Do NOT force any tools, if not specifically mentioned to use some tool.
+
+IMPORTANT RULE FOR 'aider' TOOL:
+- The 'aider' tool is SPECIFICALLY for performing coding tasks on various programming languages.
+- STRICTLY FORBIDDEN: Do NOT mention ANY programming language names (like Python, JavaScript, Java, C++, etc.) in the prompt.
+- Do NOT reference language-specific features, libraries, or syntax in the prompt other than those in the <OriginalPrompt>.
+- When a coding task is required, use the Aider tool as the FINAL response, when no other tool is available to perform such task.
+- Do NOT use Aider tool when there is other tool that can perform the coding task.
+- After using the Aider tool, NO further responses are allowed.
+- The Aider tool's prompt should contain the complete instructions for the coding task based on the <OriginalPrompt>.
+- Do NOT suggest implementation details specific to any programming language.
+- Do NOT post any code with the task - use only natural language to describe task if not mentioned in the <OriginalPrompt>.
+
+Never ask any additional questions.`,
   },
 };
 

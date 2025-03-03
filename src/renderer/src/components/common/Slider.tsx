@@ -31,7 +31,14 @@ export const Slider = ({ label, min, max, step = 1, value, onChange, className =
         step={step}
         value={value}
         onChange={handleChange}
-        className="w-full h-2 bg-neutral-700 rounded-lg appearance-none cursor-pointer accent-neutral-500"
+        className="w-full h-2 bg-neutral-700 rounded-lg appearance-none cursor-pointer accent-neutral-200 transition-colors bg-slider-track"
+        style={
+          {
+            '--slider-percentage': `${((value - min) / (max - min)) * 100}%`,
+            '--slider-filled-color': 'var(--tw-color-neutral-500)',
+            '--slider-empty-color': 'var(--tw-color-neutral-700)',
+          } as React.CSSProperties
+        }
       />
     </div>
   );
