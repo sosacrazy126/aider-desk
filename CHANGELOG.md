@@ -5,6 +5,7 @@
 - added result of MCP tool to the tool message
 - updated Claude model to 3.7 in default preferred list of models
 - system prompt for MCP agent can be now configured in settings
+- fixed prompt field focus issue after model selection
 
 ## [0.3.1]
 

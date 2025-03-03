@@ -173,10 +173,10 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
     }, [processing, baseDir]);
 
     useEffect(() => {
-      if (isActive && inputRef.current) {
+      if (!disabled && isActive && inputRef.current) {
         inputRef.current.focus();
       }
-    }, [isActive]);
+    }, [isActive, disabled]);
 
     useEffect(() => {
       const commandMatch = COMMANDS.find((cmd) => text.startsWith(cmd));
