@@ -17,6 +17,7 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, store: Store, mcpCli
   ipcMain.handle('save-settings', (_, settings: SettingsData) => {
     store.saveSettings(settings);
     void mcpClient.init();
+    return store.getSettings();
   });
 
   ipcMain.on('send-prompt', (_, baseDir: string, prompt: string, editFormat?: EditFormat) => {

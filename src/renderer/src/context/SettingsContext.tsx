@@ -9,20 +9,21 @@ type SettingsContextType = {
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 export const SettingsProvider = ({ children }: { children: ReactNode }) => {
-  const [settings, setSettingsState] = useState<SettingsData | null>(null);
+  const [settings, setSettings] = useState<SettingsData | null>(null);
 
   useEffect(() => {
     const loadSettings = async () => {
       const loadedSettings = await window.api.loadSettings();
-      setSettingsState(loadedSettings);
+      setSettings(loadedSettings);
     };
     void loadSettings();
   }, []);
 
   const saveSettings = async (updated: SettingsData) => {
     try {
-      setSettingsState(updated);
-      await window.api.saveSettings(updated);
+      setSettings(updated);
+      const updatedSettings = await window.api.saveSettings(updated);
+      setSettings(updatedSettings);
     } catch (error) {
       console.error('Failed to save settings:', error);
     }

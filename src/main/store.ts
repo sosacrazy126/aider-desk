@@ -84,6 +84,8 @@ export class Store {
       mcpConfig: {
         ...DEFAULT_SETTINGS.mcpConfig,
         ...settings?.mcpConfig,
+        // use the default system prompt if the user hasn't set one
+        systemPrompt: settings?.mcpConfig?.systemPrompt || DEFAULT_SETTINGS.mcpConfig.systemPrompt,
       },
     };
   }

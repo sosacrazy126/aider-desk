@@ -15,7 +15,7 @@ import type { ElectronAPI } from '@electron-toolkit/preload';
 
 export interface ApplicationAPI {
   loadSettings: () => Promise<SettingsData>;
-  saveSettings: (settings: SettingsData) => Promise<void>;
+  saveSettings: (settings: SettingsData) => Promise<SettingsData>;
   startProject: (baseDir: string) => void;
   stopProject: (baseDir: string) => void;
   restartProject: (baseDir: string) => void;
