@@ -1,5 +1,7 @@
 # Changelog
 
+## [0.3.2]
+
 ## [0.3.1]
 
 - using python executable to install packages instead of pip
