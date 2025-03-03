@@ -11,7 +11,7 @@ const DEFAULT_SETTINGS: SettingsData = {
     environmentVariables: '',
   },
   models: {
-    preferred: ['gpt-4o', 'claude-3-5-sonnet-20241022', 'deepseek/deepseek-coder', 'claude-3-5-haiku-20241022'],
+    preferred: ['gpt-4o', 'claude-3-7-sonnet-20250219', 'deepseek/deepseek-coder', 'claude-3-5-haiku-20241022'],
   },
   mcpConfig: {
     provider: 'openai',
