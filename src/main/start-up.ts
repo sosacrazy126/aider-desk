@@ -5,11 +5,11 @@ import { promisify } from 'util';
 
 import { delay } from '@common/utils';
 
-import { AIDER_DESK_DIR, SETUP_COMPLETE_FILENAME, PYTHON_VENV_DIR, AIDER_DESK_CONNECTOR_DIR, RESOURCES_DIR } from './constants';
+import { AIDER_DESK_DIR, SETUP_COMPLETE_FILENAME, PYTHON_VENV_DIR, AIDER_DESK_CONNECTOR_DIR, RESOURCES_DIR, PYTHON_COMMAND } from './constants';
 
 const execAsync = promisify(exec);
 
-const getPythonExecutable = (): string => {
+const getOSPythonExecutable = (): string => {
   const envPython = process.env.AIDER_DESK_PYTHON;
   if (envPython) {
     return envPython;
@@ -18,7 +18,7 @@ const getPythonExecutable = (): string => {
 };
 
 const checkPythonVersion = async (): Promise<void> => {
-  const pythonExecutable = getPythonExecutable();
+  const pythonExecutable = getOSPythonExecutable();
   try {
     const command = `${pythonExecutable} --version`;
     const { stdout } = await execAsync(command, {
@@ -78,13 +78,10 @@ const setupAiderConnector = async () => {
 
 const installAiderConnectorRequirements = async (): Promise<void> => {
   const pythonBinPath = getPythonVenvBinPath();
-  const pip = process.platform === 'win32' ? 'pip.exe' : 'pip';
-  const pipPath = path.join(pythonBinPath, pip);
-
   const packages = ['aider-chat --upgrade', 'python-socketio', 'websocket-client', 'nest-asyncio'];
 
   for (const pkg of packages) {
-    await execAsync(`"${pipPath}" install ${pkg}`, {
+    await execAsync(`"${PYTHON_COMMAND}" -m pip install ${pkg}`, {
       windowsHide: true,
       env: {
         ...process.env,
