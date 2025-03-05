@@ -95,12 +95,13 @@ export class McpClient {
   private currentInitId: string | null = null;
   private clients: ClientHolder[] = [];
   private lastToolCallTime: number = 0;
+  private currentProjectBaseDir: string | null = null;
 
   constructor(store: Store) {
     this.store = store;
   }
 
-  async init(initId = uuidv4()) {
+  async init(project?: Project, initId = uuidv4()) {
     try {
       this.currentInitId = initId;
       await this.closeClients();
@@ -110,7 +111,7 @@ export class McpClient {
 
       // Initialize each MCP server
       for (const [serverName, serverConfig] of Object.entries(mcpConfig.mcpServers)) {
-        const clientHolder = await this.initMcpClient(serverName, serverConfig);
+        const clientHolder = await this.initMcpClient(serverName, this.interpolateServerConfig(serverConfig, project));
 
         if (this.currentInitId !== initId) {
           return;
@@ -119,6 +120,7 @@ export class McpClient {
       }
 
       this.clients = clients;
+      this.currentProjectBaseDir = project?.baseDir || null;
     } catch (error) {
       logger.error('MCP Client initialization failed:', error);
       throw error;
@@ -167,9 +169,9 @@ export class McpClient {
     }
   }
 
-  async getMcpServerTools(name: string, config: McpServerConfig): Promise<McpTool[] | null> {
+  async getMcpServerTools(name: string, config: McpServerConfig, project?: Project): Promise<McpTool[] | null> {
     try {
-      const clientHolder = await this.initMcpClient(name, config);
+      const clientHolder = await this.initMcpClient(name, this.interpolateServerConfig(config, project));
       const tools = clientHolder.tools;
       await clientHolder.client.close();
       return tools;
@@ -182,6 +184,13 @@ export class McpClient {
   async runPrompt(project: Project, prompt: string): Promise<string | null> {
     const { mcpConfig } = this.store.getSettings();
     logger.debug('McpConfig:', mcpConfig);
+
+    // Check if we need to reinitialize for a different project
+    if (this.currentProjectBaseDir !== project.baseDir) {
+      logger.info(`Reinitializing MCP clients for project: ${project.baseDir}`);
+      await this.init(project, uuidv4());
+    }
+
     // Get MCP server tools
     const mcpServerTools = this.clients
       .filter((clientHolder) => !mcpConfig.disabledServers.includes(clientHolder.serverName))
@@ -294,7 +303,9 @@ export class McpClient {
 
           const toolResponse = await selectedTool.invoke(toolCall);
 
-          logger.debug(`Tool ${toolCall.name} returned response`, { toolResponse });
+          logger.debug(`Tool ${toolCall.name} returned response`, {
+            toolResponse,
+          });
           if (!toolResponse) {
             logger.warn(`Tool ${toolCall.name} didn't return a response`);
             return null;
@@ -322,8 +333,37 @@ export class McpClient {
     }
   }
 
+  private interpolateServerConfig(serverConfig: McpServerConfig, project?: Project): McpServerConfig {
+    if (!project) {
+      return serverConfig;
+    }
+
+    // Create a deep copy of the config
+    const config = JSON.parse(JSON.stringify(serverConfig)) as McpServerConfig;
+
+    if (config.env) {
+      // Create a new env object since it's readonly
+      const newEnv: Record<string, string> = {};
+
+      Object.keys(config.env).forEach((key) => {
+        if (typeof config.env![key] === 'string') {
+          // Replace ${projectDir} in environment variable
+          newEnv[key] = config.env![key].replace(/\${projectDir}/g, project.baseDir);
+        } else {
+          newEnv[key] = config.env![key];
+        }
+      });
+
+      // Replace the env object
+      config.env = newEnv;
+    }
+
+    return config;
+  }
+
   private async initMcpClient(serverName: string, serverConfig: McpServerConfig): Promise<ClientHolder> {
     logger.info(`Initializing MCP client for server: ${serverName}`);
+
     logger.debug(`Server configuration: ${JSON.stringify(serverConfig)}`);
 
     // NOTE: Some servers (e.g. Brave) seem to require PATH to be set.

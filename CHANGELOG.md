@@ -8,6 +8,7 @@
 - fixed prompt field focus issue after model selection
 - properly showing preferred models in model selector when searching
 - added missing vertical scrollbar when MCP server has many tools
+- interpolating ${projectDir} in MCP server config `env` values
 
 ## [0.3.1]
 
