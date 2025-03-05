@@ -72,7 +72,7 @@ export const McpSelector = () => {
   const renderConfigureServersButton = () => (
     <button onClick={handleOpenSettings} className="w-full flex items-center px-3 py-2 text-xs text-neutral-300 hover:bg-neutral-700 transition-colors">
       <MdSettings className="w-3 h-3 mr-2" />
-      Configure servers
+      Configure MCP servers
     </button>
   );
 

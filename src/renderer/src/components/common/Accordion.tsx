@@ -21,7 +21,11 @@ export const Accordion = ({ title, children, className, buttonClassName = '', de
         <FaChevronDown className={`w-3 h-3 transition-transform duration-200 ${isOpen ? 'rotate-0' : '-rotate-90'}`} />
         {title}
       </button>
-      <div className={`overflow-hidden transition-all duration-200 ${isOpen ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'}`}>{children}</div>
+      <div
+        className={`overflow-hidden transition-all duration-200 ${isOpen ? 'max-h-screen opacity-100 overflow-y-auto scrollbar-thin scrollbar-track-neutral-850 scrollbar-thumb-neutral-700 hover:scrollbar-thumb-neutral-600' : 'max-h-0 opacity-0'}`}
+      >
+        {children}
+      </div>
     </div>
   );
 };

@@ -7,6 +7,7 @@
 - system prompt for MCP agent can be now configured in settings
 - fixed prompt field focus issue after model selection
 - properly showing preferred models in model selector when searching
+- added missing vertical scrollbar when MCP server has many tools
 
 ## [0.3.1]
 
