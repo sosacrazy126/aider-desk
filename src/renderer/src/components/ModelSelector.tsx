@@ -1,4 +1,4 @@
-import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState, KeyboardEvent } from 'react';
 import { MdClose, MdKeyboardArrowUp } from 'react-icons/md';
 import { useDebounce } from 'react-use';
 
@@ -59,7 +59,7 @@ export const ModelSelector = forwardRef<ModelSelectorRef, Props>(({ models, sele
     hide();
   };
 
-  const onModelSelectorSearchInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const onModelSelectorSearchInputKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (!settings) {
       return;
     }
@@ -72,7 +72,7 @@ export const ModelSelector = forwardRef<ModelSelectorRef, Props>(({ models, sele
       case 'ArrowDown':
         e.preventDefault();
         setHighlightedModelIndex((prev) => {
-          const newIndex = Math.min(prev + 1, filteredModels.length - 2);
+          const newIndex = Math.min(prev + 1, filteredModels.length - 1);
           setTimeout(() => highlightedModelRef.current?.scrollIntoView({ block: 'nearest' }), 0);
           return newIndex;
         });
@@ -173,9 +173,7 @@ export const ModelSelector = forwardRef<ModelSelectorRef, Props>(({ models, sele
                 <div key="divider" className="border-t border-neutral-700 my-1" />
               </>
             )}
-            {...models
-              .filter((model) => !settings?.models.preferred.includes(model) && model.toLowerCase().includes(debouncedSearchTerm.toLowerCase()))
-              .map(renderModelItem)}
+            {...models.filter((model) => model.toLowerCase().includes(debouncedSearchTerm.toLowerCase())).map(renderModelItem)}
           </div>
         </div>
       )}
