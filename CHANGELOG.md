@@ -9,6 +9,7 @@
 - properly showing preferred models in model selector when searching
 - added missing vertical scrollbar when MCP server has many tools
 - interpolating ${projectDir} in MCP server config `env` values
+- interpolating ${projectDir} in MCP server config `args`
 
 ## [0.3.1]
 

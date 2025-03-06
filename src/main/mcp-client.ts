@@ -334,29 +334,27 @@ export class McpClient {
   }
 
   private interpolateServerConfig(serverConfig: McpServerConfig, project?: Project): McpServerConfig {
-    if (!project) {
-      return serverConfig;
-    }
-
-    // Create a deep copy of the config
     const config = JSON.parse(JSON.stringify(serverConfig)) as McpServerConfig;
 
+    const interpolateValue = (value: string): string => {
+      return value.replace(/\${projectDir}/g, project?.baseDir || '.');
+    };
+
     if (config.env) {
-      // Create a new env object since it's readonly
       const newEnv: Record<string, string> = {};
 
       Object.keys(config.env).forEach((key) => {
         if (typeof config.env![key] === 'string') {
-          // Replace ${projectDir} in environment variable
-          newEnv[key] = config.env![key].replace(/\${projectDir}/g, project.baseDir);
+          newEnv[key] = interpolateValue(config.env![key]);
         } else {
           newEnv[key] = config.env![key];
         }
       });
 
-      // Replace the env object
       config.env = newEnv;
     }
+
+    config.args = config.args.map(interpolateValue);
 
     return config;
   }
