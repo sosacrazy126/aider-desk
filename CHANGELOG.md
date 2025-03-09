@@ -6,6 +6,7 @@
 - improved MCP client interruption handling
 - properly adding user input messages to the input history when using MCP tools
 - wrapping long tool message content
+- better handling of MCP tool errors
 
 ## [0.3.2]
 

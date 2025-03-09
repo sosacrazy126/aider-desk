@@ -321,18 +321,29 @@ export class McpClient {
 
           project.sendToolMessage(toolCall.name, toolCall.args);
 
-          const toolResponse = await selectedTool.invoke(toolCall);
+          try {
+            const toolResponse = await selectedTool.invoke(toolCall);
 
-          logger.debug(`Tool ${toolCall.name} returned response`, {
-            toolResponse,
-          });
-          if (!toolResponse) {
-            logger.warn(`Tool ${toolCall.name} didn't return a response`);
-            return null;
+            logger.debug(`Tool ${toolCall.name} returned response`, {
+              toolResponse,
+            });
+            if (!toolResponse) {
+              logger.warn(`Tool ${toolCall.name} didn't return a response`);
+              return null;
+            }
+
+            // Add tool message to messages
+            messages.push(toolResponse);
+          } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            logger.error(`Error invoking tool ${toolCall.name}:`, error);
+
+            // Send log message about the tool error
+            project.sendLogMessage('error', `Tool ${toolCall.name} failed: ${errorMessage}`);
+
+            // Add user message to messages for next iteration
+            messages.push(new HumanMessage(errorMessage));
           }
-
-          // Add tool message to messages
-          messages.push(toolResponse);
 
           // Update the last tool call time after the delay
           this.lastToolCallTime = Date.now();
