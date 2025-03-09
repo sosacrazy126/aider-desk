@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.3.3]
+
+- skip adding ignored non read-only files to the context
+
 ## [0.3.2]
 
 - added result of MCP tool to the tool message

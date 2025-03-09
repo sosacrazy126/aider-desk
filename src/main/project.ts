@@ -4,8 +4,9 @@ import { unlinkSync } from 'fs';
 import fs from 'fs/promises';
 import path from 'path';
 
+import ignore from 'ignore';
 import { ContextFile, FileEdit, ModelsData, QuestionData, ResponseChunkData, ResponseCompletedData, ToolData, UsageReportData } from '@common/types';
-import { parseUsageReport } from '@common/utils';
+import { fileExists, parseUsageReport } from '@common/utils';
 import { BrowserWindow } from 'electron';
 import treeKill from 'tree-kill';
 import { v4 as uuidv4 } from 'uuid';
@@ -84,7 +85,7 @@ export class Project {
   private async checkAndCleanupPidFile(): Promise<void> {
     const pidFilePath = this.getAiderProcessPidFilePath();
     try {
-      if (await fs.stat(pidFilePath).catch(() => null)) {
+      if (await fileExists(pidFilePath)) {
         const pid = parseInt(await fs.readFile(pidFilePath, 'utf8'));
         await new Promise<void>((resolve, reject) => {
           treeKill(pid, 'SIGKILL', (err) => {
@@ -310,16 +311,45 @@ export class Project {
     this.currentQuestion = null;
   }
 
-  public addFile(contextFile: ContextFile): void {
+  private async isFileIgnored(contextFile: ContextFile): Promise<boolean> {
+    if (contextFile.readOnly) {
+      // not checking gitignore for read-only files
+      return false;
+    }
+
+    const gitignorePath = path.join(this.baseDir, '.gitignore');
+
+    if (!(await fileExists(gitignorePath))) {
+      return false;
+    }
+
+    const gitignoreContent = await fs.readFile(gitignorePath, 'utf8');
+    const ig = ignore().add(gitignoreContent);
+
+    // Make the path relative to the base directory
+    const absolutePath = path.resolve(this.baseDir, contextFile.path);
+    const relativePath = path.relative(this.baseDir, absolutePath);
+
+    return ig.ignores(relativePath);
+  }
+
+  public async addFile(contextFile: ContextFile): Promise<void> {
     logger.info('Adding file:', {
       path: contextFile.path,
       readOnly: contextFile.readOnly,
     });
-    const existingFile = this.contextFiles.find((file) => file.path === contextFile.path);
-    if (!existingFile) {
-      this.contextFiles.push(contextFile);
-      this.findMessageConnectors('add-file').forEach((connector) => connector.sendAddFileMessage(contextFile));
+    const alreadyAdded = this.contextFiles.find((file) => file.path === contextFile.path);
+    if (alreadyAdded) {
+      return;
     }
+
+    if (await this.isFileIgnored(contextFile)) {
+      logger.debug('Skipping ignored file:', { path: contextFile.path });
+      return;
+    }
+
+    this.contextFiles.push(contextFile);
+    this.findMessageConnectors('add-file').forEach((connector) => connector.sendAddFileMessage(contextFile));
   }
 
   public dropFile(filePath: string): void {
@@ -494,7 +524,13 @@ export class Project {
   }
 
   public sendToolMessage(name: string, args?: Record<string, unknown>, response?: string, usageReport?: UsageReportData) {
-    logger.info('Sending tool message:', { baseDir: this.baseDir, name, args, response, usageReport });
+    logger.info('Sending tool message:', {
+      baseDir: this.baseDir,
+      name,
+      args,
+      response,
+      usageReport,
+    });
     const data: ToolData = {
       baseDir: this.baseDir,
       name,

@@ -43,6 +43,7 @@
     "electron-updater": "^6.1.7",
     "focus-trap-react": "^11.0.3",
     "framer-motion": "^11.18.2",
+    "ignore": "^7.0.3",
     "match-sorter": "^8.0.0",
     "playwright-core": "^1.49.0",
     "prismjs": "^1.29.0",

@@ -1,3 +1,5 @@
+import fs from 'fs/promises';
+
 import { UsageReportData } from './types';
 
 export const delay = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
@@ -32,4 +34,8 @@ export const parseUsageReport = (report: string): UsageReportData => {
 export const normalizeBaseDir = (baseDir: string): string => {
   // On Windows, paths are case-insensitive so we normalize to lowercase
   return process.platform === 'win32' ? baseDir.toLowerCase() : baseDir;
+};
+
+export const fileExists = async (fileName: string): Promise<boolean> => {
+  return (await fs.stat(fileName).catch(() => null)) !== null;
 };

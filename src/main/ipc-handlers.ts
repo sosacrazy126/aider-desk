@@ -33,7 +33,7 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, store: Store, mcpCli
   });
 
   ipcMain.on('add-file', (_, baseDir: string, filePath: string, readOnly = false) => {
-    projectManager.getProject(baseDir).addFile({ path: filePath, readOnly });
+    void projectManager.getProject(baseDir).addFile({ path: filePath, readOnly });
   });
 
   ipcMain.on('start-project', (_, baseDir: string) => {
