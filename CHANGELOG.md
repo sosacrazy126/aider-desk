@@ -3,6 +3,7 @@
 ## [0.3.3]
 
 - skip adding ignored non read-only files to the context
+- improved MCP client interruption handling
 
 ## [0.3.2]
 

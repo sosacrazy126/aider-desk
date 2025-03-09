@@ -516,6 +516,7 @@ export class Project {
   public interruptResponse() {
     logger.info('Interrupting response:', { baseDir: this.baseDir });
     this.findMessageConnectors('interrupt-response').forEach((connector) => connector.sendInterruptResponseMessage());
+    this.mcpClient.interrupt();
   }
 
   public applyEdits(edits: FileEdit[]) {

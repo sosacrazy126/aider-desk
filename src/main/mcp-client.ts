@@ -96,6 +96,7 @@ export class McpClient {
   private clients: ClientHolder[] = [];
   private lastToolCallTime: number = 0;
   private currentProjectBaseDir: string | null = null;
+  private isInterrupted: boolean = false;
 
   constructor(store: Store) {
     this.store = store;
@@ -185,6 +186,9 @@ export class McpClient {
     const { mcpConfig } = this.store.getSettings();
     logger.debug('McpConfig:', mcpConfig);
 
+    // Reset interruption flag
+    this.isInterrupted = false;
+
     // Check if we need to reinitialize for a different project
     if (this.currentProjectBaseDir !== project.baseDir) {
       logger.info(`Reinitializing MCP clients for project: ${project.baseDir}`);
@@ -205,7 +209,8 @@ export class McpClient {
     const aiderTool = createAiderTool();
     const allTools = [...mcpServerTools, aiderTool];
 
-    logger.debug('Running prompt with tools:', {
+    logger.info(`Running prompt with ${allTools.length} tools.`);
+    logger.debug('Tools:', {
       prompt,
       tools: allTools.map((tool) => tool.name),
     });
@@ -234,6 +239,11 @@ export class McpClient {
 
         // Get LLM response which may contain tool calls
         const aiMessage = await llmWithTools.invoke(messages);
+
+        // Check for interruption
+        if (this.checkInterrupted(project, usageReport)) {
+          return null;
+        }
 
         // Update usage report
         usageReport.sentTokens += aiMessage.usage_metadata?.input_tokens ?? 0;
@@ -284,6 +294,11 @@ export class McpClient {
         messages.push(aiMessage);
 
         for (const toolCall of aiMessage.tool_calls) {
+          // Check for interruption before each tool call
+          if (this.checkInterrupted(project, usageReport)) {
+            return null;
+          }
+
           // Calculate how much time to wait based on the minimum time between tool calls
           const now = Date.now();
           const elapsedSinceLastCall = now - this.lastToolCallTime;
@@ -297,6 +312,11 @@ export class McpClient {
           if (!selectedTool) {
             logger.error(`Tool ${toolCall.name} not found`);
             continue;
+          }
+
+          // Check for interruption before sending tool message
+          if (this.checkInterrupted(project, usageReport)) {
+            return null;
           }
 
           project.sendToolMessage(toolCall.name, toolCall.args);
@@ -319,9 +339,9 @@ export class McpClient {
         }
       }
 
-      // If no Aider tool was called after max iterations, return the original prompt
-      project.sendLogMessage('info', 'No result from MCP tools. Sending original prompt to Aider.');
-      return prompt;
+      // If no Aider tool was called after max iterations, do nothing
+      project.sendLogMessage('info', 'Max iterations for MCP tools reached. Increase the max iterations in the settings.');
+      return null;
     } catch (error) {
       logger.error('Error running prompt:', error);
       if (error instanceof Error && error.message.includes('API key is required')) {
@@ -357,6 +377,25 @@ export class McpClient {
     config.args = config.args.map(interpolateValue);
 
     return config;
+  }
+
+  private checkInterrupted(project: Project, usageReport?: UsageReportData): boolean {
+    if (this.isInterrupted) {
+      logger.info('Prompt processing interrupted');
+      project.processResponseMessage({
+        action: 'response',
+        content: '',
+        finished: true,
+        usageReport,
+      });
+      return true;
+    }
+    return false;
+  }
+
+  public interrupt() {
+    logger.info('Interrupting MCP client');
+    this.isInterrupted = true;
   }
 
   private async initMcpClient(serverName: string, serverConfig: McpServerConfig): Promise<ClientHolder> {

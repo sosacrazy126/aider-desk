@@ -410,13 +410,13 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
       level: 'warning',
       content: 'Interrupted by user.',
     };
-    setMessages((prevMessages) => [...prevMessages, interruptMessage]);
+    setMessages((prevMessages) => [...prevMessages.filter((message) => !isLoadingMessage(message)), interruptMessage]);
 
     frozenTimeoutRef.current = setTimeout(() => {
       if (processing) {
         setShowFrozenDialog(true);
       }
-    }, 5000);
+    }, 10000);
   };
 
   const handleModelChange = () => {
