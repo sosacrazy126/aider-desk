@@ -42,6 +42,7 @@ type Props = {
   processing: boolean;
   isActive: boolean;
   words?: string[];
+  inputHistory?: string[];
   openModelSelector?: () => void;
   defaultEditFormat?: string;
   editFormat: string;
@@ -65,6 +66,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
       processing = false,
       isActive = false,
       words = [],
+      inputHistory = [],
       defaultEditFormat = 'code',
       editFormat,
       setEditFormat,
@@ -88,7 +90,6 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
     const [cursorPosition, setCursorPosition] = useState({ top: 0, left: 0 });
     const [placeholder] = useState(PLACEHOLDERS[Math.floor(Math.random() * PLACEHOLDERS.length)]);
     const [highlightedSuggestionIndex, setHighlightedSuggestionIndex] = useState(-1);
-    const [inputHistory, setInputHistory] = useState<string[]>([]);
     const [historyIndex, setHistoryIndex] = useState<number>(-1);
     const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
     const [editFormatLocked, setEditFormatLocked] = useState(false);
@@ -99,17 +100,6 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
         inputRef.current?.focus();
       },
     }));
-
-    const loadHistory = async () => {
-      try {
-        const history = await window.api.loadInputHistory(baseDir);
-        setInputHistory(history || []);
-      } catch (error: unknown) {
-        console.error('Failed to load input history:', error);
-        // If loading fails, continue with empty history
-        setInputHistory([]);
-      }
-    };
 
     const invokeCommand = useCallback(
       (command: string, args?: string): void => {
@@ -164,13 +154,6 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
         setSelectedAnswer(question.defaultAnswer || 'y');
       }
     }, [question]);
-
-    useEffect(() => {
-      if (processing) {
-        return;
-      }
-      void loadHistory();
-    }, [processing, baseDir]);
 
     useEffect(() => {
       if (!disabled && isActive && inputRef.current) {

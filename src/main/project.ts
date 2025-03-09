@@ -5,18 +5,29 @@ import fs from 'fs/promises';
 import path from 'path';
 
 import ignore from 'ignore';
-import { ContextFile, FileEdit, ModelsData, QuestionData, ResponseChunkData, ResponseCompletedData, ToolData, UsageReportData } from '@common/types';
+import {
+  ContextFile,
+  FileEdit,
+  InputHistoryData,
+  ModelsData,
+  QuestionData,
+  ResponseChunkData,
+  ResponseCompletedData,
+  ToolData,
+  UsageReportData,
+} from '@common/types';
 import { fileExists, parseUsageReport } from '@common/utils';
 import { BrowserWindow } from 'electron';
 import treeKill from 'tree-kill';
 import { v4 as uuidv4 } from 'uuid';
+import { parse } from '@dotenvx/dotenvx';
 
 import { Connector } from './connector';
 import { McpClient } from './mcp-client';
 import { AIDER_DESK_CONNECTOR_DIR, PID_FILES_DIR, PYTHON_COMMAND, SOCKET_PORT } from './constants';
 import logger from './logger';
 import { EditFormat, MessageAction, ResponseMessage } from './messages';
-import { Store } from './store';
+import { DEFAULT_MAIN_MODEL, Store } from './store';
 
 export class Project {
   private mainWindow: BrowserWindow | null = null;
@@ -28,6 +39,7 @@ export class Project {
   private allTrackedFiles: string[] = [];
   private questionAnswers: Map<string, 'y' | 'n'> = new Map();
   private currentResponseMessageId: string | null = null;
+  private inputHistoryFile = '.aider.input.history';
   public baseDir: string;
   public contextFiles: ContextFile[] = [];
   public models: ModelsData | null = null;
@@ -40,6 +52,18 @@ export class Project {
     this.mcpClient = mcpClient;
   }
 
+  public start() {
+    this.contextFiles.forEach((contextFile) => {
+      this.mainWindow?.webContents.send('file-added', {
+        baseDir: this.baseDir,
+        file: contextFile,
+      });
+    });
+
+    void this.runAider();
+    void this.sendInputHistoryUpdatedEvent();
+  }
+
   public addConnector(connector: Connector) {
     logger.info('Adding connector for base directory:', {
       baseDir: this.baseDir,
@@ -47,6 +71,12 @@ export class Project {
     this.connectors.push(connector);
     if (connector.listenTo.includes('add-file')) {
       this.contextFiles.forEach(connector.sendAddFileMessage);
+    }
+
+    // Set input history file if provided by the connector
+    if (connector.inputHistoryFile) {
+      this.inputHistoryFile = connector.inputHistoryFile;
+      void this.sendInputHistoryUpdatedEvent();
     }
   }
 
@@ -103,7 +133,7 @@ export class Project {
     }
   }
 
-  public async runAider(options: string, environmentVariables: Record<string, string>, mainModel: string, weakModel?: string | null): Promise<void> {
+  public async runAider(): Promise<void> {
     if (this.process) {
       await this.killAider();
     }
@@ -112,6 +142,18 @@ export class Project {
 
     this.currentCommand = null;
     this.currentQuestion = null;
+
+    const settings = this.store!.getSettings();
+    const mainModel = this.store!.getProjectSettings(this.baseDir).mainModel || DEFAULT_MAIN_MODEL;
+    const weakModel = this.store!.getProjectSettings(this.baseDir).weakModel;
+    const environmentVariables = parse(settings.aider.environmentVariables);
+
+    logger.info('Running Aider for project', {
+      baseDir: this.baseDir,
+      mainModel,
+      weakModel,
+    });
+    const options = settings.aider.options;
 
     const args = ['-m', 'connector'];
     if (options) {
@@ -214,14 +256,17 @@ export class Project {
     return this.connectors.filter((connector) => connector.listenTo.includes(action));
   }
 
-  public async sendPrompt(prompt: string, editFormat?: EditFormat): Promise<void> {
+  public async runPrompt(prompt: string, editFormat?: EditFormat): Promise<void> {
     this.currentResponseMessageId = null;
 
-    logger.info('Sending prompt:', {
+    logger.info('Running prompt:', {
       baseDir: this.baseDir,
       prompt,
       editFormat,
     });
+
+    await this.addToInputHistory(prompt);
+
     if (this.currentQuestion) {
       this.answerQuestion('n');
     }
@@ -382,7 +427,8 @@ export class Project {
 
   public async loadInputHistory(): Promise<string[]> {
     try {
-      const historyPath = path.join(this.baseDir, '.aider.input.history');
+      const historyPath = path.isAbsolute(this.inputHistoryFile) ? this.inputHistoryFile : path.join(this.baseDir, this.inputHistoryFile);
+
       const content = await fs.readFile(historyPath, 'utf8');
 
       if (!content) {
@@ -413,6 +459,30 @@ export class Project {
       logger.error('Failed to load input history:', { error });
       return [];
     }
+  }
+
+  public async addToInputHistory(message: string) {
+    try {
+      const historyPath = path.isAbsolute(this.inputHistoryFile) ? this.inputHistoryFile : path.join(this.baseDir, this.inputHistoryFile);
+
+      const timestamp = new Date().toISOString();
+      const formattedMessage = `\n# ${timestamp}\n+${message.replace(/\n/g, '\n+')}\n`;
+
+      await fs.appendFile(historyPath, formattedMessage);
+
+      await this.sendInputHistoryUpdatedEvent();
+    } catch (error) {
+      logger.error('Failed to add to input history:', { error });
+    }
+  }
+
+  private async sendInputHistoryUpdatedEvent() {
+    const history = await this.loadInputHistory();
+    const inputHistoryData: InputHistoryData = {
+      baseDir: this.baseDir,
+      messages: history,
+    };
+    this.mainWindow?.webContents.send('input-history-updated', inputHistoryData);
   }
 
   public askQuestion(questionData: QuestionData) {

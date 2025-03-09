@@ -1,6 +1,7 @@
 import {
   AutocompletionData,
   ContextFilesUpdatedData,
+  InputHistoryData,
   ModelsData,
   ProjectData,
   ProjectSettings,
@@ -78,6 +79,12 @@ export interface ApplicationAPI {
 
   addToolListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: ToolData) => void) => string;
   removeToolListener: (listenerId: string) => void;
+
+  addInputHistoryUpdatedListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: InputHistoryData) => void) => string;
+  removeInputHistoryUpdatedListener: (listenerId: string) => void;
+
+  addInputHistoryUpdatedListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: InputHistoryData) => void) => string;
+  removeInputHistoryUpdatedListener: (listenerId: string) => void;
 }
 
 declare global {

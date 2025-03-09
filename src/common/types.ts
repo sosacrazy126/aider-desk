@@ -142,6 +142,11 @@ export interface TokensInfoData {
   systemMessages: TokensCost;
 }
 
+export interface InputHistoryData {
+  baseDir: string;
+  messages: string[];
+}
+
 export interface FileEdit {
   path: string;
   original: string;

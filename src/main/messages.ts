@@ -32,6 +32,7 @@ export interface InitMessage {
   baseDir: string;
   contextFiles?: ContextFile[];
   listenTo?: MessageAction[];
+  inputHistoryFile?: string;
 }
 
 export const isInitMessage = (message: Message): message is InitMessage => {

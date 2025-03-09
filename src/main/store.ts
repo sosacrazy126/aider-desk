@@ -3,7 +3,7 @@ import { normalizeBaseDir } from '@common/utils';
 
 import logger from './logger';
 
-export const DEFAULT_MAIN_MODEL = 'gpt-4o';
+export const DEFAULT_MAIN_MODEL = 'claude-3-7-sonnet-20250219';
 
 const DEFAULT_SETTINGS: SettingsData = {
   aider: {
@@ -11,7 +11,7 @@ const DEFAULT_SETTINGS: SettingsData = {
     environmentVariables: '',
   },
   models: {
-    preferred: ['gpt-4o', 'claude-3-7-sonnet-20250219', 'deepseek/deepseek-coder', 'claude-3-5-haiku-20241022'],
+    preferred: ['claude-3-7-sonnet-20250219', 'gpt-4o', 'deepseek/deepseek-coder', 'claude-3-5-haiku-20241022'],
   },
   mcpConfig: {
     provider: 'openai',

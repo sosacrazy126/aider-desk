@@ -4,6 +4,7 @@
 
 - skip adding ignored non read-only files to the context
 - improved MCP client interruption handling
+- properly adding user input messages to the input history when using MCP tools
 
 ## [0.3.2]
 

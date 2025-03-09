@@ -9,6 +9,7 @@ import {
   TokensInfoData,
   QuestionData,
   ToolData,
+  InputHistoryData,
 } from '@common/types';
 import { IpcRendererEvent } from 'electron';
 import { useEffect, useRef, useState } from 'react';
@@ -52,6 +53,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
   const [addFileDialogOptions, setAddFileDialogOptions] = useState<AddFileDialogOptions | null>(null);
   const [autocompletionData, setAutocompletionData] = useState<AutocompletionData | null>(null);
   const [modelsData, setModelsData] = useState<ModelsData | null>(null);
+  const [inputHistory, setInputHistory] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalCost, setTotalCost] = useState(0);
   const [lastMessageCost, setLastMessageCost] = useState<number | undefined>(undefined);
@@ -280,6 +282,10 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
       setQuestion(data);
     };
 
+    const handleInputHistoryUpdate = (_: IpcRendererEvent, data: InputHistoryData) => {
+      setInputHistory(data.messages);
+    };
+
     const autocompletionListenerId = window.api.addUpdateAutocompletionListener(project.baseDir, handleUpdateAutocompletion);
     const currentModelsListenerId = window.api.addSetCurrentModelsListener(project.baseDir, handleSetCurrentModels);
     const commandOutputListenerId = window.api.addCommandOutputListener(project.baseDir, handleCommandOutput);
@@ -289,6 +295,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
     const tokensInfoListenerId = window.api.addTokensInfoListener(project.baseDir, handleTokensInfo);
     const questionListenerId = window.api.addAskQuestionListener(project.baseDir, handleQuestion);
     const toolListenerId = window.api.addToolListener(project.baseDir, handleTool);
+    const inputHistoryListenerId = window.api.addInputHistoryUpdatedListener(project.baseDir, handleInputHistoryUpdate);
 
     return () => {
       window.api.removeUpdateAutocompletionListener(autocompletionListenerId);
@@ -300,6 +307,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
       window.api.removeTokensInfoListener(tokensInfoListenerId);
       window.api.removeAskQuestionListener(questionListenerId);
       window.api.removeToolListener(toolListenerId);
+      window.api.removeInputHistoryUpdatedListener(inputHistoryListenerId);
     };
   }, [project.baseDir, processing]);
 
@@ -464,6 +472,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
           <PromptField
             ref={promptFieldRef}
             baseDir={project.baseDir}
+            inputHistory={inputHistory}
             onSubmitted={handlePromptSubmit}
             processing={processing}
             editFormat={editFormat}

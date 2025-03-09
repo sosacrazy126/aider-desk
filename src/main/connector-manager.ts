@@ -74,7 +74,7 @@ class ConnectorManager {
 
       if (isInitMessage(message)) {
         logger.info('Initializing connector for base directory:', { baseDir: message.baseDir, listenTo: message.listenTo });
-        const connector = new Connector(socket, message.baseDir, message.listenTo);
+        const connector = new Connector(socket, message.baseDir, message.listenTo, message.inputHistoryFile);
         this.connectors.push(connector);
 
         const project = projectManager.getProject(message.baseDir);

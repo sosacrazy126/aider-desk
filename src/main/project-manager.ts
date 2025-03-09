@@ -1,11 +1,10 @@
 import { normalizeBaseDir } from '@common/utils';
-import { parse } from '@dotenvx/dotenvx';
 import { BrowserWindow } from 'electron';
 import { McpClient } from 'src/main/mcp-client';
 
 import logger from './logger';
 import { Project } from './project';
-import { DEFAULT_MAIN_MODEL, Store } from './store';
+import { Store } from './store';
 
 class ProjectManager {
   private static instance: ProjectManager;
@@ -29,20 +28,6 @@ class ProjectManager {
     this.mcpClient = mcpClient;
   }
 
-  private runAiderForProject(project: Project): void {
-    const settings = this.store!.getSettings();
-    const mainModel = this.store!.getProjectSettings(project.baseDir).mainModel || DEFAULT_MAIN_MODEL;
-    const weakModel = this.store!.getProjectSettings(project.baseDir).weakModel;
-    const environmentVariables = parse(settings.aider.environmentVariables);
-
-    logger.info('Running Aider for project', {
-      baseDir: project.baseDir,
-      mainModel,
-      weakModel,
-    });
-    void project.runAider(settings.aider.options, environmentVariables, mainModel, weakModel);
-  }
-
   private findProject(baseDir: string): Project | undefined {
     baseDir = normalizeBaseDir(baseDir);
     return this.projects.find((project) => normalizeBaseDir(project.baseDir) === baseDir);
@@ -64,14 +49,7 @@ class ProjectManager {
     logger.info('Starting project', { baseDir });
     const project = this.getProject(baseDir);
 
-    project.contextFiles.forEach((contextFile) => {
-      this.mainWindow?.webContents.send('file-added', {
-        baseDir,
-        file: contextFile,
-      });
-    });
-
-    this.runAiderForProject(project);
+    project.start();
   }
 
   public async stopProject(baseDir: string) {

@@ -68,6 +68,10 @@ class ConnectorInputOutput(InputOutput):
     self.running_shell_command = False
     self.current_command = None
 
+  def add_to_input_history(self, input_text):
+    # handled by AiderDesk
+    pass
+
   def tool_output(self, *messages, log_only=False, bold=False):
     super().tool_output(*messages, log_only=log_only, bold=bold)
     if self.running_shell_command:
@@ -267,7 +271,8 @@ class Connector:
         'add-message',
         'interrupt-response',
         'apply-edits'
-      ]
+      ],
+      'inputHistoryFile': self.coder.io.input_history_file
     })
     await self.send_autocompletion()
     await self.send_current_models()

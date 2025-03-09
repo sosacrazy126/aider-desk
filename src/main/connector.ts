@@ -23,11 +23,13 @@ export class Connector {
   socket: Socket;
   baseDir: string;
   listenTo: MessageAction[];
+  inputHistoryFile?: string;
 
-  constructor(socket: Socket, baseDir: string, listenTo: MessageAction[] = []) {
+  constructor(socket: Socket, baseDir: string, listenTo: MessageAction[] = [], inputHistoryFile?: string) {
     this.socket = socket;
     this.baseDir = baseDir;
     this.listenTo = listenTo;
+    this.inputHistoryFile = inputHistoryFile;
   }
 
   private sendMessage = (message: Message) => {

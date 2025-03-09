@@ -4,6 +4,7 @@ import {
   ContextFile,
   ContextFilesUpdatedData,
   FileEdit,
+  InputHistoryData,
   LogData,
   McpServerConfig,
   ModelsData,
@@ -35,6 +36,7 @@ const commandOutputListeners: Record<string, (event: Electron.IpcRendererEvent, 
 const logListeners: Record<string, (event: Electron.IpcRendererEvent, data: LogData) => void> = {};
 const tokensInfoListeners: Record<string, (event: Electron.IpcRendererEvent, data: TokensInfoData) => void> = {};
 const toolListeners: Record<string, (event: Electron.IpcRendererEvent, data: ToolData) => void> = {};
+const inputHistoryUpdatedListeners: Record<string, (event: Electron.IpcRendererEvent, data: InputHistoryData) => void> = {};
 
 const api: ApplicationAPI = {
   loadSettings: () => ipcRenderer.invoke('load-settings'),
@@ -260,6 +262,25 @@ const api: ApplicationAPI = {
     if (callback) {
       ipcRenderer.removeListener('tool', callback);
       delete toolListeners[listenerId];
+    }
+  },
+
+  addInputHistoryUpdatedListener: (baseDir, callback) => {
+    const listenerId = uuidv4();
+    inputHistoryUpdatedListeners[listenerId] = (event: Electron.IpcRendererEvent, data: InputHistoryData) => {
+      if (!compareBaseDirs(data.baseDir, baseDir)) {
+        return;
+      }
+      callback(event, data);
+    };
+    ipcRenderer.on('input-history-updated', inputHistoryUpdatedListeners[listenerId]);
+    return listenerId;
+  },
+  removeInputHistoryUpdatedListener: (listenerId) => {
+    const callback = inputHistoryUpdatedListeners[listenerId];
+    if (callback) {
+      ipcRenderer.removeListener('tool', callback);
+      delete inputHistoryUpdatedListeners[listenerId];
     }
   },
 };

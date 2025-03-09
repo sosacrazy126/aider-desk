@@ -21,7 +21,7 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, store: Store, mcpCli
   });
 
   ipcMain.on('send-prompt', (_, baseDir: string, prompt: string, editFormat?: EditFormat) => {
-    void projectManager.getProject(baseDir).sendPrompt(prompt, editFormat);
+    void projectManager.getProject(baseDir).runPrompt(prompt, editFormat);
   });
 
   ipcMain.on('answer-question', (_, baseDir: string, answer: string) => {
