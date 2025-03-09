@@ -24,7 +24,7 @@ export const ToolMessageBlock = ({ message }: Props) => {
           {Object.keys(message.args).length > 0 && (
             <div className="mt-2 text-xs">
               <div className="font-semibold mb-1">Arguments:</div>
-              <pre>{JSON.stringify(message.args, null, 2)}</pre>
+              <pre className="whitespace-pre-wrap">{JSON.stringify(message.args, null, 2)}</pre>
             </div>
           )}
           {isExecuting ? (
