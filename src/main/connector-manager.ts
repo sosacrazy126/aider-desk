@@ -44,6 +44,7 @@ class ConnectorManager {
         methods: ['GET', 'POST'],
       },
       pingTimeout: 120000,
+      maxHttpBufferSize: 1e8, // Increase payload size to 100 MB
     });
 
     this.io.on('connection', (socket) => {

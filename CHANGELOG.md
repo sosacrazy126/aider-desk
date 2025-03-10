@@ -7,6 +7,7 @@
 - properly adding user input messages to the input history when using MCP tools
 - wrapping long tool message content
 - better handling of MCP tool errors
+- increase max buffer size for socket.io events to 100MB to fix issue with large repos
 
 ## [0.3.2]
 
