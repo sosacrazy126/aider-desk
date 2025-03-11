@@ -15,6 +15,8 @@ import logger from './logger';
 import { Store } from './store';
 import { Project } from './project';
 
+import type { JsonSchema } from '@n8n/json-schema-to-zod';
+
 const PROVIDER_MODELS = {
   openai: 'gpt-4o-mini',
   anthropic: 'claude-3-7-sonnet-20250219',
@@ -215,7 +217,7 @@ export class McpClient {
     // Get MCP server tools
     const mcpServerTools = this.clients
       .filter((clientHolder) => !mcpConfig.disabledServers.includes(clientHolder.serverName))
-      .flatMap((clientHolder) => clientHolder.tools.map((tool) => convertMpcToolToLangchainTool(project, clientHolder.client, tool)));
+      .flatMap((clientHolder) => clientHolder.tools.map((tool) => convertMpcToolToLangchainTool(project, clientHolder.client, tool, mcpConfig.provider)));
 
     if (!mcpServerTools.length) {
       logger.info('No tools found for prompt, returning original prompt');
@@ -266,6 +268,8 @@ export class McpClient {
         usageReport.sentTokens += aiMessage.usage_metadata?.input_tokens ?? 0;
         usageReport.receivedTokens += aiMessage.usage_metadata?.output_tokens ?? 0;
         usageReport.mcpToolsCost = calculateCost(PROVIDER_MODELS[mcpConfig.provider], usageReport.sentTokens, usageReport.receivedTokens);
+
+        logger.debug(`Tool calls: ${aiMessage.tool_calls?.length}, message: ${JSON.stringify(aiMessage.content)}`);
 
         // If no tool calls, check if there's content to send
         if (!aiMessage.tool_calls?.length) {
@@ -480,7 +484,23 @@ export class McpClient {
   }
 }
 
-const convertMpcToolToLangchainTool = (project: Project, client: Client, toolDef: McpTool): StructuredTool => {
+const convertMpcToolToLangchainTool = (project: Project, client: Client, toolDef: McpTool, provider: string): StructuredTool => {
+  const normalizeSchemaForProvider = (schema: JsonSchema): JsonSchema => {
+    if (provider === 'gemini') {
+      // gemini does not like "default" in the schema
+      const normalized = JSON.parse(JSON.stringify(schema));
+      if (normalized.properties) {
+        for (const key of Object.keys(normalized.properties)) {
+          if (normalized.properties[key].default !== undefined) {
+            delete normalized.properties[key].default;
+          }
+        }
+      }
+      return normalized;
+    }
+    return schema;
+  };
+
   return tool(
     async (params: unknown) => {
       const response = await client.callTool({
@@ -516,7 +536,7 @@ const convertMpcToolToLangchainTool = (project: Project, client: Client, toolDef
     {
       name: toolDef.name,
       description: toolDef.description ?? '',
-      schema: jsonSchemaToZod(toolDef.inputSchema),
+      schema: jsonSchemaToZod(normalizeSchemaForProvider(toolDef.inputSchema)),
     },
   );
 };
