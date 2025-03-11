@@ -32,13 +32,15 @@ export const McpSettings = ({ settings, setSettings }: Props) => {
 
     if (mcpConfig.provider === 'openai') {
       updatedMcpConfig.openAiApiKey = newApiKey;
-    } else {
+    } else if (mcpConfig.provider === 'anthropic') {
       updatedMcpConfig.anthropicApiKey = newApiKey;
+    } else if (mcpConfig.provider === 'gemini') {
+      updatedMcpConfig.geminiApiKey = newApiKey;
     }
     setSettings({ ...settings, mcpConfig: updatedMcpConfig });
   };
 
-  const handleProviderChanged = (newProvider: 'openai' | 'anthropic') => {
+  const handleProviderChanged = (newProvider: 'openai' | 'anthropic' | 'gemini') => {
     const updatedMcpConfig: McpConfig = {
       ...settings.mcpConfig,
       provider: newProvider,
@@ -114,10 +116,11 @@ export const McpSettings = ({ settings, setSettings }: Props) => {
                 <Select
                   label="Provider"
                   value={mcpConfig.provider}
-                  onChange={(value) => handleProviderChanged(value as 'openai' | 'anthropic')}
+                  onChange={(value) => handleProviderChanged(value as 'openai' | 'anthropic' | 'gemini')}
                   options={[
                     { value: 'openai', label: 'OpenAI' },
                     { value: 'anthropic', label: 'Anthropic' },
+                    { value: 'gemini', label: 'Gemini' },
                   ]}
                 />
               </div>
@@ -125,7 +128,13 @@ export const McpSettings = ({ settings, setSettings }: Props) => {
                 <Input
                   label="API Key"
                   type="password"
-                  value={mcpConfig.provider === 'openai' ? mcpConfig.openAiApiKey : mcpConfig.anthropicApiKey}
+                  value={
+                    mcpConfig.provider === 'openai'
+                      ? mcpConfig.openAiApiKey
+                      : mcpConfig.provider === 'anthropic'
+                        ? mcpConfig.anthropicApiKey
+                        : mcpConfig.geminiApiKey
+                  }
                   onChange={(e) => handleApiKeyChanged(e.target.value)}
                   className="w-full p-2 border rounded"
                 />
@@ -139,7 +148,7 @@ export const McpSettings = ({ settings, setSettings }: Props) => {
                     </div>
                   }
                   min={1}
-                  max={20}
+                  max={100}
                   value={mcpConfig.maxIterations}
                   onChange={handleMaxIterationsChanged}
                 />

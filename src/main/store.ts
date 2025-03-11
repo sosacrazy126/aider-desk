@@ -17,6 +17,7 @@ const DEFAULT_SETTINGS: SettingsData = {
     provider: 'openai',
     anthropicApiKey: '',
     openAiApiKey: '',
+    geminiApiKey: '',
     maxIterations: 10,
     minTimeBetweenToolCalls: 0,
     mcpServers: {},

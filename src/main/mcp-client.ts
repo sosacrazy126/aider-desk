@@ -4,6 +4,7 @@ import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { StructuredTool, tool } from '@langchain/core/tools';
 import { z } from 'zod';
 import { ChatOpenAI } from '@langchain/openai';
+import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { jsonSchemaToZod } from '@n8n/json-schema-to-zod';
@@ -17,6 +18,7 @@ import { Project } from './project';
 const PROVIDER_MODELS = {
   openai: 'gpt-4o-mini',
   anthropic: 'claude-3-7-sonnet-20250219',
+  gemini: 'gemini-2.0-flash',
 };
 
 const MODEL_PRICING_MAP = {
@@ -27,6 +29,10 @@ const MODEL_PRICING_MAP = {
   'claude-3-7-sonnet-20250219': {
     inputCost: 3.0, // per million tokens
     outputCost: 15.0, // per million tokens
+  },
+  'gemini-2.0-flash': {
+    inputCost: 0.1, // per million tokens
+    outputCost: 0.4, // per million tokens
   },
 };
 
@@ -141,7 +147,7 @@ export class McpClient {
 
   private createLlm() {
     const { mcpConfig } = this.store.getSettings();
-    const { provider, anthropicApiKey, openAiApiKey } = mcpConfig;
+    const { provider, anthropicApiKey, openAiApiKey, geminiApiKey } = mcpConfig;
 
     if (provider === 'anthropic') {
       if (!anthropicApiKey) {
@@ -164,6 +170,17 @@ export class McpClient {
         temperature: 0,
         maxTokens: 1000,
         apiKey: openAiApiKey,
+      });
+    } else if (provider === 'gemini') {
+      if (!geminiApiKey) {
+        throw new Error('Gemini API key is required');
+      }
+
+      return new ChatGoogleGenerativeAI({
+        model: PROVIDER_MODELS[provider],
+        temperature: 0,
+        maxOutputTokens: 1000,
+        apiKey: geminiApiKey,
       });
     } else {
       throw new Error(`Unsupported MCP provider: ${provider}`);

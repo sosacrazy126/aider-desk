@@ -3,6 +3,7 @@
 ## [0.3.4]
 
 - fancy animation for loading message
+- added Gemini model support for MCP agent
 
 ## [0.3.3]
 

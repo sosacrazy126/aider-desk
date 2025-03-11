@@ -109,9 +109,10 @@ export interface SettingsData {
 }
 
 export interface McpConfig {
-  provider: 'openai' | 'anthropic';
+  provider: 'openai' | 'anthropic' | 'gemini';
   anthropicApiKey: string;
   openAiApiKey: string;
+  geminiApiKey: string;
   maxIterations: number;
   minTimeBetweenToolCalls: number; // in milliseconds
   mcpServers: {
