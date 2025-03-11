@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.3.4]
+
+- fancy animation for loading message
+
 ## [0.3.3]
 
 - skip adding ignored non read-only files to the context
