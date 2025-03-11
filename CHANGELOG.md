@@ -4,6 +4,7 @@
 
 - fancy animation for loading message
 - added Gemini model support for MCP agent
+- updated autocompletion in prompt field to include abbreviations
 
 ## [0.3.3]
 

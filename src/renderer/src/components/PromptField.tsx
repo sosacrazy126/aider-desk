@@ -1,5 +1,6 @@
 import { QuestionData } from '@common/types';
 import React, { useCallback, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react';
+import { matchSorter } from 'match-sorter';
 import { BiSend } from 'react-icons/bi';
 import { MdStop } from 'react-icons/md';
 import TextareaAutosize from 'react-textarea-autosize';
@@ -215,7 +216,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
         setFilteredSuggestions(matched);
         setSuggestionsVisible(matched.length > 0);
       } else if (word.length > 0) {
-        const matched = words.filter((s) => s.toLowerCase().startsWith(word.toLowerCase()));
+        const matched = matchSorter(words, word);
         setFilteredSuggestions(matched);
         setSuggestionsVisible(matched.length > 0);
       } else {
