@@ -190,3 +190,5 @@ For major changes, please open an issue first to discuss what you would like to 
 
 [![Star History
 Chart](https://api.star-history.com/svg?repos=hotovo/aider-desk&type=Date)](https://star-history.com/#hotovo/aider-desk&Date)
+
+Thank you ❤️
