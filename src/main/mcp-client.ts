@@ -295,24 +295,11 @@ export class McpClient {
           }
         }
 
-        // Check if Aider tool is being called
-        const aiderToolCall = aiMessage.tool_calls.find((call) => call.name === 'aider');
-        if (aiderToolCall) {
-          if (iteration === 1) {
-            // If Aider tool is called for the first iteration don't send anything
-            return prompt;
-          }
-
-          logger.debug('Aider tool called. Sending prompt to Aider.');
-          // If Aider tool is called, use its prompt as the response
-          const aiderPrompt = aiderToolCall.args.prompt as string;
-          project.sendToolMessage('aider', { prompt: aiderPrompt }, undefined, usageReport);
-
-          return aiderPrompt;
-        }
-
         // Add AI message to messages
         messages.push(aiMessage);
+
+        // Collect tool results for potential Aider tool
+        const toolResults: string[] = [];
 
         for (const toolCall of aiMessage.tool_calls) {
           // Check for interruption before each tool call
@@ -327,6 +314,22 @@ export class McpClient {
 
           if (remainingDelay > 0) {
             await delay(remainingDelay);
+          }
+
+          // Check if Aider tool is being called
+          if (toolCall.name === 'aider') {
+            logger.debug('Aider tool called. Sending prompt to Aider.');
+            // If Aider tool is called, use its prompt as the response
+            const aiderPrompt = toolCall.args.prompt as string;
+
+            // Append previous tool results to the Aider prompt
+            const toolResultsText = toolResults.length > 0 ? `Previous Tool Results:\n${toolResults.join('\n\n')}\n\nTask:\n` : '';
+
+            const fullAiderPrompt = `${toolResultsText}${aiderPrompt}`;
+
+            project.sendUserMessage(fullAiderPrompt);
+
+            return fullAiderPrompt;
           }
 
           const selectedTool = toolsByName[toolCall.name];
@@ -355,6 +358,12 @@ export class McpClient {
 
             // Add tool message to messages
             messages.push(toolResponse);
+
+            // Store tool result for potential Aider tool
+            const toolResultText = extractTextContent(toolResponse);
+            if (toolResultText) {
+              toolResults.push(`Tool: ${toolCall.name}\n${toolResultText}`);
+            }
           } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
             logger.error(`Error invoking tool ${toolCall.name}:`, error);

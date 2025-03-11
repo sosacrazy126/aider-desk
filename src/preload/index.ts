@@ -14,6 +14,7 @@ import {
   SettingsData,
   TokensInfoData,
   ToolData,
+  UserMessageData,
 } from '@common/types';
 import { normalizeBaseDir } from '@common/utils';
 import { electronAPI } from '@electron-toolkit/preload';
@@ -37,6 +38,7 @@ const logListeners: Record<string, (event: Electron.IpcRendererEvent, data: LogD
 const tokensInfoListeners: Record<string, (event: Electron.IpcRendererEvent, data: TokensInfoData) => void> = {};
 const toolListeners: Record<string, (event: Electron.IpcRendererEvent, data: ToolData) => void> = {};
 const inputHistoryUpdatedListeners: Record<string, (event: Electron.IpcRendererEvent, data: InputHistoryData) => void> = {};
+const userMessageListeners: Record<string, (event: Electron.IpcRendererEvent, data: UserMessageData) => void> = {};
 
 const api: ApplicationAPI = {
   loadSettings: () => ipcRenderer.invoke('load-settings'),
@@ -171,7 +173,7 @@ const api: ApplicationAPI = {
 
   addSetCurrentModelsListener: (baseDir, callback) => {
     const listenerId = uuidv4();
-    setCurrentModelsListeners[listenerId] = (event: Electron.IpcRendererEvent, data: ModelsData & { baseDir: string }) => {
+    setCurrentModelsListeners[listenerId] = (event: Electron.IpcRendererEvent, data: ModelsData) => {
       if (!compareBaseDirs(data.baseDir, baseDir)) {
         return;
       }
@@ -281,6 +283,25 @@ const api: ApplicationAPI = {
     if (callback) {
       ipcRenderer.removeListener('tool', callback);
       delete inputHistoryUpdatedListeners[listenerId];
+    }
+  },
+
+  addUserMessageListener: (baseDir, callback) => {
+    const listenerId = uuidv4();
+    userMessageListeners[listenerId] = (event: Electron.IpcRendererEvent, data: UserMessageData) => {
+      if (!compareBaseDirs(data.baseDir, baseDir)) {
+        return;
+      }
+      callback(event, data);
+    };
+    ipcRenderer.on('user-message', userMessageListeners[listenerId]);
+    return listenerId;
+  },
+  removeUserMessageListener: (listenerId) => {
+    const callback = userMessageListeners[listenerId];
+    if (callback) {
+      ipcRenderer.removeListener('user-message', callback);
+      delete userMessageListeners[listenerId];
     }
   },
 };

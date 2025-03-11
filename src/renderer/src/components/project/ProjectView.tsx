@@ -10,6 +10,7 @@ import {
   QuestionData,
   ToolData,
   InputHistoryData,
+  UserMessageData,
 } from '@common/types';
 import { IpcRendererEvent } from 'electron';
 import { useEffect, useRef, useState } from 'react';
@@ -25,7 +26,7 @@ import {
   LoadingMessage,
   LogMessage,
   Message,
-  PromptMessage,
+  UserMessage,
   ResponseMessage,
   ToolMessage,
 } from '@/types/message';
@@ -185,22 +186,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
     };
 
     const handleTool = (_: IpcRendererEvent, { name, args, response, usageReport }: ToolData) => {
-      if (name === 'aider') {
-        const promptMessage: PromptMessage = {
-          id: uuidv4(),
-          type: 'prompt',
-          editFormat: 'code',
-          content: args!.prompt as string,
-        };
-        setMessages((prevMessages) => {
-          const loadingMessages = prevMessages.filter(isLoadingMessage);
-          const nonLoadingMessages = prevMessages.filter((message) => !isLoadingMessage(message));
-          return [...nonLoadingMessages, promptMessage, ...loadingMessages];
-        });
-        if (usageReport) {
-          setMcpToolsCost((prev) => prev + (usageReport.mcpToolsCost ?? 0));
-        }
-      } else if (response) {
+      if (response) {
         // update the last tool message with the response
         setMessages((prevMessages) => {
           const lastToolMessage = prevMessages.findLast((message) => isToolMessage(message) && message.toolName === name);
@@ -217,7 +203,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
           });
         });
       } else if (args) {
-        // create a tool message with the args
+        // create a new tool message with the args
         const toolMessage: ToolMessage = {
           id: uuidv4(),
           type: 'tool',
@@ -231,6 +217,10 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
           return [...nonLoadingMessages, toolMessage, ...loadingMessages];
         });
       }
+
+      if (usageReport) {
+        setMcpToolsCost((prev) => prev + (usageReport.mcpToolsCost ?? 0));
+      }
     };
 
     const handleLog = (_: IpcRendererEvent, { level, message }: LogData) => {
@@ -241,6 +231,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
           content: message || 'Thinking...',
         };
         setMessages((prevMessages) => [...prevMessages, loadingMessage]);
+        setProcessing(true);
       } else {
         const logMessage: LogMessage = {
           id: uuidv4(),
@@ -286,6 +277,21 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
       setInputHistory(data.messages);
     };
 
+    const handleUserMessage = (_: IpcRendererEvent, data: UserMessageData) => {
+      const userMessage: UserMessage = {
+        id: uuidv4(),
+        type: 'user',
+        editFormat: data.editFormat || 'code',
+        content: data.content,
+      };
+
+      setMessages((prevMessages) => {
+        const loadingMessages = prevMessages.filter(isLoadingMessage);
+        const nonLoadingMessages = prevMessages.filter((message) => !isLoadingMessage(message));
+        return [...nonLoadingMessages, userMessage, ...loadingMessages];
+      });
+    };
+
     const autocompletionListenerId = window.api.addUpdateAutocompletionListener(project.baseDir, handleUpdateAutocompletion);
     const currentModelsListenerId = window.api.addSetCurrentModelsListener(project.baseDir, handleSetCurrentModels);
     const commandOutputListenerId = window.api.addCommandOutputListener(project.baseDir, handleCommandOutput);
@@ -296,6 +302,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
     const questionListenerId = window.api.addAskQuestionListener(project.baseDir, handleQuestion);
     const toolListenerId = window.api.addToolListener(project.baseDir, handleTool);
     const inputHistoryListenerId = window.api.addInputHistoryUpdatedListener(project.baseDir, handleInputHistoryUpdate);
+    const userMessageListenerId = window.api.addUserMessageListener(project.baseDir, handleUserMessage);
 
     return () => {
       window.api.removeUpdateAutocompletionListener(autocompletionListenerId);
@@ -308,6 +315,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
       window.api.removeAskQuestionListener(questionListenerId);
       window.api.removeToolListener(toolListenerId);
       window.api.removeInputHistoryUpdatedListener(inputHistoryListenerId);
+      window.api.removeUserMessageListener(userMessageListenerId);
     };
   }, [project.baseDir, processing]);
 
@@ -315,22 +323,6 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
     window.api.addFile(project.baseDir, filePath, readOnly);
     setAddFileDialogOptions(null);
     promptFieldRef.current?.focus();
-  };
-
-  const handlePromptSubmit = (prompt: string) => {
-    setProcessing(true);
-    const promptMessage: PromptMessage = {
-      id: uuidv4(),
-      type: 'prompt',
-      editFormat,
-      content: prompt,
-    };
-    const loadingMessage: LoadingMessage = {
-      id: uuidv4(),
-      type: 'loading',
-      content: 'Thinking...',
-    };
-    setMessages((prevMessages) => [...prevMessages, promptMessage, loadingMessage]);
   };
 
   const showFileDialog = (readOnly: boolean) => {
@@ -473,7 +465,6 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
             ref={promptFieldRef}
             baseDir={project.baseDir}
             inputHistory={inputHistory}
-            onSubmitted={handlePromptSubmit}
             processing={processing}
             editFormat={editFormat}
             setEditFormat={setEditFormat}

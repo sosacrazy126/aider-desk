@@ -13,7 +13,7 @@ type Props = {
   allFiles: string[];
 };
 
-export const PromptMessageBlock = ({ baseDir, message, allFiles }: Props) => {
+export const UserMessageBlock = ({ baseDir, message, allFiles }: Props) => {
   const baseClasses = 'rounded-md p-3 mb-2 max-w-full break-words whitespace-pre-wrap text-xs bg-neutral-850 border border-neutral-800 text-gray-100';
 
   return (

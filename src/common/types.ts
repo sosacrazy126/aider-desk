@@ -148,6 +148,12 @@ export interface InputHistoryData {
   messages: string[];
 }
 
+export interface UserMessageData {
+  baseDir: string;
+  content: string;
+  editFormat?: string;
+}
+
 export interface FileEdit {
   path: string;
   original: string;

@@ -15,6 +15,7 @@ import {
   ResponseCompletedData,
   ToolData,
   UsageReportData,
+  UserMessageData,
 } from '@common/types';
 import { fileExists, parseUsageReport } from '@common/utils';
 import { BrowserWindow } from 'electron';
@@ -264,6 +265,9 @@ export class Project {
       prompt,
       editFormat,
     });
+
+    this.sendUserMessage(prompt, editFormat);
+    this.sendLogMessage('loading', 'Thinking...');
 
     await this.addToInputHistory(prompt);
 
@@ -610,5 +614,21 @@ export class Project {
       usageReport,
     };
     this.mainWindow!.webContents.send('tool', data);
+  }
+
+  public sendUserMessage(content: string, editFormat?: string) {
+    logger.info('Sending user message:', {
+      baseDir: this.baseDir,
+      content,
+      editFormat,
+    });
+
+    const data: UserMessageData = {
+      baseDir: this.baseDir,
+      content,
+      editFormat,
+    };
+
+    this.mainWindow!.webContents.send('user-message', data);
   }
 }

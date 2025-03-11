@@ -2,7 +2,7 @@ import { CommandOutputMessageBlock } from './CommandOutputMessageBlock';
 import { LoadingMessageBlock } from './LoadingMessageBlock';
 import { LogMessageBlock } from './LogMessageBlock';
 import { ModelsMessageBlock } from './ModelsMessageBlock';
-import { PromptMessageBlock } from './PromptMessageBlock';
+import { UserMessageBlock } from './UserMessageBlock';
 import { ReflectedMessageBlock } from './ReflectedMessageBlock';
 import { ResponseMessageBlock } from './ResponseMessageBlock';
 
@@ -11,7 +11,7 @@ import {
   isLogMessage,
   isLoadingMessage,
   isModelsMessage,
-  isPromptMessage,
+  isUserMessage,
   isReflectedMessage,
   isResponseMessage,
   Message,
@@ -46,8 +46,8 @@ export const MessageBlock = ({ baseDir, message, allFiles }: Props) => {
     return <CommandOutputMessageBlock message={message} />;
   }
 
-  if (isPromptMessage(message)) {
-    return <PromptMessageBlock baseDir={baseDir} message={message} allFiles={allFiles} />;
+  if (isUserMessage(message)) {
+    return <UserMessageBlock baseDir={baseDir} message={message} allFiles={allFiles} />;
   }
 
   if (isResponseMessage(message)) {

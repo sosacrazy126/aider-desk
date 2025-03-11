@@ -10,6 +10,7 @@ import {
   ResponseCompletedData,
   SettingsData,
   TokensInfoData,
+  UserMessageData,
 } from '../common/types';
 
 import type { ElectronAPI } from '@electron-toolkit/preload';
@@ -68,7 +69,7 @@ export interface ApplicationAPI {
   addAskQuestionListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: QuestionData) => void) => string;
   removeAskQuestionListener: (listenerId: string) => void;
 
-  addSetCurrentModelsListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: ModelsData & { baseDir: string }) => void) => string;
+  addSetCurrentModelsListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: ModelsData) => void) => string;
   removeSetCurrentModelsListener: (listenerId: string) => void;
 
   addCommandOutputListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: CommandOutputData) => void) => string;
@@ -79,6 +80,9 @@ export interface ApplicationAPI {
 
   addToolListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: ToolData) => void) => string;
   removeToolListener: (listenerId: string) => void;
+
+  addUserMessageListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: UserMessageData) => void) => string;
+  removeUserMessageListener: (listenerId: string) => void;
 
   addInputHistoryUpdatedListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: InputHistoryData) => void) => string;
   removeInputHistoryUpdatedListener: (listenerId: string) => void;

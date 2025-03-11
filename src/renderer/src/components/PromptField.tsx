@@ -48,7 +48,7 @@ type Props = {
   defaultEditFormat?: string;
   editFormat: string;
   setEditFormat: (format: string) => void;
-  onSubmitted: (prompt: string) => void;
+  onSubmitted?: (prompt: string) => void;
   showFileDialog: (readOnly: boolean) => void;
   clearMessages: () => void;
   scrapeWeb: (url: string) => void;

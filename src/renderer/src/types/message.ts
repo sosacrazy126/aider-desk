@@ -2,12 +2,12 @@ import { ModelsData, TokensInfoData, UsageReportData } from '@common/types';
 
 export interface Message {
   id: string;
-  type: 'prompt' | 'response' | 'loading' | 'models' | 'reflected-message' | 'command-output' | 'log' | 'tokens-info' | 'tool';
+  type: 'user' | 'response' | 'loading' | 'models' | 'reflected-message' | 'command-output' | 'log' | 'tokens-info' | 'tool';
   content: string;
 }
 
-export interface PromptMessage extends Message {
-  type: 'prompt';
+export interface UserMessage extends Message {
+  type: 'user';
   editFormat?: string;
 }
 
@@ -52,8 +52,8 @@ export interface ToolMessage extends Message {
   content: string; // Empty while executing, contains result when complete
 }
 
-export const isPromptMessage = (message: Message): message is PromptMessage => {
-  return message.type === 'prompt';
+export const isUserMessage = (message: Message): message is UserMessage => {
+  return message.type === 'user';
 };
 
 export const isResponseMessage = (message: Message): message is ResponseMessage => {
