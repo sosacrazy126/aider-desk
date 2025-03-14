@@ -6,6 +6,7 @@
 - added Gemini model support for MCP agent
 - updated autocompletion in prompt field to include abbreviations
 - fixed MCP tool schema for Gemini provider
+- added REST API for managing context files and running prompt
 
 ## [0.3.3]
 

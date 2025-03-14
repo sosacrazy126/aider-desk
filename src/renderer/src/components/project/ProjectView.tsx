@@ -112,9 +112,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
         processingMessageRef.current = newResponseMessage;
         newMessages.push(newResponseMessage);
         setMessages((prevMessages) => prevMessages.filter((message) => !isLoadingMessage(message)).concat(...newMessages));
-        if (!processing) {
-          setProcessing(true);
-        }
+        setProcessing(true);
       } else {
         processingMessage.content += chunk;
         setMessages((prevMessages) => prevMessages.map((message) => (message.id === messageId ? processingMessage : message)));
@@ -412,11 +410,14 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
     };
     setMessages((prevMessages) => [...prevMessages.filter((message) => !isLoadingMessage(message)), interruptMessage]);
 
-    frozenTimeoutRef.current = setTimeout(() => {
-      if (processing) {
-        setShowFrozenDialog(true);
-      }
-    }, 10000);
+    if (!frozenTimeoutRef.current) {
+      frozenTimeoutRef.current = setTimeout(() => {
+        if (processing) {
+          setShowFrozenDialog(true);
+        }
+        frozenTimeoutRef.current = null;
+      }, 10000);
+    }
   };
 
   const handleModelChange = () => {

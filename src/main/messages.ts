@@ -3,6 +3,7 @@ import { ContextFileSourceType, ContextFile, TokensCost, FileEdit, UsageReportDa
 export type MessageAction =
   | 'init'
   | 'prompt'
+  | 'prompt-finished'
   | 'response'
   | 'add-file'
   | 'drop-file'
@@ -46,6 +47,7 @@ export interface PromptMessage extends Message {
   prompt: string;
   editFormat: EditFormat | null;
   architectModel: string | null;
+  promptId?: string | null;
 }
 
 export interface ResponseMessage extends Message {
@@ -174,8 +176,13 @@ export interface InterruptResponseMessage extends Message {
   action: 'interrupt-response';
 }
 
-export const isInterruptResponseMessage = (message: Message): message is InterruptResponseMessage => {
-  return typeof message === 'object' && message !== null && 'action' in message && message.action === 'interrupt-response';
+export interface PromptFinishedMessage extends Message {
+  action: 'prompt-finished';
+  promptId: string;
+}
+
+export const isPromptFinishedMessage = (message: Message): message is PromptFinishedMessage => {
+  return message.action === 'prompt-finished';
 };
 
 export interface ApplyEditsMessage extends Message {

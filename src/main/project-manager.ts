@@ -6,23 +6,14 @@ import logger from './logger';
 import { Project } from './project';
 import { Store } from './store';
 
-class ProjectManager {
-  private static instance: ProjectManager;
+export class ProjectManager {
   private projects: Project[] = [];
-  private mainWindow: BrowserWindow | null = null;
-  private store: Store | null = null;
-  private mcpClient: McpClient | null = null;
 
-  private constructor() {}
-
-  public static getInstance(): ProjectManager {
-    if (!ProjectManager.instance) {
-      ProjectManager.instance = new ProjectManager();
-    }
-    return ProjectManager.instance;
-  }
-
-  public init(mainWindow: BrowserWindow, store: Store, mcpClient: McpClient): void {
+  constructor(
+    private readonly mainWindow: BrowserWindow,
+    private readonly store: Store,
+    private readonly mcpClient: McpClient,
+  ) {
     this.mainWindow = mainWindow;
     this.store = store;
     this.mcpClient = mcpClient;
@@ -38,7 +29,7 @@ class ProjectManager {
 
     if (!project) {
       logger.info('Creating new project', { baseDir });
-      project = new Project(this.mainWindow!, baseDir, this.store!, this.mcpClient!);
+      project = new Project(this.mainWindow, baseDir, this.store, this.mcpClient!);
       this.projects.push(project);
     }
 
@@ -60,7 +51,7 @@ class ProjectManager {
       return;
     }
     logger.info('Stopping project', { baseDir });
-    await project.killAider();
+    await project.stop();
   }
 
   public async restartProject(baseDir: string): Promise<void> {
@@ -70,9 +61,7 @@ class ProjectManager {
 
   public async close(): Promise<void> {
     logger.info('Stopping all projects');
-    await Promise.all(this.projects.map((project) => project.killAider()));
+    await Promise.all(this.projects.map((project) => project.stop()));
     this.projects = [];
   }
 }
-
-export const projectManager = ProjectManager.getInstance();

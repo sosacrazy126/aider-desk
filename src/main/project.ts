@@ -25,14 +25,12 @@ import { parse } from '@dotenvx/dotenvx';
 
 import { Connector } from './connector';
 import { McpClient } from './mcp-client';
-import { AIDER_DESK_CONNECTOR_DIR, PID_FILES_DIR, PYTHON_COMMAND, SOCKET_PORT } from './constants';
+import { AIDER_DESK_CONNECTOR_DIR, PID_FILES_DIR, PYTHON_COMMAND, SERVER_PORT } from './constants';
 import logger from './logger';
 import { EditFormat, MessageAction, ResponseMessage } from './messages';
 import { DEFAULT_MAIN_MODEL, Store } from './store';
 
 export class Project {
-  private mainWindow: BrowserWindow | null = null;
-  private store: Store | null = null;
   private process?: ChildProcessWithoutNullStreams | null = null;
   private connectors: Connector[] = [];
   private currentCommand: string | null = null;
@@ -40,22 +38,23 @@ export class Project {
   private allTrackedFiles: string[] = [];
   private questionAnswers: Map<string, 'y' | 'n'> = new Map();
   private currentResponseMessageId: string | null = null;
+  private currentPromptId: string | null = null;
   private inputHistoryFile = '.aider.input.history';
-  public baseDir: string;
-  public contextFiles: ContextFile[] = [];
-  public models: ModelsData | null = null;
-  private mcpClient: McpClient;
+  private contextFiles: ContextFile[] = [];
+  private models: ModelsData | null = null;
+  private currentPromptResponses: ResponseCompletedData[] = [];
+  private runPromptResolves: ((value: ResponseCompletedData[]) => void)[] = [];
 
-  constructor(mainWindow: BrowserWindow, baseDir: string, store: Store, mcpClient: McpClient) {
-    this.mainWindow = mainWindow;
-    this.store = store;
-    this.baseDir = baseDir;
-    this.mcpClient = mcpClient;
-  }
+  constructor(
+    private readonly mainWindow: BrowserWindow,
+    public readonly baseDir: string,
+    private readonly store: Store,
+    private readonly mcpClient: McpClient,
+  ) {}
 
   public start() {
     this.contextFiles.forEach((contextFile) => {
-      this.mainWindow?.webContents.send('file-added', {
+      this.mainWindow.webContents.send('file-added', {
         baseDir: this.baseDir,
         file: contextFile,
       });
@@ -144,9 +143,9 @@ export class Project {
     this.currentCommand = null;
     this.currentQuestion = null;
 
-    const settings = this.store!.getSettings();
-    const mainModel = this.store!.getProjectSettings(this.baseDir).mainModel || DEFAULT_MAIN_MODEL;
-    const weakModel = this.store!.getProjectSettings(this.baseDir).weakModel;
+    const settings = this.store.getSettings();
+    const mainModel = this.store.getProjectSettings(this.baseDir).mainModel || DEFAULT_MAIN_MODEL;
+    const weakModel = this.store.getProjectSettings(this.baseDir).weakModel;
     const environmentVariables = parse(settings.aider.environmentVariables);
 
     logger.info('Running Aider for project', {
@@ -180,7 +179,7 @@ export class Project {
       ...process.env,
       ...environmentVariables,
       PYTHONPATH: AIDER_DESK_CONNECTOR_DIR,
-      CONNECTOR_SERVER_URL: `http://localhost:${SOCKET_PORT}`,
+      CONNECTOR_SERVER_URL: `http://localhost:${SERVER_PORT}`,
     };
 
     // Spawn without shell to have direct process control
@@ -226,7 +225,19 @@ export class Project {
     return !!this.process;
   }
 
-  public async killAider(): Promise<void> {
+  public async stop() {
+    await this.killAider();
+    this.currentCommand = null;
+    this.currentQuestion = null;
+    this.currentResponseMessageId = null;
+    this.currentPromptId = null;
+    this.currentPromptResponses = [];
+
+    this.runPromptResolves.forEach((resolve) => resolve([]));
+    this.runPromptResolves = [];
+  }
+
+  private async killAider(): Promise<void> {
     if (this.process) {
       logger.info('Killing Aider...', { baseDir: this.baseDir });
       try {
@@ -257,8 +268,13 @@ export class Project {
     return this.connectors.filter((connector) => connector.listenTo.includes(action));
   }
 
-  public async runPrompt(prompt: string, editFormat?: EditFormat): Promise<void> {
-    this.currentResponseMessageId = null;
+  public async runPrompt(prompt: string, editFormat?: EditFormat): Promise<ResponseCompletedData[]> {
+    // If a prompt is already running, wait for it to finish
+    if (this.currentPromptId) {
+      return new Promise((resolve) => {
+        this.runPromptResolves.push(resolve);
+      });
+    }
 
     logger.info('Running prompt:', {
       baseDir: this.baseDir,
@@ -277,16 +293,52 @@ export class Project {
 
     const mcpPrompt = await this.mcpClient.runPrompt(this, prompt);
     if (!mcpPrompt) {
-      return;
+      this.currentPromptId = null;
+      return [];
     }
 
     prompt = mcpPrompt;
 
-    this.findMessageConnectors('prompt').forEach((connector) => connector.sendPromptMessage(prompt, editFormat, this.getArchitectModel()));
+    this.currentPromptResponses = [];
+    this.currentResponseMessageId = null;
+    this.currentPromptId = uuidv4();
+
+    this.findMessageConnectors('prompt').forEach((connector) =>
+      connector.sendPromptMessage(prompt, editFormat, this.getArchitectModel(), this.currentPromptId),
+    );
+
+    // Wait for prompt to finish and return collected responses
+    return new Promise((resolve) => {
+      this.runPromptResolves.push(resolve);
+    });
   }
 
   private getArchitectModel(): string | null {
-    return this.store?.getProjectSettings(this.baseDir).architectModel || null;
+    return this.store.getProjectSettings(this.baseDir).architectModel || null;
+  }
+
+  public promptFinished() {
+    if (this.currentResponseMessageId) {
+      this.mainWindow.webContents.send('response-completed', {
+        messageId: this.currentResponseMessageId,
+        baseDir: this.baseDir,
+        content: '',
+      });
+      this.currentResponseMessageId = null;
+    }
+
+    // Notify waiting prompts with collected responses
+    const responses = [...this.currentPromptResponses];
+    this.currentPromptResponses = [];
+    this.currentPromptId = null;
+    this.closeCommandOutput();
+
+    while (this.runPromptResolves.length) {
+      const resolve = this.runPromptResolves.shift();
+      if (resolve) {
+        resolve(responses);
+      }
+    }
   }
 
   public processResponseMessage(message: ResponseMessage) {
@@ -302,7 +354,7 @@ export class Project {
         chunk: message.content,
         reflectedMessage: message.reflectedMessage,
       };
-      this.mainWindow!.webContents.send('response-chunk', data);
+      this.mainWindow.webContents.send('response-chunk', data);
     } else {
       logger.info(`Sending response completed to ${this.baseDir}`);
       logger.debug(`Message data: ${JSON.stringify(message)}`);
@@ -324,10 +376,12 @@ export class Project {
         diff: message.diff,
         usageReport,
       };
-      this.mainWindow!.webContents.send('response-completed', data);
+      this.mainWindow.webContents.send('response-completed', data);
       this.currentResponseMessageId = null;
-
       this.closeCommandOutput();
+
+      // Collect the completed response
+      this.currentPromptResponses.push(data);
     }
   }
 
@@ -397,7 +451,10 @@ export class Project {
       return;
     }
 
-    this.contextFiles.push(contextFile);
+    this.contextFiles.push({
+      ...contextFile,
+      readOnly: contextFile.readOnly ?? false,
+    });
     this.findMessageConnectors('add-file').forEach((connector) => connector.sendAddFileMessage(contextFile));
   }
 
@@ -423,7 +480,7 @@ export class Project {
   public updateContextFiles(contextFiles: ContextFile[]) {
     this.contextFiles = contextFiles;
 
-    this.mainWindow?.webContents.send('context-files-updated', {
+    this.mainWindow.webContents.send('context-files-updated', {
       baseDir: this.baseDir,
       files: contextFiles,
     });
@@ -486,7 +543,7 @@ export class Project {
       baseDir: this.baseDir,
       messages: history,
     };
-    this.mainWindow?.webContents.send('input-history-updated', inputHistoryData);
+    this.mainWindow.webContents.send('input-history-updated', inputHistoryData);
   }
 
   public askQuestion(questionData: QuestionData) {
@@ -510,7 +567,7 @@ export class Project {
       return;
     }
 
-    this.mainWindow?.webContents.send('ask-question', questionData);
+    this.mainWindow.webContents.send('ask-question', questionData);
   }
 
   public setAllTrackedFiles(files: string[]) {
@@ -522,7 +579,7 @@ export class Project {
       ...modelsData,
       architectModel: modelsData.architectModel !== undefined ? modelsData.architectModel : this.getArchitectModel(),
     };
-    this.mainWindow?.webContents.send('set-current-models', this.models);
+    this.mainWindow.webContents.send('set-current-models', this.models);
   }
 
   public updateModels(mainModel: string, weakModel: string | null) {
@@ -548,6 +605,10 @@ export class Project {
     return this.allTrackedFiles.filter((file) => !contextFilePaths.has(file));
   }
 
+  public getContextFiles(): ContextFile[] {
+    return this.contextFiles;
+  }
+
   public openCommandOutput(command: string) {
     this.currentCommand = command;
     this.sendCommandOutput(command, '');
@@ -558,7 +619,7 @@ export class Project {
   }
 
   private sendCommandOutput(command: string, output: string) {
-    this.mainWindow!.webContents.send('command-output', {
+    this.mainWindow.webContents.send('command-output', {
       baseDir: this.baseDir,
       command: command,
       output,
@@ -566,17 +627,7 @@ export class Project {
   }
 
   public sendLogMessage(level: string, message: string) {
-    if (level === 'error' && this.currentResponseMessageId) {
-      const data: ResponseCompletedData = {
-        baseDir: this.baseDir,
-        messageId: this.currentResponseMessageId,
-        content: '',
-      };
-      this.mainWindow!.webContents.send('response-completed', data);
-      this.currentResponseMessageId = null;
-    }
-
-    this.mainWindow!.webContents.send('log', {
+    this.mainWindow.webContents.send('log', {
       baseDir: this.baseDir,
       level,
       message,
@@ -613,7 +664,7 @@ export class Project {
       response,
       usageReport,
     };
-    this.mainWindow!.webContents.send('tool', data);
+    this.mainWindow.webContents.send('tool', data);
   }
 
   public sendUserMessage(content: string, editFormat?: string) {
@@ -629,6 +680,6 @@ export class Project {
       editFormat,
     };
 
-    this.mainWindow!.webContents.send('user-message', data);
+    this.mainWindow.webContents.send('user-message', data);
   }
 }

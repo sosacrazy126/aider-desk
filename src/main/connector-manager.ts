@@ -1,15 +1,19 @@
+import { Server as HttpServer } from 'http';
+
 import { ModelsData, QuestionData, TokensInfoData } from '@common/types';
 import { BrowserWindow } from 'electron';
 import { Server, Socket } from 'socket.io';
 import { Connector } from 'src/main/connector';
+import { ProjectManager } from 'src/main/project-manager';
+import { SERVER_PORT } from 'src/main/constants';
 
-import { SOCKET_PORT } from './constants';
 import logger from './logger';
 import {
   isAddFileMessage,
   isAskQuestionMessage,
   isDropFileMessage,
   isInitMessage,
+  isPromptFinishedMessage,
   isResponseMessage,
   isSetModelsMessage,
   isTokensInfoMessage,
@@ -19,26 +23,22 @@ import {
   LogMessage,
   Message,
 } from './messages';
-import { projectManager } from './project-manager';
 
-class ConnectorManager {
-  private static instance: ConnectorManager;
+export class ConnectorManager {
   private io: Server | null = null;
-  private mainWindow: BrowserWindow | null = null;
   private connectors: Connector[] = [];
 
-  private constructor() {}
-
-  public static getInstance(): ConnectorManager {
-    if (!ConnectorManager.instance) {
-      ConnectorManager.instance = new ConnectorManager();
-    }
-    return ConnectorManager.instance;
+  constructor(
+    private readonly mainWindow: BrowserWindow,
+    private readonly projectManager: ProjectManager,
+    httpServer: HttpServer,
+  ) {
+    this.init(httpServer);
   }
 
-  public init(mainWindow: BrowserWindow, port = SOCKET_PORT): void {
-    this.mainWindow = mainWindow;
-    this.io = new Server(port, {
+  public init(httpServer: HttpServer): void {
+    // Create Socket.IO server
+    this.io = new Server(httpServer, {
       cors: {
         origin: '*',
         methods: ['GET', 'POST'],
@@ -55,47 +55,57 @@ class ConnectorManager {
 
       socket.on('disconnect', () => {
         const connector = this.findConnectorBySocket(socket);
-        logger.info('Socket.IO client disconnected', { baseDir: connector?.baseDir });
+        logger.info('Socket.IO client disconnected', {
+          baseDir: connector?.baseDir,
+        });
         this.removeConnector(socket);
       });
     });
+
+    httpServer.listen(SERVER_PORT);
+
+    logger.info('Socket.IO server initialized');
   }
 
-  public close(): void {
-    if (this.io) {
-      this.io.close();
-      this.io = null;
-    }
+  public async close() {
+    await this.io?.close();
   }
 
   private processMessage = (socket: Socket, message: Message) => {
     try {
       logger.info('Received message from client', { action: message.action });
-      logger.debug('Message:', { message: JSON.stringify(message).slice(0, 1000) });
+      logger.debug('Message:', {
+        message: JSON.stringify(message).slice(0, 1000),
+      });
 
       if (isInitMessage(message)) {
-        logger.info('Initializing connector for base directory:', { baseDir: message.baseDir, listenTo: message.listenTo });
+        logger.info('Initializing connector for base directory:', {
+          baseDir: message.baseDir,
+          listenTo: message.listenTo,
+        });
         const connector = new Connector(socket, message.baseDir, message.listenTo, message.inputHistoryFile);
         this.connectors.push(connector);
 
-        const project = projectManager.getProject(message.baseDir);
+        const project = this.projectManager.getProject(message.baseDir);
         project.addConnector(connector);
 
         message.contextFiles?.forEach((file) => project.addFile(file));
-        logger.info('Socket.IO registered project for base directory:', { baseDir: message.baseDir });
+        logger.info('Socket.IO registered project for base directory:', {
+          baseDir: message.baseDir,
+        });
       } else if (isResponseMessage(message)) {
         const connector = this.findConnectorBySocket(socket);
         if (!connector) {
           return;
         }
-        projectManager.getProject(connector.baseDir).processResponseMessage(message);
+        this.projectManager.getProject(connector.baseDir).processResponseMessage(message);
       } else if (isAddFileMessage(message)) {
         const connector = this.findConnectorBySocket(socket);
         if (!connector) {
           return;
         }
         logger.info('Adding file in project', { baseDir: connector.baseDir });
-        projectManager.getProject(connector.baseDir).addFile({
+        this.projectManager.getProject(connector.baseDir).addFile({
           path: message.path,
           readOnly: message.readOnly,
         });
@@ -105,19 +115,19 @@ class ConnectorManager {
           return;
         }
         logger.info('Dropping file in project', { baseDir: connector.baseDir });
-        projectManager.getProject(connector.baseDir).dropFile(message.path);
+        this.projectManager.getProject(connector.baseDir).dropFile(message.path);
       } else if (isUpdateAutocompletionMessage(message)) {
         const connector = this.findConnectorBySocket(socket);
         if (!connector) {
           return;
         }
-        this.mainWindow?.webContents.send('update-autocompletion', {
+        this.mainWindow.webContents.send('update-autocompletion', {
           baseDir: connector.baseDir,
           words: message.words,
           allFiles: message.allFiles,
           models: message.models,
         });
-        projectManager.getProject(connector.baseDir).setAllTrackedFiles(message.allFiles);
+        this.projectManager.getProject(connector.baseDir).setAllTrackedFiles(message.allFiles);
       } else if (isAskQuestionMessage(message)) {
         const connector = this.findConnectorBySocket(socket);
         if (!connector) {
@@ -129,7 +139,7 @@ class ConnectorManager {
           subject: message.subject,
           defaultAnswer: message.defaultAnswer,
         };
-        projectManager.getProject(connector.baseDir).askQuestion(questionData);
+        this.projectManager.getProject(connector.baseDir).askQuestion(questionData);
       } else if (isSetModelsMessage(message)) {
         const connector = this.findConnectorBySocket(socket);
         if (!connector) {
@@ -140,13 +150,13 @@ class ConnectorManager {
           ...message,
         };
 
-        projectManager.getProject(connector.baseDir).setCurrentModels(modelsData);
+        this.projectManager.getProject(connector.baseDir).setCurrentModels(modelsData);
       } else if (isUpdateContextFilesMessage(message)) {
         const connector = this.findConnectorBySocket(socket);
         if (!connector) {
           return;
         }
-        projectManager.getProject(connector.baseDir).updateContextFiles(message.files);
+        this.projectManager.getProject(connector.baseDir).updateContextFiles(message.files);
       } else if (isUseCommandOutputMessage(message)) {
         logger.info('Use command output', { ...message });
 
@@ -154,7 +164,7 @@ class ConnectorManager {
         if (!connector || !this.mainWindow) {
           return;
         }
-        const project = projectManager.getProject(connector.baseDir);
+        const project = this.projectManager.getProject(connector.baseDir);
         if (message.finished) {
           project.closeCommandOutput();
         } else {
@@ -171,6 +181,16 @@ class ConnectorManager {
           ...message.info,
         };
         this.mainWindow.webContents.send('update-tokens-info', data);
+      } else if (isPromptFinishedMessage(message)) {
+        const connector = this.findConnectorBySocket(socket);
+        if (!connector) {
+          return;
+        }
+        logger.info('Prompt finished', {
+          baseDir: connector.baseDir,
+          promptId: message.promptId,
+        });
+        this.projectManager.getProject(connector.baseDir).promptFinished();
       } else {
         logger.warn('Unknown message type: ', message);
       }
@@ -185,7 +205,7 @@ class ConnectorManager {
       return;
     }
 
-    const project = projectManager.getProject(connector.baseDir);
+    const project = this.projectManager.getProject(connector.baseDir);
     project.sendLogMessage(message.level, message.message);
   };
 
@@ -195,7 +215,7 @@ class ConnectorManager {
       return;
     }
 
-    const project = projectManager.getProject(connector.baseDir);
+    const project = this.projectManager.getProject(connector.baseDir);
     project.removeConnector(connector);
 
     this.connectors = this.connectors.filter((c) => c !== connector);
@@ -209,5 +229,3 @@ class ConnectorManager {
     return connector;
   };
 }
-
-export const connectorManager = ConnectorManager.getInstance();

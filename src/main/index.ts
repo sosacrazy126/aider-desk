@@ -1,17 +1,19 @@
 import { join } from 'path';
+import { createServer } from 'http';
 
 import { delay } from '@common/utils';
-import { electronApp, optimizer, is } from '@electron-toolkit/utils';
-import { app, shell, BrowserWindow, dialog } from 'electron';
+import { electronApp, is, optimizer } from '@electron-toolkit/utils';
+import { app, BrowserWindow, dialog, shell } from 'electron';
 import ProgressBar from 'electron-progressbar';
 import { McpClient } from 'src/main/mcp-client';
 
 import icon from '../../resources/icon.png?asset';
 
-import { setupAutoUpdater, checkForUpdates } from './auto-updater';
-import { connectorManager } from './connector-manager';
+import { RestApiController } from './rest-api-controller';
+import { checkForUpdates, setupAutoUpdater } from './auto-updater';
+import { ConnectorManager } from './connector-manager';
 import { setupIpcHandlers } from './ipc-handlers';
-import { projectManager } from './project-manager';
+import { ProjectManager } from './project-manager';
 import { performStartUp, UpdateProgressData } from './start-up';
 import { Store } from './store';
 
@@ -50,7 +52,13 @@ const initWindow = (store: Store) => {
   const saveWindowState = (): void => {
     const [width, height] = mainWindow.getSize();
     const [x, y] = mainWindow.getPosition();
-    store.setWindowState({ width, height, x, y, isMaximized: mainWindow.isMaximized() });
+    store.setWindowState({
+      width,
+      height,
+      x,
+      y,
+      isMaximized: mainWindow.isMaximized(),
+    });
   };
 
   mainWindow.on('resize', saveWindowState);
@@ -61,13 +69,32 @@ const initWindow = (store: Store) => {
   const mcpClient = new McpClient(store);
   void mcpClient.init();
 
-  connectorManager.init(mainWindow);
-  projectManager.init(mainWindow, store, mcpClient);
-  setupIpcHandlers(mainWindow, store, mcpClient);
+  // Initialize project manager
+  const projectManager = new ProjectManager(mainWindow, store, mcpClient);
+
+  // Create HTTP server
+  const httpServer = createServer();
+
+  // Create and initialize REST API controller
+  const restApiController = new RestApiController(projectManager, httpServer);
+
+  // Initialize connector manager with the server
+  const connectorManager = new ConnectorManager(mainWindow, projectManager, httpServer);
+
+  setupIpcHandlers(mainWindow, projectManager, store, mcpClient);
 
   app.on('before-quit', async () => {
-    connectorManager.close();
+    await restApiController.close();
+    await connectorManager.close();
     await projectManager.close();
+  });
+
+  // Handle CTRL+C (SIGINT)
+  process.on('SIGINT', async () => {
+    await restApiController.close();
+    await connectorManager.close();
+    await projectManager.close();
+    process.exit(0);
   });
 
   // HMR for renderer base on electron-vite cli.
@@ -171,13 +198,6 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
   }
-});
-
-// Handle CTRL+C (SIGINT)
-process.on('SIGINT', async () => {
-  connectorManager.close();
-  await projectManager.close();
-  process.exit(0);
 });
 
 process.on('exit', () => {

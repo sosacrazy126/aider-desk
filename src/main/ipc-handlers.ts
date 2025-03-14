@@ -5,11 +5,11 @@ import { McpClient } from 'src/main/mcp-client';
 
 import { getFilePathSuggestions, isProjectPath, isValidPath } from './file-system';
 import { EditFormat } from './messages';
-import { projectManager } from './project-manager';
+import { ProjectManager } from './project-manager';
 import { DEFAULT_PROJECT_SETTINGS, Store } from './store';
 import { scrapeWeb } from './web-scrapper';
 
-export const setupIpcHandlers = (mainWindow: BrowserWindow, store: Store, mcpClient: McpClient) => {
+export const setupIpcHandlers = (mainWindow: BrowserWindow, projectManager: ProjectManager, store: Store, mcpClient: McpClient) => {
   ipcMain.handle('load-settings', () => {
     return store.getSettings();
   });

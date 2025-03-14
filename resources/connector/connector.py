@@ -323,10 +323,18 @@ class Connector:
         prompt = message.get('prompt')
         edit_format = message.get('editFormat')
         architect_model = message.get('architectModel')
+        prompt_id = message.get('promptId')
         if not prompt:
           return
 
-        await self.run_prompt(prompt, edit_format, architect_model)
+        try:
+            await self.run_prompt(prompt, edit_format, architect_model, prompt_id)
+        finally:
+            if prompt_id:
+                await self.send_action({
+                    "action": "prompt-finished",
+                    "promptId": prompt_id
+                })
 
       elif action == "answer-question":
         global confirmation_result
@@ -399,7 +407,6 @@ class Connector:
           return
 
         edit_tuples = [(edit['path'], edit['original'], edit['updated']) for edit in edits]
-        await self.send_log_message("loading", "Applying changes...")
         self.coder.apply_edits(edit_tuples)
         await self.send_log_message("info", "Files have been updated." if len(edits) > 1 else "File has been updated.")
         await self.send_update_context_files()
@@ -420,7 +427,7 @@ class Connector:
     self.coder.io.reset_state()
     self.interrupted = False
 
-  async def run_prompt(self, prompt, edit_format=None, architect_model=None):
+  async def run_prompt(self, prompt, edit_format=None, architect_model=None, prompt_id=None):
     self.coder.io.add_to_input_history(prompt)
 
     coder_model = self.coder.main_model
@@ -545,6 +552,13 @@ class Connector:
     self.running_coder = None
     await self.send_autocompletion()
     await self.send_tokens_info()
+
+    # Send prompt-finished message if we have a prompt ID
+    if prompt_id:
+      await self.send_action({
+        "action": "prompt-finished",
+        "promptId": prompt_id
+      })
 
   async def add_file(self, path, read_only):
     """Add a file to the coder's tracked files"""
