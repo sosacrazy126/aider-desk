@@ -10,7 +10,7 @@ Transform your AI coding experience with AiderDesk - all the power of the Aider 
 - [✨ Key Features](#-key-features)
 - [📥 Installation](#-installation)
 - [📸 Screenshots](#-screenshots)
-- [🛠️ Model Context Protocol (MCP) Support](#-model-context-protocol-mcp-support)
+- [🛠️ Model Context Protocol (MCP) Support](#%EF%B8%8F-model-context-protocol-mcp-support)
 - [🌐 REST API](#-rest-api)
 - [👨‍💻 Development Setup](#-development-setup)
 - [🤝 Contributing](#-contributing)
@@ -31,6 +31,7 @@ Transform your AI coding experience with AiderDesk - all the power of the Aider 
 *   **🔌 IDE Integration** - Automatically manage context files in:
     * IntelliJ IDEA ([Plugin](https://plugins.jetbrains.com/plugin/26313-aiderdesk-connector) | [GitHub](https://github.com/hotovo/aider-desk-connector-intellij-plugin))
     * VSCode ([Extension](https://marketplace.visualstudio.com/items?itemName=hotovo-sk.aider-desk-connector) | [GitHub](https://github.com/hotovo/aider-desk-connector-vscode-extension))
+*   **🌐 REST API** - Expose functionality via REST API for external tools
 *   **🧩 MCP Support** - Connect to Model Context Protocol servers for enhanced AI capabilities
 *   **🔑 Settings Management** - Easily configure API keys and environment variables
 *   **💰 Cost Tracking** - Monitor token usage and expenses with detailed insights
@@ -153,11 +154,11 @@ AiderDesk should work with any MCP-compatible server, including Brave API MCP se
 
 AiderDesk provides a REST API for external tools to interact with the application. The API is running on the same port as the main application (default 24337, configurable by `AIDER_DESK_PORT` environment variable).
 
-### Available Endpoints
-
 #### Add Context File
 
-- **Endpoint:** `/api/add-context-file`
+<details>
+  <summary><code>/api/add-context-file</code></summary>
+
 - **Method:** POST
 - **Request Body:**
   ```json
@@ -177,10 +178,13 @@ AiderDesk provides a REST API for external tools to interact with the applicatio
   ]
   ```
   Returns the list of context files in the project.
+</details>
 
 #### Drop Context File
 
-- **Endpoint:** `/api/drop-context-file`
+<details>
+  <summary><code>/api/drop-context-file</code></summary>
+
 - **Method:** POST
 - **Request Body:**
   ```json
@@ -194,10 +198,13 @@ AiderDesk provides a REST API for external tools to interact with the applicatio
   []
   ```
   Returns the list of context files in the project.
+</details>
 
 #### Get Context Files
 
-- **Endpoint:** `/api/get-context-files`
+<details>
+  <summary><code>/api/get-context-files</code></summary>
+
 - **Method:** POST
 - **Request Body:**
   ```json
@@ -215,8 +222,12 @@ AiderDesk provides a REST API for external tools to interact with the applicatio
   ]
   ```
   Returns the list of context files in the project.
+</details>
 
 #### Run Prompt
+
+<details>
+  <summary><code>/api/run-prompt</code></summary>
 
 - **Endpoint:** `/api/run-prompt`
 - **Method:** POST
@@ -250,6 +261,7 @@ AiderDesk provides a REST API for external tools to interact with the applicatio
     }
   ]
   ```
+</details>
 
 ## 👨‍💻 Development Setup
 If you want to run from source, you can follow these steps:
