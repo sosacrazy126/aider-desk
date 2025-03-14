@@ -6,6 +6,15 @@
 
 Transform your AI coding experience with AiderDesk - all the power of the Aider console tool in an intuitive desktop interface. Whether you're managing multiple projects, integrating with your favorite IDE, or tracking costs, AiderDesk elevates your productivity to new heights.
 
+## Table of Contents
+- [✨ Key Features](#-key-features)
+- [📥 Installation](#-installation)
+- [📸 Screenshots](#-screenshots)
+- [🛠️ Model Context Protocol (MCP) Support](#-model-context-protocol-mcp-support)
+- [🌐 REST API](#-rest-api)
+- [👨‍💻 Development Setup](#-development-setup)
+- [🤝 Contributing](#-contributing)
+- [⭐ Star History](#-star-history)
 
 ## 🎬 Quick Demo
 
@@ -123,7 +132,7 @@ $env:AIDER_DESK_NO_AUTO_UPDATE = "true"
 
 </div>
 
-## 🛠️ Model Context Protocol (MCP) Support (Experimental)
+## 🛠️ Model Context Protocol (MCP) Support
 
 AiderDesk integrates with the [Model Context Protocol](https://github.com/model-context-protocol/mcp) (MCP), enhancing your coding workflow with external tools and context:
 
@@ -139,6 +148,108 @@ MCP connects AI models to external tools like web browsers, documentation system
 - **Seamless Workflow**: MCP tools gather information, then Aider implements the code changes
 
 AiderDesk should work with any MCP-compatible server, including Brave API MCP server for searching the web and custom language-specific tools.
+
+## 🌐 REST API
+
+AiderDesk provides a REST API for external tools to interact with the application. The API is running on the same port as the main application (default 24337, configurable by `AIDER_DESK_PORT` environment variable).
+
+### Available Endpoints
+
+#### Add Context File
+
+- **Endpoint:** `/api/add-context-file`
+- **Method:** POST
+- **Request Body:**
+  ```json
+  {
+    "projectDir": "path/to/your/project",
+    "path": "path/to/the/file",
+    "readOnly": false
+  }
+  ```
+- **Response:**
+  ```json
+  [
+    {
+      "path": "path/to/the/file",
+      "readOnly": false
+    }
+  ]
+  ```
+  Returns the list of context files in the project.
+
+#### Drop Context File
+
+- **Endpoint:** `/api/drop-context-file`
+- **Method:** POST
+- **Request Body:**
+  ```json
+  {
+    "projectDir": "path/to/your/project",
+    "path": "path/to/the/file"
+  }
+  ```
+- **Response:**
+  ```json
+  []
+  ```
+  Returns the list of context files in the project.
+
+#### Get Context Files
+
+- **Endpoint:** `/api/get-context-files`
+- **Method:** POST
+- **Request Body:**
+  ```json
+  {
+    "projectDir": "path/to/your/project"
+  }
+  ```
+- **Response:**
+  ```json
+  [
+    {
+      "path": "path/to/the/file",
+      "readOnly": false
+    }
+  ]
+  ```
+  Returns the list of context files in the project.
+
+#### Run Prompt
+
+- **Endpoint:** `/api/run-prompt`
+- **Method:** POST
+- **Request Body:**
+  ```json
+  {
+    "projectDir": "path/to/your/project",
+    "prompt": "Your prompt here",
+    "editFormat": "code" // Optional: "code", "ask", or "architect"
+  }
+  ```
+- **Response:**
+  ```json
+  [
+    {
+      "messageId": "unique-message-id",
+      "baseDir": "path/to/your/project",
+      "content": "The AI generated response",
+      "reflectedMessage": "Optional reflected message",
+      "editedFiles": ["file1.txt", "file2.py"],
+      "commitHash": "a1b2c3d4e5f6",
+      "commitMessage": "Optional commit message",
+      "diff": "Optional diff content",
+      "usageReport": {
+        "sentTokens": 100,
+        "receivedTokens": 200,
+        "messageCost": 0.5,
+        "totalCost": 1.0,
+        "mcpToolsCost": 0.2
+      }
+    }
+  ]
+  ```
 
 ## 👨‍💻 Development Setup
 If you want to run from source, you can follow these steps:
