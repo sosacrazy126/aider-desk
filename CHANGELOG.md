@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.3.4]
+## [0.4.0]
 
 - fancy animation for loading message
 - added Gemini model support for MCP agent
