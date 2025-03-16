@@ -4,17 +4,13 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import axios from 'axios';
 import { z } from 'zod';
 
-// Get host and port from environment variables or use defaults
-const HOST = process.env.AIDER_DESK_HOST || 'localhost';
-const PORT = process.env.AIDER_DESK_PORT || '24337';
-
 // Get project directory from command line arguments or use default
 const projectDir = process.argv[2] || '.';
 
 // AiderDesk API configuration
-const AIDER_DESK_API_URL = `http://${HOST}:${PORT}/api`;
+const AIDER_DESK_API_BASE_URL = process.env.AIDER_DESK_API_BASE_URL || 'http://localhost:24337/api';
 
-console.error(`Using AiderDesk API at: ${AIDER_DESK_API_URL} for project directory: ${projectDir}`);
+console.error(`Using AiderDesk API at: ${AIDER_DESK_API_BASE_URL} for project directory: ${projectDir}`);
 
 // Create MCP server
 const server = new McpServer({
@@ -52,7 +48,7 @@ const RunPromptSchema = {
 server.tool('add_context_file', 'Add a file to the context of AiderDesk.', AddContextFileSchema, async (params) => {
   try {
     const requestParams = { ...params, projectDir };
-    const response = await axios.post(`${AIDER_DESK_API_URL}/add-context-file`, requestParams);
+    const response = await axios.post(`${AIDER_DESK_API_BASE_URL}/add-context-file`, requestParams);
     return { content: [{ type: 'text', text: JSON.stringify(response.data) }] };
   } catch (error: any) {
     return { content: [{ type: 'text', text: error.response?.data || error.message }] };
@@ -62,7 +58,7 @@ server.tool('add_context_file', 'Add a file to the context of AiderDesk.', AddCo
 server.tool('drop_context_file', 'Remove a file from the context of AiderDesk.', DropContextFileSchema, async (params) => {
   try {
     const requestParams = { ...params, projectDir };
-    const response = await axios.post(`${AIDER_DESK_API_URL}/drop-context-file`, requestParams);
+    const response = await axios.post(`${AIDER_DESK_API_BASE_URL}/drop-context-file`, requestParams);
     return { content: [{ type: 'text', text: JSON.stringify(response.data) }] };
   } catch (error: any) {
     return { content: [{ type: 'text', text: error.response?.data || error.message }] };
@@ -72,7 +68,7 @@ server.tool('drop_context_file', 'Remove a file from the context of AiderDesk.',
 server.tool('get_context_files', 'Get all files currently in the context for AiderDesk to use.', GetContextFilesSchema, async (params) => {
   try {
     const requestParams = { ...params, projectDir };
-    const response = await axios.post(`${AIDER_DESK_API_URL}/get-context-files`, requestParams);
+    const response = await axios.post(`${AIDER_DESK_API_BASE_URL}/get-context-files`, requestParams);
     return { content: [{ type: 'text', text: JSON.stringify(response.data) }] };
   } catch (error: any) {
     return { content: [{ type: 'text', text: error.response?.data || error.message }] };
@@ -82,7 +78,7 @@ server.tool('get_context_files', 'Get all files currently in the context for Aid
 server.tool('get_addable_files', 'Get files that can be added to the context for AiderDesk.', GetAddableFilesSchema, async (params) => {
   try {
     const requestParams = { ...params, projectDir };
-    const response = await axios.post(`${AIDER_DESK_API_URL}/get-addable-files`, requestParams);
+    const response = await axios.post(`${AIDER_DESK_API_BASE_URL}/get-addable-files`, requestParams);
     return { content: [{ type: 'text', text: JSON.stringify(response.data) }] };
   } catch (error: any) {
     return { content: [{ type: 'text', text: error.response?.data || error.message }] };
@@ -96,7 +92,7 @@ server.tool(
   async (params) => {
     try {
       const requestParams = { ...params, projectDir };
-      const response = await axios.post(`${AIDER_DESK_API_URL}/run-prompt`, requestParams);
+      const response = await axios.post(`${AIDER_DESK_API_BASE_URL}/run-prompt`, requestParams);
       return { content: [{ type: 'text', text: JSON.stringify(response.data) }] };
     } catch (error: any) {
       return { content: [{ type: 'text', text: error.response?.data || error.message }] };

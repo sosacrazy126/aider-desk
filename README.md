@@ -168,8 +168,7 @@ To use the built-in MCP server, add the following configuration to your MCP sett
       "command": "node",
       "args": ["%APPDATA%/aider-desk/mcp-server/aider-desk-mcp-server.js", "/path/to/project"],
       "env": {
-        "AIDER_DESK_HOST": "localhost",
-        "AIDER_DESK_PORT": "24337"
+        "AIDER_DESK_API_BASE_URL": "http://localhost:24337/api"
       }
     }
   }
@@ -188,8 +187,7 @@ To use the built-in MCP server, add the following configuration to your MCP sett
       "command": "node",
       "args": ["~/Library/Application Support/aider-desk/mcp-server/aider-desk-mcp-server.js", "/path/to/project"],
       "env": {
-        "AIDER_DESK_HOST": "localhost",
-        "AIDER_DESK_PORT": "24337"
+        "AIDER_DESK_API_BASE_URL": "http://localhost:24337/api"
       }
     }
   }
@@ -208,8 +206,7 @@ To use the built-in MCP server, add the following configuration to your MCP sett
       "command": "node",
       "args": ["~/.config/aider-desk/mcp-server/aider-desk-mcp-server.js", "/path/to/project"],
       "env": {
-        "AIDER_DESK_HOST": "localhost",
-        "AIDER_DESK_PORT": "24337"
+        "AIDER_DESK_API_BASE_URL": "http://localhost:24337/api"
       }
     }
   }
@@ -224,8 +221,7 @@ The server supports the following:
 - First argument: Project directory path (default: current directory)
 
 **Environment variables:**
-- `AIDER_DESK_HOST`: The hostname where AiderDesk is running (default: localhost)
-- `AIDER_DESK_PORT`: The port where AiderDesk is running (default: 24337)
+- `AIDER_DESK_API_BASE_URL`: The base URL of the AiderDesk API (default: http://localhost:24337/api)
 
 With this configuration, the MCP server will automatically use the specified project directory for all tool calls, so you don't need to specify the project directory when using the tools.
 
