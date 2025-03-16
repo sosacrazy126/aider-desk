@@ -20,7 +20,7 @@ Transform your AI coding experience with AiderDesk - all the power of the Aider 
 
 <div align="left">
   <a href="https://www.youtube.com/watch?v=9JkUwn9rk2g">
-    <img src="https://img.youtube.com/vi/9JkUwn9rk2g/0.jpg" alt="Demo Video" width=400">
+    <img src="https://img.youtube.com/vi/9JkUwn9rk2g/0.jpg" alt="Demo Video" width=400>
   </a>
 </div>
 
@@ -150,6 +150,99 @@ MCP connects AI models to external tools like web browsers, documentation system
 
 AiderDesk should work with any MCP-compatible server, including Brave API MCP server for searching the web and custom language-specific tools.
 
+### Built-in AiderDesk MCP Server
+
+AiderDesk comes with a built-in MCP server that provides tools for interacting with the AiderDesk API. This allows you to use MCP to manage context files, run prompts, and more.
+
+#### Configuration
+
+To use the built-in MCP server, add the following configuration to your MCP settings:
+
+<details>
+  <summary>Windows</summary>
+
+```json
+{
+  "mcpServers": {
+    "aider-desk": {
+      "command": "node",
+      "args": ["%APPDATA%/aider-desk/mcp-server/aider-desk-mcp-server.js", "/path/to/project"],
+      "env": {
+        "AIDER_DESK_HOST": "localhost",
+        "AIDER_DESK_PORT": "24337"
+      }
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+  <summary>macOS</summary>
+
+```json
+{
+  "mcpServers": {
+    "aider-desk": {
+      "command": "node",
+      "args": ["~/Library/Application Support/aider-desk/mcp-server/aider-desk-mcp-server.js", "/path/to/project"],
+      "env": {
+        "AIDER_DESK_HOST": "localhost",
+        "AIDER_DESK_PORT": "24337"
+      }
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+  <summary>Linux</summary>
+
+```json
+{
+  "mcpServers": {
+    "aider-desk": {
+      "command": "node",
+      "args": ["~/.config/aider-desk/mcp-server/aider-desk-mcp-server.js", "/path/to/project"],
+      "env": {
+        "AIDER_DESK_HOST": "localhost",
+        "AIDER_DESK_PORT": "24337"
+      }
+    }
+  }
+}
+```
+
+</details>
+
+The server supports the following:
+
+**Command-line arguments:**
+- First argument: Project directory path (default: current directory)
+
+**Environment variables:**
+- `AIDER_DESK_HOST`: The hostname where AiderDesk is running (default: localhost)
+- `AIDER_DESK_PORT`: The port where AiderDesk is running (default: 24337)
+
+With this configuration, the MCP server will automatically use the specified project directory for all tool calls, so you don't need to specify the project directory when using the tools.
+
+#### Available Tools
+
+The AiderDesk MCP server provides the following tools:
+
+- `add_context_file`: Add a file to the context of AiderDesk
+- `drop_context_file`: Remove a file from the context of AiderDesk
+- `get_context_files`: Get the list of context files in AiderDesk
+- `get_addable_files`: Get the list of project files that can be added to the context context
+- `run_prompt`: Run a prompt in AiderDesk
+
+These tools allow MCP clients (Claude Desktop, Claude Code, Cursor, Windsurf...) to interact with your AiderDesk, managing context files and running prompts.
+
+**Note:** The AiderDesk application must be running for the MCP server to function.
+
 ## 🌐 REST API
 
 AiderDesk provides a REST API for external tools to interact with the application. The API is running on the same port as the main application (default 24337, configurable by `AIDER_DESK_PORT` environment variable).
@@ -222,6 +315,30 @@ AiderDesk provides a REST API for external tools to interact with the applicatio
   ]
   ```
   Returns the list of context files in the project.
+</details>
+
+#### Get Addable Files
+
+<details>
+  <summary><code>/api/get-addable-files</code></summary>
+
+- **Method:** POST
+- **Request Body:**
+  ```json
+  {
+    "projectDir": "path/to/your/project",
+    "searchRegex": "optional/regex/filter"
+  }
+  ```
+- **Response:**
+  ```json
+  [
+    {
+      "path": "path/to/the/file"
+    }
+  ]
+  ```
+  Returns the list of files that can be added to the project.
 </details>
 
 #### Run Prompt

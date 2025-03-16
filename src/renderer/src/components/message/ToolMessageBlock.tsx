@@ -16,7 +16,9 @@ export const ToolMessageBlock = ({ message }: Props) => {
     <div className="rounded-md p-3 mb-2 max-w-full break-words whitespace-pre-wrap text-xs bg-neutral-900/50 border border-neutral-800/50 text-neutral-400">
       <div className="flex items-center cursor-pointer select-none" onClick={() => setIsExpanded(!isExpanded)}>
         {isExpanded ? <MdKeyboardArrowDown className="mr-2" /> : <MdKeyboardArrowRight className="mr-2" />}
-        <span className="opacity-70 text-xs">Tool: {message.toolName}</span>
+        <span className="opacity-70 text-xs">
+          Tool: {message.serverName}/{message.toolName}
+        </span>
         {isExecuting && <CgSpinner className="animate-spin ml-2 w-3 h-3" />}
       </div>
       {isExpanded && (

@@ -47,6 +47,7 @@ export interface TokensInfoMessage extends Message {
 
 export interface ToolMessage extends Message {
   type: 'tool';
+  serverName: string;
   toolName: string;
   args: Record<string, unknown>;
   content: string; // Empty while executing, contains result when complete

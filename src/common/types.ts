@@ -33,7 +33,8 @@ export interface LogData {
 
 export interface ToolData {
   baseDir: string;
-  name: string;
+  serverName: string;
+  toolName: string;
   args?: Record<string, unknown>;
   response?: string;
   usageReport?: UsageReportData;
@@ -171,4 +172,9 @@ export interface McpServerConfig {
   command: string;
   args: string[];
   env?: Readonly<Record<string, string>>;
+}
+
+export interface Test {
+  propertyA: string;
+  propertyB: number;
 }

@@ -4,8 +4,17 @@ import * as path from 'path';
 import { promisify } from 'util';
 
 import { delay } from '@common/utils';
+import { is } from '@electron-toolkit/utils';
 
-import { AIDER_DESK_DIR, SETUP_COMPLETE_FILENAME, PYTHON_VENV_DIR, AIDER_DESK_CONNECTOR_DIR, RESOURCES_DIR, PYTHON_COMMAND } from './constants';
+import {
+  AIDER_DESK_DIR,
+  SETUP_COMPLETE_FILENAME,
+  PYTHON_VENV_DIR,
+  AIDER_DESK_CONNECTOR_DIR,
+  RESOURCES_DIR,
+  PYTHON_COMMAND,
+  AIDER_DESK_MCP_SERVER_DIR,
+} from './constants';
 
 const execAsync = promisify(exec);
 
@@ -92,6 +101,36 @@ const installAiderConnectorRequirements = async (): Promise<void> => {
   }
 };
 
+const setupMcpServer = async () => {
+  if (is.dev) {
+    console.log('Skipping MCP server setup in dev mode');
+    return;
+  }
+
+  if (!fs.existsSync(AIDER_DESK_MCP_SERVER_DIR)) {
+    fs.mkdirSync(AIDER_DESK_MCP_SERVER_DIR, { recursive: true });
+  }
+
+  // Copy all files from the MCP server directory
+  const sourceMcpServerDir = path.join(RESOURCES_DIR, 'mcp-server');
+
+  if (fs.existsSync(sourceMcpServerDir)) {
+    const files = fs.readdirSync(sourceMcpServerDir);
+
+    for (const file of files) {
+      const sourceFilePath = path.join(sourceMcpServerDir, file);
+      const destFilePath = path.join(AIDER_DESK_MCP_SERVER_DIR, file);
+
+      // Skip directories for now, only copy files
+      if (fs.statSync(sourceFilePath).isFile()) {
+        fs.copyFileSync(sourceFilePath, destFilePath);
+      }
+    }
+  } else {
+    console.error(`MCP server directory not found: ${sourceMcpServerDir}`);
+  }
+};
+
 const performUpdateCheck = async (updateProgress: UpdateProgressFunction): Promise<void> => {
   updateProgress({
     step: 'Update Check',
@@ -99,6 +138,13 @@ const performUpdateCheck = async (updateProgress: UpdateProgressFunction): Promi
   });
 
   await setupAiderConnector();
+
+  updateProgress({
+    step: 'Update Check',
+    message: 'Updating MCP server...',
+  });
+
+  await setupMcpServer();
 };
 
 export type UpdateProgressData = {
@@ -146,6 +192,13 @@ export const performStartUp = async (updateProgress: UpdateProgressFunction): Pr
     });
 
     await setupAiderConnector();
+
+    updateProgress({
+      step: 'Setting Up MCP Server',
+      message: 'Installing MCP server...',
+    });
+
+    await setupMcpServer();
 
     updateProgress({
       step: 'Finishing Setup',

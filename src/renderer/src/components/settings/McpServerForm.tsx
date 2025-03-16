@@ -72,11 +72,11 @@ export const McpServerForm = ({ onSave, onCancel, initialName, initialConfig }: 
 
   return (
     <div>
-      <div className="flex items-center mb-2">
-        <button onClick={onCancel} className="mr-3 hover:bg-neutral-700 rounded-md p-2">
+      <div className="flex items-center mb-2 text-neutral-200">
+        <button onClick={onCancel} className="mr-2 hover:bg-neutral-700 rounded-md p-2 text-md">
           <FaArrowLeft />
         </button>
-        <h3 className="text-lg font-semibold">{initialName ? `Edit MCP Server: ${initialName}` : 'Add MCP Server'}</h3>
+        <h3 className="text-md font-medium uppercase">{initialName ? `Edit MCP Server: ${initialName}` : 'Add MCP Server'}</h3>
       </div>
       <div className="mb-2">
         <TextArea

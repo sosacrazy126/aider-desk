@@ -600,9 +600,20 @@ export class Project {
     });
   }
 
-  public getAddableFiles(): string[] {
+  public getAddableFiles(searchRegex?: string): string[] {
     const contextFilePaths = new Set(this.contextFiles.map((file) => file.path));
-    return this.allTrackedFiles.filter((file) => !contextFilePaths.has(file));
+    let files = this.allTrackedFiles.filter((file) => !contextFilePaths.has(file));
+
+    if (searchRegex) {
+      try {
+        const regex = new RegExp(searchRegex, 'i');
+        files = files.filter((file) => regex.test(file));
+      } catch (error) {
+        logger.error('Invalid regex for getAddableFiles', { searchRegex, error });
+      }
+    }
+
+    return files;
   }
 
   public getContextFiles(): ContextFile[] {
@@ -649,17 +660,19 @@ export class Project {
     this.findMessageConnectors('apply-edits').forEach((connector) => connector.sendApplyEditsMessage(edits));
   }
 
-  public sendToolMessage(name: string, args?: Record<string, unknown>, response?: string, usageReport?: UsageReportData) {
+  public sendToolMessage(serverName: string, toolName: string, args?: Record<string, unknown>, response?: string, usageReport?: UsageReportData) {
     logger.info('Sending tool message:', {
       baseDir: this.baseDir,
-      name,
+      serverName,
+      name: toolName,
       args,
       response,
       usageReport,
     });
     const data: ToolData = {
       baseDir: this.baseDir,
-      name,
+      serverName,
+      toolName,
       args,
       response,
       usageReport,

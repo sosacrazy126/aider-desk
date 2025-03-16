@@ -7,6 +7,8 @@
 - updated autocompletion in prompt field to include abbreviations
 - fixed MCP tool schema for Gemini provider
 - added REST API for managing context files and running prompt
+- added `get-addable-files` REST API endpoint
+- MCP server for AiderDesk
 
 ## [0.3.3]
 

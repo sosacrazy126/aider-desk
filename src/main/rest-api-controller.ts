@@ -5,6 +5,7 @@ import cors from 'cors';
 import { z } from 'zod';
 import { SERVER_PORT } from 'src/main/constants';
 import { Project } from 'src/main/project';
+import { delay } from '@common/utils';
 
 import { ProjectManager } from './project-manager';
 import logger from './logger';
@@ -19,6 +20,11 @@ const ContextFileSchema = z.object({
 
 const GetContextFilesSchema = z.object({
   projectDir: z.string().min(1, 'Project directory is required'),
+});
+
+const GetAddableFilesSchema = z.object({
+  projectDir: z.string().min(1, 'Project directory is required'),
+  searchRegex: z.string().optional(),
 });
 
 const RunPromptSchema = z.object({
@@ -69,6 +75,7 @@ export class RestApiController {
     // Add context file
     this.app.post('/api/add-context-file', async (req, res) => {
       try {
+        logger.debug('REST API: Add context file request received', { body: req.body });
         const result = ContextFileSchema.safeParse(req.body);
         if (!result.success) {
           res.status(400).json({
@@ -85,6 +92,10 @@ export class RestApiController {
         }
 
         await project.addFile({ path, readOnly });
+
+        // add delay to allow Aider to verify the added files
+        await delay(1000);
+
         const contextFiles = project.getContextFiles();
         res.status(200).json(contextFiles);
       } catch (error) {
@@ -99,6 +110,7 @@ export class RestApiController {
     // Drop context file
     this.app.post('/api/drop-context-file', async (req, res) => {
       try {
+        logger.debug('REST API: Drop context file request received', { body: req.body });
         const result = ContextFileSchema.safeParse(req.body);
         if (!result.success) {
           res.status(400).json({
@@ -115,6 +127,10 @@ export class RestApiController {
         }
 
         project.dropFile(path);
+
+        // add delay to allow Aider to verify the dropped files
+        await delay(1000);
+
         const contextFiles = project.getContextFiles();
         res.status(200).json(contextFiles);
       } catch (error) {
@@ -129,6 +145,7 @@ export class RestApiController {
     // Get context files
     this.app.post('/api/get-context-files', async (req, res) => {
       try {
+        logger.debug('REST API: Get context files request received', { body: req.body });
         const result = GetContextFilesSchema.safeParse(req.body);
         if (!result.success) {
           res.status(400).json({
@@ -157,8 +174,40 @@ export class RestApiController {
       }
     });
 
+    // Get addable files
+    this.app.post('/api/get-addable-files', async (req, res) => {
+      try {
+        logger.debug('REST API: Get addable files request received', { body: req.body });
+        const result = GetAddableFilesSchema.safeParse(req.body);
+        if (!result.success) {
+          res.status(400).json({
+            error: 'Invalid request',
+            details: result.error.issues,
+          });
+          return;
+        }
+
+        const { projectDir, searchRegex } = result.data;
+
+        const project = this.findProject(projectDir, res);
+        if (!project) {
+          return;
+        }
+
+        const addableFiles = project.getAddableFiles(searchRegex);
+        res.status(200).json(addableFiles);
+      } catch (error) {
+        logger.error('REST API: Error getting addable files', { error });
+        res.status(500).json({
+          error: 'Internal server error',
+          details: error instanceof Error ? error.message : 'Unknown error',
+        });
+      }
+    });
+
     this.app.post('/api/run-prompt', async (req, res) => {
       try {
+        logger.debug('REST API: Run prompt request received', { body: req.body });
         // Validate request body
         const result = RunPromptSchema.safeParse(req.body);
         if (!result.success) {

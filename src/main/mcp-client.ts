@@ -208,16 +208,30 @@ export class McpClient {
     // Reset interruption flag
     this.isInterrupted = false;
 
+    const tools = this.clients.filter((clientHolder) => !mcpConfig.disabledServers.includes(clientHolder.serverName));
+    if (!tools.length) {
+      logger.info('No tools found for prompt, returning original prompt');
+      return prompt;
+    }
+
     // Check if we need to reinitialize for a different project
     if (this.currentProjectBaseDir !== project.baseDir) {
       logger.info(`Reinitializing MCP clients for project: ${project.baseDir}`);
-      await this.init(project, uuidv4());
+      try {
+        await this.init(project, uuidv4());
+      } catch (error) {
+        logger.error('Error reinitializing MCP clients:', error);
+        project.sendLogMessage('error', `Error reinitializing MCP clients: ${error}`);
+        return prompt;
+      }
     }
 
     // Get MCP server tools
     const mcpServerTools = this.clients
       .filter((clientHolder) => !mcpConfig.disabledServers.includes(clientHolder.serverName))
-      .flatMap((clientHolder) => clientHolder.tools.map((tool) => convertMpcToolToLangchainTool(project, clientHolder.client, tool, mcpConfig.provider)));
+      .flatMap((clientHolder) =>
+        clientHolder.tools.map((tool) => convertMpcToolToLangchainTool(project, clientHolder.serverName, clientHolder.client, tool, mcpConfig.provider)),
+      );
 
     if (!mcpServerTools.length) {
       logger.info('No tools found for prompt, returning original prompt');
@@ -327,7 +341,9 @@ export class McpClient {
 
             const fullAiderPrompt = `${toolResultsText}${aiderPrompt}`;
 
-            project.sendUserMessage(fullAiderPrompt);
+            if (prompt !== fullAiderPrompt) {
+              project.sendUserMessage(fullAiderPrompt);
+            }
 
             return fullAiderPrompt;
           }
@@ -343,7 +359,8 @@ export class McpClient {
             return null;
           }
 
-          project.sendToolMessage(toolCall.name, toolCall.args);
+          const [serverName, toolName] = this.extractServerNameToolName(toolCall.name);
+          project.sendToolMessage(serverName, toolName, toolCall.args);
 
           try {
             const toolResponse = await selectedTool.invoke(toolCall);
@@ -420,6 +437,20 @@ export class McpClient {
     return config;
   }
 
+  private extractServerNameToolName(toolCallName: string): [string, string] {
+    // Find the first matching client's server name that is a prefix of the tool call name
+    const matchingClient = this.clients.find((clientHolder) => toolCallName.startsWith(`${clientHolder.serverName}-`));
+
+    if (!matchingClient) {
+      logger.warn(`No matching server found for tool call: ${toolCallName}`);
+      return ['unknown', toolCallName];
+    }
+
+    // Remove the server name prefix and underscore
+    const toolName = toolCallName.slice(matchingClient.serverName.length + 1);
+    return [matchingClient.serverName, toolName];
+  }
+
   private checkInterrupted(project: Project, usageReport?: UsageReportData): boolean {
     if (this.isInterrupted) {
       logger.info('Prompt processing interrupted');
@@ -493,7 +524,7 @@ export class McpClient {
   }
 }
 
-const convertMpcToolToLangchainTool = (project: Project, client: Client, toolDef: McpTool, provider: string): StructuredTool => {
+const convertMpcToolToLangchainTool = (project: Project, serverName: string, client: Client, toolDef: McpTool, provider: string): StructuredTool => {
   const normalizeSchemaForProvider = (schema: JsonSchema): JsonSchema => {
     if (provider === 'gemini') {
       // gemini does not like "default" in the schema
@@ -537,13 +568,13 @@ const convertMpcToolToLangchainTool = (project: Project, client: Client, toolDef
       const content = extractContent(response);
 
       if (content) {
-        project.sendToolMessage(toolDef.name, undefined, content);
+        project.sendToolMessage(serverName, toolDef.name, undefined, content);
       }
 
       return content;
     },
     {
-      name: toolDef.name,
+      name: `${serverName}-${toolDef.name}`,
       description: toolDef.description ?? '',
       schema: jsonSchemaToZod(normalizeSchemaForProvider(toolDef.inputSchema)),
     },

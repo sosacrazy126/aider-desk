@@ -183,11 +183,13 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
       });
     };
 
-    const handleTool = (_: IpcRendererEvent, { name, args, response, usageReport }: ToolData) => {
+    const handleTool = (_: IpcRendererEvent, { serverName, toolName, args, response, usageReport }: ToolData) => {
       if (response) {
         // update the last tool message with the response
         setMessages((prevMessages) => {
-          const lastToolMessage = prevMessages.findLast((message) => isToolMessage(message) && message.toolName === name);
+          const lastToolMessage = prevMessages.findLast(
+            (message) => isToolMessage(message) && message.serverName === serverName && message.toolName === toolName,
+          );
 
           return prevMessages.map((message) => {
             if (message === lastToolMessage) {
@@ -205,7 +207,8 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
         const toolMessage: ToolMessage = {
           id: uuidv4(),
           type: 'tool',
-          toolName: name,
+          serverName: serverName,
+          toolName: toolName,
           args,
           content: '',
         };
