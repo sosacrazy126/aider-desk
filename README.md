@@ -166,7 +166,7 @@ To use the built-in MCP server, add the following configuration to your MCP sett
   "mcpServers": {
     "aider-desk": {
       "command": "node",
-      "args": ["%APPDATA%/aider-desk/mcp-server/aider-desk-mcp-server.js", "/path/to/project"],
+      "args": ["path-to-appdata/aider-desk/mcp-server/aider-desk-mcp-server.js", "/path/to/project"],
       "env": {
         "AIDER_DESK_API_BASE_URL": "http://localhost:24337/api"
       }
@@ -175,6 +175,7 @@ To use the built-in MCP server, add the following configuration to your MCP sett
 }
 ```
 
+**Note:** Replace `path-to-appdata` with the absolute path to your AppData directory. You can find this value by running `echo %APPDATA%` in your command prompt.
 </details>
 
 <details>
@@ -185,7 +186,7 @@ To use the built-in MCP server, add the following configuration to your MCP sett
   "mcpServers": {
     "aider-desk": {
       "command": "node",
-      "args": ["~/Library/Application Support/aider-desk/mcp-server/aider-desk-mcp-server.js", "/path/to/project"],
+      "args": ["/path/to/home/Library/Application Support/aider-desk/mcp-server/aider-desk-mcp-server.js", "/path/to/project"],
       "env": {
         "AIDER_DESK_API_BASE_URL": "http://localhost:24337/api"
       }
@@ -194,6 +195,7 @@ To use the built-in MCP server, add the following configuration to your MCP sett
 }
 ```
 
+**Note:** Replace `/path/to/home` with the absolute path to your home directory. You can find this value by running `echo $HOME` in your terminal.
 </details>
 
 <details>
@@ -204,7 +206,7 @@ To use the built-in MCP server, add the following configuration to your MCP sett
   "mcpServers": {
     "aider-desk": {
       "command": "node",
-      "args": ["~/.config/aider-desk/mcp-server/aider-desk-mcp-server.js", "/path/to/project"],
+      "args": ["/path/to/home/.config/aider-desk/mcp-server/aider-desk-mcp-server.js", "/path/to/project"],
       "env": {
         "AIDER_DESK_API_BASE_URL": "http://localhost:24337/api"
       }
@@ -213,6 +215,7 @@ To use the built-in MCP server, add the following configuration to your MCP sett
 }
 ```
 
+**Note:** Replace `/path/to/home` with the absolute path to your home directory. You can find this value by running `echo $HOME` in your terminal.
 </details>
 
 The server supports the following:
