@@ -303,6 +303,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
         if (e.key === 'Enter' && !e.shiftKey && ANSWERS.includes(selectedAnswer?.toLowerCase() || 'y')) {
           e.preventDefault();
           answerQuestion?.(selectedAnswer!);
+          prepareForNextPrompt();
           return;
         }
       }

@@ -2,6 +2,8 @@
 
 ## [0.4.1]
 
+- fixed prompt field answer handling to properly prepare for next prompt after answering question
+
 ## [0.4.0]
 
 - fancy animation for loading message
