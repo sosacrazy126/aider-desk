@@ -8,6 +8,7 @@
 - added support for /run command
 - added support for /reasoning-effort, /think-tokens commands and showing the values in the project bar
 - added Thinking and Answer message blocks when using reasoning models
+- fixed watch files infinite loop caused by missing ignores
 
 ## [0.4.0]
 
