@@ -30,7 +30,7 @@ const PLACEHOLDERS = [
 ];
 
 const COMMANDS = ['/code', '/ask', '/architect', '/add', '/model', '/read-only'];
-const CONFIRM_COMMANDS = ['/clear', '/web', '/undo', '/test', '/map-refresh', '/map', '/run'];
+const CONFIRM_COMMANDS = ['/clear', '/web', '/undo', '/test', '/map-refresh', '/map', '/run', '/reasoning-effort', '/think-tokens'];
 
 const ANSWERS = ['y', 'n', 'a', 'd'];
 

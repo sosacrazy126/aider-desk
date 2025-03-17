@@ -93,6 +93,8 @@ export interface ModelsData {
   weakModel?: string | null;
   architectModel?: string | null;
   maxChatHistoryTokens?: number;
+  reasoningEffort?: number;
+  thinkingTokens?: number;
   info?: Record<string, unknown>;
   error?: string;
 }

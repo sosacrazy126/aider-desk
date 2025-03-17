@@ -6,6 +6,7 @@
 - fixed architect auto-accept behavior in connector to work properly with AiderDesk
 - fixed yes/no question answering with custom prompt
 - added support for /run command
+- added support for /reasoning-effort, /think-tokens commands and showing the values in the project bar
 
 ## [0.4.0]
 

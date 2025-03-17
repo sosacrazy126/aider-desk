@@ -114,6 +114,24 @@ export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(({ baseDir, 
               </div>
             </>
           )}
+          {modelsData.reasoningEffort && (
+            <>
+              <div className="h-3 w-px bg-neutral-600/50"></div>
+              <div className="flex items-center space-x-1">
+                <span className="text-xs">Reasoning:</span>
+                <span className="text-neutral-400 text-xs">{modelsData.reasoningEffort}</span>
+              </div>
+            </>
+          )}
+          {modelsData.thinkingTokens && (
+            <>
+              <div className="h-3 w-px bg-neutral-600/50"></div>
+              <div className="flex items-center space-x-1">
+                <span className="text-xs">Thinking tokens:</span>
+                <span className="text-neutral-400 text-xs">{modelsData.thinkingTokens}</span>
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>

@@ -605,6 +605,12 @@ class Connector:
       await asyncio.sleep(0.1)
       await self.send_log_message("info", "The repo map has been refreshed.")
       await self.send_autocompletion()
+    elif command.startswith("/reasoning-effort"):
+      await asyncio.sleep(0.1)
+      await self.send_current_models()
+    elif command.startswith("/think-tokens"):
+      await asyncio.sleep(0.1)
+      await self.send_current_models()
 
 
   async def send_autocompletion(self):
@@ -678,6 +684,8 @@ class Connector:
         "mainModel": self.coder.main_model.name,
         "weakModel": self.coder.main_model.weak_model.name,
         "maxChatHistoryTokens": self.coder.main_model.max_chat_history_tokens,
+        "reasoningEffort": self.coder.main_model.get_reasoning_effort(self.coder.main_model),
+        "thinkingTokens": self.coder.main_model.get_thinking_tokens(self.coder.main_model),
         "info": info,
         "error": error
       })
