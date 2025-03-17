@@ -580,7 +580,7 @@ class Connector:
     await self.send_tokens_info()
 
   async def run_command(self, command):
-    if command == "/map":
+    if command.startswith("/map"):
       repo_map = self.coder.get_repo_map()
       await asyncio.sleep(0.1)
       if repo_map:
@@ -589,9 +589,9 @@ class Connector:
         await self.send_log_message("info", "No repo map available.")
       return
 
-    if command.startswith("/test"):
+    if command.startswith("/test ") or command.startswith("/run "):
       self.coder.io.running_shell_command = True
-      self.coder.io.tool_output("Running " + command[6:])
+      self.coder.io.tool_output("Running " + command.split(" ", 1)[1])
 
     self.coder.commands.run(command)
     self.coder.io.running_shell_command = False

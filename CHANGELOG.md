@@ -5,6 +5,7 @@
 - fixed prompt field answer handling to properly prepare for next prompt after answering question
 - fixed architect auto-accept behavior in connector to work properly with AiderDesk
 - fixed yes/no question answering with custom prompt
+- added support for /run command
 
 ## [0.4.0]
 

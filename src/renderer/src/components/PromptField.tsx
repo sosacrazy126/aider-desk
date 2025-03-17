@@ -30,7 +30,7 @@ const PLACEHOLDERS = [
 ];
 
 const COMMANDS = ['/code', '/ask', '/architect', '/add', '/model', '/read-only'];
-const CONFIRM_COMMANDS = ['/clear', '/web', '/undo', '/test', '/map-refresh', '/map'];
+const CONFIRM_COMMANDS = ['/clear', '/web', '/undo', '/test', '/map-refresh', '/map', '/run'];
 
 const ANSWERS = ['y', 'n', 'a', 'd'];
 
@@ -142,7 +142,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
           }
           default: {
             setText('');
-            runCommand(command.slice(1));
+            runCommand(`${command.slice(1)} ${args || ''}`);
             break;
           }
         }
