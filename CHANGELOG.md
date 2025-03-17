@@ -3,6 +3,7 @@
 ## [0.4.1]
 
 - fixed prompt field answer handling to properly prepare for next prompt after answering question
+- fixed architect auto-accept behavior in connector to work properly with AiderDesk
 
 ## [0.4.0]
 

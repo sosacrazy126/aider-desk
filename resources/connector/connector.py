@@ -444,6 +444,8 @@ class Connector:
         main_model=running_model,
         summarize_from_coder=False
       )
+      # we need to disable auto accept as this does not work properly with AiderDesk
+      self.running_coder.auto_accept_architect=False
     else:
       self.running_coder = self.coder
 
