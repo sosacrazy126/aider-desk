@@ -1,5 +1,7 @@
 # Changelog
 
+## [0.4.1]
+
 ## [0.4.0]
 
 - fancy animation for loading message
