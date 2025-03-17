@@ -208,7 +208,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
           setSelectedAnswer(newText);
           return;
         } else {
-          setSelectedAnswer('n');
+          setSelectedAnswer(null);
         }
       }
       if (newText.startsWith('/')) {
@@ -291,18 +291,18 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
       }
 
       if (question) {
-        if (e.key === 'Tab') {
+        if (e.key === 'Tab' && selectedAnswer) {
           e.preventDefault();
-          const currentIndex = ANSWERS.indexOf(selectedAnswer?.toLowerCase() || 'y');
+          const currentIndex = ANSWERS.indexOf(selectedAnswer.toLowerCase());
           if (currentIndex !== -1) {
             const nextIndex = (currentIndex + (e.shiftKey ? -1 : 1) + ANSWERS.length) % ANSWERS.length;
             setSelectedAnswer(ANSWERS[nextIndex]);
             return;
           }
         }
-        if (e.key === 'Enter' && !e.shiftKey && ANSWERS.includes(selectedAnswer?.toLowerCase() || 'y')) {
+        if (e.key === 'Enter' && !e.shiftKey && selectedAnswer && ANSWERS.includes(selectedAnswer.toLowerCase())) {
           e.preventDefault();
-          answerQuestion?.(selectedAnswer!);
+          answerQuestion?.(selectedAnswer);
           prepareForNextPrompt();
           return;
         }
@@ -350,7 +350,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
           case 'Enter':
             if (!e.shiftKey) {
               e.preventDefault();
-              if (!processing) {
+              if (!processing || question) {
                 handleSubmit();
               }
             }

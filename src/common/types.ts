@@ -173,8 +173,3 @@ export interface McpServerConfig {
   args: string[];
   env?: Readonly<Record<string, string>>;
 }
-
-export interface Test {
-  propertyA: string;
-  propertyB: number;
-}

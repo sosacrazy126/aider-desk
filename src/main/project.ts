@@ -269,10 +269,15 @@ export class Project {
   }
 
   public async runPrompt(prompt: string, editFormat?: EditFormat): Promise<ResponseCompletedData[]> {
+    if (this.currentQuestion) {
+      this.answerQuestion('n');
+    }
+
     // If a prompt is already running, wait for it to finish
     if (this.currentPromptId) {
-      return new Promise((resolve) => {
-        this.runPromptResolves.push(resolve);
+      logger.info('Waiting for prompt to finish...');
+      await new Promise<void>((resolve) => {
+        this.runPromptResolves.push(() => resolve());
       });
     }
 
@@ -286,10 +291,6 @@ export class Project {
     this.sendLogMessage('loading', 'Thinking...');
 
     await this.addToInputHistory(prompt);
-
-    if (this.currentQuestion) {
-      this.answerQuestion('n');
-    }
 
     const mcpPrompt = await this.mcpClient.runPrompt(this, prompt);
     if (!mcpPrompt) {
@@ -473,6 +474,10 @@ export class Project {
   }
 
   public runCommand(command: string) {
+    if (this.currentQuestion) {
+      this.answerQuestion('n');
+    }
+
     logger.info('Running command:', { command });
     this.findMessageConnectors('run-command').forEach((connector) => connector.sendRunCommandMessage(command));
   }
@@ -609,7 +614,10 @@ export class Project {
         const regex = new RegExp(searchRegex, 'i');
         files = files.filter((file) => regex.test(file));
       } catch (error) {
-        logger.error('Invalid regex for getAddableFiles', { searchRegex, error });
+        logger.error('Invalid regex for getAddableFiles', {
+          searchRegex,
+          error,
+        });
       }
     }
 
