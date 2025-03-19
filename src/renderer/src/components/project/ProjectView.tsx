@@ -241,10 +241,6 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
           content: message,
         };
         setMessages((prevMessages) => [...prevMessages.filter((message) => !isLoadingMessage(message)), logMessage]);
-
-        if (level === 'error') {
-          setProcessing(false);
-        }
       }
     };
 
