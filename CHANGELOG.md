@@ -2,6 +2,7 @@
 
 ## [0.4.2]
 
+- added debouncing to autocompletion in prompt field
 
 ## [0.4.1]
 

@@ -1,5 +1,6 @@
 import { QuestionData } from '@common/types';
 import React, { useCallback, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react';
+import { useDebounce } from 'react-use';
 import { matchSorter } from 'match-sorter';
 import { BiSend } from 'react-icons/bi';
 import { MdStop } from 'react-icons/md';
@@ -88,6 +89,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
     const [text, setText] = useState('');
     const [suggestionsVisible, setSuggestionsVisible] = useState(false);
     const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
+    const [currentWord, setCurrentWord] = useState('');
     const [cursorPosition, setCursorPosition] = useState({ top: 0, left: 0 });
     const [placeholder] = useState(PLACEHOLDERS[Math.floor(Math.random() * PLACEHOLDERS.length)]);
     const [highlightedSuggestionIndex, setHighlightedSuggestionIndex] = useState(-1);
@@ -95,6 +97,19 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
     const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
     const [editFormatLocked, setEditFormatLocked] = useState(false);
     const inputRef = useRef<HTMLTextAreaElement>(null);
+
+    useDebounce(
+      () => {
+        // only show suggestions if the current word is at least 3 characters long
+        if (currentWord.length >= 3 && !suggestionsVisible) {
+          const matched = matchSorter(words, currentWord);
+          setFilteredSuggestions(matched);
+          setSuggestionsVisible(matched.length > 0);
+        }
+      },
+      100,
+      [currentWord, words],
+    );
 
     useImperativeHandle(ref, () => ({
       focus: () => {
@@ -216,11 +231,16 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
         setFilteredSuggestions(matched);
         setSuggestionsVisible(matched.length > 0);
       } else if (word.length > 0) {
-        const matched = matchSorter(words, word);
-        setFilteredSuggestions(matched);
-        setSuggestionsVisible(matched.length > 0);
+        setCurrentWord(word);
+
+        if (suggestionsVisible) {
+          const matched = matchSorter(words, word);
+          setFilteredSuggestions(matched);
+          setSuggestionsVisible(matched.length > 0);
+        }
       } else {
         setSuggestionsVisible(false);
+        setCurrentWord('');
       }
     };
 
@@ -246,6 +266,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
 
     const prepareForNextPrompt = () => {
       setText('');
+      setCurrentWord('');
       setSuggestionsVisible(false);
       setHighlightedSuggestionIndex(-1);
       setHistoryIndex(-1);
