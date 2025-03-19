@@ -4,6 +4,7 @@
 
 - added debouncing to autocompletion in prompt field
 - keeping the processing on errors (e.g. LLM model API overload that keeps retrying)
+- using --no-cache-dir when installing Python packages on start
 
 ## [0.4.1]
 
