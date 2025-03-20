@@ -125,8 +125,16 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
           case '/architect': {
             const prompt = text.replace(command, '').trim();
             setText(prompt);
-            setEditFormat(command.slice(1));
-            setEditFormatLocked(false);
+            const newFormat = command.slice(1);
+
+            // If the same command is used twice, toggle the lock
+            if (editFormat === newFormat) {
+              setEditFormatLocked((prev) => !prev);
+            } else {
+              setEditFormatLocked(false);
+            }
+
+            setEditFormat(newFormat);
             break;
           }
           case '/add':
@@ -162,7 +170,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
           }
         }
       },
-      [text, runTests],
+      [editFormat, text, runTests],
     );
 
     useEffect(() => {

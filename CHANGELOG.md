@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.4.3]
+
+- added toggle for edit format lock by repeating the same command (/ask, /architect)
+
 ## [0.4.2]
 
 - added debouncing to autocompletion in prompt field
