@@ -238,7 +238,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
           id: uuidv4(),
           type: 'log',
           level,
-          content: message,
+          content: message || '',
         };
         setMessages((prevMessages) => [...prevMessages.filter((message) => !isLoadingMessage(message)), logMessage]);
       }
@@ -342,7 +342,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
     setMessages(lastModelsMessage ? [lastModelsMessage] : []);
     setProcessing(false);
     processingMessageRef.current = null;
-    window.api.runCommand(project.baseDir, 'clear');
+    window.api.clearContext(project.baseDir);
   };
 
   const runCommand = (command: string) => {

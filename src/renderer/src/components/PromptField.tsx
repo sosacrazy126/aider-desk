@@ -291,7 +291,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
         if (confirmCommandMatch) {
           invokeCommand(confirmCommandMatch, text.split(' ').slice(1).join(' '));
         } else {
-          window.api.sendPrompt(baseDir, text, editFormat);
+          window.api.runPrompt(baseDir, text, editFormat);
           if (!editFormatLocked) {
             setEditFormat(defaultEditFormat);
           }

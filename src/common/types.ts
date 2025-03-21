@@ -25,10 +25,12 @@ export interface CommandOutputData {
   output: string;
 }
 
+export type LogLevel = 'info' | 'warning' | 'error' | 'loading';
+
 export interface LogData {
   baseDir: string;
-  level: 'info' | 'warning' | 'error' | 'loading';
-  message: string;
+  level: LogLevel;
+  message?: string;
 }
 
 export interface ToolData {

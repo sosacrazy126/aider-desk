@@ -3,6 +3,7 @@
 ## [0.4.3]
 
 - added toggle for edit format lock by repeating the same command (/ask, /architect)
+- persisting MCP agent message history for next messages
 
 ## [0.4.2]
 

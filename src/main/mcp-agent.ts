@@ -1,6 +1,6 @@
 import { McpServerConfig, McpTool, UsageReportData } from '@common/types';
 import { ChatAnthropic } from '@langchain/anthropic';
-import { HumanMessage, SystemMessage } from '@langchain/core/messages';
+import { AIMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { StructuredTool, tool } from '@langchain/core/tools';
 import { z } from 'zod';
 import { ChatOpenAI } from '@langchain/openai';
@@ -10,6 +10,7 @@ import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { jsonSchemaToZod } from '@n8n/json-schema-to-zod';
 import { v4 as uuidv4 } from 'uuid';
 import { delay } from '@common/utils';
+import { BaseMessage } from '@langchain/core/dist/messages/base';
 
 import logger from './logger';
 import { Store } from './store';
@@ -98,13 +99,14 @@ const calculateCost = (model: string, sentTokens: number, receivedTokens: number
   return (sentTokens * modelCost.inputCost + receivedTokens * modelCost.outputCost) / 1000000;
 };
 
-export class McpClient {
+export class McpAgent {
   private store: Store;
   private currentInitId: string | null = null;
   private clients: ClientHolder[] = [];
   private lastToolCallTime: number = 0;
   private currentProjectBaseDir: string | null = null;
   private isInterrupted: boolean = false;
+  private messages: Map<string, BaseMessage[]> = new Map();
 
   constructor(store: Store) {
     this.store = store;
@@ -208,6 +210,16 @@ export class McpClient {
     // Reset interruption flag
     this.isInterrupted = false;
 
+    // Get the message history for this project, or create a new one if it doesn't exist
+    let messages = this.messages.get(project.baseDir);
+    if (!messages) {
+      messages = [new SystemMessage(mcpConfig.systemPrompt)];
+      this.messages.set(project.baseDir, messages);
+    }
+
+    // Add the user message to the message history
+    messages.push(new HumanMessage(prompt));
+
     const tools = this.clients.filter((clientHolder) => !mcpConfig.disabledServers.includes(clientHolder.serverName));
     if (!tools.length) {
       logger.info('No tools found for prompt, returning original prompt');
@@ -221,7 +233,7 @@ export class McpClient {
         await this.init(project, uuidv4());
       } catch (error) {
         logger.error('Error reinitializing MCP clients:', error);
-        project.sendLogMessage('error', `Error reinitializing MCP clients: ${error}`);
+        project.addLogMessage('error', `Error reinitializing MCP clients: ${error}`);
         return prompt;
       }
     }
@@ -255,7 +267,6 @@ export class McpClient {
         toolsByName[tool.name] = tool;
       });
 
-      const messages = [new SystemMessage(mcpConfig.systemPrompt), new HumanMessage(`<OriginalPrompt>${prompt}</OriginalPrompt>`)];
       const usageReport: UsageReportData = {
         sentTokens: 0,
         receivedTokens: 0,
@@ -300,8 +311,8 @@ export class McpClient {
             });
 
             // Push messages to the aider's chat history
-            project.addMessage(prompt, 'user', false);
-            project.addMessage(textContent, 'assistant');
+            project.sendAddContextMessage('user', prompt, false);
+            project.sendAddContextMessage('assistant', textContent);
 
             return null;
           } else {
@@ -342,7 +353,7 @@ export class McpClient {
             const fullAiderPrompt = `${toolResultsText}${aiderPrompt}`;
 
             if (prompt !== fullAiderPrompt) {
-              project.sendUserMessage(fullAiderPrompt);
+              project.addUserMessage(fullAiderPrompt);
             }
 
             return fullAiderPrompt;
@@ -360,7 +371,7 @@ export class McpClient {
           }
 
           const [serverName, toolName] = this.extractServerNameToolName(toolCall.name);
-          project.sendToolMessage(serverName, toolName, toolCall.args);
+          project.addToolMessage(serverName, toolName, toolCall.args);
 
           try {
             const toolResponse = await selectedTool.invoke(toolCall);
@@ -386,7 +397,7 @@ export class McpClient {
             logger.error(`Error invoking tool ${toolCall.name}:`, error);
 
             // Send log message about the tool error
-            project.sendLogMessage('error', `Tool ${toolCall.name} failed: ${errorMessage}`);
+            project.addLogMessage('error', `Tool ${toolCall.name} failed: ${errorMessage}`);
 
             // Add user message to messages for next iteration
             messages.push(new HumanMessage(errorMessage));
@@ -398,14 +409,14 @@ export class McpClient {
       }
 
       // If no Aider tool was called after max iterations, do nothing
-      project.sendLogMessage('info', 'Max iterations for MCP tools reached. Increase the max iterations in the settings.');
+      project.addLogMessage('info', 'Max iterations for MCP tools reached. Increase the max iterations in the settings.');
       return null;
     } catch (error) {
       logger.error('Error running prompt:', error);
       if (error instanceof Error && error.message.includes('API key is required')) {
-        project.sendLogMessage('error', `Error running MCP servers. ${error.message}. Configure it in the Settings -> MCP Config tab.`);
+        project.addLogMessage('error', `Error running MCP servers. ${error.message}. Configure it in the Settings -> MCP Config tab.`);
       } else {
-        project.sendLogMessage('error', `Error running MCP servers: ${error}`);
+        project.addLogMessage('error', `Error running MCP servers: ${error}`);
       }
       throw error;
     }
@@ -468,6 +479,23 @@ export class McpClient {
   public interrupt() {
     logger.info('Interrupting MCP client');
     this.isInterrupted = true;
+  }
+
+  public clearMessages(project: Project) {
+    logger.info('Clearing message history');
+    this.messages.delete(project.baseDir);
+  }
+
+  public addMessage(project: Project, role: 'user' | 'assistant', content: string) {
+    logger.info(`Adding message to MCP client history: ${content}`);
+    let messages = this.messages.get(project.baseDir);
+    if (!messages) {
+      const { mcpConfig } = this.store.getSettings();
+      messages = [new SystemMessage(mcpConfig.systemPrompt)];
+      this.messages.set(project.baseDir, messages);
+    }
+
+    messages.push(role === 'user' ? new HumanMessage(content) : new AIMessage(content));
   }
 
   private async initMcpClient(serverName: string, serverConfig: McpServerConfig): Promise<ClientHolder> {
@@ -568,7 +596,7 @@ const convertMpcToolToLangchainTool = (project: Project, serverName: string, cli
       const content = extractContent(response);
 
       if (content) {
-        project.sendToolMessage(serverName, toolDef.name, undefined, content);
+        project.addToolMessage(serverName, toolDef.name, undefined, content);
       }
 
       return content;

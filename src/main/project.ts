@@ -9,6 +9,8 @@ import {
   ContextFile,
   FileEdit,
   InputHistoryData,
+  LogData,
+  LogLevel,
   ModelsData,
   QuestionData,
   ResponseChunkData,
@@ -22,9 +24,9 @@ import { BrowserWindow } from 'electron';
 import treeKill from 'tree-kill';
 import { v4 as uuidv4 } from 'uuid';
 import { parse } from '@dotenvx/dotenvx';
+import { McpAgent } from 'src/main/mcp-agent';
 
 import { Connector } from './connector';
-import { McpClient } from './mcp-client';
 import { AIDER_DESK_CONNECTOR_DIR, PID_FILES_DIR, PYTHON_COMMAND, SERVER_PORT } from './constants';
 import logger from './logger';
 import { EditFormat, MessageAction, ResponseMessage } from './messages';
@@ -49,7 +51,7 @@ export class Project {
     private readonly mainWindow: BrowserWindow,
     public readonly baseDir: string,
     private readonly store: Store,
-    private readonly mcpClient: McpClient,
+    private readonly mcpAgent: McpAgent,
   ) {}
 
   public start() {
@@ -195,7 +197,7 @@ export class Project {
       logger.debug('Aider output:', { output });
 
       if (this.currentCommand) {
-        this.sendCommandOutput(this.currentCommand, output);
+        this.addCommandOutput(this.currentCommand, output);
       }
     });
 
@@ -207,7 +209,7 @@ export class Project {
       }
       if (output.startsWith('usage:')) {
         logger.debug(output);
-        this.sendLogMessage('error', output.includes('error:') ? output.substring(output.indexOf('error:')) : output);
+        this.addLogMessage('error', output.includes('error:') ? output.substring(output.indexOf('error:')) : output);
         return;
       }
 
@@ -226,15 +228,8 @@ export class Project {
   }
 
   public async stop() {
+    logger.info('Stopping project...', { baseDir: this.baseDir });
     await this.killAider();
-    this.currentCommand = null;
-    this.currentQuestion = null;
-    this.currentResponseMessageId = null;
-    this.currentPromptId = null;
-    this.currentPromptResponses = [];
-
-    this.runPromptResolves.forEach((resolve) => resolve([]));
-    this.runPromptResolves = [];
   }
 
   private async killAider(): Promise<void> {
@@ -252,9 +247,17 @@ export class Project {
             }
           });
         });
+
         this.currentCommand = null;
         this.currentQuestion = null;
         this.currentResponseMessageId = null;
+        this.currentPromptId = null;
+        this.currentPromptResponses = [];
+
+        this.runPromptResolves.forEach((resolve) => resolve([]));
+        this.runPromptResolves = [];
+
+        this.mcpAgent.clearMessages(this);
       } catch (error: unknown) {
         logger.error('Error killing Aider process:', { error });
         throw error;
@@ -287,19 +290,29 @@ export class Project {
       editFormat,
     });
 
-    this.sendUserMessage(prompt, editFormat);
-    this.sendLogMessage('loading', 'Thinking...');
+    this.addUserMessage(prompt, editFormat);
+    this.addLogMessage('loading');
 
     await this.addToInputHistory(prompt);
 
-    const mcpPrompt = await this.mcpClient.runPrompt(this, prompt);
+    const mcpPrompt = await this.mcpAgent.runPrompt(this, prompt);
     if (!mcpPrompt) {
-      this.currentPromptId = null;
       return [];
     }
 
-    prompt = mcpPrompt;
+    const responses = await this.sendPrompt(mcpPrompt, editFormat);
 
+    // Send all responses as assistant messages to MCP client
+    for (const response of responses) {
+      if (response.content) {
+        this.mcpAgent.addMessage(this, 'assistant', response.content);
+      }
+    }
+
+    return responses;
+  }
+
+  public sendPrompt(prompt: string, editFormat?: EditFormat): Promise<ResponseCompletedData[]> {
     this.currentPromptResponses = [];
     this.currentResponseMessageId = null;
     this.currentPromptId = uuidv4();
@@ -630,14 +643,14 @@ export class Project {
 
   public openCommandOutput(command: string) {
     this.currentCommand = command;
-    this.sendCommandOutput(command, '');
+    this.addCommandOutput(command, '');
   }
 
   public closeCommandOutput() {
     this.currentCommand = null;
   }
 
-  private sendCommandOutput(command: string, output: string) {
+  private addCommandOutput(command: string, output: string) {
     this.mainWindow.webContents.send('command-output', {
       baseDir: this.baseDir,
       command: command,
@@ -645,22 +658,29 @@ export class Project {
     });
   }
 
-  public sendLogMessage(level: string, message: string) {
-    this.mainWindow.webContents.send('log', {
+  public addLogMessage(level: LogLevel, message?: string) {
+    const data: LogData = {
       baseDir: this.baseDir,
       level,
       message,
-    });
+    };
+
+    this.mainWindow.webContents.send('log', data);
   }
 
-  public addMessage(content: string, role: 'user' | 'assistant' = 'user', acknowledge = true) {
-    this.findMessageConnectors('add-message').forEach((connector) => connector.sendAddMessageMessage(content, role, acknowledge));
+  public sendAddContextMessage(role: 'user' | 'assistant' = 'user', content: string, acknowledge = true) {
+    this.findMessageConnectors('add-message').forEach((connector) => connector.sendAddMessageMessage(role, content, acknowledge));
+  }
+
+  public clearContext() {
+    this.mcpAgent.clearMessages(this);
+    this.runCommand('clear');
   }
 
   public interruptResponse() {
     logger.info('Interrupting response:', { baseDir: this.baseDir });
     this.findMessageConnectors('interrupt-response').forEach((connector) => connector.sendInterruptResponseMessage());
-    this.mcpClient.interrupt();
+    this.mcpAgent.interrupt();
   }
 
   public applyEdits(edits: FileEdit[]) {
@@ -668,7 +688,7 @@ export class Project {
     this.findMessageConnectors('apply-edits').forEach((connector) => connector.sendApplyEditsMessage(edits));
   }
 
-  public sendToolMessage(serverName: string, toolName: string, args?: Record<string, unknown>, response?: string, usageReport?: UsageReportData) {
+  public addToolMessage(serverName: string, toolName: string, args?: Record<string, unknown>, response?: string, usageReport?: UsageReportData) {
     logger.info('Sending tool message:', {
       baseDir: this.baseDir,
       serverName,
@@ -688,8 +708,8 @@ export class Project {
     this.mainWindow.webContents.send('tool', data);
   }
 
-  public sendUserMessage(content: string, editFormat?: string) {
-    logger.info('Sending user message:', {
+  public addUserMessage(content: string, editFormat?: string) {
+    logger.info('Adding user message:', {
       baseDir: this.baseDir,
       content,
       editFormat,
