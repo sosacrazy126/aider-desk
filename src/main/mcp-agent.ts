@@ -487,7 +487,7 @@ export class McpAgent {
   }
 
   public addMessage(project: Project, role: 'user' | 'assistant', content: string) {
-    logger.info(`Adding message to MCP client history: ${content}`);
+    logger.debug(`Adding message to MCP agent history: ${content}`);
     let messages = this.messages.get(project.baseDir);
     if (!messages) {
       const { mcpConfig } = this.store.getSettings();
