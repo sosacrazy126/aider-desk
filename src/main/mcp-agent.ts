@@ -1,4 +1,7 @@
-import { getActiveProvider, McpServerConfig, McpTool, UsageReportData } from '@common/types';
+import fs from 'fs/promises';
+import path from 'path';
+
+import { ContextFile, getActiveProvider, McpServerConfig, McpTool, UsageReportData } from '@common/types';
 import { ChatAnthropic } from '@langchain/anthropic';
 import { AIMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { StructuredTool, tool } from '@langchain/core/tools';
@@ -106,6 +109,7 @@ export class McpAgent {
   private currentProjectBaseDir: string | null = null;
   private isInterrupted: boolean = false;
   private messages: Map<string, BaseMessage[]> = new Map();
+  private contextFilesMessages: Map<string, BaseMessage[]> = new Map();
 
   constructor(store: Store) {
     this.store = store;
@@ -219,6 +223,92 @@ export class McpAgent {
     }
   }
 
+  private async getFileSections(files: ContextFile[], project: Project): Promise<string[]> {
+    // Common binary file extensions to exclude
+    /* eslint-disable prettier/prettier */
+    const BINARY_EXTENSIONS = new Set([
+      '.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tiff', '.ico', // Images
+      '.mp3', '.wav', '.ogg', '.flac', // Audio
+      '.mp4', '.mov', '.avi', '.mkv', // Video
+      '.zip', '.tar', '.gz', '.7z', // Archives
+      '.pdf', '.doc', '.docx', '.xls', '.xlsx', // Documents
+      '.exe', '.dll', '.so', // Binaries
+    ]);
+    /* eslint-enable prettier/prettier */
+
+    const filesWithContent = await Promise.all(
+      files.map(async (file) => {
+        try {
+          const filePath = path.resolve(project.baseDir, file.path);
+          const ext = path.extname(filePath).toLowerCase();
+
+          // Skip known binary extensions
+          if (BINARY_EXTENSIONS.has(ext)) {
+            logger.debug(`Skipping binary file: ${file.path}`);
+            return null;
+          }
+
+          // Read file as text
+          const content = await fs.readFile(filePath, 'utf8');
+          return {
+            path: file.path,
+            content,
+            readOnly: file.readOnly,
+          };
+        } catch (error) {
+          logger.error('Error reading context file:', {
+            path: file.path,
+            error,
+          });
+          return null;
+        }
+      }),
+    );
+
+    return filesWithContent.filter(Boolean).map((file) => {
+      const filePath = path.isAbsolute(file!.path) ? path.relative(project.baseDir, file!.path) : file!.path;
+      return `File: ${filePath}\n\`\`\`\n${file!.content}\n\`\`\`\n\n`;
+    });
+  }
+
+  private async getContextFilesMessages(project: Project): Promise<BaseMessage[]> {
+    const { mcpConfig } = this.store.getSettings();
+    const messages: BaseMessage[] = [];
+
+    if (mcpConfig.includeContextFiles) {
+      const contextFiles = project.getContextFiles();
+      if (contextFiles.length > 0) {
+        // Separate readonly and editable files
+        const [readOnlyFiles, editableFiles] = contextFiles.reduce(
+          ([readOnly, editable], file) => (file.readOnly ? [[...readOnly, file], editable] : [readOnly, [...editable, file]]),
+          [[], []] as [ContextFile[], ContextFile[]],
+        );
+
+        // Process readonly files first
+        if (readOnlyFiles.length > 0) {
+          const fileSections = await this.getFileSections(readOnlyFiles, project);
+          if (fileSections.length > 0) {
+            messages.push(
+              new HumanMessage('Here are some READ ONLY files, provided for your reference. Do not try to edit these files!\n\n' + fileSections.join('\n\n')),
+            );
+            messages.push(new AIMessage('Ok, I will use these files as references and will not try to edit them.'));
+          }
+        }
+
+        // Process editable files
+        if (editableFiles.length > 0) {
+          const fileSections = await this.getFileSections(editableFiles, project);
+          if (fileSections.length > 0) {
+            messages.push(new HumanMessage('These are files that can be edited, if needed.\n\n' + fileSections.join('\n\n')));
+            messages.push(new AIMessage('OK, I understand that I can update those files, but only when needed.'));
+          }
+        }
+      }
+    }
+
+    return messages;
+  }
+
   async runPrompt(project: Project, prompt: string): Promise<string | null> {
     const { mcpConfig } = this.store.getSettings();
     logger.debug('McpConfig:', mcpConfig);
@@ -226,24 +316,15 @@ export class McpAgent {
     // Reset interruption flag
     this.isInterrupted = false;
 
-    // Get the message history for this project, or create a new one if it doesn't exist
-    let messages = this.messages.get(project.baseDir);
-    if (!messages) {
-      messages = [new SystemMessage(mcpConfig.systemPrompt)];
-      this.messages.set(project.baseDir, messages);
-    }
+    const tools = this.clients.filter((clientHolder) => !mcpConfig.disabledServers.includes(clientHolder.serverName));
+    const enabled = mcpConfig.agentEnabled && tools.length > 0;
+    const messages = await this.prepareMessages(project, enabled);
 
     // Add the user message to the message history
     messages.push(new HumanMessage(prompt));
 
-    if (!mcpConfig.agentEnabled) {
+    if (!enabled) {
       logger.debug('MCP agent disabled, returning original prompt');
-      return prompt;
-    }
-
-    const tools = this.clients.filter((clientHolder) => !mcpConfig.disabledServers.includes(clientHolder.serverName));
-    if (!tools.length) {
-      logger.info('No tools found for prompt, returning original prompt');
       return prompt;
     }
 
@@ -432,8 +513,11 @@ export class McpAgent {
         }
       }
 
-      // If no Aider tool was called after max iterations, do nothing
-      project.addLogMessage('info', 'Max iterations for MCP tools reached. Increase the max iterations in the settings.');
+      if (iteration >= mcpConfig.maxIterations) {
+        // If no Aider tool was called after max iterations, do nothing
+        project.addLogMessage('info', 'Max iterations for MCP tools reached. Increase the max iterations in the settings.');
+      }
+
       return null;
     } catch (error) {
       logger.error('Error running prompt:', error);
@@ -442,14 +526,40 @@ export class McpAgent {
       } else {
         project.addLogMessage('error', `Error running MCP servers: ${error}`);
       }
+      throw error;
+    } finally {
       project.processResponseMessage({
         action: 'response',
         content: '',
         finished: true,
         usageReport,
       });
-      throw error;
     }
+  }
+
+  private async prepareMessages(project: Project, enabled: boolean): Promise<BaseMessage[]> {
+    const { mcpConfig } = this.store.getSettings();
+    let messages = this.messages.get(project.baseDir) || [new SystemMessage(mcpConfig.systemPrompt)];
+
+    // Remove previous context files messages if they exist
+    const previousContextMessages = this.contextFilesMessages.get(project.baseDir);
+    if (previousContextMessages) {
+      messages = messages.filter((msg) => !previousContextMessages.includes(msg));
+    }
+
+    if (mcpConfig.includeContextFiles && enabled) {
+      // Get and store new context files messages
+      const contextFilesMessages = await this.getContextFilesMessages(project);
+      this.contextFilesMessages.set(project.baseDir, contextFilesMessages);
+      messages.push(...contextFilesMessages);
+    } else {
+      // Remove context files messages if includeContextFiles is disabled
+      this.contextFilesMessages.delete(project.baseDir);
+    }
+
+    // Update messages map
+    this.messages.set(project.baseDir, messages);
+    return messages;
   }
 
   private interpolateServerConfig(serverConfig: McpServerConfig, project?: Project): McpServerConfig {
@@ -514,6 +624,7 @@ export class McpAgent {
   public clearMessages(project: Project) {
     logger.info('Clearing message history');
     this.messages.delete(project.baseDir);
+    this.contextFilesMessages.delete(project.baseDir);
   }
 
   public addMessage(project: Project, role: 'user' | 'assistant', content: string) {
@@ -584,20 +695,32 @@ export class McpAgent {
 
 const convertMpcToolToLangchainTool = (project: Project, serverName: string, client: Client, toolDef: McpTool, provider: LlmProvider): StructuredTool => {
   const normalizeSchemaForProvider = (schema: JsonSchema): JsonSchema => {
+    const normalized = JSON.parse(JSON.stringify(schema));
+
     if (provider.name === 'gemini') {
-      // gemini does not like "default" in the schema
-      const normalized = JSON.parse(JSON.stringify(schema));
       if (normalized.properties) {
         for (const key of Object.keys(normalized.properties)) {
+          // gemini does not like "default" in the schema
           if (normalized.properties[key].default !== undefined) {
             delete normalized.properties[key].default;
           }
         }
+        if (Object.keys(normalized.properties).length === 0) {
+          // gemini requires at least one property in the schema
+          normalized.properties = {
+            placeholder: {
+              type: 'string',
+              description: 'Placeholder property to satisfy Gemini schema requirements',
+            },
+          };
+        }
       }
-      return normalized;
     }
-    return schema;
+
+    return normalized;
   };
+
+  logger.debug(`Converting MCP tool to Langchain tool: ${toolDef.name}`, toolDef);
 
   return tool(
     async (params: unknown) => {

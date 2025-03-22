@@ -125,6 +125,7 @@ export interface McpConfig {
   agentEnabled: boolean;
   disabledServers: string[];
   systemPrompt: string;
+  includeContextFiles: boolean;
 }
 
 export const getActiveProvider = (providers: LlmProvider[]): LlmProvider | null => {

@@ -30,6 +30,7 @@ const DEFAULT_SETTINGS: SettingsData = {
     mcpServers: {},
     disabledServers: [],
     agentEnabled: false,
+    includeContextFiles: false,
     systemPrompt: `You can use tools available to get context related to the user input. Do NOT force any tools, if not specifically mentioned to use some tool.
 
 IMPORTANT RULE FOR 'aider' TOOL:

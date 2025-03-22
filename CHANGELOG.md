@@ -7,6 +7,7 @@
 - added support for Amazon Bedrock provider in MPC agent (#20)
 - added support for o3-mini model in MCP agent
 - keeping the selected MCP servers when toggling MCP agent
+- added option to add context files to MCP agent
 
 ## [0.4.2]
 

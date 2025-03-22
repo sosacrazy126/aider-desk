@@ -5,6 +5,7 @@ import { McpServerSelectorItem } from './McpServerSelectorItem';
 
 import { Checkbox } from '@/components/common/Checkbox';
 import { TriStateCheckbox } from '@/components/common/TriStateCheckbox';
+import { InfoIcon } from '@/components/common/InfoIcon';
 import { SettingsDialog } from '@/components/settings/SettingsDialog';
 import { useSettings } from '@/context/SettingsContext';
 import { useClickOutside } from '@/hooks/useClickOutside';
@@ -106,11 +107,33 @@ export const McpSelector = () => {
   const totalServers = serverNames.length;
   const enabledServers = totalServers - settings.mcpConfig.disabledServers.filter((name) => serverNames.includes(name)).length;
 
+  const handleToggleIncludeContextFiles = () => {
+    const updatedSettings = {
+      ...settings,
+      mcpConfig: {
+        ...settings.mcpConfig,
+        includeContextFiles: !settings.mcpConfig.includeContextFiles,
+      },
+    };
+    void saveSettings(updatedSettings);
+  };
+
   const renderConfigureServersButton = () => (
-    <button onClick={handleOpenSettings} className="w-full flex items-center px-3 py-2 text-xs text-neutral-300 hover:bg-neutral-700 transition-colors">
-      <MdSettings className="w-3 h-3 mr-2" />
-      Configure servers
-    </button>
+    <>
+      <div className="px-3 py-2 text-xs text-neutral-300 border-b border-neutral-700 flex items-center gap-2">
+        <Checkbox
+          checked={settings.mcpConfig.includeContextFiles}
+          onChange={handleToggleIncludeContextFiles}
+          label="Include context files"
+          className="flex-1 mr-1"
+        />
+        <InfoIcon tooltip="Adds content of context files into the chat of MCP agent. This will increase token usage." />
+      </div>
+      <button onClick={handleOpenSettings} className="w-full flex items-center px-3 py-2 text-xs text-neutral-300 hover:bg-neutral-700 transition-colors">
+        <MdSettings className="w-3 h-3 mr-2" />
+        Configure servers
+      </button>
+    </>
   );
 
   return (
@@ -122,14 +145,14 @@ export const McpSelector = () => {
         {serverNames.length > 0 && <Checkbox checked={settings.mcpConfig.agentEnabled} onChange={handleToggleEnabled} className="mr-2" />}
         <span>
           {settings.mcpConfig.agentEnabled
-            ? `MCP agent ${enabledServers === 0 ? 'disabled' : 'enabled'} (${enabledServers} server${enabledServers === 1 ? '' : 's'})`
+            ? `MCP agent ${enabledServers === 0 ? 'disabled' : 'enabled'} (${enabledServers} server${enabledServers === 1 ? '' : 's'}${settings.mcpConfig.includeContextFiles ? ', with files' : ''})`
             : 'MCP agent disabled'}
         </span>
         <MdKeyboardArrowUp className="w-3 h-3 ml-0.5" />
       </button>
 
       {selectorVisible && (
-        <div className="absolute bottom-full right-0 mb-1 bg-neutral-900 border border-neutral-700 rounded-md shadow-lg z-10 ml-2 min-w-[200px]">
+        <div className="absolute bottom-full right-0 mb-1 bg-neutral-900 border border-neutral-700 rounded-md shadow-lg z-10 ml-2 min-w-[250px]">
           {serverNames.length > 0 ? (
             <>
               <div
