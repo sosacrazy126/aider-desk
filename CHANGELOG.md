@@ -8,6 +8,7 @@
 - added support for o3-mini model in MCP agent
 - keeping the selected MCP servers when toggling MCP agent
 - added option to add context files to MCP agent
+- properly adding Aider's files present at start to AiderDesk's Context files
 
 ## [0.4.2]
 

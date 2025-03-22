@@ -280,6 +280,7 @@ class Connector:
       ],
       'inputHistoryFile': self.coder.io.input_history_file
     })
+    await self.send_update_context_files()
     await self.send_autocompletion()
     await self.send_current_models()
 
