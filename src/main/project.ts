@@ -33,7 +33,7 @@ import { EditFormat, MessageAction, ResponseMessage } from './messages';
 import { DEFAULT_MAIN_MODEL, Store } from './store';
 
 export class Project {
-  private process?: ChildProcessWithoutNullStreams | null = null;
+  private process: ChildProcessWithoutNullStreams | null = null;
   private connectors: Connector[] = [];
   private currentCommand: string | null = null;
   private currentQuestion: QuestionData | null = null;

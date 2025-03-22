@@ -1,3 +1,5 @@
+import { LlmProvider } from '@common/llm-providers';
+
 import type { JsonSchema } from '@n8n/json-schema-to-zod';
 
 export interface ResponseChunkData {
@@ -114,10 +116,7 @@ export interface SettingsData {
 }
 
 export interface McpConfig {
-  provider: 'openai' | 'anthropic' | 'gemini';
-  anthropicApiKey: string;
-  openAiApiKey: string;
-  geminiApiKey: string;
+  providers: LlmProvider[];
   maxIterations: number;
   minTimeBetweenToolCalls: number; // in milliseconds
   mcpServers: {
@@ -126,6 +125,10 @@ export interface McpConfig {
   disabledServers: string[];
   systemPrompt: string;
 }
+
+export const getActiveProvider = (providers: LlmProvider[]): LlmProvider | null => {
+  return providers.find((provider) => provider.active) || null;
+};
 
 export interface UsageReportData {
   sentTokens: number;

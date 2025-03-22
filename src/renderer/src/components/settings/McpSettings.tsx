@@ -1,6 +1,7 @@
-import { McpConfig, McpServerConfig, SettingsData } from '@common/types';
+import { getActiveProvider, McpConfig, McpServerConfig, SettingsData } from '@common/types';
 import { useState } from 'react';
 import { FaPlus } from 'react-icons/fa';
+import { LlmProviderBase, PROVIDER_MODELS } from '@common/llm-providers';
 
 import { McpServerForm } from './McpServerForm';
 import { McpServerItem } from './McpServerItem';
@@ -26,24 +27,44 @@ export const McpSettings = ({ settings, setSettings }: Props) => {
   const { mcpConfig } = settings;
   const [isAddingServer, setIsAddingServer] = useState(false);
   const [editingServer, setEditingServer] = useState<EditingServer | null>(null);
+  const activeProvider = getActiveProvider(mcpConfig.providers);
 
   const handleApiKeyChanged = (newApiKey: string) => {
-    const updatedMcpConfig = { ...settings.mcpConfig };
+    const updatedProviders = settings.mcpConfig.providers.map((provider) => (provider.active ? { ...provider, apiKey: newApiKey } : provider));
 
-    if (mcpConfig.provider === 'openai') {
-      updatedMcpConfig.openAiApiKey = newApiKey;
-    } else if (mcpConfig.provider === 'anthropic') {
-      updatedMcpConfig.anthropicApiKey = newApiKey;
-    } else if (mcpConfig.provider === 'gemini') {
-      updatedMcpConfig.geminiApiKey = newApiKey;
-    }
+    const updatedMcpConfig = {
+      ...settings.mcpConfig,
+      providers: updatedProviders,
+    };
     setSettings({ ...settings, mcpConfig: updatedMcpConfig });
   };
 
-  const handleProviderChanged = (newProvider: 'openai' | 'anthropic' | 'gemini') => {
-    const updatedMcpConfig: McpConfig = {
+  const handleProviderChanged = (newProviderName: string) => {
+    let updatedProviders = settings.mcpConfig.providers;
+
+    // Check if provider already exists
+    const existingProvider = updatedProviders.find((p) => p.name === newProviderName);
+
+    if (!existingProvider) {
+      // Create new provider with default values
+      const newProvider: LlmProviderBase = {
+        name: newProviderName as LlmProviderBase['name'],
+        apiKey: '',
+        model: Object.keys(PROVIDER_MODELS[newProviderName].models)[0],
+        active: true,
+      };
+      updatedProviders = [...updatedProviders, newProvider];
+    }
+
+    // Update active state for all providers
+    updatedProviders = updatedProviders.map((provider) => ({
+      ...provider,
+      active: provider.name === newProviderName,
+    }));
+
+    const updatedMcpConfig = {
       ...settings.mcpConfig,
-      provider: newProvider,
+      providers: updatedProviders,
     };
     setSettings({ ...settings, mcpConfig: updatedMcpConfig });
   };
@@ -115,26 +136,20 @@ export const McpSettings = ({ settings, setSettings }: Props) => {
               <div>
                 <Select
                   label="Provider"
-                  value={mcpConfig.provider}
-                  onChange={(value) => handleProviderChanged(value as 'openai' | 'anthropic' | 'gemini')}
-                  options={[
-                    { value: 'openai', label: 'OpenAI' },
-                    { value: 'anthropic', label: 'Anthropic' },
-                    { value: 'gemini', label: 'Gemini' },
-                  ]}
+                  value={activeProvider?.name || ''}
+                  onChange={handleProviderChanged}
+                  options={mcpConfig.providers.map((p) => ({
+                    value: p.name,
+                    label: p.name.charAt(0).toUpperCase() + p.name.slice(1),
+                    disabled: !p.active,
+                  }))}
                 />
               </div>
               <div className="mt-2">
                 <Input
                   label="API Key"
                   type="password"
-                  value={
-                    mcpConfig.provider === 'openai'
-                      ? mcpConfig.openAiApiKey
-                      : mcpConfig.provider === 'anthropic'
-                        ? mcpConfig.anthropicApiKey
-                        : mcpConfig.geminiApiKey
-                  }
+                  value={activeProvider?.apiKey || ''}
                   onChange={(e) => handleApiKeyChanged(e.target.value)}
                   className="w-full p-2 border rounded"
                 />

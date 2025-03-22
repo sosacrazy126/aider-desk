@@ -1,7 +1,10 @@
-import { WindowState, ProjectData, ProjectSettings, SettingsData, McpConfig } from '@common/types';
+import { ProjectData, ProjectSettings, SettingsData, WindowState } from '@common/types';
 import { normalizeBaseDir } from '@common/utils';
+import { PROVIDER_MODELS } from '@common/llm-providers';
 
-import logger from './logger';
+import logger from '../logger';
+
+import { migrateSettingsV0toV1 } from './migrations/v0-to-v1';
 
 export const DEFAULT_MAIN_MODEL = 'claude-3-7-sonnet-20250219';
 
@@ -14,10 +17,14 @@ const DEFAULT_SETTINGS: SettingsData = {
     preferred: ['claude-3-7-sonnet-20250219', 'gpt-4o', 'deepseek/deepseek-coder', 'claude-3-5-haiku-20241022'],
   },
   mcpConfig: {
-    provider: 'openai',
-    anthropicApiKey: '',
-    openAiApiKey: '',
-    geminiApiKey: '',
+    providers: [
+      {
+        name: 'anthropic',
+        apiKey: '',
+        model: PROVIDER_MODELS.anthropic.models[0],
+        active: true,
+      },
+    ],
     maxIterations: 10,
     minTimeBetweenToolCalls: 0,
     mcpServers: {},
@@ -52,8 +59,10 @@ interface StoreSchema {
   openProjects: ProjectData[];
   recentProjects: string[]; // baseDir paths of recently closed projects
   settings: SettingsData;
-  mcpConfig?: McpConfig;
+  settingsVersion: number;
 }
+
+const CURRENT_SETTINGS_VERSION = 1;
 
 interface CustomStore<T> {
   get<K extends keyof T>(key: K): T[K] | undefined;
@@ -70,7 +79,16 @@ export class Store {
   }
 
   getSettings(): SettingsData {
-    const settings = this.store.get('settings');
+    let settings = this.store.get('settings');
+
+    if (settings) {
+      settings = this.migrate(settings);
+    }
+
+    if (!settings) {
+      return DEFAULT_SETTINGS;
+    }
+
     return {
       ...DEFAULT_SETTINGS,
       ...settings,
@@ -89,6 +107,26 @@ export class Store {
         systemPrompt: settings?.mcpConfig?.systemPrompt || DEFAULT_SETTINGS.mcpConfig.systemPrompt,
       },
     };
+  }
+
+  private migrate(settings: SettingsData): SettingsData {
+    let settingsVersion = this.store.get('settingsVersion') || 0;
+
+    if (settingsVersion < CURRENT_SETTINGS_VERSION) {
+      logger.info(`Migrating settings from version ${settingsVersion} to ${CURRENT_SETTINGS_VERSION}`);
+
+      if (settingsVersion === 0) {
+        settings = migrateSettingsV0toV1(settings);
+        settingsVersion = 1;
+      }
+
+      // Add more migration steps as needed (e.g., migrateSettingsV1toV2)
+
+      this.store.set('settings', settings);
+      this.store.set('settingsVersion', CURRENT_SETTINGS_VERSION);
+    }
+
+    return settings;
   }
 
   saveSettings(settings: SettingsData): void {

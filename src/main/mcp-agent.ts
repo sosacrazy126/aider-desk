@@ -1,4 +1,4 @@
-import { McpServerConfig, McpTool, UsageReportData } from '@common/types';
+import { getActiveProvider, McpServerConfig, McpTool, UsageReportData } from '@common/types';
 import { ChatAnthropic } from '@langchain/anthropic';
 import { AIMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { StructuredTool, tool } from '@langchain/core/tools';
@@ -11,33 +11,13 @@ import { jsonSchemaToZod } from '@n8n/json-schema-to-zod';
 import { v4 as uuidv4 } from 'uuid';
 import { delay } from '@common/utils';
 import { BaseMessage } from '@langchain/core/dist/messages/base';
+import { isAnthropicProvider, isGeminiProvider, isOpenAiProvider, LlmProvider, PROVIDER_MODELS } from '@common/llm-providers';
 
 import logger from './logger';
 import { Store } from './store';
 import { Project } from './project';
 
 import type { JsonSchema } from '@n8n/json-schema-to-zod';
-
-const PROVIDER_MODELS = {
-  openai: 'gpt-4o-mini',
-  anthropic: 'claude-3-7-sonnet-20250219',
-  gemini: 'gemini-2.0-flash',
-};
-
-const MODEL_PRICING_MAP = {
-  'gpt-4o-mini': {
-    inputCost: 0.15, // per million tokens
-    outputCost: 0.6, // per million tokens
-  },
-  'claude-3-7-sonnet-20250219': {
-    inputCost: 3.0, // per million tokens
-    outputCost: 15.0, // per million tokens
-  },
-  'gemini-2.0-flash': {
-    inputCost: 0.1, // per million tokens
-    outputCost: 0.4, // per million tokens
-  },
-};
 
 type TextContent =
   | string
@@ -91,12 +71,29 @@ const createAiderTool = () => {
   );
 };
 
-const calculateCost = (model: string, sentTokens: number, receivedTokens: number) => {
-  const modelCost = MODEL_PRICING_MAP[model];
+const calculateCost = (llmProvider: LlmProvider, sentTokens: number, receivedTokens: number) => {
+  const providerModels = PROVIDER_MODELS[llmProvider.name];
+  if (!providerModels) {
+    return 0;
+  }
+
+  // Get the model name directly from the provider
+  const model = llmProvider.model;
+  if (!model) {
+    return 0;
+  }
+
+  // Find the model cost configuration
+  const modelCost = providerModels.models[model];
   if (!modelCost) {
     return 0;
   }
-  return (sentTokens * modelCost.inputCost + receivedTokens * modelCost.outputCost) / 1000000;
+
+  // Calculate cost in dollars (costs are per million tokens)
+  const inputCost = (sentTokens * modelCost.inputCost) / 1_000_000;
+  const outputCost = (receivedTokens * modelCost.outputCost) / 1_000_000;
+
+  return inputCost + outputCost;
 };
 
 export class McpAgent {
@@ -151,43 +148,40 @@ export class McpAgent {
 
   private createLlm() {
     const { mcpConfig } = this.store.getSettings();
-    const { provider, anthropicApiKey, openAiApiKey, geminiApiKey } = mcpConfig;
+    const { providers } = mcpConfig;
+    const provider = getActiveProvider(providers);
 
-    if (provider === 'anthropic') {
-      if (!anthropicApiKey) {
-        throw new Error('Anthropic API key is required');
-      }
+    if (!provider) {
+      throw new Error('No active MCP provider found');
+    }
 
+    if (!provider.apiKey) {
+      throw new Error(`${provider.name} API key is required`);
+    }
+
+    if (isAnthropicProvider(provider)) {
       return new ChatAnthropic({
-        model: PROVIDER_MODELS[provider],
+        model: provider.model,
         temperature: 0,
         maxTokens: 1000,
-        apiKey: anthropicApiKey,
+        apiKey: provider.apiKey,
       });
-    } else if (provider === 'openai') {
-      if (!openAiApiKey) {
-        throw new Error('OpenAI API key is required');
-      }
-
+    } else if (isOpenAiProvider(provider)) {
       return new ChatOpenAI({
-        model: PROVIDER_MODELS[provider],
+        model: provider.model,
         temperature: 0,
         maxTokens: 1000,
-        apiKey: openAiApiKey,
+        apiKey: provider.apiKey,
       });
-    } else if (provider === 'gemini') {
-      if (!geminiApiKey) {
-        throw new Error('Gemini API key is required');
-      }
-
+    } else if (isGeminiProvider(provider)) {
       return new ChatGoogleGenerativeAI({
-        model: PROVIDER_MODELS[provider],
+        model: provider.model,
         temperature: 0,
         maxOutputTokens: 1000,
-        apiKey: geminiApiKey,
+        apiKey: provider.apiKey,
       });
     } else {
-      throw new Error(`Unsupported MCP provider: ${provider}`);
+      throw new Error(`Unsupported MCP provider: ${JSON.stringify(provider)}`);
     }
   }
 
@@ -242,7 +236,9 @@ export class McpAgent {
     const mcpServerTools = this.clients
       .filter((clientHolder) => !mcpConfig.disabledServers.includes(clientHolder.serverName))
       .flatMap((clientHolder) =>
-        clientHolder.tools.map((tool) => convertMpcToolToLangchainTool(project, clientHolder.serverName, clientHolder.client, tool, mcpConfig.provider)),
+        clientHolder.tools.map((tool) =>
+          convertMpcToolToLangchainTool(project, clientHolder.serverName, clientHolder.client, tool, getActiveProvider(mcpConfig.providers)!),
+        ),
       );
 
     if (!mcpServerTools.length) {
@@ -289,10 +285,13 @@ export class McpAgent {
           return null;
         }
 
+        // Add AI message to messages
+        messages.push(aiMessage);
+
         // Update usage report
         usageReport.sentTokens += aiMessage.usage_metadata?.input_tokens ?? 0;
         usageReport.receivedTokens += aiMessage.usage_metadata?.output_tokens ?? 0;
-        usageReport.mcpToolsCost = calculateCost(PROVIDER_MODELS[mcpConfig.provider], usageReport.sentTokens, usageReport.receivedTokens);
+        usageReport.mcpToolsCost = calculateCost(getActiveProvider(mcpConfig.providers)!, usageReport.sentTokens, usageReport.receivedTokens);
 
         logger.debug(`Tool calls: ${aiMessage.tool_calls?.length}, message: ${JSON.stringify(aiMessage.content)}`);
 
@@ -319,9 +318,6 @@ export class McpAgent {
             break;
           }
         }
-
-        // Add AI message to messages
-        messages.push(aiMessage);
 
         // Collect tool results for potential Aider tool
         const toolResults: string[] = [];
@@ -552,9 +548,9 @@ export class McpAgent {
   }
 }
 
-const convertMpcToolToLangchainTool = (project: Project, serverName: string, client: Client, toolDef: McpTool, provider: string): StructuredTool => {
+const convertMpcToolToLangchainTool = (project: Project, serverName: string, client: Client, toolDef: McpTool, provider: LlmProvider): StructuredTool => {
   const normalizeSchemaForProvider = (schema: JsonSchema): JsonSchema => {
-    if (provider === 'gemini') {
+    if (provider.name === 'gemini') {
       // gemini does not like "default" in the schema
       const normalized = JSON.parse(JSON.stringify(schema));
       if (normalized.properties) {
