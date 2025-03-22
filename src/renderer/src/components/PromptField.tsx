@@ -7,6 +7,7 @@ import { MdStop } from 'react-icons/md';
 import TextareaAutosize from 'react-textarea-autosize';
 import getCaretCoordinates from 'textarea-caret';
 
+import { useSettings } from '@/context/SettingsContext';
 import { showErrorNotification } from '@/utils/notifications';
 import { FormatSelector } from '@/components/FormatSelector';
 import { McpSelector } from '@/components/McpSelector';
@@ -30,7 +31,7 @@ const PLACEHOLDERS = [
   'Give me some task!',
 ];
 
-const COMMANDS = ['/code', '/ask', '/architect', '/add', '/model', '/read-only'];
+const COMMANDS = ['/code', '/ask', '/architect', '/add', '/model', '/read-only', '/mcp'];
 const CONFIRM_COMMANDS = ['/clear', '/web', '/undo', '/test', '/map-refresh', '/map', '/run', '/reasoning-effort', '/think-tokens'];
 
 const ANSWERS = ['y', 'n', 'a', 'd'];
@@ -96,6 +97,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
     const [historyIndex, setHistoryIndex] = useState<number>(-1);
     const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
     const [editFormatLocked, setEditFormatLocked] = useState(false);
+    const { settings, saveSettings } = useSettings();
     const inputRef = useRef<HTMLTextAreaElement>(null);
 
     useDebounce(
@@ -148,6 +150,19 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
           case '/model':
             setText('');
             openModelSelector?.();
+            break;
+          case '/mcp':
+            if (settings) {
+              const updatedSettings = {
+                ...settings,
+                mcpConfig: {
+                  ...settings.mcpConfig,
+                  agentEnabled: !settings.mcpConfig.agentEnabled,
+                },
+              };
+              void saveSettings(updatedSettings);
+            }
+            setText('');
             break;
           case '/web': {
             const url = text.replace('/web', '').trim();

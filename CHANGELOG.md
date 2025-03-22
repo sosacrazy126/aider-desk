@@ -9,6 +9,7 @@
 - keeping the selected MCP servers when toggling MCP agent
 - added option to add context files to MCP agent
 - properly adding Aider's files present at start to AiderDesk's Context files
+- added /mcp command to toggle MCP agent
 
 ## [0.4.2]
 
