@@ -439,6 +439,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
     setMessages([]);
     setLastMessageCost(0);
     setTotalCost(0);
+    setMcpToolsCost(0);
     setProcessing(false);
     setTokensInfo(null);
     setQuestion(null);

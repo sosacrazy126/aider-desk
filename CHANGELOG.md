@@ -1,9 +1,11 @@
 # Changelog
 
-## [0.4.3]
+## [0.5.0]
 
 - added toggle for edit format lock by repeating the same command (/ask, /architect)
 - persisting MCP agent message history for next messages
+- added support for Amazon Bedrock provider in MPC agent (#20)
+- added support for o3-mini model in MCP agent
 
 ## [0.4.2]
 

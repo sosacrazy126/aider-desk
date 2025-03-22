@@ -83,13 +83,7 @@ export const McpSelector = () => {
         className="flex items-center hover:text-neutral-300 focus:outline-none transition-colors duration-200 text-xs ml-3"
       >
         {serverNames.length > 0 && <Checkbox checked={enabledServers > 0} onChange={handleToggleAllServers} className="mr-2" />}
-        <span>
-          {enabledServers === 0
-            ? 'No MCP servers enabled'
-            : enabledServers === totalServers
-              ? `${totalServers} MCP servers enabled`
-              : `${enabledServers}/${totalServers} MCP servers enabled`}
-        </span>
+        <span>{enabledServers === 0 ? 'MCP agent disabled' : `MCP agent (${enabledServers} server${enabledServers > 1 ? 's' : ''})`}</span>
         <MdKeyboardArrowUp className="w-3 h-3 ml-0.5" />
       </button>
 

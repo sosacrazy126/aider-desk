@@ -1,17 +1,27 @@
 import { getActiveProvider, McpConfig, McpServerConfig, SettingsData } from '@common/types';
 import { useState } from 'react';
 import { FaPlus } from 'react-icons/fa';
-import { LlmProviderBase, PROVIDER_MODELS } from '@common/llm-providers';
+import {
+  LlmProvider,
+  PROVIDER_MODELS,
+  AVAILABLE_PROVIDERS,
+  isBedrockProvider,
+  isOpenAiProvider,
+  isAnthropicProvider,
+  isGeminiProvider,
+} from '@common/llm-providers';
 
 import { McpServerForm } from './McpServerForm';
 import { McpServerItem } from './McpServerItem';
+import { OpenAiParameters, AnthropicParameters, GeminiParameters, BedrockParameters } from './providers';
 
 import { Select } from '@/components/common/Select';
-import { Input } from '@/components/common/Input';
 import { Button } from '@/components/common/Button';
 import { Slider } from '@/components/common/Slider';
 import { InfoIcon } from '@/components/common/InfoIcon';
 import { TextArea } from '@/components/common/TextArea';
+import { Accordion } from '@/components/common/Accordion';
+import { Input } from '@/components/common/Input';
 
 type Props = {
   settings: SettingsData;
@@ -29,16 +39,6 @@ export const McpSettings = ({ settings, setSettings }: Props) => {
   const [editingServer, setEditingServer] = useState<EditingServer | null>(null);
   const activeProvider = getActiveProvider(mcpConfig.providers);
 
-  const handleApiKeyChanged = (newApiKey: string) => {
-    const updatedProviders = settings.mcpConfig.providers.map((provider) => (provider.active ? { ...provider, apiKey: newApiKey } : provider));
-
-    const updatedMcpConfig = {
-      ...settings.mcpConfig,
-      providers: updatedProviders,
-    };
-    setSettings({ ...settings, mcpConfig: updatedMcpConfig });
-  };
-
   const handleProviderChanged = (newProviderName: string) => {
     let updatedProviders = settings.mcpConfig.providers;
 
@@ -46,13 +46,27 @@ export const McpSettings = ({ settings, setSettings }: Props) => {
     const existingProvider = updatedProviders.find((p) => p.name === newProviderName);
 
     if (!existingProvider) {
-      // Create new provider with default values
-      const newProvider: LlmProviderBase = {
-        name: newProviderName as LlmProviderBase['name'],
-        apiKey: '',
-        model: Object.keys(PROVIDER_MODELS[newProviderName].models)[0],
-        active: true,
-      };
+      // Create new provider with default values based on provider type
+      let newProvider: LlmProvider;
+
+      if (newProviderName === 'bedrock') {
+        newProvider = {
+          name: 'bedrock',
+          accessKeyId: '',
+          secretAccessKey: '',
+          region: 'us-east-1',
+          model: Object.keys(PROVIDER_MODELS[newProviderName].models)[0],
+          active: true,
+        };
+      } else {
+        newProvider = {
+          name: newProviderName as 'openai' | 'anthropic' | 'gemini',
+          apiKey: '',
+          model: Object.keys(PROVIDER_MODELS[newProviderName].models)[0],
+          active: true,
+        };
+      }
+
       updatedProviders = [...updatedProviders, newProvider];
     }
 
@@ -131,30 +145,22 @@ export const McpSettings = ({ settings, setSettings }: Props) => {
         />
       ) : (
         <>
-          <div className="flex space-x-4">
-            <div className="flex-1">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
               <div>
-                <Select
-                  label="Provider"
-                  value={activeProvider?.name || ''}
-                  onChange={handleProviderChanged}
-                  options={mcpConfig.providers.map((p) => ({
-                    value: p.name,
-                    label: p.name.charAt(0).toUpperCase() + p.name.slice(1),
-                    disabled: !p.active,
-                  }))}
-                />
+                <Select label="Provider" value={activeProvider?.name || ''} onChange={handleProviderChanged} options={AVAILABLE_PROVIDERS} />
               </div>
-              <div className="mt-2">
-                <Input
-                  label="API Key"
-                  type="password"
-                  value={activeProvider?.apiKey || ''}
-                  onChange={(e) => handleApiKeyChanged(e.target.value)}
-                  className="w-full p-2 border rounded"
-                />
-              </div>
-              <div className="mt-4">
+
+              {activeProvider && isOpenAiProvider(activeProvider) && <OpenAiParameters settings={settings} setSettings={setSettings} />}
+
+              {activeProvider && isAnthropicProvider(activeProvider) && <AnthropicParameters settings={settings} setSettings={setSettings} />}
+
+              {activeProvider && isGeminiProvider(activeProvider) && <GeminiParameters settings={settings} setSettings={setSettings} />}
+
+              {activeProvider && isBedrockProvider(activeProvider) && <BedrockParameters settings={settings} setSettings={setSettings} />}
+            </div>
+            <div>
+              <div>
                 <Slider
                   label={
                     <div className="flex items-center">
@@ -188,19 +194,18 @@ export const McpSettings = ({ settings, setSettings }: Props) => {
                 />
               </div>
             </div>
-            <div className="flex-1 flex flex-col">
-              <TextArea
-                label="System Prompt"
-                value={mcpConfig.systemPrompt}
-                onChange={(e) => handleSystemPromptChanged(e.target.value)}
-                rows={5}
-                className="flex-grow resize-none"
-              />
-            </div>
           </div>
-          {/* Removed the Max Iterations section as it's now in the first column */}
+
           <div className="mt-4">
-            <h3 className="text-sm font-semibold mb-2 mt-4">MCP Servers</h3>
+            <Accordion title="System Prompt" className="text-sm">
+              <div className="text-xxs text-amber-500 mb-2">
+                Warning: Modifying the system prompt can cause the MCP agent to behave unexpectedly. Only change this if you understand the implications.
+              </div>
+              <TextArea value={mcpConfig.systemPrompt} onChange={(e) => handleSystemPromptChanged(e.target.value)} rows={20} className="w-full resize-none" />
+            </Accordion>
+          </div>
+          <div className="mt-4">
+            <div className="text-sm text-neutral-100 font-medium mb-2 mt-4">MCP Servers</div>
             {Object.keys(mcpConfig.mcpServers).length === 0 ? (
               <div className="text-xs text-gray-500 mb-2">No MCP servers configured.</div>
             ) : (

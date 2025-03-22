@@ -5,13 +5,15 @@ import { StructuredTool, tool } from '@langchain/core/tools';
 import { z } from 'zod';
 import { ChatOpenAI } from '@langchain/openai';
 import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
+import { BedrockChat } from '@langchain/community/chat_models/bedrock';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { jsonSchemaToZod } from '@n8n/json-schema-to-zod';
 import { v4 as uuidv4 } from 'uuid';
 import { delay } from '@common/utils';
 import { BaseMessage } from '@langchain/core/dist/messages/base';
-import { isAnthropicProvider, isGeminiProvider, isOpenAiProvider, LlmProvider, PROVIDER_MODELS } from '@common/llm-providers';
+import { isAnthropicProvider, isGeminiProvider, isOpenAiProvider, isBedrockProvider, LlmProvider, PROVIDER_MODELS } from '@common/llm-providers';
+import { BaseChatModel } from '@langchain/core/dist/language_models/chat_models';
 
 import logger from './logger';
 import { Store } from './store';
@@ -155,11 +157,10 @@ export class McpAgent {
       throw new Error('No active MCP provider found');
     }
 
-    if (!provider.apiKey) {
-      throw new Error(`${provider.name} API key is required`);
-    }
-
     if (isAnthropicProvider(provider)) {
+      if (!provider.apiKey) {
+        throw new Error('Anthropic API key is required');
+      }
       return new ChatAnthropic({
         model: provider.model,
         temperature: 0,
@@ -167,19 +168,40 @@ export class McpAgent {
         apiKey: provider.apiKey,
       });
     } else if (isOpenAiProvider(provider)) {
+      if (!provider.apiKey) {
+        throw new Error('OpenAI API key is required');
+      }
       return new ChatOpenAI({
         model: provider.model,
-        temperature: 0,
+        // o3-mini does not support temperature
+        temperature: provider.model === 'o3-mini' ? undefined : 0,
         maxTokens: 1000,
         apiKey: provider.apiKey,
       });
     } else if (isGeminiProvider(provider)) {
+      if (!provider.apiKey) {
+        throw new Error('Gemini API key is required');
+      }
       return new ChatGoogleGenerativeAI({
         model: provider.model,
         temperature: 0,
         maxOutputTokens: 1000,
         apiKey: provider.apiKey,
       });
+    } else if (isBedrockProvider(provider)) {
+      if (!provider.accessKeyId || !provider.secretAccessKey || !provider.region) {
+        throw new Error('AWS accessKeyId, secretAccessKey and region are required for Bedrock');
+      }
+      return new BedrockChat({
+        model: provider.model,
+        region: provider.region,
+        credentials: {
+          accessKeyId: provider.accessKeyId,
+          secretAccessKey: provider.secretAccessKey,
+        },
+        temperature: 0,
+        maxTokens: 1000,
+      }) as BaseChatModel;
     } else {
       throw new Error(`Unsupported MCP provider: ${JSON.stringify(provider)}`);
     }
@@ -256,20 +278,21 @@ export class McpAgent {
       tools: allTools.map((tool) => tool.name),
     });
 
+    const usageReport: UsageReportData = {
+      sentTokens: 0,
+      receivedTokens: 0,
+      messageCost: 0,
+      totalCost: 0,
+      mcpToolsCost: 0,
+    };
+
     try {
-      const llmWithTools = this.createLlm().bindTools(allTools);
+      const baseChatModel = this.createLlm();
+      const llmWithTools = baseChatModel.bindTools!(allTools);
       const toolsByName: { [key: string]: StructuredTool } = {};
       allTools.forEach((tool) => {
         toolsByName[tool.name] = tool;
       });
-
-      const usageReport: UsageReportData = {
-        sentTokens: 0,
-        receivedTokens: 0,
-        messageCost: 0,
-        totalCost: 0,
-        mcpToolsCost: 0,
-      };
 
       let iteration = 0;
 
@@ -289,8 +312,8 @@ export class McpAgent {
         messages.push(aiMessage);
 
         // Update usage report
-        usageReport.sentTokens += aiMessage.usage_metadata?.input_tokens ?? 0;
-        usageReport.receivedTokens += aiMessage.usage_metadata?.output_tokens ?? 0;
+        usageReport.sentTokens += aiMessage.usage_metadata?.input_tokens ?? aiMessage.response_metadata?.usage?.input_tokens ?? 0;
+        usageReport.receivedTokens += aiMessage.usage_metadata?.output_tokens ?? aiMessage.response_metadata?.usage?.output_tokens ?? 0;
         usageReport.mcpToolsCost = calculateCost(getActiveProvider(mcpConfig.providers)!, usageReport.sentTokens, usageReport.receivedTokens);
 
         logger.debug(`Tool calls: ${aiMessage.tool_calls?.length}, message: ${JSON.stringify(aiMessage.content)}`);
@@ -414,6 +437,12 @@ export class McpAgent {
       } else {
         project.addLogMessage('error', `Error running MCP servers: ${error}`);
       }
+      project.processResponseMessage({
+        action: 'response',
+        content: '',
+        finished: true,
+        usageReport,
+      });
       throw error;
     }
   }
