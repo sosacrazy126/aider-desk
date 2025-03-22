@@ -122,6 +122,7 @@ export interface McpConfig {
   mcpServers: {
     [key: string]: McpServerConfig;
   };
+  agentEnabled: boolean;
   disabledServers: string[];
   systemPrompt: string;
 }

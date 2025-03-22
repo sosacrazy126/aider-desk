@@ -236,6 +236,11 @@ export class McpAgent {
     // Add the user message to the message history
     messages.push(new HumanMessage(prompt));
 
+    if (!mcpConfig.agentEnabled) {
+      logger.debug('MCP agent disabled, returning original prompt');
+      return prompt;
+    }
+
     const tools = this.clients.filter((clientHolder) => !mcpConfig.disabledServers.includes(clientHolder.serverName));
     if (!tools.length) {
       logger.info('No tools found for prompt, returning original prompt');

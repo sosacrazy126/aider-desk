@@ -6,6 +6,7 @@
 - persisting MCP agent message history for next messages
 - added support for Amazon Bedrock provider in MPC agent (#20)
 - added support for o3-mini model in MCP agent
+- keeping the selected MCP servers when toggling MCP agent
 
 ## [0.4.2]
 
