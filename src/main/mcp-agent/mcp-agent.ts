@@ -5,7 +5,6 @@ import { ContextFile, getActiveProvider, McpServerConfig, McpTool, UsageReportDa
 import { ChatAnthropic } from '@langchain/anthropic';
 import { AIMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { StructuredTool, tool } from '@langchain/core/tools';
-import { z } from 'zod';
 import { ChatOpenAI } from '@langchain/openai';
 import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
 import { BedrockChat } from '@langchain/community/chat_models/bedrock';
@@ -17,12 +16,18 @@ import { delay } from '@common/utils';
 import { BaseMessage } from '@langchain/core/dist/messages/base';
 import { isAnthropicProvider, isGeminiProvider, isOpenAiProvider, isBedrockProvider, LlmProvider, PROVIDER_MODELS } from '@common/llm-providers';
 import { BaseChatModel } from '@langchain/core/dist/language_models/chat_models';
+import { EditFormat } from 'src/main/messages';
 
-import logger from './logger';
-import { Store } from './store';
-import { Project } from './project';
+import logger from '../logger';
+import { Store } from '../store';
+import { Project } from '../project';
+
+import { createAiderTools } from './tools/aider';
 
 import type { JsonSchema } from '@n8n/json-schema-to-zod';
+
+// some results are too long, so we limit the length
+const MAX_SAFE_TOOL_RESULT_CONTENT_LENGTH = 32_000;
 
 type TextContent =
   | string
@@ -57,23 +62,6 @@ const extractTextContent = (content: unknown): string => {
   }
 
   return '';
-};
-
-const createAiderTool = () => {
-  return tool(
-    async (params: { prompt: string }) => {
-      logger.info('Aider tool called with params:', params);
-      // This is a noop tool that just returns the prompt
-      return params.prompt;
-    },
-    {
-      name: 'aider',
-      description: 'Use the Aider AI pair programming assistant to perform coding tasks',
-      schema: z.object({
-        prompt: z.string().describe('The prompt in natural language to send to Aider for coding assistance including <OriginalPrompt>.'),
-      }),
-    },
-  );
 };
 
 const calculateCost = (llmProvider: LlmProvider, sentTokens: number, receivedTokens: number) => {
@@ -121,10 +109,10 @@ export class McpAgent {
       await this.closeClients();
       const clients: ClientHolder[] = [];
 
-      const { mcpConfig } = this.store.getSettings();
+      const { mcpAgent } = this.store.getSettings();
 
       // Initialize each MCP server
-      for (const [serverName, serverConfig] of Object.entries(mcpConfig.mcpServers)) {
+      for (const [serverName, serverConfig] of Object.entries(mcpAgent.mcpServers)) {
         const clientHolder = await this.initMcpClient(serverName, this.interpolateServerConfig(serverConfig, project));
 
         if (this.currentInitId !== initId) {
@@ -153,8 +141,8 @@ export class McpAgent {
   }
 
   private createLlm() {
-    const { mcpConfig } = this.store.getSettings();
-    const { providers } = mcpConfig;
+    const { mcpAgent } = this.store.getSettings();
+    const { providers, maxTokens } = mcpAgent;
     const provider = getActiveProvider(providers);
 
     if (!provider) {
@@ -168,7 +156,7 @@ export class McpAgent {
       return new ChatAnthropic({
         model: provider.model,
         temperature: 0,
-        maxTokens: 1000,
+        maxTokens: maxTokens,
         apiKey: provider.apiKey,
       });
     } else if (isOpenAiProvider(provider)) {
@@ -179,7 +167,7 @@ export class McpAgent {
         model: provider.model,
         // o3-mini does not support temperature
         temperature: provider.model === 'o3-mini' ? undefined : 0,
-        maxTokens: 1000,
+        maxTokens: maxTokens,
         apiKey: provider.apiKey,
       });
     } else if (isGeminiProvider(provider)) {
@@ -189,7 +177,7 @@ export class McpAgent {
       return new ChatGoogleGenerativeAI({
         model: provider.model,
         temperature: 0,
-        maxOutputTokens: 1000,
+        maxOutputTokens: maxTokens,
         apiKey: provider.apiKey,
       });
     } else if (isBedrockProvider(provider)) {
@@ -204,7 +192,7 @@ export class McpAgent {
           secretAccessKey: provider.secretAccessKey,
         },
         temperature: 0,
-        maxTokens: 1000,
+        maxTokens: maxTokens,
       }) as BaseChatModel;
     } else {
       throw new Error(`Unsupported MCP provider: ${JSON.stringify(provider)}`);
@@ -272,10 +260,10 @@ export class McpAgent {
   }
 
   private async getContextFilesMessages(project: Project): Promise<BaseMessage[]> {
-    const { mcpConfig } = this.store.getSettings();
+    const { mcpAgent } = this.store.getSettings();
     const messages: BaseMessage[] = [];
 
-    if (mcpConfig.includeContextFiles) {
+    if (mcpAgent.includeContextFiles) {
       const contextFiles = project.getContextFiles();
       if (contextFiles.length > 0) {
         // Separate readonly and editable files
@@ -309,15 +297,15 @@ export class McpAgent {
     return messages;
   }
 
-  async runPrompt(project: Project, prompt: string): Promise<string | null> {
-    const { mcpConfig } = this.store.getSettings();
-    logger.debug('McpConfig:', mcpConfig);
+  async runPrompt(project: Project, prompt: string, editFormat?: EditFormat): Promise<string | null> {
+    const { mcpAgent } = this.store.getSettings();
+    logger.debug('McpConfig:', mcpAgent);
 
     // Reset interruption flag
     this.isInterrupted = false;
 
-    const tools = this.clients.filter((clientHolder) => !mcpConfig.disabledServers.includes(clientHolder.serverName));
-    const enabled = mcpConfig.agentEnabled && tools.length > 0;
+    const tools = this.clients.filter((clientHolder) => !mcpAgent.disabledServers.includes(clientHolder.serverName));
+    const enabled = mcpAgent.agentEnabled && (tools.length > 0 || mcpAgent.useAiderTools);
     const messages = await this.prepareMessages(project, enabled);
 
     // Add the user message to the message history
@@ -342,21 +330,19 @@ export class McpAgent {
 
     // Get MCP server tools
     const mcpServerTools = this.clients
-      .filter((clientHolder) => !mcpConfig.disabledServers.includes(clientHolder.serverName))
+      .filter((clientHolder) => !mcpAgent.disabledServers.includes(clientHolder.serverName))
       .flatMap((clientHolder) =>
         clientHolder.tools.map((tool) =>
-          convertMpcToolToLangchainTool(project, clientHolder.serverName, clientHolder.client, tool, getActiveProvider(mcpConfig.providers)!),
+          convertMpcToolToLangchainTool(project, clientHolder.serverName, clientHolder.client, tool, getActiveProvider(mcpAgent.providers)!),
         ),
       );
 
-    if (!mcpServerTools.length) {
-      logger.info('No tools found for prompt, returning original prompt');
-      return prompt;
+    // Add Aider tools if enabled
+    const allTools = [...mcpServerTools];
+    if (mcpAgent.useAiderTools) {
+      const aiderTools = createAiderTools(project, editFormat);
+      allTools.push(...aiderTools);
     }
-
-    // Add the Aider tool
-    const aiderTool = createAiderTool();
-    const allTools = [...mcpServerTools, aiderTool];
 
     logger.info(`Running prompt with ${allTools.length} tools.`);
     logger.debug('Tools:', {
@@ -382,7 +368,7 @@ export class McpAgent {
 
       let iteration = 0;
 
-      while (iteration < mcpConfig.maxIterations) {
+      while (iteration < mcpAgent.maxIterations) {
         iteration++;
         logger.debug(`Running prompt iteration ${iteration}`, { messages });
 
@@ -400,7 +386,7 @@ export class McpAgent {
         // Update usage report
         usageReport.sentTokens += aiMessage.usage_metadata?.input_tokens ?? aiMessage.response_metadata?.usage?.input_tokens ?? 0;
         usageReport.receivedTokens += aiMessage.usage_metadata?.output_tokens ?? aiMessage.response_metadata?.usage?.output_tokens ?? 0;
-        usageReport.mcpToolsCost = calculateCost(getActiveProvider(mcpConfig.providers)!, usageReport.sentTokens, usageReport.receivedTokens);
+        usageReport.mcpToolsCost = calculateCost(getActiveProvider(mcpAgent.providers)!, usageReport.sentTokens, usageReport.receivedTokens);
 
         logger.debug(`Tool calls: ${aiMessage.tool_calls?.length}, message: ${JSON.stringify(aiMessage.content)}`);
 
@@ -409,8 +395,6 @@ export class McpAgent {
           const textContent = extractTextContent(aiMessage.content);
 
           if (textContent) {
-            logger.info(`Sending final response: ${textContent}`);
-
             project.processResponseMessage({
               action: 'response',
               content: textContent,
@@ -428,9 +412,6 @@ export class McpAgent {
           }
         }
 
-        // Collect tool results for potential Aider tool
-        const toolResults: string[] = [];
-
         for (const toolCall of aiMessage.tool_calls) {
           // Check for interruption before each tool call
           if (this.checkInterrupted(project, usageReport)) {
@@ -440,28 +421,10 @@ export class McpAgent {
           // Calculate how much time to wait based on the minimum time between tool calls
           const now = Date.now();
           const elapsedSinceLastCall = now - this.lastToolCallTime;
-          const remainingDelay = Math.max(0, mcpConfig.minTimeBetweenToolCalls - elapsedSinceLastCall);
+          const remainingDelay = Math.max(0, mcpAgent.minTimeBetweenToolCalls - elapsedSinceLastCall);
 
           if (remainingDelay > 0) {
             await delay(remainingDelay);
-          }
-
-          // Check if Aider tool is being called
-          if (toolCall.name === 'aider') {
-            logger.debug('Aider tool called. Sending prompt to Aider.');
-            // If Aider tool is called, use its prompt as the response
-            const aiderPrompt = toolCall.args.prompt as string;
-
-            // Append previous tool results to the Aider prompt
-            const toolResultsText = toolResults.length > 0 ? `Previous Tool Results:\n${toolResults.join('\n\n')}\n\nTask:\n` : '';
-
-            const fullAiderPrompt = `${toolResultsText}${aiderPrompt}`;
-
-            if (prompt !== fullAiderPrompt) {
-              project.addUserMessage(fullAiderPrompt);
-            }
-
-            return fullAiderPrompt;
           }
 
           const selectedTool = toolsByName[toolCall.name];
@@ -491,18 +454,13 @@ export class McpAgent {
 
             // Add tool message to messages
             messages.push(toolResponse);
-
-            // Store tool result for potential Aider tool
-            const toolResultText = extractTextContent(toolResponse);
-            if (toolResultText) {
-              toolResults.push(`Tool: ${toolCall.name}\n${toolResultText}`);
-            }
           } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
             logger.error(`Error invoking tool ${toolCall.name}:`, error);
 
             // Send log message about the tool error
             project.addLogMessage('error', `Tool ${toolCall.name} failed: ${errorMessage}`);
+            project.addToolMessage(serverName, toolName, undefined, errorMessage);
 
             // Add user message to messages for next iteration
             messages.push(new HumanMessage(errorMessage));
@@ -513,7 +471,7 @@ export class McpAgent {
         }
       }
 
-      if (iteration >= mcpConfig.maxIterations) {
+      if (iteration >= mcpAgent.maxIterations) {
         // If no Aider tool was called after max iterations, do nothing
         project.addLogMessage('info', 'Max iterations for MCP tools reached. Increase the max iterations in the settings.');
       }
@@ -538,8 +496,8 @@ export class McpAgent {
   }
 
   private async prepareMessages(project: Project, enabled: boolean): Promise<BaseMessage[]> {
-    const { mcpConfig } = this.store.getSettings();
-    let messages = this.messages.get(project.baseDir) || [new SystemMessage(mcpConfig.systemPrompt)];
+    const { mcpAgent } = this.store.getSettings();
+    let messages = this.messages.get(project.baseDir) || [new SystemMessage(mcpAgent.systemPrompt)];
 
     // Remove previous context files messages if they exist
     const previousContextMessages = this.contextFilesMessages.get(project.baseDir);
@@ -547,7 +505,7 @@ export class McpAgent {
       messages = messages.filter((msg) => !previousContextMessages.includes(msg));
     }
 
-    if (mcpConfig.includeContextFiles && enabled) {
+    if (mcpAgent.includeContextFiles && enabled) {
       // Get and store new context files messages
       const contextFilesMessages = await this.getContextFilesMessages(project);
       this.contextFilesMessages.set(project.baseDir, contextFilesMessages);
@@ -589,6 +547,10 @@ export class McpAgent {
   }
 
   private extractServerNameToolName(toolCallName: string): [string, string] {
+    if (toolCallName.startsWith('aider-')) {
+      return ['aider', toolCallName.slice(6)];
+    }
+
     // Find the first matching client's server name that is a prefix of the tool call name
     const matchingClient = this.clients.find((clientHolder) => toolCallName.startsWith(`${clientHolder.serverName}-`));
 
@@ -631,8 +593,8 @@ export class McpAgent {
     logger.debug(`Adding message to MCP agent history: ${content}`);
     let messages = this.messages.get(project.baseDir);
     if (!messages) {
-      const { mcpConfig } = this.store.getSettings();
-      messages = [new SystemMessage(mcpConfig.systemPrompt)];
+      const { mcpAgent } = this.store.getSettings();
+      messages = [new SystemMessage(mcpAgent.systemPrompt)];
       this.messages.set(project.baseDir, messages);
     }
 
@@ -724,35 +686,40 @@ const convertMpcToolToLangchainTool = (project: Project, serverName: string, cli
 
   return tool(
     async (params: unknown) => {
-      const response = await client.callTool({
-        name: toolDef.name,
-        arguments: params as Record<string, unknown>,
-      });
+      try {
+        const response = await client.callTool({
+          name: toolDef.name,
+          arguments: params as Record<string, unknown>,
+        });
 
-      logger.debug(`Tool ${toolDef.name} returned response`, { response });
+        logger.debug(`Tool ${toolDef.name} returned response`, { response });
 
-      const extractContent = (response) => {
-        if (!response?.content) {
-          return null;
-        } else if (Array.isArray(response.content)) {
-          return (
-            response.content
-              .filter(isTextContent)
-              .map((textContent) => (typeof textContent === 'string' ? textContent : textContent.text))
-              .join('\n\n') ?? null
-          );
-        } else {
-          return response.content;
+        const extractContent = (response): string | null => {
+          if (!response?.content) {
+            return null;
+          } else if (Array.isArray(response.content)) {
+            return (
+              response.content
+                .filter(isTextContent)
+                .map((textContent) => (typeof textContent === 'string' ? textContent : textContent.text))
+                .join('\n\n') ?? null
+            );
+          } else {
+            return response.content;
+          }
+        };
+
+        const content = extractContent(response)?.slice(0, MAX_SAFE_TOOL_RESULT_CONTENT_LENGTH);
+
+        if (content) {
+          project.addToolMessage(serverName, toolDef.name, undefined, content);
         }
-      };
 
-      const content = extractContent(response);
-
-      if (content) {
-        project.addToolMessage(serverName, toolDef.name, undefined, content);
+        return content;
+      } catch (error) {
+        logger.error(`Error calling tool ${toolDef.name}:`, error);
+        return `Error calling tool: ${(error as Error).message}`;
       }
-
-      return content;
     },
     {
       name: `${serverName}-${toolDef.name}`,

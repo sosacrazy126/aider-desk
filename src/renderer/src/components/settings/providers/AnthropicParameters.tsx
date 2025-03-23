@@ -12,32 +12,32 @@ type Props = {
 };
 
 export const AnthropicParameters = ({ settings, setSettings }: Props) => {
-  const activeProvider = settings.mcpConfig.providers.find((provider) => provider.active && isAnthropicProvider(provider));
+  const activeProvider = settings.mcpAgent.providers.find((provider) => provider.active && isAnthropicProvider(provider));
   const apiKey = activeProvider && isAnthropicProvider(activeProvider) ? activeProvider.apiKey : '';
   const model = activeProvider && isAnthropicProvider(activeProvider) ? activeProvider.model : '';
 
   const handleApiKeyChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const updatedProviders = settings.mcpConfig.providers.map((provider) =>
+    const updatedProviders = settings.mcpAgent.providers.map((provider) =>
       provider.active && isAnthropicProvider(provider) ? { ...provider, apiKey: e.target.value } : provider,
     );
 
     const updatedMcpConfig = {
-      ...settings.mcpConfig,
+      ...settings.mcpAgent,
       providers: updatedProviders,
     };
-    setSettings({ ...settings, mcpConfig: updatedMcpConfig });
+    setSettings({ ...settings, mcpAgent: updatedMcpConfig });
   };
 
   const handleModelChange = (selectedModel: string) => {
-    const updatedProviders = settings.mcpConfig.providers.map((provider) =>
+    const updatedProviders = settings.mcpAgent.providers.map((provider) =>
       provider.active && isAnthropicProvider(provider) ? { ...provider, model: selectedModel } : provider,
     );
 
     const updatedMcpConfig = {
-      ...settings.mcpConfig,
+      ...settings.mcpAgent,
       providers: updatedProviders,
     };
-    setSettings({ ...settings, mcpConfig: updatedMcpConfig });
+    setSettings({ ...settings, mcpAgent: updatedMcpConfig });
   };
 
   return (

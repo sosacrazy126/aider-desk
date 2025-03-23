@@ -10,6 +10,9 @@
 - added option to add context files to MCP agent
 - properly adding Aider's files present at start to AiderDesk's Context files
 - added /mcp command to toggle MCP agent
+- added maximum tokens setting for MCP agent
+- improved MCP agent system prompt
+- MCP agent now uses aider as another tool
 
 ## [0.4.2]
 

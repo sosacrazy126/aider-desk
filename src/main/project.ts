@@ -295,7 +295,7 @@ export class Project {
 
     await this.addToInputHistory(prompt);
 
-    const mcpPrompt = await this.mcpAgent.runPrompt(this, prompt);
+    const mcpPrompt = await this.mcpAgent.runPrompt(this, prompt, editFormat);
     if (!mcpPrompt) {
       return [];
     }
@@ -689,7 +689,7 @@ export class Project {
   }
 
   public addToolMessage(serverName: string, toolName: string, args?: Record<string, unknown>, response?: string, usageReport?: UsageReportData) {
-    logger.info('Sending tool message:', {
+    logger.debug('Sending tool message:', {
       baseDir: this.baseDir,
       serverName,
       name: toolName,

@@ -1,4 +1,4 @@
-import { getActiveProvider, McpConfig, McpServerConfig, SettingsData } from '@common/types';
+import { getActiveProvider, McpAgent, McpServerConfig, SettingsData } from '@common/types';
 import { useState } from 'react';
 import { FaPlus } from 'react-icons/fa';
 import {
@@ -34,13 +34,13 @@ type EditingServer = {
 };
 
 export const McpSettings = ({ settings, setSettings }: Props) => {
-  const { mcpConfig } = settings;
+  const { mcpAgent } = settings;
   const [isAddingServer, setIsAddingServer] = useState(false);
   const [editingServer, setEditingServer] = useState<EditingServer | null>(null);
-  const activeProvider = getActiveProvider(mcpConfig.providers);
+  const activeProvider = getActiveProvider(mcpAgent.providers);
 
   const handleProviderChanged = (newProviderName: string) => {
-    let updatedProviders = settings.mcpConfig.providers;
+    let updatedProviders = settings.mcpAgent.providers;
 
     // Check if provider already exists
     const existingProvider = updatedProviders.find((p) => p.name === newProviderName);
@@ -77,58 +77,66 @@ export const McpSettings = ({ settings, setSettings }: Props) => {
     }));
 
     const updatedMcpConfig = {
-      ...settings.mcpConfig,
+      ...settings.mcpAgent,
       providers: updatedProviders,
     };
-    setSettings({ ...settings, mcpConfig: updatedMcpConfig });
+    setSettings({ ...settings, mcpAgent: updatedMcpConfig });
   };
 
   const handleMaxIterationsChanged = (newMaxIterations: number) => {
-    const updatedMcpConfig: McpConfig = {
-      ...settings.mcpConfig,
+    const updatedMcpConfig: McpAgent = {
+      ...settings.mcpAgent,
       maxIterations: newMaxIterations,
     };
-    setSettings({ ...settings, mcpConfig: updatedMcpConfig });
+    setSettings({ ...settings, mcpAgent: updatedMcpConfig });
   };
 
   const handleDelayBetweenIterationsChanged = (newDelay: number) => {
-    const updatedMcpConfig: McpConfig = {
-      ...settings.mcpConfig,
+    const updatedMcpConfig: McpAgent = {
+      ...settings.mcpAgent,
       minTimeBetweenToolCalls: newDelay,
     };
-    setSettings({ ...settings, mcpConfig: updatedMcpConfig });
+    setSettings({ ...settings, mcpAgent: updatedMcpConfig });
+  };
+
+  const handleMaxTokenChanged = (newMaxTokens: number) => {
+    const updatedMcpConfig: McpAgent = {
+      ...settings.mcpAgent,
+      maxTokens: newMaxTokens,
+    };
+    setSettings({ ...settings, mcpAgent: updatedMcpConfig });
   };
 
   const handleSystemPromptChanged = (newSystemPrompt: string) => {
     const updatedMcpConfig = {
-      ...settings.mcpConfig,
+      ...settings.mcpAgent,
       systemPrompt: newSystemPrompt,
     };
-    setSettings({ ...settings, mcpConfig: updatedMcpConfig });
+    setSettings({ ...settings, mcpAgent: updatedMcpConfig });
   };
 
   const handleServerConfigSave = (newServerName: string, newServerConfig: McpServerConfig) => {
     const updatedMcpServers = {
-      ...settings.mcpConfig.mcpServers,
+      ...settings.mcpAgent.mcpServers,
       [newServerName]: newServerConfig,
     };
-    const updatedMcpConfig: McpConfig = {
-      ...settings.mcpConfig,
+    const updatedMcpConfig: McpAgent = {
+      ...settings.mcpAgent,
       mcpServers: updatedMcpServers,
     };
-    setSettings({ ...settings, mcpConfig: updatedMcpConfig });
+    setSettings({ ...settings, mcpAgent: updatedMcpConfig });
     setIsAddingServer(false);
     setEditingServer(null);
   };
 
   const handleServerConfigRemove = (serverName: string) => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { [serverName]: removedServer, ...remainingServers } = settings.mcpConfig.mcpServers;
+    const { [serverName]: removedServer, ...remainingServers } = settings.mcpAgent.mcpServers;
     const updatedMcpConfig = {
-      ...settings.mcpConfig,
+      ...settings.mcpAgent,
       mcpServers: remainingServers,
     };
-    setSettings({ ...settings, mcpConfig: updatedMcpConfig });
+    setSettings({ ...settings, mcpAgent: updatedMcpConfig });
   };
 
   return (
@@ -170,7 +178,7 @@ export const McpSettings = ({ settings, setSettings }: Props) => {
                   }
                   min={1}
                   max={100}
-                  value={mcpConfig.maxIterations}
+                  value={mcpAgent.maxIterations}
                   onChange={handleMaxIterationsChanged}
                 />
               </div>
@@ -189,8 +197,22 @@ export const McpSettings = ({ settings, setSettings }: Props) => {
                   min={0}
                   max={10000}
                   step={100}
-                  value={mcpConfig.minTimeBetweenToolCalls.toString()}
+                  value={mcpAgent.minTimeBetweenToolCalls.toString()}
                   onChange={(e) => handleDelayBetweenIterationsChanged(Number(e.target.value))}
+                />
+              </div>
+              <div className="mt-2">
+                <Input
+                  label={
+                    <div className="flex items-center">
+                      <span>Max Tokens</span>
+                      <InfoIcon className="ml-1" tooltip="Maximum number of tokens the MCP agent can use per response." />
+                    </div>
+                  }
+                  type="number"
+                  min={1}
+                  value={mcpAgent.maxTokens.toString()}
+                  onChange={(e) => handleMaxTokenChanged(Number(e.target.value))}
                 />
               </div>
             </div>
@@ -201,15 +223,15 @@ export const McpSettings = ({ settings, setSettings }: Props) => {
               <div className="text-xxs text-amber-500 mb-2">
                 Warning: Modifying the system prompt can cause the MCP agent to behave unexpectedly. Only change this if you understand the implications.
               </div>
-              <TextArea value={mcpConfig.systemPrompt} onChange={(e) => handleSystemPromptChanged(e.target.value)} rows={20} className="w-full resize-none" />
+              <TextArea value={mcpAgent.systemPrompt} onChange={(e) => handleSystemPromptChanged(e.target.value)} rows={20} className="w-full resize-none" />
             </Accordion>
           </div>
           <div className="mt-4">
             <div className="text-sm text-neutral-100 font-medium mb-2 mt-4">MCP Servers</div>
-            {Object.keys(mcpConfig.mcpServers).length === 0 ? (
+            {Object.keys(mcpAgent.mcpServers).length === 0 ? (
               <div className="text-xs text-gray-500 mb-2">No MCP servers configured.</div>
             ) : (
-              Object.entries(mcpConfig.mcpServers).map(([serverName, config]) => (
+              Object.entries(mcpAgent.mcpServers).map(([serverName, config]) => (
                 <McpServerItem
                   key={serverName}
                   serverName={serverName}

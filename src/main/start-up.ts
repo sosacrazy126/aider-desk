@@ -124,7 +124,7 @@ const installAiderConnectorRequirements = async (): Promise<void> => {
 
 const setupMcpServer = async () => {
   if (is.dev) {
-    console.log('Skipping MCP server setup in dev mode');
+    logger.info('Skipping MCP server setup in dev mode');
     return;
   }
 

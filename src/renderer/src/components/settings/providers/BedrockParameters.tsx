@@ -12,7 +12,7 @@ type Props = {
 };
 
 export const BedrockParameters = ({ settings, setSettings }: Props) => {
-  const activeProvider = settings.mcpConfig.providers.find((provider) => provider.active && isBedrockProvider(provider));
+  const activeProvider = settings.mcpAgent.providers.find((provider) => provider.active && isBedrockProvider(provider));
 
   const region = activeProvider && isBedrockProvider(activeProvider) ? activeProvider.region : '';
   const accessKeyId = activeProvider && isBedrockProvider(activeProvider) ? activeProvider.accessKeyId : '';
@@ -20,51 +20,51 @@ export const BedrockParameters = ({ settings, setSettings }: Props) => {
   const model = activeProvider && isBedrockProvider(activeProvider) ? activeProvider.model : '';
 
   const handleRegionChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const updatedProviders = settings.mcpConfig.providers.map((provider) =>
+    const updatedProviders = settings.mcpAgent.providers.map((provider) =>
       provider.active && isBedrockProvider(provider) ? { ...provider, region: e.target.value } : provider,
     );
 
     const updatedMcpConfig = {
-      ...settings.mcpConfig,
+      ...settings.mcpAgent,
       providers: updatedProviders,
     };
-    setSettings({ ...settings, mcpConfig: updatedMcpConfig });
+    setSettings({ ...settings, mcpAgent: updatedMcpConfig });
   };
 
   const handleAccessKeyIdChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const updatedProviders = settings.mcpConfig.providers.map((provider) =>
+    const updatedProviders = settings.mcpAgent.providers.map((provider) =>
       provider.active && isBedrockProvider(provider) ? { ...provider, accessKeyId: e.target.value } : provider,
     );
 
     const updatedMcpConfig = {
-      ...settings.mcpConfig,
+      ...settings.mcpAgent,
       providers: updatedProviders,
     };
-    setSettings({ ...settings, mcpConfig: updatedMcpConfig });
+    setSettings({ ...settings, mcpAgent: updatedMcpConfig });
   };
 
   const handleSecretAccessKeyChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const updatedProviders = settings.mcpConfig.providers.map((provider) =>
+    const updatedProviders = settings.mcpAgent.providers.map((provider) =>
       provider.active && isBedrockProvider(provider) ? { ...provider, secretAccessKey: e.target.value } : provider,
     );
 
     const updatedMcpConfig = {
-      ...settings.mcpConfig,
+      ...settings.mcpAgent,
       providers: updatedProviders,
     };
-    setSettings({ ...settings, mcpConfig: updatedMcpConfig });
+    setSettings({ ...settings, mcpAgent: updatedMcpConfig });
   };
 
   const handleModelChange = (selectedModel: string) => {
-    const updatedProviders = settings.mcpConfig.providers.map((provider) =>
+    const updatedProviders = settings.mcpAgent.providers.map((provider) =>
       provider.active && isBedrockProvider(provider) ? { ...provider, model: selectedModel } : provider,
     );
 
     const updatedMcpConfig = {
-      ...settings.mcpConfig,
+      ...settings.mcpAgent,
       providers: updatedProviders,
     };
-    setSettings({ ...settings, mcpConfig: updatedMcpConfig });
+    setSettings({ ...settings, mcpAgent: updatedMcpConfig });
   };
 
   return (

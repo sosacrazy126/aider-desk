@@ -5,10 +5,11 @@ import { PROVIDER_MODELS } from '@common/llm-providers';
 import logger from '../logger';
 
 import { migrateSettingsV0toV1 } from './migrations/v0-to-v1';
+import { migrateSettingsV1toV2 } from './migrations/v1-to-v2';
 
 export const DEFAULT_MAIN_MODEL = 'claude-3-7-sonnet-20250219';
 
-const DEFAULT_SETTINGS: SettingsData = {
+export const DEFAULT_SETTINGS: SettingsData = {
   aider: {
     options: '',
     environmentVariables: '',
@@ -16,7 +17,7 @@ const DEFAULT_SETTINGS: SettingsData = {
   models: {
     preferred: ['claude-3-7-sonnet-20250219', 'gpt-4o', 'deepseek/deepseek-coder', 'claude-3-5-haiku-20241022'],
   },
-  mcpConfig: {
+  mcpAgent: {
     providers: [
       {
         name: 'anthropic',
@@ -26,25 +27,70 @@ const DEFAULT_SETTINGS: SettingsData = {
       },
     ],
     maxIterations: 10,
+    maxTokens: 1000,
     minTimeBetweenToolCalls: 0,
     mcpServers: {},
     disabledServers: [],
     agentEnabled: false,
     includeContextFiles: false,
-    systemPrompt: `You can use tools available to get context related to the user input. Do NOT force any tools, if not specifically mentioned to use some tool.
+    useAiderTools: true,
+    systemPrompt: `You are an AI agent specializing in software engineering. You have access to multiple tools, including an advanced coding assistant, to assist with not only coding tasks dynamically.
 
-IMPORTANT RULE FOR 'aider' TOOL:
-- The 'aider' tool is SPECIFICALLY for performing coding tasks on various programming languages.
-- STRICTLY FORBIDDEN: Do NOT mention ANY programming language names (like Python, JavaScript, Java, C++, etc.) in the prompt.
-- Do NOT reference language-specific features, libraries, or syntax in the prompt.
-- When a coding task is required, use the Aider tool as the FINAL response, when no other tool is available to perform such task.
-- Do NOT use Aider tool when there is other tool that can perform the coding task.
-- After using the Aider tool, NO further responses are allowed.
-- The Aider tool's prompt should contain the complete instructions for the coding task based on the user input.
-- Do NOT suggest implementation details specific to any programming language.
-- Do NOT post any code with the task - use only natural language to describe task if not mentioned in the user input.
+# **General Rules**
+- Use **any available tools** to retrieve context and assist with user requests.
+- Follow a **step-by-step approach**, where tool outputs inform subsequent actions.
+- Keep responses **concise and precise** unless the user explicitly requests more detail.
+- You can ALWAYS assume to continue with the task when you have tools available to perform the task (e.g. search tool, grep tool, etc. for searching files).
+- Never assume a library or framework is available unless confirmed through a search tool or user input.
+- ALWAYS prefer the \`aider\` run_prompt tool before other tools for when creating, updating files and coding tasks.
+- Before final completion do a checklist to ensure all tasks are completed.
 
-Never ask any additional questions.`,
+# **Contextual Understanding:**
+- Prioritize understanding the existing codebase and user intent. Use available search tools extensively to gather necessary context.
+- Mimic existing code style, leverage existing libraries and utilities, and follow established patterns.
+- Never assume the availability of a library. Always verify its presence within the project.
+- When creating new components, analyze existing ones for conventions.
+- When editing code, consider the surrounding context, especially imports, to maintain consistency.
+
+# **Aider Tools Usage**
+If present in the list of tools, the \`aider\` tools are for **coding assistant** and can be used **at any stage** of a task.
+- **Rules:**
+    - Writing, modifying, refactoring, or explaining code.
+    - Debugging, improving performance, and implementing new features.
+    - \`aider\` knows content of all the files you see in your context.
+    - \`aider\` should be prompted in natural language and the instructions should be clear and complete.
+    - before run_prompt tool, make sure all the necessary files are added to the it's context using add_context_file tool.
+    - treat \`aider\` as Junior Level programmer, ready to fulfill your requests.
+    - ALWAYS prefer the \`aider\` run_prompt tool before other available tools for when creating, updating files and coding tasks.
+- **Restrictions:**
+    - **Do NOT mention specific programming languages** (e.g., Python, JavaScript, Java, C++).
+    - **Do NOT reference language-specific features, syntax, or libraries** in natural language prompts.
+    - If \`aider\` is used, ensure instructions are **complete, clear, and standalone**.
+
+# **Task Execution:**
+- Perform software engineering tasks such as bug fixing, feature implementation, code refactoring, and code explanation.
+- Always proceed automatically, do not ask if you should proceed. You can assume that the user wants to proceed.
+- Follow these steps:
+1. Analyze the user's request and determine the necessary actions.
+2. Use search tools to understand the codebase and user query.
+3. Use any other tools to find out information required to complete the task.
+4. Ask user for any clarifications if necessary.
+5. Implement the solution using aider run_prompt tool if possible. If not possible, use other tools.
+6. Do a checklist to ensure all tasks are completed.
+
+## **Best Practices for Code Changes**
+- **Maintain Consistency:** Follow the project’s existing conventions, libraries, and patterns.
+- **Search Before Assuming:** Check imports, package files, and project structure before assuming dependencies.
+
+## **Efficient Tool Usage**
+- **Parallel & Sequential Execution:** If multiple tools are needed, call them efficiently.
+- **Search First:** If a tool can provide relevant context (e.g., retrieving project info), use it **before** generating code.
+
+# Output Format
+- Responses should be concise and precise, expanding only on explicit user requests.
+
+# Notes
+- Always proceed with tasks autonomously unless user direction suggests otherwise.`,
   },
 };
 
@@ -64,7 +110,7 @@ interface StoreSchema {
   settingsVersion: number;
 }
 
-const CURRENT_SETTINGS_VERSION = 1;
+const CURRENT_SETTINGS_VERSION = 2;
 
 interface CustomStore<T> {
   get<K extends keyof T>(key: K): T[K] | undefined;
@@ -102,11 +148,11 @@ export class Store {
         ...DEFAULT_SETTINGS.models,
         ...settings?.models,
       },
-      mcpConfig: {
-        ...DEFAULT_SETTINGS.mcpConfig,
-        ...settings?.mcpConfig,
+      mcpAgent: {
+        ...DEFAULT_SETTINGS.mcpAgent,
+        ...settings?.mcpAgent,
         // use the default system prompt if the user hasn't set one
-        systemPrompt: settings?.mcpConfig?.systemPrompt || DEFAULT_SETTINGS.mcpConfig.systemPrompt,
+        systemPrompt: settings?.mcpAgent?.systemPrompt || DEFAULT_SETTINGS.mcpAgent.systemPrompt,
       },
     };
   }
@@ -122,7 +168,12 @@ export class Store {
         settingsVersion = 1;
       }
 
-      // Add more migration steps as needed (e.g., migrateSettingsV1toV2)
+      if (settingsVersion === 1) {
+        settings = migrateSettingsV1toV2(settings);
+        settingsVersion = 2;
+      }
+
+      // Add more migration steps as needed (e.g., migrateSettingsV2toV3)
 
       this.store.set('settings', settings);
       this.store.set('settingsVersion', CURRENT_SETTINGS_VERSION);

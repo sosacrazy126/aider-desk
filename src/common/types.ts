@@ -112,12 +112,13 @@ export interface SettingsData {
   models: {
     preferred: string[];
   };
-  mcpConfig: McpConfig;
+  mcpAgent: McpAgent;
 }
 
-export interface McpConfig {
+export interface McpAgent {
   providers: LlmProvider[];
   maxIterations: number;
+  maxTokens: number;
   minTimeBetweenToolCalls: number; // in milliseconds
   mcpServers: {
     [key: string]: McpServerConfig;
@@ -126,6 +127,7 @@ export interface McpConfig {
   disabledServers: string[];
   systemPrompt: string;
   includeContextFiles: boolean;
+  useAiderTools: boolean;
 }
 
 export const getActiveProvider = (providers: LlmProvider[]): LlmProvider | null => {

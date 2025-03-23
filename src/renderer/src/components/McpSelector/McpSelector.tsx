@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { MdKeyboardArrowUp, MdSettings } from 'react-icons/md';
+import { SettingsData } from '@common/types';
 
 import { McpServerSelectorItem } from './McpServerSelectorItem';
 
@@ -23,8 +24,8 @@ export const McpSelector = () => {
   }
 
   const getTriState = (): 'checked' | 'unchecked' | 'indeterminate' => {
-    const { disabledServers } = settings.mcpConfig;
-    const serverCount = Object.keys(settings.mcpConfig.mcpServers).length;
+    const { disabledServers } = settings.mcpAgent;
+    const serverCount = Object.keys(settings.mcpAgent.mcpServers).length;
 
     if (disabledServers.length === 0) {
       return 'checked';
@@ -36,9 +37,9 @@ export const McpSelector = () => {
   };
 
   const handleToggleAllServers = () => {
-    const { mcpConfig } = settings;
-    const { disabledServers } = mcpConfig;
-    const serverNames = Object.keys(mcpConfig.mcpServers);
+    const { mcpAgent } = settings;
+    const { disabledServers } = mcpAgent;
+    const serverNames = Object.keys(mcpAgent.mcpServers);
 
     let updatedDisabledServers: string[];
     if (disabledServers.length === 0) {
@@ -49,10 +50,10 @@ export const McpSelector = () => {
       updatedDisabledServers = [];
     }
 
-    const updatedSettings = {
+    const updatedSettings: SettingsData = {
       ...settings,
-      mcpConfig: {
-        ...mcpConfig,
+      mcpAgent: {
+        ...mcpAgent,
         disabledServers: updatedDisabledServers,
       },
     };
@@ -61,11 +62,11 @@ export const McpSelector = () => {
   };
 
   const handleToggleEnabled = () => {
-    const updatedSettings = {
+    const updatedSettings: SettingsData = {
       ...settings,
-      mcpConfig: {
-        ...settings.mcpConfig,
-        agentEnabled: !settings.mcpConfig.agentEnabled,
+      mcpAgent: {
+        ...settings.mcpAgent,
+        agentEnabled: !settings.mcpAgent.agentEnabled,
       },
     };
     void saveSettings(updatedSettings);
@@ -76,8 +77,8 @@ export const McpSelector = () => {
   };
 
   const toggleServer = (serverName: string) => {
-    const { mcpConfig } = settings;
-    const { disabledServers } = mcpConfig;
+    const { mcpAgent } = settings;
+    const { disabledServers } = mcpAgent;
 
     let updatedDisabledServers: string[];
 
@@ -87,10 +88,10 @@ export const McpSelector = () => {
       updatedDisabledServers = [...disabledServers, serverName];
     }
 
-    const updatedSettings = {
+    const updatedSettings: SettingsData = {
       ...settings,
-      mcpConfig: {
-        ...mcpConfig,
+      mcpAgent: {
+        ...mcpAgent,
         disabledServers: updatedDisabledServers,
       },
     };
@@ -103,16 +104,27 @@ export const McpSelector = () => {
     setShowSettings(true);
   };
 
-  const serverNames = Object.keys(settings.mcpConfig.mcpServers);
+  const serverNames = Object.keys(settings.mcpAgent.mcpServers);
   const totalServers = serverNames.length;
-  const enabledServers = totalServers - settings.mcpConfig.disabledServers.filter((name) => serverNames.includes(name)).length;
+  const enabledServers = totalServers - settings.mcpAgent.disabledServers.filter((name) => serverNames.includes(name)).length;
 
   const handleToggleIncludeContextFiles = () => {
-    const updatedSettings = {
+    const updatedSettings: SettingsData = {
       ...settings,
-      mcpConfig: {
-        ...settings.mcpConfig,
-        includeContextFiles: !settings.mcpConfig.includeContextFiles,
+      mcpAgent: {
+        ...settings.mcpAgent,
+        includeContextFiles: !settings.mcpAgent.includeContextFiles,
+      },
+    };
+    void saveSettings(updatedSettings);
+  };
+
+  const handleToggleUseAiderTools = () => {
+    const updatedSettings: SettingsData = {
+      ...settings,
+      mcpAgent: {
+        ...settings.mcpAgent,
+        useAiderTools: !settings.mcpAgent.useAiderTools,
       },
     };
     void saveSettings(updatedSettings);
@@ -120,14 +132,20 @@ export const McpSelector = () => {
 
   const renderConfigureServersButton = () => (
     <>
-      <div className="px-3 py-2 text-xs text-neutral-300 border-b border-neutral-700 flex items-center gap-2">
-        <Checkbox
-          checked={settings.mcpConfig.includeContextFiles}
-          onChange={handleToggleIncludeContextFiles}
-          label="Include context files"
-          className="flex-1 mr-1"
-        />
-        <InfoIcon tooltip="Adds content of context files into the chat of MCP agent. This will increase token usage." />
+      <div className="py-1 border-b border-neutral-700 ">
+        <div className="px-3 py-1 text-xs text-neutral-300 flex items-center gap-2">
+          <Checkbox checked={settings.mcpAgent.useAiderTools} onChange={handleToggleUseAiderTools} label="Use Aider tools" className="flex-1 mr-1" />
+          <InfoIcon tooltip="MCP agent can use Aider to perform add/drop context files actions and run prompts." />
+        </div>
+        <div className="px-3 py-1 text-xs text-neutral-300 flex items-center gap-2">
+          <Checkbox
+            checked={settings.mcpAgent.includeContextFiles}
+            onChange={handleToggleIncludeContextFiles}
+            label="Include context files"
+            className="flex-1 mr-1"
+          />
+          <InfoIcon tooltip="Adds content of context files into the chat of MCP agent. This will increase token usage." />
+        </div>
       </div>
       <button onClick={handleOpenSettings} className="w-full flex items-center px-3 py-2 text-xs text-neutral-300 hover:bg-neutral-700 transition-colors">
         <MdSettings className="w-3 h-3 mr-2" />
@@ -142,10 +160,12 @@ export const McpSelector = () => {
         onClick={toggleSelectorVisible}
         className="flex items-center hover:text-neutral-300 focus:outline-none transition-colors duration-200 text-xs ml-3"
       >
-        {serverNames.length > 0 && <Checkbox checked={settings.mcpConfig.agentEnabled} onChange={handleToggleEnabled} className="mr-2" />}
+        {serverNames.length > 0 && <Checkbox checked={settings.mcpAgent.agentEnabled} onChange={handleToggleEnabled} className="mr-2" />}
         <span>
-          {settings.mcpConfig.agentEnabled
-            ? `MCP agent ${enabledServers === 0 ? 'disabled' : 'enabled'} (${enabledServers} server${enabledServers === 1 ? '' : 's'}${settings.mcpConfig.includeContextFiles ? ', with files' : ''})`
+          {settings.mcpAgent.agentEnabled && (enabledServers > 0 || settings.mcpAgent.useAiderTools)
+            ? enabledServers === 0
+              ? `MCP agent enabled (aider only${settings.mcpAgent.includeContextFiles ? ', with files' : ''})`
+              : `MCP agent enabled (${enabledServers} server${enabledServers === 1 ? '' : 's'}${settings.mcpAgent.useAiderTools ? ' + aider' : ''}${settings.mcpAgent.includeContextFiles ? ', with files' : ''})`
             : 'MCP agent disabled'}
         </span>
         <MdKeyboardArrowUp className="w-3 h-3 ml-0.5" />
@@ -165,7 +185,7 @@ export const McpSelector = () => {
                 <McpServerSelectorItem
                   key={serverName}
                   serverName={serverName}
-                  disabled={settings.mcpConfig.disabledServers.includes(serverName)}
+                  disabled={settings.mcpAgent.disabledServers.includes(serverName)}
                   onToggle={toggleServer}
                 />
               ))}

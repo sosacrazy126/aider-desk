@@ -1,4 +1,4 @@
-import { QuestionData } from '@common/types';
+import { QuestionData, SettingsData } from '@common/types';
 import React, { useCallback, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react';
 import { useDebounce } from 'react-use';
 import { matchSorter } from 'match-sorter';
@@ -153,11 +153,11 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
             break;
           case '/mcp':
             if (settings) {
-              const updatedSettings = {
+              const updatedSettings: SettingsData = {
                 ...settings,
-                mcpConfig: {
-                  ...settings.mcpConfig,
-                  agentEnabled: !settings.mcpConfig.agentEnabled,
+                mcpAgent: {
+                  ...settings.mcpAgent,
+                  agentEnabled: !settings.mcpAgent.agentEnabled,
                 },
               };
               void saveSettings(updatedSettings);

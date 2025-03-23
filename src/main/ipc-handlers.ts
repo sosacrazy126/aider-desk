@@ -18,7 +18,7 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, projectManager: Proj
     const currentSettings = store.getSettings();
     store.saveSettings(settings);
 
-    const mcpServersChanged = JSON.stringify(currentSettings.mcpConfig?.mcpServers) !== JSON.stringify(settings.mcpConfig?.mcpServers);
+    const mcpServersChanged = JSON.stringify(currentSettings.mcpAgent?.mcpServers) !== JSON.stringify(settings.mcpAgent?.mcpServers);
     if (mcpServersChanged) {
       void mcpAgent.init();
     }
