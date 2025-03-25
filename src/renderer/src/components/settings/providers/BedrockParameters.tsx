@@ -1,10 +1,11 @@
 import { ChangeEvent } from 'react';
 import { SettingsData } from '@common/types';
-import { isBedrockProvider } from '@common/llm-providers';
+import { BedrockProvider, isBedrockProvider } from '@common/llm-providers';
 
 import { ModelSelect } from './ModelSelect';
 
 import { Input } from '@/components/common/Input';
+import { InfoIcon } from '@/components/common/InfoIcon';
 
 type Props = {
   settings: SettingsData;
@@ -12,12 +13,12 @@ type Props = {
 };
 
 export const BedrockParameters = ({ settings, setSettings }: Props) => {
-  const activeProvider = settings.mcpAgent.providers.find((provider) => provider.active && isBedrockProvider(provider));
+  const activeProvider = settings.mcpAgent.providers.find((provider) => provider.active && isBedrockProvider(provider)) as BedrockProvider | undefined;
 
-  const region = activeProvider && isBedrockProvider(activeProvider) ? activeProvider.region : '';
-  const accessKeyId = activeProvider && isBedrockProvider(activeProvider) ? activeProvider.accessKeyId : '';
-  const secretAccessKey = activeProvider && isBedrockProvider(activeProvider) ? activeProvider.secretAccessKey : '';
-  const model = activeProvider && isBedrockProvider(activeProvider) ? activeProvider.model : '';
+  const region = activeProvider?.region || '';
+  const accessKeyId = activeProvider?.accessKeyId;
+  const secretAccessKey = activeProvider?.secretAccessKey;
+  const model = activeProvider?.model || '';
 
   const handleRegionChange = (e: ChangeEvent<HTMLInputElement>) => {
     const updatedProviders = settings.mcpAgent.providers.map((provider) =>
@@ -71,8 +72,27 @@ export const BedrockParameters = ({ settings, setSettings }: Props) => {
     <div className="mt-2 space-y-2">
       <ModelSelect providerName="bedrock" currentModel={model} onChange={handleModelChange} />
       <Input label="Region" value={region} onChange={handleRegionChange} placeholder="e.g., us-east-1" />
-      <Input label="Access Key ID" value={accessKeyId} onChange={handleAccessKeyIdChange} />
-      <Input label="Secret Access Key" type="password" value={secretAccessKey} onChange={handleSecretAccessKeyChange} />
+      <Input
+        label={
+          <div className="flex items-center">
+            <span>Access Key ID</span>
+            <InfoIcon className="ml-1" tooltip="AWS access key ID. Can be left empty if AWS_PROFILE is set in environment." />
+          </div>
+        }
+        value={accessKeyId}
+        onChange={handleAccessKeyIdChange}
+      />
+      <Input
+        label={
+          <div className="flex items-center">
+            <span>Secret Access Key</span>
+            <InfoIcon className="ml-1" tooltip="AWS secret access key. Can be left empty if AWS_PROFILE is set in environment." />
+          </div>
+        }
+        type="password"
+        value={secretAccessKey}
+        onChange={handleSecretAccessKeyChange}
+      />
     </div>
   );
 };

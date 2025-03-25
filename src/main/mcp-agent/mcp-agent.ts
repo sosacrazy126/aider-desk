@@ -181,16 +181,26 @@ export class McpAgent {
         apiKey: provider.apiKey,
       });
     } else if (isBedrockProvider(provider)) {
-      if (!provider.accessKeyId || !provider.secretAccessKey || !provider.region) {
-        throw new Error('AWS accessKeyId, secretAccessKey and region are required for Bedrock');
+      if (!provider.region) {
+        throw new Error('AWS region is required for Bedrock. You can set it in the MCP settings.');
       }
+
+      if (!provider.accessKeyId && !provider.secretAccessKey && !process.env.AWS_PROFILE) {
+        throw new Error('Either AWS_PROFILE environment variable or accessKeyId/secretAccessKey must be provided for Bedrock');
+      }
+
+      const credentials =
+        provider.accessKeyId && provider.secretAccessKey
+          ? {
+              accessKeyId: provider.accessKeyId,
+              secretAccessKey: provider.secretAccessKey,
+            }
+          : undefined;
+
       return new BedrockChat({
         model: provider.model,
         region: provider.region,
-        credentials: {
-          accessKeyId: provider.accessKeyId,
-          secretAccessKey: provider.secretAccessKey,
-        },
+        credentials,
         temperature: 0,
         maxTokens: maxTokens,
       }) as BaseChatModel;
@@ -482,7 +492,7 @@ export class McpAgent {
       if (error instanceof Error && error.message.includes('API key is required')) {
         project.addLogMessage('error', `Error running MCP servers. ${error.message}. Configure it in the Settings -> MCP Config tab.`);
       } else {
-        project.addLogMessage('error', `Error running MCP servers: ${error}`);
+        project.addLogMessage('error', `Error running MCP servers: ${error instanceof Error ? error.message : String(error)}`);
       }
       throw error;
     } finally {

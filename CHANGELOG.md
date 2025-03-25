@@ -3,6 +3,7 @@
 ## [0.5.1]
 
 - optimized start up installation of packages
+- using AWS_PROFILE environment variable for Bedrock provider when no accessKeyId/secretAccessKey is provided
 
 ## [0.5.0]
 

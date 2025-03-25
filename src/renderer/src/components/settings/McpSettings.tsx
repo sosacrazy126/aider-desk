@@ -43,7 +43,7 @@ export const McpSettings = ({ settings, setSettings }: Props) => {
     let updatedProviders = settings.mcpAgent.providers;
 
     // Check if provider already exists
-    const existingProvider = updatedProviders.find((p) => p.name === newProviderName);
+    const existingProvider = updatedProviders.find((provider) => provider.name === newProviderName);
 
     if (!existingProvider) {
       // Create new provider with default values based on provider type
