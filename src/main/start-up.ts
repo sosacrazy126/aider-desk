@@ -73,7 +73,7 @@ const getPythonVenvBinPath = (): string => {
   return process.platform === 'win32' ? path.join(PYTHON_VENV_DIR, 'Scripts') : path.join(PYTHON_VENV_DIR, 'bin');
 };
 
-const setupAiderConnector = async () => {
+const setupAiderConnector = async (cleanInstall: boolean, updateProgress?: UpdateProgressFunction): Promise<void> => {
   if (!fs.existsSync(AIDER_DESK_CONNECTOR_DIR)) {
     fs.mkdirSync(AIDER_DESK_CONNECTOR_DIR, { recursive: true });
   }
@@ -83,19 +83,74 @@ const setupAiderConnector = async () => {
   const destConnectorPath = path.join(AIDER_DESK_CONNECTOR_DIR, 'connector.py');
   fs.copyFileSync(sourceConnectorPath, destConnectorPath);
 
-  await installAiderConnectorRequirements();
+  await installAiderConnectorRequirements(cleanInstall, updateProgress);
 };
 
-const installAiderConnectorRequirements = async (): Promise<void> => {
+const installAiderConnectorRequirements = async (cleanInstall: boolean, updateProgress?: UpdateProgressFunction): Promise<void> => {
   const pythonBinPath = getPythonVenvBinPath();
-  const packages = ['pip', 'aider-chat', 'python-socketio', 'websocket-client', 'nest-asyncio'];
+  const packages = ['pip', 'aider-chat', 'python-socketio==5.12.1', 'websocket-client==1.8.0', 'nest-asyncio==1.6.0'];
 
   logger.info('Starting Aider connector requirements installation', { packages });
 
-  for (const pkg of packages) {
+  for (let currentPackage = 0; currentPackage < packages.length; currentPackage++) {
+    const pkg = packages[currentPackage];
+    if (updateProgress) {
+      updateProgress({
+        step: 'Installing Requirements',
+        message: `Installing package: ${pkg} (${currentPackage + 1}/${packages.length})`,
+      });
+    }
     try {
+      const installCommand = `"${PYTHON_COMMAND}" -m pip install --upgrade --no-cache-dir ${pkg}`;
+
+      if (!cleanInstall) {
+        // First check if package is already installed
+        try {
+          const { stdout } = await execAsync(`"${PYTHON_COMMAND}" -m pip show ${pkg.split('==')[0]}`, {
+            windowsHide: true,
+            env: {
+              ...process.env,
+              VIRTUAL_ENV: PYTHON_VENV_DIR,
+              PATH: `${pythonBinPath}${path.delimiter}${process.env.PATH}`,
+            },
+          });
+
+          if (stdout) {
+            // Currently installed version
+            const currentVersion = stdout.match(/Version: (.+)/)?.[1];
+
+            if (pkg.includes('==')) {
+              // Version-pinned package - check if matches required version
+              const requiredVersion = pkg.split('==')[1];
+              if (currentVersion === requiredVersion) {
+                logger.info(`Package ${pkg} is already at required version ${requiredVersion}, skipping`);
+                continue;
+              }
+            } else {
+              // For non-version-pinned packages, check if newer version is available
+              const { stdout: latestVersion } = await execAsync(`"${PYTHON_COMMAND}" -m pip index versions ${pkg}`, {
+                windowsHide: true,
+                env: {
+                  ...process.env,
+                  VIRTUAL_ENV: PYTHON_VENV_DIR,
+                  PATH: `${pythonBinPath}${path.delimiter}${process.env.PATH}`,
+                },
+              });
+
+              const latestMatch = latestVersion.match(/LATEST:\s+(.+)/);
+              if (latestMatch && currentVersion === latestMatch[1]) {
+                logger.info(`Package ${pkg} is already at latest version ${currentVersion}, skipping`);
+                continue;
+              }
+            }
+          }
+        } catch {
+          // Package not installed, proceed with installation
+        }
+      }
+
       logger.info(`Installing package: ${pkg}`);
-      const { stdout, stderr } = await execAsync(`"${PYTHON_COMMAND}" -m pip install --upgrade --no-cache-dir ${pkg}`, {
+      const { stdout, stderr } = await execAsync(installCommand, {
         windowsHide: true,
         env: {
           ...process.env,
@@ -119,6 +174,12 @@ const installAiderConnectorRequirements = async (): Promise<void> => {
     }
   }
 
+  if (updateProgress) {
+    updateProgress({
+      step: 'Installing Requirements',
+      message: 'Completed installing all packages',
+    });
+  }
   logger.info('Completed Aider connector requirements installation');
 };
 
@@ -148,7 +209,7 @@ const setupMcpServer = async () => {
       }
     }
   } else {
-    console.error(`MCP server directory not found: ${sourceMcpServerDir}`);
+    logger.error(`MCP server directory not found: ${sourceMcpServerDir}`);
   }
 };
 
@@ -158,7 +219,7 @@ const performUpdateCheck = async (updateProgress: UpdateProgressFunction): Promi
     message: 'Updating Aider connector...',
   });
 
-  await setupAiderConnector();
+  await setupAiderConnector(false, updateProgress);
 
   updateProgress({
     step: 'Update Check',
@@ -219,7 +280,7 @@ export const performStartUp = async (updateProgress: UpdateProgressFunction): Pr
     });
 
     logger.info('Setting up Aider connector');
-    await setupAiderConnector();
+    await setupAiderConnector(true);
 
     updateProgress({
       step: 'Setting Up MCP Server',

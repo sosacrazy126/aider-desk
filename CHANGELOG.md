@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.5.1]
+
+- optimized start up installation of packages
+
 ## [0.5.0]
 
 - added toggle for edit format lock by repeating the same command (/ask, /architect)
