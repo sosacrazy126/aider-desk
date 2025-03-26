@@ -103,16 +103,7 @@ export const ModelSelector = forwardRef<ModelSelectorRef, Props>(({ models, sele
     }
   };
 
-  const getFilteredModels = useCallback(() => {
-    if (!settings) {
-      return [];
-    }
-    const visiblePreferredModels = debouncedSearchTerm ? [] : settings.models.preferred;
-    const sortedModels = [...visiblePreferredModels, ...models.filter((model) => !visiblePreferredModels.includes(model))];
-    return sortedModels.filter((model) => model.toLowerCase().includes(debouncedSearchTerm.toLowerCase()));
-  }, [settings, models, debouncedSearchTerm]);
-
-  const filteredModels = getFilteredModels();
+  const filteredModels = models.filter((model) => model.toLowerCase().includes(debouncedSearchTerm.toLowerCase()));
   const showCustomModelHint = filteredModels.length === 0 && modelSearchTerm.trim() !== '';
 
   const renderModelItem = (model: string, index: number) => {
