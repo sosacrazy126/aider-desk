@@ -35,7 +35,9 @@ export const ToolMessageBlock = ({ message }: Props) => {
             message.content && (
               <div className="mt-2 text-xs">
                 <div className="font-semibold mb-1">Result:</div>
-                <pre className="whitespace-pre-wrap">{message.content}</pre>
+                <pre className="whitespace-pre-wrap max-h-[800px] overflow-y-auto scrollbar-thin scrollbar-track-neutral-900 scrollbar-thumb-neutral-700 hover:scrollbar-thumb-neutral-600">
+                  {message.content}
+                </pre>
               </div>
             )
           )}
