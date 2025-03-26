@@ -4,6 +4,7 @@
 
 - added support for /context command
 - added support for gemini-2.5-pro-exp-03-25 model in MCP agent
+- added support for custom OpenAI compatible models with openai/ prefix
 
 ## [0.5.1]
 

@@ -678,13 +678,6 @@ class Connector:
 
       if self.coder.main_model.missing_keys:
         error = "Missing keys for the model: " + ", ".join(self.coder.main_model.missing_keys)
-      if not info:
-        error = "Model is not available. Try setting a different model."
-        possible_matches = models.fuzzy_match_models(self.coder.main_model.name)
-        if possible_matches:
-          error += "\nDid you mean one of these?"
-          for match in possible_matches:
-            error += f"\n- {match}"
 
       await self.sio.emit("message", {
         "action": "set-models",

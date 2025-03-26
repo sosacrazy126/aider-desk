@@ -1,5 +1,5 @@
-import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState, KeyboardEvent } from 'react';
-import { MdClose, MdKeyboardArrowUp } from 'react-icons/md';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState, KeyboardEvent } from 'react';
+import { MdClose, MdKeyboardArrowUp, MdKeyboardReturn } from 'react-icons/md';
 import { useDebounce } from 'react-use';
 
 import { useClickOutside } from '@/hooks/useClickOutside';
@@ -66,7 +66,7 @@ export const ModelSelector = forwardRef<ModelSelectorRef, Props>(({ models, sele
 
     const visiblePreferredModels = debouncedSearchTerm ? [] : settings.models.preferred;
     const sortedModels = [...visiblePreferredModels, ...models.filter((model) => !visiblePreferredModels.includes(model))];
-    const filteredModels = sortedModels.filter((model) => model.toLowerCase().includes(modelSearchTerm.toLowerCase()));
+    const filteredModels = sortedModels.filter((model) => model.toLowerCase().includes(debouncedSearchTerm.toLowerCase()));
 
     switch (e.key) {
       case 'ArrowDown':
@@ -88,8 +88,12 @@ export const ModelSelector = forwardRef<ModelSelectorRef, Props>(({ models, sele
       case 'Enter':
         if (highlightedModelIndex !== -1) {
           e.preventDefault();
-          const selectedModel = filteredModels[highlightedModelIndex];
-          onModelSelected(selectedModel);
+          const selected = filteredModels[highlightedModelIndex];
+          onModelSelected(selected);
+        } else if (highlightedModelIndex === -1 && modelSearchTerm.trim()) {
+          // If no model is highlighted and there's a search term, select the custom term
+          e.preventDefault();
+          onModelSelected(modelSearchTerm.trim());
         }
         break;
       case 'Escape':
@@ -98,6 +102,18 @@ export const ModelSelector = forwardRef<ModelSelectorRef, Props>(({ models, sele
         break;
     }
   };
+
+  const getFilteredModels = useCallback(() => {
+    if (!settings) {
+      return [];
+    }
+    const visiblePreferredModels = debouncedSearchTerm ? [] : settings.models.preferred;
+    const sortedModels = [...visiblePreferredModels, ...models.filter((model) => !visiblePreferredModels.includes(model))];
+    return sortedModels.filter((model) => model.toLowerCase().includes(debouncedSearchTerm.toLowerCase()));
+  }, [settings, models, debouncedSearchTerm]);
+
+  const filteredModels = getFilteredModels();
+  const showCustomModelHint = filteredModels.length === 0 && modelSearchTerm.trim() !== '';
 
   const renderModelItem = (model: string, index: number) => {
     if (!settings) {
@@ -155,16 +171,21 @@ export const ModelSelector = forwardRef<ModelSelectorRef, Props>(({ models, sele
       </button>
       {visible && (
         <div className="absolute top-full left-0 mt-1 bg-neutral-900 border border-neutral-700 rounded-md shadow-lg z-10 flex flex-col w-[600px]">
-          <div className="sticky top-0 p-2 border-b border-neutral-700 bg-neutral-900 rounded-md z-10">
+          <div className="sticky top-0 p-2 border-b border-neutral-700 bg-neutral-900 rounded-md z-10 flex items-center space-x-2">
             <input
               type="text"
               autoFocus={true}
-              placeholder="Search models..."
-              className="w-full px-2 py-1 text-xs bg-neutral-800 text-white rounded border border-neutral-600 focus:outline-none focus:border-neutral-500"
+              placeholder="Search models or enter custom name..."
+              className="flex-grow px-2 py-1 text-xs bg-neutral-800 text-white rounded border border-neutral-600 focus:outline-none focus:border-neutral-500"
               value={modelSearchTerm}
               onChange={(e) => setModelSearchTerm(e.target.value)}
               onKeyDown={onModelSelectorSearchInputKeyDown}
             />
+            {showCustomModelHint && (
+              <div className="flex items-center text-neutral-400" title="Press Enter to use this custom model name">
+                <MdKeyboardReturn className="w-4 h-4" />
+              </div>
+            )}
           </div>
           <div className="overflow-y-auto scrollbar-thin scrollbar-track-neutral-800 scrollbar-thumb-neutral-700 hover:scrollbar-thumb-neutral-600 max-h-48">
             {!debouncedSearchTerm && (
@@ -173,7 +194,7 @@ export const ModelSelector = forwardRef<ModelSelectorRef, Props>(({ models, sele
                 <div key="divider" className="border-t border-neutral-700 my-1" />
               </>
             )}
-            {...models.filter((model) => model.toLowerCase().includes(debouncedSearchTerm.toLowerCase())).map(renderModelItem)}
+            {filteredModels.map(renderModelItem)}
           </div>
         </div>
       )}
