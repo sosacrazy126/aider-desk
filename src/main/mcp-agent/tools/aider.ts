@@ -63,7 +63,7 @@ export const createAiderTools = (project: Project, editFormat: EditFormat = 'cod
   );
 
   const runPromptTool = tool(
-    async (params: { prompt: string; editFormat?: 'code' | 'ask' | 'architect' }) => {
+    async (params: { prompt: string; editFormat?: EditFormat }) => {
       const responses = await project.sendPrompt(params.prompt, editFormat);
 
       // Merge all responses into a single cohesive response

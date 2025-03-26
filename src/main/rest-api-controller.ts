@@ -30,7 +30,7 @@ const GetAddableFilesSchema = z.object({
 const RunPromptSchema = z.object({
   projectDir: z.string().min(1, 'Project directory is required'),
   prompt: z.string().min(1, 'Prompt is required'),
-  editFormat: z.enum(['code', 'ask', 'architect']).optional(),
+  editFormat: z.enum(['code', 'ask', 'architect', 'context']).optional(),
 });
 
 export class RestApiController {

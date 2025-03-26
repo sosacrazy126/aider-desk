@@ -39,9 +39,11 @@ const GetAddableFilesSchema = {
 const RunPromptSchema = {
   prompt: z.string().describe('The prompt to run'),
   editFormat: z
-    .enum(['code', 'ask', 'architect'])
+    .enum(['code', 'ask', 'architect', 'context'])
     .default('code')
-    .describe('Type of the action that AiderDesk will perform. Code is for coding tasks, ask is for asking questions, architect is for planing changes.'),
+    .describe(
+      'Type of the action that AiderDesk will perform. Code is for coding tasks, ask is for asking questions, architect is for planing changes, context automatically identifies which files need to added to context based on the prompt.',
+    ),
 };
 
 // Add tools to the server

@@ -122,7 +122,7 @@ export class ConnectorManager {
           return;
         }
 
-        logger.debug('Updating autocompletion', { ...message });
+        logger.debug('Updating autocompletion', { baseDir: connector.baseDir });
         this.mainWindow.webContents.send('update-autocompletion', {
           baseDir: connector.baseDir,
           words: message.words,

@@ -15,6 +15,7 @@ const EDIT_FORMATS = [
   { value: 'code', label: 'Code' },
   { value: 'ask', label: 'Ask' },
   { value: 'architect', label: 'Architect' },
+  { value: 'context', label: 'Context' },
 ];
 
 export const FormatSelector = ({ editFormat, editFormatLocked, onFormatChange, onLockChange }: Props) => {

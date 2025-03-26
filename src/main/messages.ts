@@ -40,7 +40,7 @@ export const isInitMessage = (message: Message): message is InitMessage => {
   return typeof message === 'object' && message !== null && 'action' in message && message.action === 'init';
 };
 
-export type EditFormat = 'code' | 'ask' | 'architect';
+export type EditFormat = 'code' | 'ask' | 'architect' | 'context';
 
 export interface PromptMessage extends Message {
   action: 'prompt';

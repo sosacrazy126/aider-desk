@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.6.0]
+
+- added support for /context command
+
 ## [0.5.1]
 
 - optimized start up installation of packages

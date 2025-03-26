@@ -31,7 +31,7 @@ const PLACEHOLDERS = [
   'Give me some task!',
 ];
 
-const COMMANDS = ['/code', '/ask', '/architect', '/add', '/model', '/read-only', '/mcp'];
+const COMMANDS = ['/code', '/context', '/ask', '/architect', '/add', '/model', '/read-only', '/mcp'];
 const CONFIRM_COMMANDS = ['/clear', '/web', '/undo', '/test', '/map-refresh', '/map', '/run', '/reasoning-effort', '/think-tokens'];
 
 const ANSWERS = ['y', 'n', 'a', 'd'];
@@ -123,6 +123,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
       (command: string, args?: string): void => {
         switch (command) {
           case '/code':
+          case '/context':
           case '/ask':
           case '/architect': {
             const prompt = text.replace(command, '').trim();
