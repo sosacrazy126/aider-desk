@@ -64,6 +64,10 @@ export const PROVIDER_MODELS = {
   },
   gemini: {
     models: {
+      'gemini-2.5-pro-exp-03-25': {
+        inputCost: 0, // unknown at the moment
+        outputCost: 0, // unknown at the moment
+      },
       'gemini-2.0-flash': {
         inputCost: 0.1,
         outputCost: 0.4,

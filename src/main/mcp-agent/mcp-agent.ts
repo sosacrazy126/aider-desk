@@ -104,29 +104,34 @@ export class McpAgent {
   }
 
   async init(project?: Project, initId = uuidv4()) {
-    try {
-      this.currentInitId = initId;
-      await this.closeClients();
-      const clients: ClientHolder[] = [];
+    this.currentInitId = initId;
+    const clients: ClientHolder[] = [];
+    const { mcpAgent } = this.store.getSettings();
 
-      const { mcpAgent } = this.store.getSettings();
+    await this.closeClients();
 
-      // Initialize each MCP server
-      for (const [serverName, serverConfig] of Object.entries(mcpAgent.mcpServers)) {
+    // Initialize each MCP server
+    for (const [serverName, serverConfig] of Object.entries(mcpAgent.mcpServers)) {
+      try {
         const clientHolder = await this.initMcpClient(serverName, this.interpolateServerConfig(serverConfig, project));
 
         if (this.currentInitId !== initId) {
+          // If initId changed during async operation, stop initialization
+          logger.info(`MCP initialization cancelled for server ${serverName} due to new init request.`);
+          await this.closeClients(); // Ensure partially initialized clients are closed
           return;
         }
         clients.push(clientHolder);
+      } catch (error) {
+        logger.error(`MCP Client initialization failed for server: ${serverName}`, error);
+        // Optionally notify the user in the UI about the specific failure
+        project?.addLogMessage('error', `Failed to initialize MCP server: ${serverName}. Check logs for details.`);
+        // Continue initializing other clients
       }
-
-      this.clients = clients;
-      this.currentProjectBaseDir = project?.baseDir || null;
-    } catch (error) {
-      logger.error('MCP Client initialization failed:', error);
-      throw error;
     }
+
+    this.clients = clients;
+    this.currentProjectBaseDir = project?.baseDir || null;
   }
 
   private async closeClients() {
@@ -314,8 +319,8 @@ export class McpAgent {
     // Reset interruption flag
     this.isInterrupted = false;
 
-    const tools = this.clients.filter((clientHolder) => !mcpAgent.disabledServers.includes(clientHolder.serverName));
-    const enabled = mcpAgent.agentEnabled && (tools.length > 0 || mcpAgent.useAiderTools);
+    const enabledClients = this.clients.filter((clientHolder) => !mcpAgent.disabledServers.includes(clientHolder.serverName));
+    const enabled = mcpAgent.agentEnabled && (enabledClients.length > 0 || mcpAgent.useAiderTools);
     const messages = await this.prepareMessages(project, enabled);
 
     // Add the user message to the message history
@@ -339,13 +344,11 @@ export class McpAgent {
     }
 
     // Get MCP server tools
-    const mcpServerTools = this.clients
-      .filter((clientHolder) => !mcpAgent.disabledServers.includes(clientHolder.serverName))
-      .flatMap((clientHolder) =>
-        clientHolder.tools.map((tool) =>
-          convertMpcToolToLangchainTool(project, clientHolder.serverName, clientHolder.client, tool, getActiveProvider(mcpAgent.providers)!),
-        ),
-      );
+    const mcpServerTools = enabledClients.flatMap((clientHolder) =>
+      clientHolder.tools.map((tool) =>
+        convertMpcToolToLangchainTool(project, clientHolder.serverName, clientHolder.client, tool, getActiveProvider(mcpAgent.providers)!),
+      ),
+    );
 
     // Add Aider tools if enabled
     const allTools = [...mcpServerTools];
@@ -505,9 +508,20 @@ export class McpAgent {
     }
   }
 
+  private getSystemMessage(project: Project, systemPrompt: string): string {
+    const currentDate = new Date().toISOString();
+    const osInfo = `${process.platform} ${process.arch}`;
+    return `${systemPrompt}
+
+Project Directory: ${project.baseDir}
+Current Date/Time: ${currentDate}
+Operating System: ${osInfo}`;
+  }
+
   private async prepareMessages(project: Project, enabled: boolean): Promise<BaseMessage[]> {
     const { mcpAgent } = this.store.getSettings();
-    let messages = this.messages.get(project.baseDir) || [new SystemMessage(mcpAgent.systemPrompt)];
+    const systemMessageContent = this.getSystemMessage(project, mcpAgent.systemPrompt);
+    let messages = this.messages.get(project.baseDir) || [new SystemMessage(systemMessageContent)];
 
     // Remove previous context files messages if they exist
     const previousContextMessages = this.contextFilesMessages.get(project.baseDir);
@@ -599,12 +613,11 @@ export class McpAgent {
     this.contextFilesMessages.delete(project.baseDir);
   }
 
-  public addMessage(project: Project, role: 'user' | 'assistant', content: string) {
+  public async addMessage(project: Project, role: 'user' | 'assistant', content: string) {
     logger.debug(`Adding message to MCP agent history: ${content}`);
     let messages = this.messages.get(project.baseDir);
     if (!messages) {
-      const { mcpAgent } = this.store.getSettings();
-      messages = [new SystemMessage(mcpAgent.systemPrompt)];
+      messages = await this.prepareMessages(project, true);
       this.messages.set(project.baseDir, messages);
     }
 
@@ -728,6 +741,7 @@ const convertMpcToolToLangchainTool = (project: Project, serverName: string, cli
         return content;
       } catch (error) {
         logger.error(`Error calling tool ${toolDef.name}:`, error);
+        project.addToolMessage(serverName, toolDef.name, undefined, (error as Error).message);
         return `Error calling tool: ${(error as Error).message}`;
       }
     },

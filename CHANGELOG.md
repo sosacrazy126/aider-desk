@@ -3,6 +3,7 @@
 ## [0.6.0]
 
 - added support for /context command
+- added support for gemini-2.5-pro-exp-03-25 model in MCP agent
 
 ## [0.5.1]
 

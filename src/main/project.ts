@@ -305,7 +305,7 @@ export class Project {
     // Send all responses as assistant messages to MCP client
     for (const response of responses) {
       if (response.content) {
-        this.mcpAgent.addMessage(this, 'assistant', response.content);
+        await this.mcpAgent.addMessage(this, 'assistant', response.content);
       }
     }
 
