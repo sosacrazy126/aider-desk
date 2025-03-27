@@ -24,19 +24,33 @@ export class ProjectManager {
     return this.projects.find((project) => normalizeBaseDir(project.baseDir) === baseDir);
   }
 
-  public getProject(baseDir: string): Project {
-    let project = this.findProject(baseDir);
+  private createProject(baseDir: string) {
+    logger.info('Creating new project', { baseDir });
+    const project = new Project(this.mainWindow, baseDir, this.store, this.mcpAgent);
+    this.projects.push(project);
 
-    if (!project) {
-      logger.info('Creating new project', { baseDir });
-      project = new Project(this.mainWindow, baseDir, this.store, this.mcpAgent!);
-      this.projects.push(project);
+    // Check if the project is marked as active in the store and initialize MCP agent if needed
+    const openProjects = this.store.getOpenProjects();
+    const projectData = openProjects.find((p) => normalizeBaseDir(p.baseDir) === normalizeBaseDir(baseDir));
+    if (projectData?.active) {
+      logger.info('Initializing MCP agent for active project in background', { baseDir });
+      void this.mcpAgent.init(project);
     }
 
     return project;
   }
 
-  public startProject(baseDir: string): void {
+  public getProject(baseDir: string) {
+    let project = this.findProject(baseDir);
+
+    if (!project) {
+      project = this.createProject(baseDir);
+    }
+
+    return project;
+  }
+
+  public async startProject(baseDir: string): Promise<void> {
     logger.info('Starting project', { baseDir });
     const project = this.getProject(baseDir);
 

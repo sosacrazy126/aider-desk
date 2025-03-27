@@ -193,7 +193,9 @@ export const CodeBlock = ({ baseDir, language, children, file, isComplete = true
                 </span>
               </span>
             </div>
-            <div className={`transition-all duration-200 overflow-hidden ${isExpanded ? 'max-h-[5000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+            <div
+              className={`transition-all duration-200 ${isExpanded ? 'max-h-[5000px] opacity-100 overflow-auto scrollbar-thin scrollbar-track-neutral-900 scrollbar-thumb-neutral-800 hover:scrollbar-thumb-neutral-600' : 'max-h-0 opacity-0 overflow-hidden'}`}
+            >
               <hr className="border-gray-700 my-2" />
               {renderContent()}
             </div>

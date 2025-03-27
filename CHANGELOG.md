@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.6.1]
+
+- added support for Deepseek provider in MCP agent
+
 ## [0.6.0]
 
 - added support for /context command

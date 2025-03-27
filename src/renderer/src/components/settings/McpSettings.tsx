@@ -9,11 +9,12 @@ import {
   isOpenAiProvider,
   isAnthropicProvider,
   isGeminiProvider,
+  isDeepseekProvider,
 } from '@common/llm-providers';
 
 import { McpServerForm } from './McpServerForm';
 import { McpServerItem } from './McpServerItem';
-import { OpenAiParameters, AnthropicParameters, GeminiParameters, BedrockParameters } from './providers';
+import { OpenAiParameters, AnthropicParameters, GeminiParameters, BedrockParameters, DeepseekParameters } from './providers';
 
 import { Select } from '@/components/common/Select';
 import { Button } from '@/components/common/Button';
@@ -60,11 +61,11 @@ export const McpSettings = ({ settings, setSettings }: Props) => {
         };
       } else {
         newProvider = {
-          name: newProviderName as 'openai' | 'anthropic' | 'gemini',
+          name: newProviderName,
           apiKey: '',
           model: Object.keys(PROVIDER_MODELS[newProviderName].models)[0],
           active: true,
-        };
+        } as LlmProvider;
       }
 
       updatedProviders = [...updatedProviders, newProvider];
@@ -164,6 +165,8 @@ export const McpSettings = ({ settings, setSettings }: Props) => {
               {activeProvider && isAnthropicProvider(activeProvider) && <AnthropicParameters settings={settings} setSettings={setSettings} />}
 
               {activeProvider && isGeminiProvider(activeProvider) && <GeminiParameters settings={settings} setSettings={setSettings} />}
+
+              {activeProvider && isDeepseekProvider(activeProvider) && <DeepseekParameters settings={settings} setSettings={setSettings} />}
 
               {activeProvider && isBedrockProvider(activeProvider) && <BedrockParameters settings={settings} setSettings={setSettings} />}
             </div>

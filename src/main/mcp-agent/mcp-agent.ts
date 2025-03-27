@@ -7,6 +7,7 @@ import { AIMessage, HumanMessage, SystemMessage } from '@langchain/core/messages
 import { StructuredTool, tool } from '@langchain/core/tools';
 import { ChatOpenAI } from '@langchain/openai';
 import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
+import { ChatDeepSeek } from '@langchain/deepseek';
 import { BedrockChat } from '@langchain/community/chat_models/bedrock';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
@@ -14,7 +15,15 @@ import { jsonSchemaToZod } from '@n8n/json-schema-to-zod';
 import { v4 as uuidv4 } from 'uuid';
 import { delay } from '@common/utils';
 import { BaseMessage } from '@langchain/core/dist/messages/base';
-import { isAnthropicProvider, isGeminiProvider, isOpenAiProvider, isBedrockProvider, LlmProvider, PROVIDER_MODELS } from '@common/llm-providers';
+import {
+  isAnthropicProvider,
+  isGeminiProvider,
+  isOpenAiProvider,
+  isBedrockProvider,
+  isDeepseekProvider,
+  LlmProvider,
+  PROVIDER_MODELS,
+} from '@common/llm-providers';
 import { BaseChatModel } from '@langchain/core/dist/language_models/chat_models';
 import { EditFormat } from 'src/main/messages';
 
@@ -94,7 +103,7 @@ export class McpAgent {
   private currentInitId: string | null = null;
   private clients: ClientHolder[] = [];
   private lastToolCallTime: number = 0;
-  private currentProjectBaseDir: string | null = null;
+  private currentProject: Project | null = null;
   private isInterrupted: boolean = false;
   private messages: Map<string, BaseMessage[]> = new Map();
   private contextFilesMessages: Map<string, BaseMessage[]> = new Map();
@@ -103,7 +112,7 @@ export class McpAgent {
     this.store = store;
   }
 
-  async init(project?: Project, initId = uuidv4()) {
+  async init(project: Project | null = this.currentProject, initId = uuidv4()) {
     this.currentInitId = initId;
     const clients: ClientHolder[] = [];
     const { mcpAgent } = this.store.getSettings();
@@ -131,7 +140,7 @@ export class McpAgent {
     }
 
     this.clients = clients;
-    this.currentProjectBaseDir = project?.baseDir || null;
+    this.currentProject = project;
   }
 
   private async closeClients() {
@@ -185,6 +194,16 @@ export class McpAgent {
         maxOutputTokens: maxTokens,
         apiKey: provider.apiKey,
       });
+    } else if (isDeepseekProvider(provider)) {
+      if (!provider.apiKey) {
+        throw new Error('Deepseek API key is required');
+      }
+      return new ChatDeepSeek({
+        model: provider.model,
+        temperature: 0,
+        maxTokens: maxTokens,
+        apiKey: provider.apiKey,
+      });
     } else if (isBedrockProvider(provider)) {
       if (!provider.region) {
         throw new Error('AWS region is required for Bedrock. You can set it in the MCP settings.');
@@ -214,14 +233,29 @@ export class McpAgent {
     }
   }
 
-  async getMcpServerTools(name: string, config: McpServerConfig, project?: Project): Promise<McpTool[] | null> {
+  async reloadMcpServer(serverName: string, config: McpServerConfig, project: Project | null = this.currentProject): Promise<McpTool[] | null> {
     try {
-      const clientHolder = await this.initMcpClient(name, this.interpolateServerConfig(config, project));
-      const tools = clientHolder.tools;
-      await clientHolder.client.close();
-      return tools;
+      const newClient = await this.initMcpClient(serverName, this.interpolateServerConfig(config, project));
+
+      const oldClientIndex = this.clients.findIndex((c) => c.serverName === serverName);
+      if (oldClientIndex !== -1) {
+        const oldClient = this.clients[oldClientIndex];
+        try {
+          await oldClient.client.close();
+          logger.info(`Closed old MCP client for server: ${serverName}`);
+        } catch (closeError) {
+          logger.error(`Error closing old MCP client for server ${serverName}:`, closeError);
+        }
+        this.clients[oldClientIndex] = newClient;
+        logger.debug(`Replaced MCP client for server: ${serverName}`);
+      } else {
+        this.clients.push(newClient);
+      }
+
+      return newClient.tools;
     } catch (error) {
-      logger.error('Error getting MCP server tools:', error);
+      logger.error(`Error reloading MCP server ${serverName}:`, error);
+      project?.addLogMessage('error', `Failed to reload MCP server: ${serverName}. Check logs for details.`);
       return null;
     }
   }
@@ -332,7 +366,7 @@ export class McpAgent {
     }
 
     // Check if we need to reinitialize for a different project
-    if (this.currentProjectBaseDir !== project.baseDir) {
+    if (this.currentProject?.baseDir !== project.baseDir) {
       logger.info(`Reinitializing MCP clients for project: ${project.baseDir}`);
       try {
         await this.init(project, uuidv4());
@@ -544,7 +578,7 @@ Operating System: ${osInfo}`;
     return messages;
   }
 
-  private interpolateServerConfig(serverConfig: McpServerConfig, project?: Project): McpServerConfig {
+  private interpolateServerConfig(serverConfig: McpServerConfig, project: Project | null): McpServerConfig {
     const config = JSON.parse(JSON.stringify(serverConfig)) as McpServerConfig;
 
     const interpolateValue = (value: string): string => {
@@ -680,6 +714,8 @@ Operating System: ${osInfo}`;
 
 const convertMpcToolToLangchainTool = (project: Project, serverName: string, client: Client, toolDef: McpTool, provider: LlmProvider): StructuredTool => {
   const normalizeSchemaForProvider = (schema: JsonSchema): JsonSchema => {
+    // Deepseek uses OpenAI compatible API, so no specific normalization needed for now.
+    // If specific needs arise, add them here.
     const normalized = JSON.parse(JSON.stringify(schema));
 
     if (provider.name === 'gemini') {

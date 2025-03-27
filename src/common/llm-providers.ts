@@ -1,4 +1,4 @@
-export type ProviderName = 'openai' | 'anthropic' | 'gemini' | 'bedrock';
+export type ProviderName = 'openai' | 'anthropic' | 'gemini' | 'bedrock' | 'deepseek';
 
 export interface LlmProviderBase {
   name: ProviderName;
@@ -11,6 +11,7 @@ export const AVAILABLE_PROVIDERS = [
   { value: 'anthropic', label: 'Anthropic' },
   { value: 'gemini', label: 'Gemini' },
   { value: 'bedrock', label: 'Bedrock' },
+  { value: 'deepseek', label: 'Deepseek' },
 ];
 
 export interface OpenAiProvider extends LlmProviderBase {
@@ -31,6 +32,12 @@ export interface GeminiProvider extends LlmProviderBase {
 }
 export const isGeminiProvider = (provider: LlmProviderBase): provider is GeminiProvider => provider.name === 'gemini';
 
+export interface DeepseekProvider extends LlmProviderBase {
+  name: 'deepseek';
+  apiKey: string;
+}
+export const isDeepseekProvider = (provider: LlmProviderBase): provider is DeepseekProvider => provider.name === 'deepseek';
+
 export interface BedrockProvider extends LlmProviderBase {
   name: 'bedrock';
   accessKeyId: string;
@@ -39,7 +46,7 @@ export interface BedrockProvider extends LlmProviderBase {
 }
 export const isBedrockProvider = (provider: LlmProviderBase): provider is BedrockProvider => provider.name === 'bedrock';
 
-export type LlmProvider = OpenAiProvider | AnthropicProvider | GeminiProvider | BedrockProvider;
+export type LlmProvider = OpenAiProvider | AnthropicProvider | GeminiProvider | BedrockProvider | DeepseekProvider;
 
 export const PROVIDER_MODELS = {
   openai: {
@@ -71,6 +78,18 @@ export const PROVIDER_MODELS = {
       'gemini-2.0-flash': {
         inputCost: 0.1,
         outputCost: 0.4,
+      },
+    },
+  },
+  deepseek: {
+    models: {
+      'deepseek-chat': {
+        inputCost: 0.27,
+        outputCost: 1.1,
+      },
+      'deepseek-reasoner': {
+        inputCost: 0.55,
+        outputCost: 2.19,
       },
     },
   },

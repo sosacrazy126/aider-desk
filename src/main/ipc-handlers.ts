@@ -106,6 +106,9 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, projectManager: Proj
     }));
 
     store.setOpenProjects(updatedProjects);
+
+    void mcpAgent.init(projectManager.getProject(baseDir));
+
     return updatedProjects;
   });
 
@@ -198,6 +201,6 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, projectManager: Proj
   });
 
   ipcMain.handle('load-mcp-server-tools', async (_, serverName: string, config: McpServerConfig) => {
-    return await mcpAgent.getMcpServerTools(serverName, config);
+    return await mcpAgent.reloadMcpServer(serverName, config);
   });
 };
