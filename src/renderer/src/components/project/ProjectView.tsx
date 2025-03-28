@@ -11,6 +11,7 @@ import {
   ToolData,
   InputHistoryData,
   UserMessageData,
+  EditFormat,
 } from '@common/types';
 import { IpcRendererEvent } from 'electron';
 import { useEffect, useRef, useState } from 'react';
@@ -61,7 +62,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
   const [mcpToolsCost, setMcpToolsCost] = useState(0);
   const [tokensInfo, setTokensInfo] = useState<TokensInfoData | null>(null);
   const [question, setQuestion] = useState<QuestionData | null>(null);
-  const [editFormat, setEditFormat] = useState<string>('code');
+  const [editFormat, setEditFormat] = useState<EditFormat>('code');
   const [showFrozenDialog, setShowFrozenDialog] = useState(false);
   const processingMessageRef = useRef<ResponseMessage | null>(null);
   const promptFieldRef = useRef<PromptFieldRef>(null);

@@ -4,13 +4,14 @@ import { unlinkSync } from 'fs';
 import fs from 'fs/promises';
 import path from 'path';
 
-import ignore from 'ignore';
 import {
   ContextFile,
+  EditFormat,
   FileEdit,
   InputHistoryData,
   LogData,
   LogLevel,
+  MessageRole,
   ModelsData,
   QuestionData,
   ResponseChunkData,
@@ -24,12 +25,15 @@ import { BrowserWindow } from 'electron';
 import treeKill from 'tree-kill';
 import { v4 as uuidv4 } from 'uuid';
 import { parse } from '@dotenvx/dotenvx';
-import { McpAgent } from 'src/main/mcp-agent';
+import { isAIMessage, isHumanMessage } from '@langchain/core/messages';
+import { extractTextContent } from 'src/main/mcp-agent/utils';
 
+import { McpAgent } from './mcp-agent';
 import { Connector } from './connector';
+import { Session } from './session';
 import { AIDER_DESK_CONNECTOR_DIR, PID_FILES_DIR, PYTHON_COMMAND, SERVER_PORT } from './constants';
 import logger from './logger';
-import { EditFormat, MessageAction, ResponseMessage } from './messages';
+import { MessageAction, ResponseMessage } from './messages';
 import { DEFAULT_MAIN_MODEL, Store } from './store';
 
 export class Project {
@@ -42,10 +46,10 @@ export class Project {
   private currentResponseMessageId: string | null = null;
   private currentPromptId: string | null = null;
   private inputHistoryFile = '.aider.input.history';
-  private contextFiles: ContextFile[] = [];
   private models: ModelsData | null = null;
   private currentPromptResponses: ResponseCompletedData[] = [];
   private runPromptResolves: ((value: ResponseCompletedData[]) => void)[] = [];
+  private session: Session = new Session(this);
 
   constructor(
     private readonly mainWindow: BrowserWindow,
@@ -55,7 +59,7 @@ export class Project {
   ) {}
 
   public start() {
-    this.contextFiles.forEach((contextFile) => {
+    this.session.getContextFiles().forEach((contextFile) => {
       this.mainWindow.webContents.send('file-added', {
         baseDir: this.baseDir,
         file: contextFile,
@@ -72,7 +76,7 @@ export class Project {
     });
     this.connectors.push(connector);
     if (connector.listenTo.includes('add-file')) {
-      this.contextFiles.forEach(connector.sendAddFileMessage);
+      this.session.getContextFiles().forEach(connector.sendAddFileMessage);
     }
 
     // Set input history file if provided by the connector
@@ -257,7 +261,7 @@ export class Project {
         this.runPromptResolves.forEach((resolve) => resolve([]));
         this.runPromptResolves = [];
 
-        this.mcpAgent.clearMessages(this);
+        this.session.clearMessages();
       } catch (error: unknown) {
         logger.error('Error killing Aider process:', { error });
         throw error;
@@ -290,22 +294,35 @@ export class Project {
       editFormat,
     });
 
+    await this.addToInputHistory(prompt);
+
     this.addUserMessage(prompt, editFormat);
     this.addLogMessage('loading');
 
-    await this.addToInputHistory(prompt);
+    // try MCP agent run first
+    const agentMessages = await this.mcpAgent.runAgent(this, prompt, editFormat);
+    if (agentMessages.length > 0) {
+      agentMessages.forEach((message) => {
+        this.session.addContextMessage(message);
 
-    const mcpPrompt = await this.mcpAgent.runPrompt(this, prompt, editFormat);
-    if (!mcpPrompt) {
+        // notify connectors about new context messages
+        if (isAIMessage(message)) {
+          this.sendAddMessage(MessageRole.Assistant, extractTextContent(message.content));
+        } else if (isHumanMessage(message)) {
+          this.sendAddMessage(MessageRole.User, extractTextContent(message.content));
+        }
+      });
+      // in case MCP agent handled the prompt, return empty array of response data
       return [];
     }
 
-    const responses = await this.sendPrompt(mcpPrompt, editFormat);
+    const responses = await this.sendPrompt(prompt, editFormat);
 
-    // Send all responses as assistant messages to MCP client
+    // add messages to session
+    this.session.addContextMessage(MessageRole.User, prompt);
     for (const response of responses) {
       if (response.content) {
-        await this.mcpAgent.addMessage(this, 'assistant', response.content);
+        this.session.addContextMessage(MessageRole.Assistant, response.content);
       }
     }
 
@@ -428,61 +445,24 @@ export class Project {
     this.currentQuestion = null;
   }
 
-  private async isFileIgnored(contextFile: ContextFile): Promise<boolean> {
-    if (contextFile.readOnly) {
-      // not checking gitignore for read-only files
-      return false;
-    }
-
-    const gitignorePath = path.join(this.baseDir, '.gitignore');
-
-    if (!(await fileExists(gitignorePath))) {
-      return false;
-    }
-
-    const gitignoreContent = await fs.readFile(gitignorePath, 'utf8');
-    const ig = ignore().add(gitignoreContent);
-
-    // Make the path relative to the base directory
-    const absolutePath = path.resolve(this.baseDir, contextFile.path);
-    const relativePath = path.relative(this.baseDir, absolutePath);
-
-    return ig.ignores(relativePath);
-  }
-
   public async addFile(contextFile: ContextFile): Promise<void> {
     logger.info('Adding file:', {
       path: contextFile.path,
       readOnly: contextFile.readOnly,
     });
-    const alreadyAdded = this.contextFiles.find((file) => file.path === contextFile.path);
-    if (alreadyAdded) {
-      return;
-    }
-
-    if (await this.isFileIgnored(contextFile)) {
-      logger.debug('Skipping ignored file:', { path: contextFile.path });
-      return;
-    }
-
-    this.contextFiles.push({
-      ...contextFile,
-      readOnly: contextFile.readOnly ?? false,
-    });
+    await this.session.addContextFile(contextFile);
     this.findMessageConnectors('add-file').forEach((connector) => connector.sendAddFileMessage(contextFile));
   }
 
   public dropFile(filePath: string): void {
     logger.info('Dropping file:', { path: filePath });
-    const file = this.contextFiles.find((f) => f.path === filePath);
-
     // Check if file is outside project directory
     const absolutePath = path.resolve(this.baseDir, filePath);
     const isOutsideProject = !absolutePath.startsWith(path.resolve(this.baseDir));
 
+    const file = this.session.dropContextFile(filePath);
     const pathToSend = file?.readOnly || isOutsideProject ? absolutePath : filePath.startsWith(this.baseDir) ? filePath : path.join(this.baseDir, filePath);
 
-    this.contextFiles = this.contextFiles.filter((file) => file.path !== filePath);
     this.findMessageConnectors('drop-file').forEach((connector) => connector.sendDropFileMessage(pathToSend));
   }
 
@@ -496,7 +476,7 @@ export class Project {
   }
 
   public updateContextFiles(contextFiles: ContextFile[]) {
-    this.contextFiles = contextFiles;
+    this.session.setContextFiles(contextFiles);
 
     this.mainWindow.webContents.send('context-files-updated', {
       baseDir: this.baseDir,
@@ -619,7 +599,7 @@ export class Project {
   }
 
   public getAddableFiles(searchRegex?: string): string[] {
-    const contextFilePaths = new Set(this.contextFiles.map((file) => file.path));
+    const contextFilePaths = new Set(this.getContextFiles().map((file) => file.path));
     let files = this.allTrackedFiles.filter((file) => !contextFilePaths.has(file));
 
     if (searchRegex) {
@@ -638,7 +618,7 @@ export class Project {
   }
 
   public getContextFiles(): ContextFile[] {
-    return this.contextFiles;
+    return this.session.getContextFiles();
   }
 
   public openCommandOutput(command: string) {
@@ -668,12 +648,22 @@ export class Project {
     this.mainWindow.webContents.send('log', data);
   }
 
-  public sendAddContextMessage(role: 'user' | 'assistant' = 'user', content: string, acknowledge = true) {
+  public getContextMessages() {
+    return this.session.getContextMessages();
+  }
+
+  public sendAddMessage(role: MessageRole = MessageRole.User, content: string, acknowledge = true) {
+    logger.info('Adding message:', {
+      baseDir: this.baseDir,
+      role,
+      content,
+      acknowledge,
+    });
     this.findMessageConnectors('add-message').forEach((connector) => connector.sendAddMessageMessage(role, content, acknowledge));
   }
 
   public clearContext() {
-    this.mcpAgent.clearMessages(this);
+    this.session.clearMessages();
     this.runCommand('clear');
   }
 

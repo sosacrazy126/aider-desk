@@ -1,4 +1,4 @@
-import { ContextFileSourceType, ContextFile, TokensCost, FileEdit, UsageReportData, LogLevel } from '@common/types';
+import { ContextFileSourceType, ContextFile, TokensCost, FileEdit, UsageReportData, LogLevel, EditFormat, MessageRole } from '@common/types';
 
 export type MessageAction =
   | 'init'
@@ -39,8 +39,6 @@ export interface InitMessage {
 export const isInitMessage = (message: Message): message is InitMessage => {
   return typeof message === 'object' && message !== null && 'action' in message && message.action === 'init';
 };
-
-export type EditFormat = 'code' | 'ask' | 'architect' | 'context';
 
 export interface PromptMessage extends Message {
   action: 'prompt';
@@ -168,7 +166,7 @@ export const isTokensInfoMessage = (message: Message): message is TokensInfoMess
 export interface AddMessageMessage extends Message {
   action: 'add-message';
   content: string;
-  role: 'user' | 'assistant';
+  role: MessageRole;
   acknowledge: boolean;
 }
 

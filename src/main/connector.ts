@@ -1,6 +1,6 @@
 import path from 'path';
 
-import { ContextFile, FileEdit } from '@common/types';
+import { ContextFile, FileEdit, MessageRole, EditFormat } from '@common/types';
 import { Socket } from 'socket.io';
 
 import logger from './logger';
@@ -10,7 +10,6 @@ import {
   AnswerQuestionMessage,
   ApplyEditsMessage,
   DropFileMessage,
-  EditFormat,
   InterruptResponseMessage,
   Message,
   MessageAction,
@@ -99,7 +98,7 @@ export class Connector {
     this.sendMessage(message);
   }
 
-  public sendAddMessageMessage(role: 'user' | 'assistant' = 'user', content: string, acknowledge = true) {
+  public sendAddMessageMessage(role: MessageRole = MessageRole.User, content: string, acknowledge = true) {
     const message: AddMessageMessage = {
       action: 'add-message',
       content,

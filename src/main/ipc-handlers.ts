@@ -1,10 +1,9 @@
-import { FileEdit, ProjectSettings, SettingsData, ProjectData, McpServerConfig } from '@common/types';
+import { EditFormat, FileEdit, McpServerConfig, MessageRole, ProjectData, ProjectSettings, SettingsData } from '@common/types';
 import { normalizeBaseDir } from '@common/utils';
 import { BrowserWindow, dialog, ipcMain } from 'electron';
 import { McpAgent } from 'src/main/mcp-agent';
 
 import { getFilePathSuggestions, isProjectPath, isValidPath } from './file-system';
-import { EditFormat } from './messages';
 import { ProjectManager } from './project-manager';
 import { DEFAULT_PROJECT_SETTINGS, Store } from './store';
 import { scrapeWeb } from './web-scrapper';
@@ -197,7 +196,7 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, projectManager: Proj
 
   ipcMain.handle('scrape-web', async (_, baseDir: string, url: string) => {
     const content = await scrapeWeb(url);
-    projectManager.getProject(baseDir).sendAddContextMessage('user', content);
+    projectManager.getProject(baseDir).sendAddMessage(MessageRole.User, content);
   });
 
   ipcMain.handle('load-mcp-server-tools', async (_, serverName: string, config: McpServerConfig) => {

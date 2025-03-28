@@ -1,4 +1,4 @@
-import { QuestionData, SettingsData } from '@common/types';
+import { EditFormat, QuestionData, SettingsData } from '@common/types';
 import React, { useCallback, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react';
 import { useDebounce } from 'react-use';
 import { matchSorter } from 'match-sorter';
@@ -47,9 +47,9 @@ type Props = {
   words?: string[];
   inputHistory?: string[];
   openModelSelector?: () => void;
-  defaultEditFormat?: string;
-  editFormat: string;
-  setEditFormat: (format: string) => void;
+  defaultEditFormat?: EditFormat;
+  editFormat: EditFormat;
+  setEditFormat: (format: EditFormat) => void;
   onSubmitted?: (prompt: string) => void;
   showFileDialog: (readOnly: boolean) => void;
   clearMessages: () => void;
@@ -128,7 +128,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
           case '/architect': {
             const prompt = text.replace(command, '').trim();
             setText(prompt);
-            const newFormat = command.slice(1);
+            const newFormat = command.slice(1) as EditFormat;
 
             // If the same command is used twice, toggle the lock
             if (editFormat === newFormat) {

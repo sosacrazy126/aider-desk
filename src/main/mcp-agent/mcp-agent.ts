@@ -1,7 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 
-import { ContextFile, getActiveProvider, McpServerConfig, McpTool, UsageReportData } from '@common/types';
+import { ContextFile, ContextMessage, EditFormat, getActiveProvider, McpServerConfig, McpTool, UsageReportData } from '@common/types';
 import { ChatAnthropic } from '@langchain/anthropic';
 import { AIMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { StructuredTool, tool } from '@langchain/core/tools';
@@ -15,22 +15,14 @@ import { jsonSchemaToZod } from '@n8n/json-schema-to-zod';
 import { v4 as uuidv4 } from 'uuid';
 import { delay } from '@common/utils';
 import { BaseMessage } from '@langchain/core/dist/messages/base';
-import {
-  isAnthropicProvider,
-  isGeminiProvider,
-  isOpenAiProvider,
-  isBedrockProvider,
-  isDeepseekProvider,
-  LlmProvider,
-  PROVIDER_MODELS,
-} from '@common/llm-providers';
+import { isAnthropicProvider, isBedrockProvider, isDeepseekProvider, isGeminiProvider, isOpenAiProvider, LlmProvider } from '@common/llm-providers';
 import { BaseChatModel } from '@langchain/core/dist/language_models/chat_models';
-import { EditFormat } from 'src/main/messages';
 
 import logger from '../logger';
 import { Store } from '../store';
 import { Project } from '../project';
 
+import { calculateCost, extractTextContent, isTextContent } from './utils';
 import { createAiderTools } from './tools/aider';
 
 import type { JsonSchema } from '@n8n/json-schema-to-zod';
@@ -38,109 +30,61 @@ import type { JsonSchema } from '@n8n/json-schema-to-zod';
 // some results are too long, so we limit the length
 const MAX_SAFE_TOOL_RESULT_CONTENT_LENGTH = 32_000;
 
-type TextContent =
-  | string
-  | {
-      type: 'text';
-      text: string;
-    };
-
 type ClientHolder = {
   client: Client;
   serverName: string;
   tools: McpTool[];
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const isTextContent = (content: any): content is TextContent => content?.type === 'text' || typeof content === 'string';
-
-const extractTextContent = (content: unknown): string => {
-  if (typeof content === 'string') {
-    return content;
-  }
-
-  if (Array.isArray(content)) {
-    return content
-      .filter(isTextContent)
-      .map((c) => (typeof c === 'string' ? c : c.text))
-      .join('\n\n');
-  }
-
-  if (typeof content === 'object' && content !== null && 'content' in content) {
-    return extractTextContent((content as { content: unknown }).content);
-  }
-
-  return '';
-};
-
-const calculateCost = (llmProvider: LlmProvider, sentTokens: number, receivedTokens: number) => {
-  const providerModels = PROVIDER_MODELS[llmProvider.name];
-  if (!providerModels) {
-    return 0;
-  }
-
-  // Get the model name directly from the provider
-  const model = llmProvider.model;
-  if (!model) {
-    return 0;
-  }
-
-  // Find the model cost configuration
-  const modelCost = providerModels.models[model];
-  if (!modelCost) {
-    return 0;
-  }
-
-  // Calculate cost in dollars (costs are per million tokens)
-  const inputCost = (sentTokens * modelCost.inputCost) / 1_000_000;
-  const outputCost = (receivedTokens * modelCost.outputCost) / 1_000_000;
-
-  return inputCost + outputCost;
-};
-
 export class McpAgent {
   private store: Store;
   private currentInitId: string | null = null;
+  private initializedForProject: Project | null = null;
   private clients: ClientHolder[] = [];
   private lastToolCallTime: number = 0;
-  private currentProject: Project | null = null;
   private isInterrupted: boolean = false;
-  private messages: Map<string, BaseMessage[]> = new Map();
-  private contextFilesMessages: Map<string, BaseMessage[]> = new Map();
 
   constructor(store: Store) {
     this.store = store;
   }
 
-  async init(project: Project | null = this.currentProject, initId = uuidv4()) {
+  async init(project: Project | null = this.initializedForProject, initId = uuidv4()) {
+    // Set the current init ID to track this specific initialization process
     this.currentInitId = initId;
-    const clients: ClientHolder[] = [];
-    const { mcpAgent } = this.store.getSettings();
+    try {
+      const clients: ClientHolder[] = [];
+      const { mcpAgent } = this.store.getSettings();
 
-    await this.closeClients();
+      await this.closeClients();
 
-    // Initialize each MCP server
-    for (const [serverName, serverConfig] of Object.entries(mcpAgent.mcpServers)) {
-      try {
-        const clientHolder = await this.initMcpClient(serverName, this.interpolateServerConfig(serverConfig, project));
+      // Initialize each MCP server
+      for (const [serverName, serverConfig] of Object.entries(mcpAgent.mcpServers)) {
+        try {
+          const clientHolder = await this.initMcpClient(serverName, this.interpolateServerConfig(serverConfig, project));
 
-        if (this.currentInitId !== initId) {
-          // If initId changed during async operation, stop initialization
-          logger.info(`MCP initialization cancelled for server ${serverName} due to new init request.`);
-          await this.closeClients(); // Ensure partially initialized clients are closed
-          return;
+          if (this.currentInitId !== initId) {
+            // If initId changed during async operation, stop initialization
+            logger.info(`MCP initialization cancelled for server ${serverName} due to new init request.`);
+            await this.closeClients(); // Ensure partially initialized clients are closed
+            return;
+          }
+          clients.push(clientHolder);
+        } catch (error) {
+          logger.error(`MCP Client initialization failed for server: ${serverName}`, error);
+          // Optionally notify the user in the UI about the specific failure
+          project?.addLogMessage('error', `Failed to initialize MCP server: ${serverName}. Check logs for details.`);
         }
-        clients.push(clientHolder);
-      } catch (error) {
-        logger.error(`MCP Client initialization failed for server: ${serverName}`, error);
-        // Optionally notify the user in the UI about the specific failure
-        project?.addLogMessage('error', `Failed to initialize MCP server: ${serverName}. Check logs for details.`);
-        // Continue initializing other clients
+      }
+
+      this.clients = clients;
+      this.initializedForProject = project;
+    } finally {
+      // Clear the init ID only if it matches the ID of this init call
+      // This prevents a newer init call from clearing the ID of an older, still running init
+      if (this.currentInitId === initId) {
+        this.currentInitId = null;
       }
     }
-
-    this.clients = clients;
-    this.currentProject = project;
   }
 
   private async closeClients() {
@@ -233,11 +177,11 @@ export class McpAgent {
     }
   }
 
-  async reloadMcpServer(serverName: string, config: McpServerConfig, project: Project | null = this.currentProject): Promise<McpTool[] | null> {
+  async reloadMcpServer(serverName: string, config: McpServerConfig, project: Project | null = this.initializedForProject): Promise<McpTool[] | null> {
     try {
       const newClient = await this.initMcpClient(serverName, this.interpolateServerConfig(config, project));
 
-      const oldClientIndex = this.clients.findIndex((c) => c.serverName === serverName);
+      const oldClientIndex = this.clients.findIndex((client) => client.serverName === serverName);
       if (oldClientIndex !== -1) {
         const oldClient = this.clients[oldClientIndex];
         try {
@@ -248,8 +192,6 @@ export class McpAgent {
         }
         this.clients[oldClientIndex] = newClient;
         logger.debug(`Replaced MCP client for server: ${serverName}`);
-      } else {
-        this.clients.push(newClient);
       }
 
       return newClient.tools;
@@ -262,16 +204,36 @@ export class McpAgent {
 
   private async getFileSections(files: ContextFile[], project: Project): Promise<string[]> {
     // Common binary file extensions to exclude
-    /* eslint-disable prettier/prettier */
+
     const BINARY_EXTENSIONS = new Set([
-      '.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tiff', '.ico', // Images
-      '.mp3', '.wav', '.ogg', '.flac', // Audio
-      '.mp4', '.mov', '.avi', '.mkv', // Video
-      '.zip', '.tar', '.gz', '.7z', // Archives
-      '.pdf', '.doc', '.docx', '.xls', '.xlsx', // Documents
-      '.exe', '.dll', '.so', // Binaries
+      '.png',
+      '.jpg',
+      '.jpeg',
+      '.gif',
+      '.bmp',
+      '.tiff',
+      '.ico', // Images
+      '.mp3',
+      '.wav',
+      '.ogg',
+      '.flac', // Audio
+      '.mp4',
+      '.mov',
+      '.avi',
+      '.mkv', // Video
+      '.zip',
+      '.tar',
+      '.gz',
+      '.7z', // Archives
+      '.pdf',
+      '.doc',
+      '.docx',
+      '.xls',
+      '.xlsx', // Documents
+      '.exe',
+      '.dll',
+      '.so', // Binaries
     ]);
-    /* eslint-enable prettier/prettier */
 
     const filesWithContent = await Promise.all(
       files.map(async (file) => {
@@ -346,34 +308,41 @@ export class McpAgent {
     return messages;
   }
 
-  async runPrompt(project: Project, prompt: string, editFormat?: EditFormat): Promise<string | null> {
+  async runAgent(project: Project, prompt: string, editFormat?: EditFormat): Promise<ContextMessage[]> {
+    // Wait for any ongoing initialization to complete
+    while (this.currentInitId) {
+      logger.debug(`MCP Agent is initializing (ID: ${this.currentInitId}), waiting...`);
+      await delay(100); // Wait for 100ms before checking again
+    }
+
     const { mcpAgent } = this.store.getSettings();
     logger.debug('McpConfig:', mcpAgent);
 
     // Reset interruption flag
     this.isInterrupted = false;
 
+    // Track new messages created during this run
+    const newMessages: ContextMessage[] = [];
     const enabledClients = this.clients.filter((clientHolder) => !mcpAgent.disabledServers.includes(clientHolder.serverName));
     const enabled = mcpAgent.agentEnabled && (enabledClients.length > 0 || mcpAgent.useAiderTools);
     const messages = await this.prepareMessages(project, enabled);
 
-    // Add the user message to the message history
-    messages.push(new HumanMessage(prompt));
+    newMessages.push(new HumanMessage(prompt));
 
     if (!enabled) {
       logger.debug('MCP agent disabled, returning original prompt');
-      return prompt;
+      return [];
     }
 
     // Check if we need to reinitialize for a different project
-    if (this.currentProject?.baseDir !== project.baseDir) {
+    if (this.initializedForProject?.baseDir !== project.baseDir) {
       logger.info(`Reinitializing MCP clients for project: ${project.baseDir}`);
       try {
         await this.init(project, uuidv4());
       } catch (error) {
         logger.error('Error reinitializing MCP clients:', error);
         project.addLogMessage('error', `Error reinitializing MCP clients: ${error}`);
-        return prompt;
+        return [];
       }
     }
 
@@ -393,7 +362,6 @@ export class McpAgent {
 
     logger.info(`Running prompt with ${allTools.length} tools.`);
     logger.debug('Tools:', {
-      prompt,
       tools: allTools.map((tool) => tool.name),
     });
 
@@ -420,15 +388,15 @@ export class McpAgent {
         logger.debug(`Running prompt iteration ${iteration}`, { messages });
 
         // Get LLM response which may contain tool calls
-        const aiMessage = await llmWithTools.invoke(messages);
+        const aiMessage = await llmWithTools.invoke([...messages, ...newMessages]);
 
         // Check for interruption
         if (this.checkInterrupted(project, usageReport)) {
-          return null;
+          return newMessages;
         }
 
         // Add AI message to messages
-        messages.push(aiMessage);
+        newMessages.push(aiMessage);
 
         // Update usage report
         usageReport.sentTokens += aiMessage.usage_metadata?.input_tokens ?? aiMessage.response_metadata?.usage?.input_tokens ?? 0;
@@ -437,8 +405,8 @@ export class McpAgent {
 
         logger.debug(`Tool calls: ${aiMessage.tool_calls?.length}, message: ${JSON.stringify(aiMessage.content)}`);
 
-        // If no tool calls, check if there's content to send
         if (!aiMessage.tool_calls?.length) {
+          // If no tool calls, check if there's message to add to context
           const textContent = extractTextContent(aiMessage.content);
 
           if (textContent) {
@@ -449,11 +417,11 @@ export class McpAgent {
               usageReport,
             });
 
-            // Push messages to the aider's chat history
-            project.sendAddContextMessage('user', prompt, false);
-            project.sendAddContextMessage('assistant', textContent);
+            // Add the final AI message to the new messages
+            const finalMessage = new AIMessage(textContent);
+            newMessages.push(finalMessage);
 
-            return null;
+            return newMessages;
           } else {
             break;
           }
@@ -462,7 +430,7 @@ export class McpAgent {
         for (const toolCall of aiMessage.tool_calls) {
           // Check for interruption before each tool call
           if (this.checkInterrupted(project, usageReport)) {
-            return null;
+            return newMessages;
           }
 
           // Calculate how much time to wait based on the minimum time between tool calls
@@ -482,7 +450,7 @@ export class McpAgent {
 
           // Check for interruption before sending tool message
           if (this.checkInterrupted(project, usageReport)) {
-            return null;
+            return newMessages;
           }
 
           const [serverName, toolName] = this.extractServerNameToolName(toolCall.name);
@@ -496,11 +464,11 @@ export class McpAgent {
             });
             if (!toolResponse) {
               logger.warn(`Tool ${toolCall.name} didn't return a response`);
-              return null;
+              return newMessages;
             }
 
             // Add tool message to messages
-            messages.push(toolResponse);
+            newMessages.push(toolResponse);
           } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
             logger.error(`Error invoking tool ${toolCall.name}:`, error);
@@ -510,7 +478,8 @@ export class McpAgent {
             project.addToolMessage(serverName, toolName, undefined, errorMessage);
 
             // Add user message to messages for next iteration
-            messages.push(new HumanMessage(errorMessage));
+            const errorHumanMessage = new HumanMessage(errorMessage);
+            newMessages.push(errorHumanMessage);
           }
 
           // Update the last tool call time after the delay
@@ -523,7 +492,7 @@ export class McpAgent {
         project.addLogMessage('info', 'Max iterations for MCP tools reached. Increase the max iterations in the settings.');
       }
 
-      return null;
+      return newMessages;
     } catch (error) {
       logger.error('Error running prompt:', error);
       if (error instanceof Error && error.message.includes('API key is required')) {
@@ -552,29 +521,17 @@ Current Date/Time: ${currentDate}
 Operating System: ${osInfo}`;
   }
 
-  private async prepareMessages(project: Project, enabled: boolean): Promise<BaseMessage[]> {
+  private async prepareMessages(project: Project, enabled: boolean): Promise<readonly BaseMessage[]> {
     const { mcpAgent } = this.store.getSettings();
     const systemMessageContent = this.getSystemMessage(project, mcpAgent.systemPrompt);
-    let messages = this.messages.get(project.baseDir) || [new SystemMessage(systemMessageContent)];
-
-    // Remove previous context files messages if they exist
-    const previousContextMessages = this.contextFilesMessages.get(project.baseDir);
-    if (previousContextMessages) {
-      messages = messages.filter((msg) => !previousContextMessages.includes(msg));
-    }
+    const messages = [new SystemMessage(systemMessageContent), ...project.getContextMessages()];
 
     if (mcpAgent.includeContextFiles && enabled) {
       // Get and store new context files messages
       const contextFilesMessages = await this.getContextFilesMessages(project);
-      this.contextFilesMessages.set(project.baseDir, contextFilesMessages);
       messages.push(...contextFilesMessages);
-    } else {
-      // Remove context files messages if includeContextFiles is disabled
-      this.contextFilesMessages.delete(project.baseDir);
     }
 
-    // Update messages map
-    this.messages.set(project.baseDir, messages);
     return messages;
   }
 
@@ -639,23 +596,6 @@ Operating System: ${osInfo}`;
   public interrupt() {
     logger.info('Interrupting MCP client');
     this.isInterrupted = true;
-  }
-
-  public clearMessages(project: Project) {
-    logger.info('Clearing message history');
-    this.messages.delete(project.baseDir);
-    this.contextFilesMessages.delete(project.baseDir);
-  }
-
-  public async addMessage(project: Project, role: 'user' | 'assistant', content: string) {
-    logger.debug(`Adding message to MCP agent history: ${content}`);
-    let messages = this.messages.get(project.baseDir);
-    if (!messages) {
-      messages = await this.prepareMessages(project, true);
-      this.messages.set(project.baseDir, messages);
-    }
-
-    messages.push(role === 'user' ? new HumanMessage(content) : new AIMessage(content));
   }
 
   private async initMcpClient(serverName: string, serverConfig: McpServerConfig): Promise<ClientHolder> {

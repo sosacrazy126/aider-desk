@@ -1,22 +1,23 @@
 import { useState, useRef } from 'react';
 import { CgLock, CgLockUnlock } from 'react-icons/cg';
 import { MdKeyboardArrowUp } from 'react-icons/md';
+import { EditFormat } from '@common/types';
 
 import { useClickOutside } from '@/hooks/useClickOutside';
 
-type Props = {
-  editFormat: string;
-  editFormatLocked: boolean;
-  onFormatChange: (format: string) => void;
-  onLockChange: (locked: boolean) => void;
-};
-
-const EDIT_FORMATS = [
+const EDIT_FORMATS: { value: EditFormat; label: string }[] = [
   { value: 'code', label: 'Code' },
   { value: 'ask', label: 'Ask' },
   { value: 'architect', label: 'Architect' },
   { value: 'context', label: 'Context' },
 ];
+
+type Props = {
+  editFormat: string;
+  editFormatLocked: boolean;
+  onFormatChange: (format: EditFormat) => void;
+  onLockChange: (locked: boolean) => void;
+};
 
 export const FormatSelector = ({ editFormat, editFormatLocked, onFormatChange, onLockChange }: Props) => {
   const [formatSelectorVisible, setFormatSelectorVisible] = useState(false);

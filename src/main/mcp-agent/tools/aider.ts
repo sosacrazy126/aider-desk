@@ -1,6 +1,6 @@
 import { StructuredTool, tool } from '@langchain/core/tools';
 import { z } from 'zod';
-import { EditFormat } from 'src/main/messages';
+import { EditFormat } from '@common/types';
 
 import { Project } from '../../project';
 

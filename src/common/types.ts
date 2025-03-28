@@ -1,6 +1,9 @@
 import { LlmProvider } from '@common/llm-providers';
+import { BaseMessage } from '@langchain/core/messages';
 
 import type { JsonSchema } from '@n8n/json-schema-to-zod';
+
+export type EditFormat = 'code' | 'ask' | 'architect' | 'context';
 
 export interface ResponseChunkData {
   messageId: string;
@@ -65,6 +68,13 @@ export interface QuestionData {
 }
 
 export type ContextFileSourceType = 'companion' | 'aider' | 'app' | string;
+
+export enum MessageRole {
+  User = 'user',
+  Assistant = 'assistant',
+}
+
+export type ContextMessage = BaseMessage;
 
 export interface ContextFile {
   path: string;
