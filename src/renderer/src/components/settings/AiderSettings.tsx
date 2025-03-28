@@ -1,5 +1,8 @@
+import { useState } from 'react';
+import { HiEye } from 'react-icons/hi';
 import { SettingsData } from '@common/types';
 
+import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
 import { TextArea } from '@/components/common/TextArea';
 
@@ -23,6 +26,8 @@ type Props = {
 };
 
 export const AiderSettings = ({ settings, setSettings }: Props) => {
+  const [showEnvVars, setShowEnvVars] = useState(false);
+
   return (
     <>
       <div className="space-y-1">
@@ -51,22 +56,31 @@ export const AiderSettings = ({ settings, setSettings }: Props) => {
       </div>
 
       <div className="space-y-1 mt-4">
-        <TextArea
-          label="Environment Variables"
-          value={settings.aider.environmentVariables}
-          onChange={(e) =>
-            setSettings({
-              ...settings,
-              aider: {
-                ...settings.aider,
-                environmentVariables: e.target.value,
-              },
-            })
-          }
-          spellCheck={false}
-          className="min-h-[300px]"
-          placeholder={ENV_VARIABLES_PLACEHOLDER}
-        />
+        <div className="relative">
+          <TextArea
+            label="Environment Variables"
+            value={settings.aider.environmentVariables}
+            onChange={(e) =>
+              setSettings({
+                ...settings,
+                aider: {
+                  ...settings.aider,
+                  environmentVariables: e.target.value,
+                },
+              })
+            }
+            spellCheck={false}
+            className="min-h-[300px]"
+            placeholder={ENV_VARIABLES_PLACEHOLDER}
+          />
+          {!showEnvVars && (
+            <div className="absolute inset-0 top-[26px] bg-neutral-900/50 backdrop-blur-sm flex items-center justify-center rounded-md border border-neutral-700">
+              <Button variant="text" color="secondary" onClick={() => setShowEnvVars(true)} className="flex items-center ">
+                <HiEye className="mr-2" /> Show Secrets
+              </Button>
+            </div>
+          )}
+        </div>
         <p className="text-xs text-neutral-400">
           Check the documentation for environment variables at{' '}
           <a href="https://aider.chat/docs/config/dotenv.html" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">
