@@ -41,6 +41,7 @@ Transform your AI coding experience with AiderDesk - all the power of the Aider 
 *   **🔍 Code Diff Viewer** - Review changes with side-by-side comparison
 *   **⏪ One-Click Reverts** - Undo specific AI-generated changes while keeping others
 *   **📋 Easy Sharing** - Copy and share code changes or conversations instantly
+*   **💾 Session Management** - Save and load coding sessions to preserve context and progress
 
 ## 📥 Installation
 
@@ -130,6 +131,10 @@ $env:AIDER_DESK_NO_AUTO_UPDATE = "true"
 ### 🛠️ MCP Server Integration
 <img src="docs/images/mcp-servers.gif" alt="MCP Servers" width="800"/>
 <p><em>Configure and manage Model Context Protocol servers for enhanced AI capabilities</em></p>
+
+### 💾 Session Management
+<img src="docs/images/session-management.gif" alt="Session Management" width="800"/>
+<p><em>Save and load coding sessions to preserve context and progress</em></p>
 
 </div>
 
