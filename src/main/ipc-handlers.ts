@@ -46,7 +46,7 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, projectManager: Proj
   });
 
   ipcMain.on('stop-project', async (_, baseDir: string) => {
-    await projectManager.stopProject(baseDir);
+    await projectManager.closeProject(baseDir);
     store.addRecentProject(baseDir);
   });
 

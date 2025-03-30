@@ -50,32 +50,32 @@ export class ProjectManager {
     return project;
   }
 
-  public async startProject(baseDir: string): Promise<void> {
+  public startProject(baseDir: string, loadLastSessionMessages?: boolean, loadLastSessionFiles?: boolean) {
     logger.info('Starting project', { baseDir });
     const project = this.getProject(baseDir);
 
-    project.start();
+    void project.start(loadLastSessionMessages, loadLastSessionFiles);
   }
 
-  public async stopProject(baseDir: string) {
+  public async closeProject(baseDir: string) {
     const project = this.findProject(baseDir);
 
     if (!project) {
-      logger.warn('No project found to stop', { baseDir });
+      logger.warn('No project found to close', { baseDir });
       return;
     }
-    logger.info('Stopping project', { baseDir });
-    await project.stop();
+    logger.info('Closing project', { baseDir });
+    await project.close();
   }
 
   public async restartProject(baseDir: string): Promise<void> {
-    await this.stopProject(baseDir);
-    this.startProject(baseDir);
+    await this.closeProject(baseDir);
+    this.startProject(baseDir, true, true);
   }
 
   public async close(): Promise<void> {
-    logger.info('Stopping all projects');
-    await Promise.all(this.projects.map((project) => project.stop()));
+    logger.info('Closing all projects');
+    await Promise.all(this.projects.map((project) => project.close()));
     this.projects = [];
   }
 }

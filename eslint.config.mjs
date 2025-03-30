@@ -40,7 +40,7 @@ export default tseslint.config({ ignores: ['dist', 'node_modules', 'out'] }, {
     'import/no-unresolved': 'off',
     'no-console': ['warn'],
     'no-unused-vars': 'off',
-    quotes: ['error', 'single'],
+    quotes: ['error', 'single', { avoidEscape: true }],
     'curly': ['error', 'all'],
 
     'prettier/prettier': [

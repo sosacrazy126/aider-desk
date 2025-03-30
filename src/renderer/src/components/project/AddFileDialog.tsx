@@ -1,10 +1,10 @@
 import { matchSorter } from 'match-sorter';
 import { useState, useEffect } from 'react';
 import { FaFolder } from 'react-icons/fa';
-import { RiCheckboxBlankLine, RiCheckboxFill } from 'react-icons/ri';
 
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { AutocompletionInput } from '@/components/AutocompletionInput';
+import { Checkbox } from '@/components/common/Checkbox';
 
 type Props = {
   baseDir: string;
@@ -127,13 +127,8 @@ export const AddFileDialog = ({ onClose, onAddFile, baseDir, initialReadOnly = f
         }
         onSubmit={handleAddFile}
       />
-      <div className="mt-3 ml-2 flex items-center">
-        <button type="button" onClick={toggleReadOnly} className="mr-2 focus:outline-none" aria-label="Toggle Read-Only">
-          {isReadOnly ? <RiCheckboxFill className="w-5 h-5 text-neutral-400" /> : <RiCheckboxBlankLine className="w-5 h-5 text-neutral-600" />}
-        </button>
-        <label onClick={toggleReadOnly} className="text-xs text-neutral-300 cursor-pointer select-none">
-          Read-Only
-        </label>
+      <div className="mt-3 ml-2">
+        <Checkbox label="Read-Only" checked={isReadOnly} onChange={toggleReadOnly} />
       </div>
     </ConfirmDialog>
   );

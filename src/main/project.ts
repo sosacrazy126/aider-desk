@@ -25,8 +25,6 @@ import { BrowserWindow } from 'electron';
 import treeKill from 'tree-kill';
 import { v4 as uuidv4 } from 'uuid';
 import { parse } from '@dotenvx/dotenvx';
-import { isAIMessage, isHumanMessage } from '@langchain/core/messages';
-import { extractTextContent } from 'src/main/mcp-agent/utils';
 
 import { McpAgent } from './mcp-agent';
 import { Connector } from './connector';
@@ -58,7 +56,19 @@ export class Project {
     private readonly mcpAgent: McpAgent,
   ) {}
 
-  public start() {
+  public async start(loadLastSessionMessages?: boolean, loadLastSessionFiles?: boolean) {
+    const settings = this.store.getSettings();
+
+    // Use provided values or fall back to settings
+    const shouldLoadMessages = loadLastSessionMessages !== undefined ? loadLastSessionMessages : settings.loadLastSessionMessages;
+    const shouldLoadFiles = loadLastSessionFiles !== undefined ? loadLastSessionFiles : settings.loadLastSessionFiles;
+
+    try {
+      await this.session.load(undefined, shouldLoadMessages, shouldLoadFiles);
+    } catch (error) {
+      logger.error('Error loading session:', { error });
+    }
+
     this.session.getContextFiles().forEach((contextFile) => {
       this.mainWindow.webContents.send('file-added', {
         baseDir: this.baseDir,
@@ -77,6 +87,11 @@ export class Project {
     this.connectors.push(connector);
     if (connector.listenTo.includes('add-file')) {
       this.session.getContextFiles().forEach(connector.sendAddFileMessage);
+    }
+    if (connector.listenTo.includes('add-message')) {
+      this.session.filterUserAndAssistantMessages().forEach((message) => {
+        connector.sendAddMessageMessage(message.role, message.content, false);
+      });
     }
 
     // Set input history file if provided by the connector
@@ -231,8 +246,13 @@ export class Project {
     return !!this.process;
   }
 
-  public async stop() {
-    logger.info('Stopping project...', { baseDir: this.baseDir });
+  public async close() {
+    logger.info('Closing project...', { baseDir: this.baseDir });
+    try {
+      await this.session.save();
+    } catch (error) {
+      logger.error('Failed to save session on close:', { error });
+    }
     await this.killAider();
   }
 
@@ -302,16 +322,12 @@ export class Project {
     // try MCP agent run first
     const agentMessages = await this.mcpAgent.runAgent(this, prompt, editFormat);
     if (agentMessages.length > 0) {
-      agentMessages.forEach((message) => {
-        this.session.addContextMessage(message);
+      agentMessages.forEach((message) => this.session.addContextMessage(message));
 
-        // notify connectors about new context messages
-        if (isAIMessage(message)) {
-          this.sendAddMessage(MessageRole.Assistant, extractTextContent(message.content));
-        } else if (isHumanMessage(message)) {
-          this.sendAddMessage(MessageRole.User, extractTextContent(message.content));
-        }
+      this.session.filterUserAndAssistantMessages(agentMessages).forEach((message) => {
+        this.sendAddMessage(message.role, message.content);
       });
+
       // in case MCP agent handled the prompt, return empty array of response data
       return [];
     }
@@ -450,7 +466,9 @@ export class Project {
       path: contextFile.path,
       readOnly: contextFile.readOnly,
     });
-    await this.session.addContextFile(contextFile);
+    if (!(await this.session.addContextFile(contextFile))) {
+      return;
+    }
     this.findMessageConnectors('add-file').forEach((connector) => connector.sendAddFileMessage(contextFile));
   }
 
@@ -678,7 +696,7 @@ export class Project {
     this.findMessageConnectors('apply-edits').forEach((connector) => connector.sendApplyEditsMessage(edits));
   }
 
-  public addToolMessage(serverName: string, toolName: string, args?: Record<string, unknown>, response?: string, usageReport?: UsageReportData) {
+  public addToolMessage(id: string, serverName: string, toolName: string, args?: Record<string, unknown>, response?: string, usageReport?: UsageReportData) {
     logger.debug('Sending tool message:', {
       baseDir: this.baseDir,
       serverName,
@@ -689,6 +707,7 @@ export class Project {
     });
     const data: ToolData = {
       baseDir: this.baseDir,
+      id,
       serverName,
       toolName,
       args,

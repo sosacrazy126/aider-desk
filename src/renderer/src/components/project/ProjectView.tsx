@@ -78,7 +78,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
   }, [project.baseDir]);
 
   useEffect(() => {
-    if (messages.length > 0 || modelsData) {
+    if (modelsData) {
       setLoading(false);
     }
   }, [messages, modelsData]);
@@ -184,39 +184,40 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
       });
     };
 
-    const handleTool = (_: IpcRendererEvent, { serverName, toolName, args, response, usageReport }: ToolData) => {
-      if (response) {
-        // update the last tool message with the response
-        setMessages((prevMessages) => {
-          const lastToolMessage = prevMessages.findLast(
-            (message) => isToolMessage(message) && message.serverName === serverName && message.toolName === toolName,
-          );
+    const handleTool = (_: IpcRendererEvent, { id, serverName, toolName, args, response, usageReport }: ToolData) => {
+      const createNewToolMessage = () => {
+        const toolMessage: ToolMessage = {
+          id,
+          type: 'tool',
+          serverName,
+          toolName,
+          args: args || {},
+          content: response || '',
+        };
+        return toolMessage;
+      };
 
-          return prevMessages.map((message) => {
-            if (message === lastToolMessage) {
-              return {
-                ...message,
-                content: response,
-              };
-            } else {
-              return message;
-            }
-          });
+      if (response) {
+        // update the tool message with matching id
+        setMessages((prevMessages) => {
+          const index = prevMessages.findIndex((message) => isToolMessage(message) && message.id === id);
+          const newMessages = [...prevMessages];
+
+          if (index !== -1) {
+            newMessages[index] = {
+              ...(newMessages[index] as ToolMessage),
+              content: response,
+            };
+          } else if (args) {
+            newMessages.push(createNewToolMessage());
+          }
+          return newMessages;
         });
       } else if (args) {
-        // create a new tool message with the args
-        const toolMessage: ToolMessage = {
-          id: uuidv4(),
-          type: 'tool',
-          serverName: serverName,
-          toolName: toolName,
-          args,
-          content: '',
-        };
         setMessages((prevMessages) => {
           const loadingMessages = prevMessages.filter(isLoadingMessage);
           const nonLoadingMessages = prevMessages.filter((message) => !isLoadingMessage(message));
-          return [...nonLoadingMessages, toolMessage, ...loadingMessages];
+          return [...nonLoadingMessages, createNewToolMessage(), ...loadingMessages];
         });
       }
 
@@ -454,7 +455,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
       {loading && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-neutral-950 to-neutral-900 z-10">
           <CgSpinner className="animate-spin w-10 h-10" />
-          <div className="mt-2 text-sm text-center text-white">Loading...</div>
+          <div className="mt-2 text-sm text-center text-white">Starting up...</div>
         </div>
       )}
       <div className="flex flex-col flex-grow overflow-hidden">

@@ -40,6 +40,7 @@ export interface LogData {
 
 export interface ToolData {
   baseDir: string;
+  id: string;
   serverName: string;
   toolName: string;
   args?: Record<string, unknown>;
@@ -115,6 +116,8 @@ export interface ModelsData {
 
 export interface SettingsData {
   onboardingFinished?: boolean;
+  loadLastSessionMessages?: boolean;
+  loadLastSessionFiles?: boolean;
   aider: {
     options: string;
     environmentVariables: string;

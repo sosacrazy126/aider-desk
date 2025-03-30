@@ -1,8 +1,9 @@
 # Changelog
 
-## [0.6.1]
+## [0.7.0]
 
 - added support for Deepseek provider in MCP agent
+- added General settings with Start Up section with options to load context messages and files from last session
 
 ## [0.6.0]
 

@@ -8,17 +8,12 @@ export const createAiderTools = (project: Project, editFormat: EditFormat = 'cod
   const getContextFilesTool = tool(
     async () => {
       const files = project.getContextFiles();
-      const response = JSON.stringify(files);
-
-      project.addToolMessage('aider', 'get_context_files', undefined, response);
-
-      return response;
+      return JSON.stringify(files);
     },
     {
       name: 'aider-get_context_files',
       description: 'Get all files currently in the context for Aider to use',
       schema: z.object({
-        // eslint-disable-next-line quotes
         projectDir: z.string().describe("The project directory. Can be '.' for current project."),
       }),
     },
@@ -30,8 +25,6 @@ export const createAiderTools = (project: Project, editFormat: EditFormat = 'cod
         path: params.path,
         readOnly: params.readOnly || false,
       });
-
-      project.addToolMessage('aider', 'add_context_file', undefined, `Added file: ${params.path}`);
 
       return `Added file: ${params.path}`;
     },
@@ -48,8 +41,6 @@ export const createAiderTools = (project: Project, editFormat: EditFormat = 'cod
   const dropContextFileTool = tool(
     async (params: { path: string }) => {
       project.dropFile(params.path);
-
-      project.addToolMessage('aider', 'drop_context_file', undefined, `Dropped file: ${params.path}`);
 
       return `Dropped file: ${params.path}`;
     },
@@ -74,11 +65,7 @@ export const createAiderTools = (project: Project, editFormat: EditFormat = 'cod
 
       const editedFiles = responses.flatMap((response) => response.editedFiles || []).filter((value, index, self) => self.indexOf(value) === index); // Unique files
 
-      const result = `${mergedResponse}\n\nUsing the above information I have updated the following files: ${editedFiles.join(', ')}`;
-
-      project.addToolMessage('aider', 'run_prompt', undefined, result);
-
-      return result;
+      return `${mergedResponse}\n\nUsing the above information I have updated the following files: ${editedFiles.join(', ')}`;
     },
     {
       name: 'aider-run_prompt',

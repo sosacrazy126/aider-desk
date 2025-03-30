@@ -3,7 +3,7 @@ import path from 'path';
 
 import { ContextFile, ContextMessage, EditFormat, getActiveProvider, McpServerConfig, McpTool, UsageReportData } from '@common/types';
 import { ChatAnthropic } from '@langchain/anthropic';
-import { AIMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
+import { AIMessage, HumanMessage, SystemMessage, ToolMessage } from '@langchain/core/messages';
 import { StructuredTool, tool } from '@langchain/core/tools';
 import { ChatOpenAI } from '@langchain/openai';
 import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
@@ -22,7 +22,7 @@ import logger from '../logger';
 import { Store } from '../store';
 import { Project } from '../project';
 
-import { calculateCost, extractTextContent, isTextContent } from './utils';
+import { calculateCost, isTextContent } from './utils';
 import { createAiderTools } from './tools/aider';
 
 import type { JsonSchema } from '@n8n/json-schema-to-zod';
@@ -349,7 +349,7 @@ export class McpAgent {
     // Get MCP server tools
     const mcpServerTools = enabledClients.flatMap((clientHolder) =>
       clientHolder.tools.map((tool) =>
-        convertMpcToolToLangchainTool(project, clientHolder.serverName, clientHolder.client, tool, getActiveProvider(mcpAgent.providers)!),
+        convertMpcToolToLangchainTool(clientHolder.serverName, clientHolder.client, tool, getActiveProvider(mcpAgent.providers)!),
       ),
     );
 
@@ -407,7 +407,7 @@ export class McpAgent {
 
         if (!aiMessage.tool_calls?.length) {
           // If no tool calls, check if there's message to add to context
-          const textContent = extractTextContent(aiMessage.content);
+          const textContent = aiMessage.text;
 
           if (textContent) {
             project.processResponseMessage({
@@ -416,10 +416,6 @@ export class McpAgent {
               finished: true,
               usageReport,
             });
-
-            // Add the final AI message to the new messages
-            const finalMessage = new AIMessage(textContent);
-            newMessages.push(finalMessage);
 
             return newMessages;
           } else {
@@ -454,28 +450,30 @@ export class McpAgent {
           }
 
           const [serverName, toolName] = this.extractServerNameToolName(toolCall.name);
-          project.addToolMessage(serverName, toolName, toolCall.args);
+          project.addToolMessage(toolCall.id!, serverName, toolName, toolCall.args);
 
           try {
-            const toolResponse = await selectedTool.invoke(toolCall);
+            const toolMessage: ToolMessage | null = await selectedTool.invoke(toolCall);
 
             logger.debug(`Tool ${toolCall.name} returned response`, {
-              toolResponse,
+              toolMessage,
             });
-            if (!toolResponse) {
+            if (!toolMessage) {
               logger.warn(`Tool ${toolCall.name} didn't return a response`);
               return newMessages;
             }
 
+            project.addToolMessage(toolCall.id!, serverName, toolName, undefined, toolMessage.text);
+
             // Add tool message to messages
-            newMessages.push(toolResponse);
+            newMessages.push(toolMessage);
           } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
             logger.error(`Error invoking tool ${toolCall.name}:`, error);
 
             // Send log message about the tool error
             project.addLogMessage('error', `Tool ${toolCall.name} failed: ${errorMessage}`);
-            project.addToolMessage(serverName, toolName, undefined, errorMessage);
+            project.addToolMessage(toolCall.id!, serverName, toolName, undefined, errorMessage);
 
             // Add user message to messages for next iteration
             const errorHumanMessage = new HumanMessage(errorMessage);
@@ -652,7 +650,7 @@ Operating System: ${osInfo}`;
   }
 }
 
-const convertMpcToolToLangchainTool = (project: Project, serverName: string, client: Client, toolDef: McpTool, provider: LlmProvider): StructuredTool => {
+const convertMpcToolToLangchainTool = (serverName: string, client: Client, toolDef: McpTool, provider: LlmProvider): StructuredTool => {
   const normalizeSchemaForProvider = (schema: JsonSchema): JsonSchema => {
     // Deepseek uses OpenAI compatible API, so no specific normalization needed for now.
     // If specific needs arise, add them here.
@@ -708,16 +706,9 @@ const convertMpcToolToLangchainTool = (project: Project, serverName: string, cli
           }
         };
 
-        const content = extractContent(response)?.slice(0, MAX_SAFE_TOOL_RESULT_CONTENT_LENGTH);
-
-        if (content) {
-          project.addToolMessage(serverName, toolDef.name, undefined, content);
-        }
-
-        return content;
+        return extractContent(response)?.slice(0, MAX_SAFE_TOOL_RESULT_CONTENT_LENGTH);
       } catch (error) {
         logger.error(`Error calling tool ${toolDef.name}:`, error);
-        project.addToolMessage(serverName, toolDef.name, undefined, (error as Error).message);
         return `Error calling tool: ${(error as Error).message}`;
       }
     },

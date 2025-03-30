@@ -245,8 +245,8 @@ export const McpSettings = ({ settings, setSettings }: Props) => {
               ))
             )}
             <div className="flex justify-center">
-              <Button onClick={() => setIsAddingServer(true)} variant="text" className="mt-3 flex items-center">
-                <FaPlus className="mr-2" /> Add server
+              <Button onClick={() => setIsAddingServer(true)} variant="text" className="mt-3 flex items-center text-sm">
+                <FaPlus className="mr-2 w-2 h-2" /> Add server
               </Button>
             </div>
           </div>
