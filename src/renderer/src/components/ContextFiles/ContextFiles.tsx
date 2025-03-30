@@ -1,5 +1,6 @@
 import { ContextFile } from '@common/types';
 import React, { useEffect, useMemo, useState } from 'react';
+import objectHash from 'object-hash';
 import { StaticTreeDataProvider, Tree, UncontrolledTreeEnvironment } from 'react-complex-tree';
 import { HiPlus, HiX } from 'react-icons/hi';
 import { TbPencilOff } from 'react-icons/tb';
@@ -70,6 +71,7 @@ export const ContextFiles = ({ baseDir, showFileDialog }: Props) => {
 
   useEffect(() => {
     const listenerId = window.api.addContextFilesUpdatedListener(baseDir, (_, { files: updatedFiles }) => {
+      console.log('Context files updated:', updatedFiles);
       setFiles(updatedFiles);
 
       // Handle highlighting of new files
@@ -87,7 +89,13 @@ export const ContextFiles = ({ baseDir, showFileDialog }: Props) => {
     };
   }, [baseDir, files]);
 
-  const treeData = useMemo(() => createFileTree(sortedFiles), [sortedFiles]);
+  const treeKey = useMemo(() => {
+    return objectHash(sortedFiles.map((file) => file.path));
+  }, [sortedFiles]);
+
+  const treeData = useMemo(() => {
+    return createFileTree(sortedFiles);
+  }, [sortedFiles]);
 
   const dropFile = (item: TreeItem) => (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
@@ -114,7 +122,7 @@ export const ContextFiles = ({ baseDir, showFileDialog }: Props) => {
         </div>
         <div className="flex-grow w-full">
           <UncontrolledTreeEnvironment
-            key={files.length}
+            key={treeKey}
             dataProvider={
               new StaticTreeDataProvider(treeData, (item) => ({
                 ...item,

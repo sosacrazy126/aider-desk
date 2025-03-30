@@ -242,12 +242,12 @@ export class SessionManager {
 
       if (sessionData.loadFiles && sessionData.contextFiles) {
         // Drop all current files
-        this.contextFiles.forEach((contextFile) => {
+        this.getContextFiles().forEach((contextFile) => {
           this.project.sendDropFile(contextFile);
         });
 
         this.contextFiles = sessionData.contextFiles;
-        this.contextFiles.forEach((contextFile) => {
+        this.getContextFiles().forEach((contextFile) => {
           this.project.sendAddFile(contextFile);
         });
       }

@@ -48,7 +48,7 @@ export const SessionsPopup = ({ sessions, onLoadSession, onSaveSession, onUpdate
   return (
     <div className="absolute right-0 top-full mt-1 bg-neutral-800 border border-neutral-700 rounded-md shadow-lg z-50 w-64">
       <div className="">
-        <div className="p-2 text-sm font-medium border-b border-neutral-700">Sessions</div>
+        <div className="p-2 text-xs font-medium border-b border-neutral-700">SESSIONS</div>
         {sessions.length === 0 ? (
           <div className="text-xs text-neutral-400 p-2">No saved sessions</div>
         ) : (
