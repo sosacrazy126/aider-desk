@@ -199,6 +199,32 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, projectManager: Proj
     projectManager.getProject(baseDir).sendAddMessage(MessageRole.User, content);
   });
 
+  ipcMain.handle('save-session', async (_, baseDir: string, name: string, loadMessages = true, loadFiles = true) => {
+    await projectManager.getProject(baseDir).saveSession(name, loadMessages, loadFiles);
+    return true;
+  });
+
+  ipcMain.handle('load-session', async (_, baseDir: string, name: string) => {
+    await projectManager.getProject(baseDir).loadSession(name);
+    return true;
+  });
+
+  ipcMain.handle('update-session', async (_, baseDir: string, name: string, loadMessages = true, loadFiles = true) => {
+    // Just update the session settings without changing content
+    const project = projectManager.getProject(baseDir);
+    await project.saveSession(name, loadMessages, loadFiles);
+    return true;
+  });
+
+  ipcMain.handle('delete-session', async (_, baseDir: string, name: string) => {
+    await projectManager.getProject(baseDir).deleteSession(name);
+    return true;
+  });
+
+  ipcMain.handle('list-sessions', async (_, baseDir: string) => {
+    return await projectManager.getProject(baseDir).listSessions();
+  });
+
   ipcMain.handle('load-mcp-server-tools', async (_, serverName: string, config: McpServerConfig) => {
     return await mcpAgent.reloadMcpServer(serverName, config);
   });

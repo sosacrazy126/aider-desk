@@ -405,22 +405,18 @@ export class McpAgent {
 
         logger.debug(`Tool calls: ${aiMessage.tool_calls?.length}, message: ${JSON.stringify(aiMessage.content)}`);
 
+        const textContent = aiMessage.text;
+        if (textContent) {
+          project.processResponseMessage({
+            action: 'response',
+            content: textContent,
+            finished: true,
+            usageReport,
+          });
+        }
+
         if (!aiMessage.tool_calls?.length) {
-          // If no tool calls, check if there's message to add to context
-          const textContent = aiMessage.text;
-
-          if (textContent) {
-            project.processResponseMessage({
-              action: 'response',
-              content: textContent,
-              finished: true,
-              usageReport,
-            });
-
-            return newMessages;
-          } else {
-            break;
-          }
+          return newMessages;
         }
 
         for (const toolCall of aiMessage.tool_calls) {

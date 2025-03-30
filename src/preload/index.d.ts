@@ -1,3 +1,5 @@
+import type { ElectronAPI } from '@electron-toolkit/preload';
+
 import {
   AutocompletionData,
   ContextFilesUpdatedData,
@@ -8,12 +10,11 @@ import {
   QuestionData,
   ResponseChunkData,
   ResponseCompletedData,
+  SessionData,
   SettingsData,
   TokensInfoData,
   UserMessageData,
-} from '../common/types';
-
-import type { ElectronAPI } from '@electron-toolkit/preload';
+} from '@/common/types';
 
 export interface ApplicationAPI {
   loadSettings: () => Promise<SettingsData>;
@@ -45,6 +46,11 @@ export interface ApplicationAPI {
   runCommand: (baseDir: string, command: string) => void;
   scrapeWeb: (baseDir: string, url: string) => Promise<string>;
   loadMcpServerTools: (serverName: string, config: McpServerConfig) => Promise<McpTool[] | null>;
+  saveSession: (baseDir: string, name: string, loadMessages?: boolean, loadFiles?: boolean) => Promise<boolean>;
+  updateSession: (baseDir: string, name: string, loadMessages?: boolean, loadFiles?: boolean) => Promise<boolean>;
+  deleteSession: (baseDir: string, name: string) => Promise<boolean>;
+  loadSession: (baseDir: string, name: string) => Promise<boolean>;
+  listSessions: (baseDir: string) => Promise<SessionData[]>;
   getRecentProjects: () => Promise<string[]>;
   addRecentProject: (baseDir: string) => Promise<void>;
   removeRecentProject: (baseDir: string) => Promise<void>;
@@ -90,6 +96,9 @@ export interface ApplicationAPI {
 
   addInputHistoryUpdatedListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: InputHistoryData) => void) => string;
   removeInputHistoryUpdatedListener: (listenerId: string) => void;
+
+  addClearMessagesListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, baseDir: string) => void) => string;
+  removeClearMessagesListener: (listenerId: string) => void;
 }
 
 declare global {

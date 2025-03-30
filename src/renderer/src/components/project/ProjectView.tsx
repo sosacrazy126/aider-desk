@@ -291,6 +291,10 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
       });
     };
 
+    const handleClearMessages = () => {
+      clearMessages(false);
+    };
+
     const autocompletionListenerId = window.api.addUpdateAutocompletionListener(project.baseDir, handleUpdateAutocompletion);
     const currentModelsListenerId = window.api.addSetCurrentModelsListener(project.baseDir, handleSetCurrentModels);
     const commandOutputListenerId = window.api.addCommandOutputListener(project.baseDir, handleCommandOutput);
@@ -302,6 +306,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
     const toolListenerId = window.api.addToolListener(project.baseDir, handleTool);
     const inputHistoryListenerId = window.api.addInputHistoryUpdatedListener(project.baseDir, handleInputHistoryUpdate);
     const userMessageListenerId = window.api.addUserMessageListener(project.baseDir, handleUserMessage);
+    const clearMessagesListenerId = window.api.addClearMessagesListener(project.baseDir, handleClearMessages);
 
     return () => {
       window.api.removeUpdateAutocompletionListener(autocompletionListenerId);
@@ -315,6 +320,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
       window.api.removeToolListener(toolListenerId);
       window.api.removeInputHistoryUpdatedListener(inputHistoryListenerId);
       window.api.removeUserMessageListener(userMessageListenerId);
+      window.api.removeClearMessagesListener(clearMessagesListenerId);
     };
   }, [project.baseDir, processing]);
 
@@ -339,12 +345,15 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
     });
   };
 
-  const clearMessages = () => {
+  const clearMessages = (clearContext = true) => {
     const lastModelsMessage = messages.filter((message) => message.type === 'models').pop();
     setMessages(lastModelsMessage ? [lastModelsMessage] : []);
     setProcessing(false);
     processingMessageRef.current = null;
-    window.api.clearContext(project.baseDir);
+
+    if (clearContext) {
+      window.api.clearContext(project.baseDir);
+    }
   };
 
   const runCommand = (command: string) => {

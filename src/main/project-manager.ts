@@ -50,11 +50,11 @@ export class ProjectManager {
     return project;
   }
 
-  public startProject(baseDir: string, loadLastSessionMessages?: boolean, loadLastSessionFiles?: boolean) {
+  public startProject(baseDir: string) {
     logger.info('Starting project', { baseDir });
     const project = this.getProject(baseDir);
 
-    void project.start(loadLastSessionMessages, loadLastSessionFiles);
+    void project.start();
   }
 
   public async closeProject(baseDir: string) {
@@ -70,7 +70,7 @@ export class ProjectManager {
 
   public async restartProject(baseDir: string): Promise<void> {
     await this.closeProject(baseDir);
-    this.startProject(baseDir, true, true);
+    this.startProject(baseDir);
   }
 
   public async close(): Promise<void> {

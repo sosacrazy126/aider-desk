@@ -39,6 +39,7 @@ const tokensInfoListeners: Record<string, (event: Electron.IpcRendererEvent, dat
 const toolListeners: Record<string, (event: Electron.IpcRendererEvent, data: ToolData) => void> = {};
 const inputHistoryUpdatedListeners: Record<string, (event: Electron.IpcRendererEvent, data: InputHistoryData) => void> = {};
 const userMessageListeners: Record<string, (event: Electron.IpcRendererEvent, data: UserMessageData) => void> = {};
+const clearMessagesListeners: Record<string, (event: Electron.IpcRendererEvent, baseDir: string) => void> = {};
 
 const api: ApplicationAPI = {
   loadSettings: () => ipcRenderer.invoke('load-settings'),
@@ -70,6 +71,13 @@ const api: ApplicationAPI = {
   runCommand: (baseDir: string, command: string) => ipcRenderer.send('run-command', baseDir, command),
   scrapeWeb: (baseDir: string, url: string) => ipcRenderer.invoke('scrape-web', baseDir, url),
   loadMcpServerTools: (serverName: string, config: McpServerConfig) => ipcRenderer.invoke('load-mcp-server-tools', serverName, config),
+  saveSession: (baseDir: string, name: string, loadMessages = true, loadFiles = true) =>
+    ipcRenderer.invoke('save-session', baseDir, name, loadMessages, loadFiles),
+  updateSession: (baseDir: string, name: string, loadMessages = true, loadFiles = true) =>
+    ipcRenderer.invoke('update-session', baseDir, name, loadMessages, loadFiles),
+  deleteSession: (baseDir: string, name: string) => ipcRenderer.invoke('delete-session', baseDir, name),
+  loadSession: (baseDir: string, name: string) => ipcRenderer.invoke('load-session', baseDir, name),
+  listSessions: (baseDir: string) => ipcRenderer.invoke('list-sessions', baseDir),
   getRecentProjects: () => ipcRenderer.invoke('get-recent-projects'),
   addRecentProject: (baseDir: string) => ipcRenderer.invoke('add-recent-project', baseDir),
   removeRecentProject: (baseDir: string) => ipcRenderer.invoke('remove-recent-project', baseDir),
@@ -303,6 +311,25 @@ const api: ApplicationAPI = {
     if (callback) {
       ipcRenderer.removeListener('user-message', callback);
       delete userMessageListeners[listenerId];
+    }
+  },
+
+  addClearMessagesListener: (baseDir, callback) => {
+    const listenerId = uuidv4();
+    clearMessagesListeners[listenerId] = (event: Electron.IpcRendererEvent, receivedBaseDir: string) => {
+      if (!compareBaseDirs(receivedBaseDir, baseDir)) {
+        return;
+      }
+      callback(event, receivedBaseDir);
+    };
+    ipcRenderer.on('clear-messages', clearMessagesListeners[listenerId]);
+    return listenerId;
+  },
+  removeClearMessagesListener: (listenerId) => {
+    const callback = clearMessagesListeners[listenerId];
+    if (callback) {
+      ipcRenderer.removeListener('clear-messages', callback);
+      delete clearMessagesListeners[listenerId];
     }
   },
 };

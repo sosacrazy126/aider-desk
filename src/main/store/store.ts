@@ -1,4 +1,4 @@
-import { ProjectData, ProjectSettings, SettingsData, WindowState } from '@common/types';
+import { ProjectData, ProjectSettings, SettingsData, StartupMode, WindowState } from '@common/types';
 import { normalizeBaseDir } from '@common/utils';
 import { PROVIDER_MODELS } from '@common/llm-providers';
 
@@ -10,8 +10,8 @@ import { migrateSettingsV1toV2 } from './migrations/v1-to-v2';
 export const DEFAULT_MAIN_MODEL = 'claude-3-7-sonnet-20250219';
 
 export const DEFAULT_SETTINGS: SettingsData = {
-  loadLastSessionMessages: false,
-  loadLastSessionFiles: false,
+  startupMode: StartupMode.Empty,
+  startupSessionName: '',
   aider: {
     options: '',
     environmentVariables: '',

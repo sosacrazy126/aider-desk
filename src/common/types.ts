@@ -60,6 +60,15 @@ export interface AutocompletionData {
   models: string[];
 }
 
+export interface SessionData {
+  name: string;
+  active: boolean;
+  loadMessages?: boolean;
+  loadFiles?: boolean;
+  messages?: number;
+  files?: number;
+}
+
 export interface QuestionData {
   baseDir: string;
   text: string;
@@ -114,10 +123,16 @@ export interface ModelsData {
   error?: string;
 }
 
+export enum StartupMode {
+  Empty = 'empty',
+  Last = 'last',
+  Specific = 'specific',
+}
+
 export interface SettingsData {
   onboardingFinished?: boolean;
-  loadLastSessionMessages?: boolean;
-  loadLastSessionFiles?: boolean;
+  startupMode?: StartupMode;
+  startupSessionName?: string;
   aider: {
     options: string;
     environmentVariables: string;

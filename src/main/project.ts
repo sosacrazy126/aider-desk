@@ -16,6 +16,8 @@ import {
   QuestionData,
   ResponseChunkData,
   ResponseCompletedData,
+  SessionData,
+  StartupMode,
   ToolData,
   UsageReportData,
   UserMessageData,
@@ -26,9 +28,9 @@ import treeKill from 'tree-kill';
 import { v4 as uuidv4 } from 'uuid';
 import { parse } from '@dotenvx/dotenvx';
 
+import { SessionManager } from './session-manager';
 import { McpAgent } from './mcp-agent';
 import { Connector } from './connector';
-import { Session } from './session';
 import { AIDER_DESK_CONNECTOR_DIR, PID_FILES_DIR, PYTHON_COMMAND, SERVER_PORT } from './constants';
 import logger from './logger';
 import { MessageAction, ResponseMessage } from './messages';
@@ -47,7 +49,7 @@ export class Project {
   private models: ModelsData | null = null;
   private currentPromptResponses: ResponseCompletedData[] = [];
   private runPromptResolves: ((value: ResponseCompletedData[]) => void)[] = [];
-  private session: Session = new Session(this);
+  private sessionManager: SessionManager = new SessionManager(this);
 
   constructor(
     private readonly mainWindow: BrowserWindow,
@@ -56,20 +58,38 @@ export class Project {
     private readonly mcpAgent: McpAgent,
   ) {}
 
-  public async start(loadLastSessionMessages?: boolean, loadLastSessionFiles?: boolean) {
+  public async start() {
     const settings = this.store.getSettings();
 
-    // Use provided values or fall back to settings
-    const shouldLoadMessages = loadLastSessionMessages !== undefined ? loadLastSessionMessages : settings.loadLastSessionMessages;
-    const shouldLoadFiles = loadLastSessionFiles !== undefined ? loadLastSessionFiles : settings.loadLastSessionFiles;
-
     try {
-      await this.session.load(undefined, shouldLoadMessages, shouldLoadFiles);
+      // Handle different startup modes
+      switch (settings.startupMode) {
+        case StartupMode.Empty:
+          // Don't load any session, start fresh
+          logger.info('Starting with empty session');
+          break;
+
+        case StartupMode.Last:
+          // Load the last active session
+          logger.info('Loading last active session');
+          await this.sessionManager.loadLastActive();
+          break;
+
+        case StartupMode.Specific:
+          if (settings.startupSessionName) {
+            // Load the specific session
+            logger.info(`Loading specific session: ${settings.startupSessionName}`);
+            await this.sessionManager.load(settings.startupSessionName);
+          } else {
+            logger.warn('Specific session mode selected but no session name provided, starting with empty session');
+          }
+          break;
+      }
     } catch (error) {
       logger.error('Error loading session:', { error });
     }
 
-    this.session.getContextFiles().forEach((contextFile) => {
+    this.sessionManager.getContextFiles().forEach((contextFile) => {
       this.mainWindow.webContents.send('file-added', {
         baseDir: this.baseDir,
         file: contextFile,
@@ -86,10 +106,10 @@ export class Project {
     });
     this.connectors.push(connector);
     if (connector.listenTo.includes('add-file')) {
-      this.session.getContextFiles().forEach(connector.sendAddFileMessage);
+      this.sessionManager.getContextFiles().forEach(connector.sendAddFileMessage);
     }
     if (connector.listenTo.includes('add-message')) {
-      this.session.filterUserAndAssistantMessages().forEach((message) => {
+      this.sessionManager.filterUserAndAssistantMessages().forEach((message) => {
         connector.sendAddMessageMessage(message.role, message.content, false);
       });
     }
@@ -249,11 +269,41 @@ export class Project {
   public async close() {
     logger.info('Closing project...', { baseDir: this.baseDir });
     try {
-      await this.session.save();
+      await this.sessionManager.save();
     } catch (error) {
       logger.error('Failed to save session on close:', { error });
     }
     await this.killAider();
+  }
+
+  public async saveSession(name: string, loadMessages = true, loadFiles = true): Promise<void> {
+    logger.info('Saving session:', {
+      baseDir: this.baseDir,
+      name,
+      loadMessages,
+      loadFiles,
+    });
+    await this.sessionManager.save(name, loadMessages, loadFiles);
+  }
+
+  public async deleteSession(name: string): Promise<void> {
+    logger.info('Deleting session:', { baseDir: this.baseDir, name });
+    const lastActiveSession = this.sessionManager.getActiveSessionName();
+    await this.sessionManager.delete(name);
+
+    if (lastActiveSession !== this.sessionManager.getActiveSessionName()) {
+      await this.sessionManager.loadLastActive();
+    }
+  }
+
+  public async loadSession(name: string): Promise<void> {
+    logger.info('Loading session:', { baseDir: this.baseDir, name });
+    await this.sessionManager.save();
+    await this.sessionManager.load(name);
+  }
+
+  public async listSessions(): Promise<SessionData[]> {
+    return this.sessionManager.getAllSessions();
   }
 
   private async killAider(): Promise<void> {
@@ -281,7 +331,7 @@ export class Project {
         this.runPromptResolves.forEach((resolve) => resolve([]));
         this.runPromptResolves = [];
 
-        this.session.clearMessages();
+        this.sessionManager.clearMessages();
       } catch (error: unknown) {
         logger.error('Error killing Aider process:', { error });
         throw error;
@@ -322,9 +372,9 @@ export class Project {
     // try MCP agent run first
     const agentMessages = await this.mcpAgent.runAgent(this, prompt, editFormat);
     if (agentMessages.length > 0) {
-      agentMessages.forEach((message) => this.session.addContextMessage(message));
+      agentMessages.forEach((message) => this.sessionManager.addContextMessage(message));
 
-      this.session.filterUserAndAssistantMessages(agentMessages).forEach((message) => {
+      this.sessionManager.filterUserAndAssistantMessages(agentMessages).forEach((message) => {
         this.sendAddMessage(message.role, message.content);
       });
 
@@ -335,10 +385,10 @@ export class Project {
     const responses = await this.sendPrompt(prompt, editFormat);
 
     // add messages to session
-    this.session.addContextMessage(MessageRole.User, prompt);
+    this.sessionManager.addContextMessage(MessageRole.User, prompt);
     for (const response of responses) {
       if (response.content) {
-        this.session.addContextMessage(MessageRole.Assistant, response.content);
+        this.sessionManager.addContextMessage(MessageRole.Assistant, response.content);
       }
     }
 
@@ -466,20 +516,28 @@ export class Project {
       path: contextFile.path,
       readOnly: contextFile.readOnly,
     });
-    if (!(await this.session.addContextFile(contextFile))) {
+    if (!(await this.sessionManager.addContextFile(contextFile))) {
       return;
     }
+    this.sendAddFile(contextFile);
+  }
+
+  public sendAddFile(contextFile: ContextFile) {
     this.findMessageConnectors('add-file').forEach((connector) => connector.sendAddFileMessage(contextFile));
   }
 
   public dropFile(filePath: string): void {
     logger.info('Dropping file:', { path: filePath });
-    // Check if file is outside project directory
-    const absolutePath = path.resolve(this.baseDir, filePath);
-    const isOutsideProject = !absolutePath.startsWith(path.resolve(this.baseDir));
+    const file = this.sessionManager.dropContextFile(filePath);
+    if (file) {
+      this.sendDropFile(file);
+    }
+  }
 
-    const file = this.session.dropContextFile(filePath);
-    const pathToSend = file?.readOnly || isOutsideProject ? absolutePath : filePath.startsWith(this.baseDir) ? filePath : path.join(this.baseDir, filePath);
+  public sendDropFile(file: ContextFile): void {
+    const absolutePath = path.resolve(this.baseDir, file.path);
+    const isOutsideProject = !absolutePath.startsWith(path.resolve(this.baseDir));
+    const pathToSend = file?.readOnly || isOutsideProject ? absolutePath : file.path.startsWith(this.baseDir) ? file.path : path.join(this.baseDir, file.path);
 
     this.findMessageConnectors('drop-file').forEach((connector) => connector.sendDropFileMessage(pathToSend));
   }
@@ -494,7 +552,7 @@ export class Project {
   }
 
   public updateContextFiles(contextFiles: ContextFile[]) {
-    this.session.setContextFiles(contextFiles);
+    this.sessionManager.setContextFiles(contextFiles);
 
     this.mainWindow.webContents.send('context-files-updated', {
       baseDir: this.baseDir,
@@ -636,7 +694,7 @@ export class Project {
   }
 
   public getContextFiles(): ContextFile[] {
-    return this.session.getContextFiles();
+    return this.sessionManager.getContextFiles();
   }
 
   public openCommandOutput(command: string) {
@@ -667,7 +725,7 @@ export class Project {
   }
 
   public getContextMessages() {
-    return this.session.getContextMessages();
+    return this.sessionManager.getContextMessages();
   }
 
   public sendAddMessage(role: MessageRole = MessageRole.User, content: string, acknowledge = true) {
@@ -681,8 +739,9 @@ export class Project {
   }
 
   public clearContext() {
-    this.session.clearMessages();
+    this.sessionManager.clearMessages();
     this.runCommand('clear');
+    this.mainWindow.webContents.send('clear-messages', this.baseDir);
   }
 
   public interruptResponse() {
