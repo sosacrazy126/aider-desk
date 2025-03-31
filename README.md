@@ -149,7 +149,7 @@ MCP connects AI models to external tools like web browsers, documentation system
 ### Key Features:
 
 - **Tool Integration**: Connect to browsers, documentation systems, and language-specific tools.
-- **Provider Options**: Choose between OpenAI, Anthropic, Gemini and Bedrock models.
+- **Provider Options**: Choose between OpenAI, Anthropic, Gemini, Deepseek, Amazon Bedrock and custom OpenAI compatible providers.
 - **Flexible Configuration**: Enable/disable servers, customize settings, and control usage.
 - **Seamless Workflow**: MCP tools gather information, then Aider implements the code changes.
 - **Aider Tools**: Use Aider tools to perform add/drop context files actions and run prompts.

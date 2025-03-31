@@ -44,7 +44,7 @@ export const Select = ({ label, className = '', options = [], value, onChange }:
 
       {isOpen && (
         <ul
-          className="absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-md bg-neutral-800 py-1 text-base ring-1 shadow-lg ring-black/5 focus:outline-hidden text-sm"
+          className="absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-md bg-neutral-800 py-1 ring-1 shadow-lg ring-black/5 focus:outline-hidden text-sm scrollbar-thin scrollbar-track-neutral-800 scrollbar-thumb-neutral-600 hover:scrollbar-thumb-neutral-200"
           role="listbox"
         >
           {options.map((opt) => (

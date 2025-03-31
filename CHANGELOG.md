@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.7.1]
+
+- added support for OpenAI compatible providers in MCP agent
+
 ## [0.7.0]
 
 - added support for Deepseek provider in MCP agent

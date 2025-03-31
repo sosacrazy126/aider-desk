@@ -15,7 +15,15 @@ import { jsonSchemaToZod } from '@n8n/json-schema-to-zod';
 import { v4 as uuidv4 } from 'uuid';
 import { delay } from '@common/utils';
 import { BaseMessage } from '@langchain/core/dist/messages/base';
-import { isAnthropicProvider, isBedrockProvider, isDeepseekProvider, isGeminiProvider, isOpenAiProvider, LlmProvider } from '@common/llm-providers';
+import {
+  isAnthropicProvider,
+  isBedrockProvider,
+  isDeepseekProvider,
+  isGeminiProvider,
+  isOpenAiCompatibleProvider,
+  isOpenAiProvider,
+  LlmProvider,
+} from '@common/llm-providers';
 import { BaseChatModel } from '@langchain/core/dist/language_models/chat_models';
 
 import logger from '../logger';
@@ -147,6 +155,33 @@ export class McpAgent {
         temperature: 0,
         maxTokens: maxTokens,
         apiKey: provider.apiKey,
+      });
+    } else if (isOpenAiCompatibleProvider(provider)) {
+      if (!provider.apiKey) {
+        throw new Error('API key is required for OpenAI Compatible provider');
+      }
+      if (!provider.baseUrl) {
+        throw new Error('Base URL is required for OpenAI Compatible provider');
+      }
+      if (!provider.model) {
+        throw new Error('Model name is required for OpenAI Compatible provider');
+      }
+      return new ChatOpenAI({
+        model: provider.model,
+        temperature: 0,
+        maxTokens: maxTokens,
+        apiKey: provider.apiKey,
+        configuration: {
+          baseURL: provider.baseUrl,
+        },
+        onFailedAttempt: (error) => {
+          if (error.message.includes('404 No endpoints found that support tool use')) {
+            // when OpenRouter does not support tool use
+            throw error;
+          }
+
+          logger.error('OpenAI Compatible provider failed attempt:', error);
+        },
       });
     } else if (isBedrockProvider(provider)) {
       if (!provider.region) {

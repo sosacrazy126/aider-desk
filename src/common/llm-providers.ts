@@ -1,4 +1,4 @@
-export type ProviderName = 'openai' | 'anthropic' | 'gemini' | 'bedrock' | 'deepseek';
+export type ProviderName = 'openai' | 'anthropic' | 'gemini' | 'bedrock' | 'deepseek' | 'openai-compatible';
 
 export interface LlmProviderBase {
   name: ProviderName;
@@ -12,6 +12,7 @@ export const AVAILABLE_PROVIDERS = [
   { value: 'gemini', label: 'Gemini' },
   { value: 'bedrock', label: 'Bedrock' },
   { value: 'deepseek', label: 'Deepseek' },
+  { value: 'openai-compatible', label: 'OpenAI Compatible' },
 ];
 
 export interface OpenAiProvider extends LlmProviderBase {
@@ -46,7 +47,14 @@ export interface BedrockProvider extends LlmProviderBase {
 }
 export const isBedrockProvider = (provider: LlmProviderBase): provider is BedrockProvider => provider.name === 'bedrock';
 
-export type LlmProvider = OpenAiProvider | AnthropicProvider | GeminiProvider | BedrockProvider | DeepseekProvider;
+export interface OpenAiCompatibleProvider extends LlmProviderBase {
+  name: 'openai-compatible';
+  apiKey: string;
+  baseUrl?: string;
+}
+export const isOpenAiCompatibleProvider = (provider: LlmProviderBase): provider is OpenAiCompatibleProvider => provider.name === 'openai-compatible';
+
+export type LlmProvider = OpenAiProvider | AnthropicProvider | GeminiProvider | BedrockProvider | DeepseekProvider | OpenAiCompatibleProvider;
 
 export const PROVIDER_MODELS = {
   openai: {

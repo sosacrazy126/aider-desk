@@ -10,11 +10,12 @@ import {
   isAnthropicProvider,
   isGeminiProvider,
   isDeepseekProvider,
+  isOpenAiCompatibleProvider,
 } from '@common/llm-providers';
 
 import { McpServerForm } from './McpServerForm';
 import { McpServerItem } from './McpServerItem';
-import { OpenAiParameters, AnthropicParameters, GeminiParameters, BedrockParameters, DeepseekParameters } from './providers';
+import { OpenAiParameters, AnthropicParameters, GeminiParameters, BedrockParameters, DeepseekParameters, OpenAiCompatibleParameters } from './providers';
 
 import { Select } from '@/components/common/Select';
 import { Button } from '@/components/common/Button';
@@ -63,7 +64,7 @@ export const McpSettings = ({ settings, setSettings }: Props) => {
         newProvider = {
           name: newProviderName,
           apiKey: '',
-          model: Object.keys(PROVIDER_MODELS[newProviderName].models)[0],
+          model: Object.keys(PROVIDER_MODELS[newProviderName]?.models || {})?.[0] || '',
           active: true,
         } as LlmProvider;
       }
@@ -159,16 +160,12 @@ export const McpSettings = ({ settings, setSettings }: Props) => {
               <div>
                 <Select label="Provider" value={activeProvider?.name || ''} onChange={handleProviderChanged} options={AVAILABLE_PROVIDERS} />
               </div>
-
               {activeProvider && isOpenAiProvider(activeProvider) && <OpenAiParameters settings={settings} setSettings={setSettings} />}
-
               {activeProvider && isAnthropicProvider(activeProvider) && <AnthropicParameters settings={settings} setSettings={setSettings} />}
-
               {activeProvider && isGeminiProvider(activeProvider) && <GeminiParameters settings={settings} setSettings={setSettings} />}
-
               {activeProvider && isDeepseekProvider(activeProvider) && <DeepseekParameters settings={settings} setSettings={setSettings} />}
-
               {activeProvider && isBedrockProvider(activeProvider) && <BedrockParameters settings={settings} setSettings={setSettings} />}
+              {activeProvider && isOpenAiCompatibleProvider(activeProvider) && <OpenAiCompatibleParameters settings={settings} setSettings={setSettings} />}
             </div>
             <div>
               <div>
