@@ -3,6 +3,7 @@
 ## [0.7.2]
 
 - correctly showing MCP config tab on Configure servers action
+- option to disable specific MCP server tools
 
 ## [0.7.1]
 

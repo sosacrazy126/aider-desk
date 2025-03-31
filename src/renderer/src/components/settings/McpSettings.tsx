@@ -1,4 +1,4 @@
-import { getActiveProvider, McpAgent, McpServerConfig, SettingsData } from '@common/types';
+import { McpAgent, McpServerConfig, SettingsData } from '@common/types';
 import { useState } from 'react';
 import { FaPlus } from 'react-icons/fa';
 import {
@@ -11,6 +11,7 @@ import {
   isGeminiProvider,
   isDeepseekProvider,
   isOpenAiCompatibleProvider,
+  getActiveProvider,
 } from '@common/llm-providers';
 
 import { McpServerForm } from './McpServerForm';
@@ -36,6 +37,18 @@ type EditingServer = {
 };
 
 export const McpSettings = ({ settings, setSettings }: Props) => {
+  const handleToggleTool = (toolId: string) => {
+    const disabledTools = settings.mcpAgent.disabledTools;
+    const updatedDisabledTools = disabledTools.includes(toolId) ? disabledTools.filter((id) => id !== toolId) : [...disabledTools, toolId];
+
+    setSettings({
+      ...settings,
+      mcpAgent: {
+        ...settings.mcpAgent,
+        disabledTools: updatedDisabledTools,
+      },
+    });
+  };
   const { mcpAgent } = settings;
   const [isAddingServer, setIsAddingServer] = useState(false);
   const [editingServer, setEditingServer] = useState<EditingServer | null>(null);
@@ -238,6 +251,8 @@ export const McpSettings = ({ settings, setSettings }: Props) => {
                   config={config}
                   onRemove={() => handleServerConfigRemove(serverName)}
                   onEdit={() => setEditingServer({ name: serverName, config })}
+                  toggleToolDisabled={handleToggleTool}
+                  disabledTools={mcpAgent.disabledTools}
                 />
               ))
             )}

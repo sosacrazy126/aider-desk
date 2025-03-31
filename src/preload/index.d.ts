@@ -14,6 +14,10 @@ import {
   SettingsData,
   TokensInfoData,
   UserMessageData,
+  McpServerConfig,
+  McpTool,
+  ToolData,
+  CommandOutputData,
 } from '@/common/types';
 
 export interface ApplicationAPI {
@@ -45,7 +49,7 @@ export interface ApplicationAPI {
   dropFile: (baseDir: string, path: string) => void;
   runCommand: (baseDir: string, command: string) => void;
   scrapeWeb: (baseDir: string, url: string) => Promise<string>;
-  loadMcpServerTools: (serverName: string, config: McpServerConfig) => Promise<McpTool[] | null>;
+  loadMcpServerTools: (serverName: string, config?: McpServerConfig) => Promise<McpTool[] | null>;
   saveSession: (baseDir: string, name: string, loadMessages?: boolean, loadFiles?: boolean) => Promise<boolean>;
   updateSession: (baseDir: string, name: string, loadMessages?: boolean, loadFiles?: boolean) => Promise<boolean>;
   deleteSession: (baseDir: string, name: string) => Promise<boolean>;

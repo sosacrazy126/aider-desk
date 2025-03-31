@@ -153,14 +153,11 @@ export interface McpAgent {
   };
   agentEnabled: boolean;
   disabledServers: string[];
+  disabledTools: string[];
   systemPrompt: string;
   includeContextFiles: boolean;
   useAiderTools: boolean;
 }
-
-export const getActiveProvider = (providers: LlmProvider[]): LlmProvider | null => {
-  return providers.find((provider) => provider.active) || null;
-};
 
 export interface UsageReportData {
   sentTokens: number;

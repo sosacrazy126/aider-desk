@@ -1,6 +1,8 @@
 import { McpServerConfig, McpTool } from '@common/types';
-import { useState, useEffect } from 'react';
-import { FaTrash, FaPencilAlt } from 'react-icons/fa';
+import { useEffect, useState } from 'react';
+import { FaPencilAlt, FaTrash } from 'react-icons/fa';
+
+import { McpToolItem } from './McpToolItem';
 
 import { Accordion } from '@/components/common/Accordion';
 import { IconButton } from '@/components/common/IconButton';
@@ -10,9 +12,11 @@ type Props = {
   config: McpServerConfig;
   onRemove: () => void;
   onEdit?: () => void;
+  toggleToolDisabled: (toolId: string) => void;
+  disabledTools: string[];
 };
 
-export const McpServerItem = ({ serverName, config, onRemove, onEdit }: Props) => {
+export const McpServerItem = ({ serverName, config, onRemove, onEdit, toggleToolDisabled, disabledTools }: Props) => {
   const [tools, setTools] = useState<McpTool[] | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -39,7 +43,15 @@ export const McpServerItem = ({ serverName, config, onRemove, onEdit }: Props) =
           {loading ? (
             <span className="text-xs text-neutral-400">Loading...</span>
           ) : (
-            tools !== null && tools.length > 0 && <span className="text-xs mr-3 text-neutral-400">{tools.length} tools</span>
+            tools !== null &&
+            tools.length > 0 && (
+              <span className="text-xs mr-3 text-neutral-400">
+                {(() => {
+                  const enabledCount = tools.length - disabledTools.filter((disabledTool) => disabledTool.startsWith(serverName)).length;
+                  return enabledCount === tools.length ? `${tools.length} tools` : `${enabledCount} of ${tools.length} tools`;
+                })()}
+              </span>
+            )
           )}
           {!loading && (
             <div className="flex items-center">
@@ -62,14 +74,16 @@ export const McpServerItem = ({ serverName, config, onRemove, onEdit }: Props) =
           <div className="text-xs text-neutral-500 p-2">Loading tools...</div>
         ) : tools && tools.length > 0 ? (
           <div>
-            <ul className="text-xs p-2 rounded mt-1 space-y-2">
-              {tools.map((tool, index) => (
-                <li key={index} className="border border-neutral-700 rounded p-2">
-                  <div className="font-bold text-sm mb-1">{tool.name}</div>
-                  <div className="text-neutral-400">{tool.description || 'No description'}</div>
-                </li>
+            <div className="text-xs p-2 rounded mt-1 space-y-2">
+              {tools.map((tool) => (
+                <McpToolItem
+                  key={tool.name}
+                  tool={tool}
+                  toggleDisabled={() => toggleToolDisabled(`${serverName}-${tool.name}`)}
+                  isDisabled={disabledTools.includes(`${serverName}-${tool.name}`)}
+                />
               ))}
-            </ul>
+            </div>
           </div>
         ) : (
           <div className="text-xs text-neutral-500 p-4">No tools could be found. Check your configuration.</div>

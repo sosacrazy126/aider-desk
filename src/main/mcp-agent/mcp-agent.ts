@@ -1,7 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 
-import { ContextFile, ContextMessage, EditFormat, getActiveProvider, McpServerConfig, McpTool, UsageReportData } from '@common/types';
+import { ContextFile, ContextMessage, EditFormat, McpServerConfig, McpTool, UsageReportData } from '@common/types';
 import { ChatAnthropic } from '@langchain/anthropic';
 import { AIMessage, HumanMessage, SystemMessage, ToolMessage } from '@langchain/core/messages';
 import { StructuredTool, tool } from '@langchain/core/tools';
@@ -23,6 +23,7 @@ import {
   isOpenAiCompatibleProvider,
   isOpenAiProvider,
   LlmProvider,
+  getActiveProvider,
 } from '@common/llm-providers';
 import { BaseChatModel } from '@langchain/core/dist/language_models/chat_models';
 
@@ -37,6 +38,8 @@ import type { JsonSchema } from '@n8n/json-schema-to-zod';
 
 // some results are too long, so we limit the length
 const MAX_SAFE_TOOL_RESULT_CONTENT_LENGTH = 32_000;
+// increasing timeout for MCP client requests
+const MCP_CLIENT_TIMEOUT = 600_000;
 
 type ClientHolder = {
   client: Client;
@@ -237,6 +240,17 @@ export class McpAgent {
     }
   }
 
+  async getMcpServerTools(serverName: string): Promise<McpTool[] | null> {
+    // Wait for any ongoing initialization to complete
+    while (this.currentInitId) {
+      logger.debug(`MCP Agent is initializing (ID: ${this.currentInitId}), waiting...`);
+      await delay(100); // Wait for 100ms before checking again
+    }
+
+    const clientHolder = this.clients.find((client) => client.serverName === serverName);
+    return clientHolder ? clientHolder.tools : null;
+  }
+
   private async getFileSections(files: ContextFile[], project: Project): Promise<string[]> {
     // Common binary file extensions to exclude
 
@@ -383,9 +397,9 @@ export class McpAgent {
 
     // Get MCP server tools
     const mcpServerTools = enabledClients.flatMap((clientHolder) =>
-      clientHolder.tools.map((tool) =>
-        convertMpcToolToLangchainTool(clientHolder.serverName, clientHolder.client, tool, getActiveProvider(mcpAgent.providers)!),
-      ),
+      clientHolder.tools
+        .filter((tool) => !mcpAgent.disabledTools.includes(`${clientHolder.serverName}-${tool.name}`))
+        .map((tool) => convertMpcToolToLangchainTool(clientHolder.serverName, clientHolder.client, tool, getActiveProvider(mcpAgent.providers)!)),
     );
 
     // Add Aider tools if enabled
@@ -664,7 +678,9 @@ Operating System: ${osInfo}`;
 
     // Get tools from this server
     logger.debug(`Fetching tools for MCP server: ${serverName}`);
-    const tools = (await client.listTools()) as unknown as { tools: McpTool[] };
+    const tools = (await client.listTools(undefined, {
+      timeout: MCP_CLIENT_TIMEOUT,
+    })) as unknown as { tools: McpTool[] };
     logger.debug(`Found ${tools.tools.length} tools for MCP server: ${serverName}`);
 
     const clientHolder: ClientHolder = {
@@ -715,10 +731,16 @@ const convertMpcToolToLangchainTool = (serverName: string, client: Client, toolD
   return tool(
     async (params: unknown) => {
       try {
-        const response = await client.callTool({
-          name: toolDef.name,
-          arguments: params as Record<string, unknown>,
-        });
+        const response = await client.callTool(
+          {
+            name: toolDef.name,
+            arguments: params as Record<string, unknown>,
+          },
+          undefined,
+          {
+            timeout: MCP_CLIENT_TIMEOUT,
+          },
+        );
 
         logger.debug(`Tool ${toolDef.name} returned response`, { response });
 

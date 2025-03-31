@@ -70,7 +70,7 @@ const api: ApplicationAPI = {
   dropFile: (baseDir: string, path: string) => ipcRenderer.send('drop-file', baseDir, path),
   runCommand: (baseDir: string, command: string) => ipcRenderer.send('run-command', baseDir, command),
   scrapeWeb: (baseDir: string, url: string) => ipcRenderer.invoke('scrape-web', baseDir, url),
-  loadMcpServerTools: (serverName: string, config: McpServerConfig) => ipcRenderer.invoke('load-mcp-server-tools', serverName, config),
+  loadMcpServerTools: (serverName: string, config?: McpServerConfig) => ipcRenderer.invoke('load-mcp-server-tools', serverName, config),
   saveSession: (baseDir: string, name: string, loadMessages = true, loadFiles = true) =>
     ipcRenderer.invoke('save-session', baseDir, name, loadMessages, loadFiles),
   updateSession: (baseDir: string, name: string, loadMessages = true, loadFiles = true) =>

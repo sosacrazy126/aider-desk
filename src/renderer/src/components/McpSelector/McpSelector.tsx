@@ -135,7 +135,7 @@ export const McpSelector = () => {
       <div className="py-1 border-b border-neutral-700 ">
         <div className="px-3 py-1 text-xs text-neutral-300 flex items-center gap-2">
           <Checkbox checked={settings.mcpAgent.useAiderTools} onChange={handleToggleUseAiderTools} label="Use Aider tools" className="flex-1 mr-1" />
-          <InfoIcon tooltip="MCP agent can use Aider to perform add/drop context files actions and run prompts." />
+          <InfoIcon tooltip="MCP agent can use Aider to manage context files and run prompts." />
         </div>
         <div className="px-3 py-1 text-xs text-neutral-300 flex items-center gap-2">
           <Checkbox
@@ -186,6 +186,7 @@ export const McpSelector = () => {
                   key={serverName}
                   serverName={serverName}
                   disabled={settings.mcpAgent.disabledServers.includes(serverName)}
+                  disabledTools={settings.mcpAgent.disabledTools}
                   onToggle={toggleServer}
                 />
               ))}

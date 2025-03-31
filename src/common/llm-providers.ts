@@ -56,6 +56,10 @@ export const isOpenAiCompatibleProvider = (provider: LlmProviderBase): provider 
 
 export type LlmProvider = OpenAiProvider | AnthropicProvider | GeminiProvider | BedrockProvider | DeepseekProvider | OpenAiCompatibleProvider;
 
+export const getActiveProvider = (providers: LlmProvider[]): LlmProvider | null => {
+  return providers.find((provider) => provider.active) || null;
+};
+
 export const PROVIDER_MODELS = {
   openai: {
     models: {

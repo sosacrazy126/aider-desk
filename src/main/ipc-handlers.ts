@@ -225,7 +225,11 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, projectManager: Proj
     return await projectManager.getProject(baseDir).listSessions();
   });
 
-  ipcMain.handle('load-mcp-server-tools', async (_, serverName: string, config: McpServerConfig) => {
-    return await mcpAgent.reloadMcpServer(serverName, config);
+  ipcMain.handle('load-mcp-server-tools', async (_, serverName: string, config?: McpServerConfig) => {
+    if (config) {
+      return await mcpAgent.reloadMcpServer(serverName, config);
+    } else {
+      return await mcpAgent.getMcpServerTools(serverName);
+    }
   });
 };

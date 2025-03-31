@@ -33,6 +33,7 @@ export const DEFAULT_SETTINGS: SettingsData = {
     minTimeBetweenToolCalls: 0,
     mcpServers: {},
     disabledServers: [],
+    disabledTools: [],
     agentEnabled: false,
     includeContextFiles: false,
     useAiderTools: true,
