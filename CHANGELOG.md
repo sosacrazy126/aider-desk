@@ -5,6 +5,7 @@
 - added support for Deepseek provider in MCP agent
 - added General settings with Start Up section with options to load context messages and files from last session
 - added support for managing sessions
+- fixed issue with 0.80.0 aider version
 
 ## [0.6.0]
 

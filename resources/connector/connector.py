@@ -684,8 +684,8 @@ class Connector:
         "mainModel": self.coder.main_model.name,
         "weakModel": self.coder.main_model.weak_model.name,
         "maxChatHistoryTokens": self.coder.main_model.max_chat_history_tokens,
-        "reasoningEffort": self.coder.main_model.get_reasoning_effort(self.coder.main_model),
-        "thinkingTokens": self.coder.main_model.get_thinking_tokens(self.coder.main_model),
+        "reasoningEffort": self.coder.main_model.get_reasoning_effort(),
+        "thinkingTokens": self.coder.main_model.get_thinking_tokens(),
         "info": info,
         "error": error
       })
