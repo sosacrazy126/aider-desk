@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.7.2]
+
+- correctly showing MCP config tab on Configure servers action
+
 ## [0.7.1]
 
 - added support for OpenAI compatible providers in MCP agent

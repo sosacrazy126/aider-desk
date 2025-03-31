@@ -197,7 +197,7 @@ export const McpSelector = () => {
         </div>
       )}
 
-      {showSettings && <SettingsDialog onClose={() => setShowSettings(false)} initialTab={1} />}
+      {showSettings && <SettingsDialog onClose={() => setShowSettings(false)} initialTab={2} />}
     </div>
   );
 };
