@@ -131,6 +131,7 @@ export enum StartupMode {
 
 export interface SettingsData {
   onboardingFinished?: boolean;
+  language: string;
   startupMode?: StartupMode;
   startupSessionName?: string;
   aider: {

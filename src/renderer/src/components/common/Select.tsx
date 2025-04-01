@@ -1,15 +1,16 @@
-import { useRef, useState } from 'react';
+import { ReactNode, useRef, useState } from 'react';
 import { HiChevronUpDown, HiCheck } from 'react-icons/hi2';
+import { useTranslation } from 'react-i18next';
 
 import { useClickOutside } from '@/hooks/useClickOutside';
 
 export type Option = {
-  label: string;
+  label: ReactNode;
   value: string;
 };
 
 type Props = {
-  label?: string;
+  label?: ReactNode;
   options?: Option[];
   value?: string;
   onChange?: (value: string) => void;
@@ -20,6 +21,7 @@ export const Select = ({ label, className = '', options = [], value, onChange }:
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const selectedOption = options.find((opt) => opt.value === value);
+  const { t } = useTranslation();
 
   useClickOutside(containerRef, () => setIsOpen(false));
 
@@ -37,7 +39,7 @@ export const Select = ({ label, className = '', options = [], value, onChange }:
         className={`flex w-full min-w-[8rem] p-2 bg-neutral-800 border-2 border-neutral-600 rounded focus:outline-none focus:border-neutral-200 text-neutral-100 text-sm placeholder-neutral-500 ${className}`}
       >
         <span className="col-start-1 row-start-1 flex items-center flex-1 min-w-0">
-          <span className="block truncate">{selectedOption?.label || 'Select an option'}</span>
+          <span className="block truncate">{selectedOption?.label || t('select.placeholder')}</span>
         </span>
         <HiChevronUpDown className="col-start-1 row-start-1 size-5 self-center justify-self-end text-neutral-500" />
       </button>
