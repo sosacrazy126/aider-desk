@@ -7,15 +7,15 @@ import { StyledTooltip } from './common/StyledTooltip';
 
 type Props = {
   tokensInfo?: TokensInfoData | null;
-  totalCost: number;
   lastMessageCost?: number;
-  mcpToolsCost?: number;
+  aiderTotalCost: number;
+  mcpAgentTotalCost: number;
   clearMessages?: () => void;
   refreshRepoMap?: () => void;
   restartProject?: () => void;
 };
 
-export const SessionInfo = ({ tokensInfo, totalCost, lastMessageCost, mcpToolsCost, clearMessages, refreshRepoMap, restartProject }: Props) => {
+export const SessionInfo = ({ tokensInfo, lastMessageCost, aiderTotalCost, mcpAgentTotalCost, clearMessages, refreshRepoMap, restartProject }: Props) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [refreshingAnimation, setRefreshingAnimation] = useState(false);
   const REFRESH_ANIMATION_DURATION = 2000;
@@ -84,9 +84,14 @@ export const SessionInfo = ({ tokensInfo, totalCost, lastMessageCost, mcpToolsCo
           )}
         </div>
         {lastMessageCost !== undefined && renderLabelValue('Last message', `$${(lastMessageCost ?? 0).toFixed(5)}`)}
-        {(mcpToolsCost && renderLabelValue('MCP agent', `$${(mcpToolsCost ?? 0).toFixed(5)}`)) || null}
+        {mcpAgentTotalCost ? (
+          <>
+            {renderLabelValue('MCP agent', `$${mcpAgentTotalCost.toFixed(5)}`)}
+            {renderLabelValue('Aider', `$${aiderTotalCost.toFixed(5)}`)}
+          </>
+        ) : null}
         <div className="flex items-center h-[20px]">
-          <div className="flex-1">{renderLabelValue('Session', `$${(totalCost + (mcpToolsCost ?? 0)).toFixed(5)}`)}</div>
+          <div className="flex-1">{renderLabelValue('Session', `$${(aiderTotalCost + mcpAgentTotalCost).toFixed(5)}`)}</div>
           <div className="ml-0 max-w-0 group-hover:max-w-xs opacity-0 group-hover:opacity-100 group-hover:px-1 group-hover:ml-1 transition-all duration-300 overflow-hidden">
             {restartProject && (
               <button

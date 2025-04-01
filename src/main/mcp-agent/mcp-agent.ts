@@ -416,8 +416,7 @@ export class McpAgent {
       sentTokens: 0,
       receivedTokens: 0,
       messageCost: 0,
-      totalCost: 0,
-      mcpToolsCost: 0,
+      mcpAgentTotalCost: 0,
     };
 
     try {
@@ -437,6 +436,15 @@ export class McpAgent {
         // Get LLM response which may contain tool calls
         const aiMessage = await llmWithTools.invoke([...messages, ...newMessages]);
 
+        // Update usage report
+        const sentTokens = aiMessage.usage_metadata?.input_tokens ?? aiMessage.response_metadata?.usage?.input_tokens ?? 0;
+        const receivedTokens = aiMessage.usage_metadata?.output_tokens ?? aiMessage.response_metadata?.usage?.output_tokens ?? 0;
+
+        usageReport.sentTokens = sentTokens;
+        usageReport.receivedTokens = receivedTokens;
+        usageReport.messageCost = calculateCost(getActiveProvider(mcpAgent.providers)!, sentTokens, receivedTokens);
+        usageReport.mcpAgentTotalCost = project.mcpAgentTotalCost + usageReport.messageCost;
+
         // Check for interruption
         if (this.checkInterrupted(project, usageReport)) {
           return newMessages;
@@ -444,11 +452,6 @@ export class McpAgent {
 
         // Add AI message to messages
         newMessages.push(aiMessage);
-
-        // Update usage report
-        usageReport.sentTokens += aiMessage.usage_metadata?.input_tokens ?? aiMessage.response_metadata?.usage?.input_tokens ?? 0;
-        usageReport.receivedTokens += aiMessage.usage_metadata?.output_tokens ?? aiMessage.response_metadata?.usage?.output_tokens ?? 0;
-        usageReport.mcpToolsCost = calculateCost(getActiveProvider(mcpAgent.providers)!, usageReport.sentTokens, usageReport.receivedTokens);
 
         logger.debug(`Tool calls: ${aiMessage.tool_calls?.length}, message: ${JSON.stringify(aiMessage.content)}`);
 
@@ -513,7 +516,7 @@ export class McpAgent {
               return newMessages;
             }
 
-            project.addToolMessage(toolCall.id!, serverName, toolName, undefined, toolMessage.text);
+            project.addToolMessage(toolCall.id!, serverName, toolName, undefined, toolMessage.text, usageReport);
 
             // Add tool message to messages
             newMessages.push(toolMessage);

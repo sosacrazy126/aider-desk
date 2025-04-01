@@ -57,9 +57,9 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
   const [modelsData, setModelsData] = useState<ModelsData | null>(null);
   const [inputHistory, setInputHistory] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  const [totalCost, setTotalCost] = useState(0);
-  const [lastMessageCost, setLastMessageCost] = useState<number | undefined>(undefined);
-  const [mcpToolsCost, setMcpToolsCost] = useState(0);
+  const [aiderTotalCost, setAiderTotalCost] = useState(0);
+  const [lastMessageCost, setLastMessageCost] = useState<undefined | number>(undefined);
+  const [mcpAgentTotalCost, setMcpAgentTotalCost] = useState(0);
   const [tokensInfo, setTokensInfo] = useState<TokensInfoData | null>(null);
   const [question, setQuestion] = useState<QuestionData | null>(null);
   const [editFormat, setEditFormat] = useState<EditFormat>('code');
@@ -154,9 +154,13 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
       }
 
       if (usageReport) {
-        setTotalCost(usageReport.totalCost);
         setLastMessageCost(usageReport.messageCost);
-        setMcpToolsCost((prev) => prev + (usageReport.mcpToolsCost ?? 0));
+        if (usageReport.aiderTotalCost !== undefined) {
+          setAiderTotalCost(usageReport.aiderTotalCost);
+        }
+        if (usageReport.mcpAgentTotalCost !== undefined) {
+          setMcpAgentTotalCost(usageReport.mcpAgentTotalCost);
+        }
       }
 
       setProcessing(false);
@@ -221,8 +225,11 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
         });
       }
 
-      if (usageReport) {
-        setMcpToolsCost((prev) => prev + (usageReport.mcpToolsCost ?? 0));
+      if (usageReport?.aiderTotalCost !== undefined) {
+        setAiderTotalCost(usageReport.aiderTotalCost);
+      }
+      if (usageReport?.mcpAgentTotalCost !== undefined) {
+        setMcpAgentTotalCost(usageReport.mcpAgentTotalCost);
       }
     };
 
@@ -449,8 +456,8 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
     setLoading(true);
     setMessages([]);
     setLastMessageCost(0);
-    setTotalCost(0);
-    setMcpToolsCost(0);
+    setAiderTotalCost(0);
+    setMcpAgentTotalCost(0);
     setProcessing(false);
     setTokensInfo(null);
     setQuestion(null);
@@ -527,9 +534,9 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
           </div>
           <SessionInfo
             tokensInfo={tokensInfo}
-            totalCost={totalCost}
+            aiderTotalCost={aiderTotalCost}
             lastMessageCost={lastMessageCost}
-            mcpToolsCost={mcpToolsCost}
+            mcpAgentTotalCost={mcpAgentTotalCost}
             clearMessages={clearMessages}
             refreshRepoMap={() => runCommand('map-refresh')}
             restartProject={restartProject}

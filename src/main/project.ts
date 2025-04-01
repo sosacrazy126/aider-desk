@@ -51,6 +51,9 @@ export class Project {
   private runPromptResolves: ((value: ResponseCompletedData[]) => void)[] = [];
   private sessionManager: SessionManager = new SessionManager(this);
 
+  mcpAgentTotalCost: number = 0;
+  aiderTotalCost: number = 0;
+
   constructor(
     private readonly mainWindow: BrowserWindow,
     public readonly baseDir: string,
@@ -98,6 +101,9 @@ export class Project {
 
     void this.runAider();
     void this.sendInputHistoryUpdatedEvent();
+
+    this.mcpAgentTotalCost = 0;
+    this.aiderTotalCost = 0;
   }
 
   public addConnector(connector: Connector) {
@@ -174,7 +180,7 @@ export class Project {
     }
   }
 
-  public async runAider(): Promise<void> {
+  private async runAider(): Promise<void> {
     if (this.process) {
       await this.killAider();
     }
@@ -461,7 +467,11 @@ export class Project {
           ? parseUsageReport(message.usageReport)
           : message.usageReport
         : undefined;
-      logger.info(`Usage report: ${JSON.stringify(usageReport)}`);
+
+      if (usageReport) {
+        logger.info(`Usage report: ${JSON.stringify(usageReport)}`);
+        this.updateTotalCosts(usageReport);
+      }
       const data: ResponseCompletedData = {
         messageId: this.currentResponseMessageId,
         content: message.content,
@@ -773,7 +783,21 @@ export class Project {
       response,
       usageReport,
     };
+
+    if (usageReport) {
+      this.updateTotalCosts(usageReport);
+    }
+
     this.mainWindow.webContents.send('tool', data);
+  }
+
+  private updateTotalCosts(usageReport: UsageReportData) {
+    if (usageReport.mcpAgentTotalCost) {
+      this.mcpAgentTotalCost = usageReport.mcpAgentTotalCost;
+    }
+    if (usageReport.aiderTotalCost) {
+      this.aiderTotalCost = usageReport.aiderTotalCost;
+    }
   }
 
   public addUserMessage(content: string, editFormat?: string) {

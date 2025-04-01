@@ -21,13 +21,13 @@ export const parseUsageReport = (report: string): UsageReportData => {
   const receivedTokens = receivedMatch ? parseTokens(receivedMatch[1]) : 0;
 
   const messageCost = messageCostMatch ? parseFloat(messageCostMatch[1]) : 0;
-  const totalCost = totalCostMatch ? parseFloat(totalCostMatch[1]) : 0;
+  const aiderTotalCost = totalCostMatch ? parseFloat(totalCostMatch[1]) : 0;
 
   return {
     sentTokens,
     receivedTokens,
     messageCost,
-    totalCost,
+    aiderTotalCost,
   };
 };
 

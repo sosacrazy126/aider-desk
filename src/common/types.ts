@@ -163,8 +163,8 @@ export interface UsageReportData {
   sentTokens: number;
   receivedTokens: number;
   messageCost: number;
-  totalCost: number;
-  mcpToolsCost?: number;
+  aiderTotalCost?: number;
+  mcpAgentTotalCost?: number;
 }
 
 export interface TokensCost {
