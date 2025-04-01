@@ -1,9 +1,11 @@
 # Changelog
 
-## [0.7.2]
+## UNRELEASED
 
 - correctly showing MCP config tab on Configure servers action
 - option to disable specific MCP server tools
+- removed tool response limiting
+- fixed issue with tool responses when using Gemini models
 
 ## [0.7.1]
 

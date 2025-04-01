@@ -36,8 +36,6 @@ import { createAiderTools } from './tools/aider';
 
 import type { JsonSchema } from '@n8n/json-schema-to-zod';
 
-// some results are too long, so we limit the length
-const MAX_SAFE_TOOL_RESULT_CONTENT_LENGTH = 32_000;
 // increasing timeout for MCP client requests
 const MCP_CLIENT_TIMEOUT = 600_000;
 
@@ -468,7 +466,8 @@ export class McpAgent {
           return newMessages;
         }
 
-        for (const toolCall of aiMessage.tool_calls) {
+        for (let toolIndex = 0; toolIndex < aiMessage.tool_calls.length; toolIndex++) {
+          const toolCall = aiMessage.tool_calls[toolIndex];
           // Check for interruption before each tool call
           if (this.checkInterrupted(project, usageReport)) {
             return newMessages;
@@ -492,6 +491,11 @@ export class McpAgent {
           // Check for interruption before sending tool message
           if (this.checkInterrupted(project, usageReport)) {
             return newMessages;
+          }
+
+          if (toolCall.id === undefined) {
+            // if tool call id is not defined, generate a new one so ToolMessage type is properly created
+            toolCall.id = `call_${toolIndex}_${uuidv4()}`;
           }
 
           const [serverName, toolName] = this.extractServerNameToolName(toolCall.name);
@@ -759,7 +763,7 @@ const convertMpcToolToLangchainTool = (serverName: string, client: Client, toolD
           }
         };
 
-        return extractContent(response)?.slice(0, MAX_SAFE_TOOL_RESULT_CONTENT_LENGTH);
+        return extractContent(response);
       } catch (error) {
         logger.error(`Error calling tool ${toolDef.name}:`, error);
         return `Error calling tool: ${(error as Error).message}`;
