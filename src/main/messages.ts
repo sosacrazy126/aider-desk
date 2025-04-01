@@ -46,6 +46,7 @@ export interface PromptMessage extends Message {
   editFormat: EditFormat | null;
   architectModel: string | null;
   promptId?: string | null;
+  clearContext?: boolean;
 }
 
 export interface ResponseMessage extends Message {

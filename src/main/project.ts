@@ -395,13 +395,13 @@ export class Project {
     return responses;
   }
 
-  public sendPrompt(prompt: string, editFormat?: EditFormat): Promise<ResponseCompletedData[]> {
+  public sendPrompt(prompt: string, editFormat?: EditFormat, clearContext = false): Promise<ResponseCompletedData[]> {
     this.currentPromptResponses = [];
     this.currentResponseMessageId = null;
     this.currentPromptId = uuidv4();
 
     this.findMessageConnectors('prompt').forEach((connector) =>
-      connector.sendPromptMessage(prompt, editFormat, this.getArchitectModel(), this.currentPromptId),
+      connector.sendPromptMessage(prompt, editFormat, this.getArchitectModel(), this.currentPromptId, clearContext),
     );
 
     // Wait for prompt to finish and return collected responses

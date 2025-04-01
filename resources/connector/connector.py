@@ -331,11 +331,12 @@ class Connector:
         edit_format = message.get('editFormat')
         architect_model = message.get('architectModel')
         prompt_id = message.get('promptId')
+        clear_context = message.get('clearContext')
         if not prompt:
           return
 
         try:
-            await self.run_prompt(prompt, edit_format, architect_model, prompt_id)
+            await self.run_prompt(prompt, edit_format, architect_model, prompt_id, clear_context)
         finally:
             if prompt_id:
                 await self.send_action({
@@ -434,7 +435,7 @@ class Connector:
     self.coder.io.reset_state()
     self.interrupted = False
 
-  async def run_prompt(self, prompt, edit_format=None, architect_model=None, prompt_id=None):
+  async def run_prompt(self, prompt, edit_format=None, architect_model=None, prompt_id=None, clear_context=False):
     self.coder.io.add_to_input_history(prompt)
 
     coder_model = self.coder.main_model
@@ -449,8 +450,13 @@ class Connector:
         from_coder=self.coder,
         edit_format=edit_format,
         main_model=running_model,
-        summarize_from_coder=False
+        summarize_from_coder=False,
       )
+
+      if clear_context:
+        self.running_coder.cur_messages = []
+        self.running_coder.done_messages = []
+
       # we need to disable auto accept as this does not work properly with AiderDesk
       self.running_coder.auto_accept_architect=False
     else:
@@ -511,11 +517,16 @@ class Connector:
       self.running_coder.cur_messages += [dict(role="assistant", content=whole_content + " (interrupted)")]
 
     if self.running_coder != self.coder:
+      cur_messages = self.coder.cur_messages if clear_context else self.running_coder.cur_messages
+      done_messages = self.coder.done_messages if clear_context else self.running_coder.done_messages
+
       self.coder = Coder.create(
         edit_format=self.coder.edit_format,
         summarize_from_coder=False,
         main_model=coder_model,
         from_coder=self.running_coder,
+        cur_messages=cur_messages,
+        done_messages=done_messages,
       )
     await self.send_update_context_files()
 

@@ -43,13 +43,20 @@ export class Connector {
     this.socket.emit('message', message);
   };
 
-  public sendPromptMessage(prompt: string, editFormat: EditFormat | null = null, architectModel: string | null = null, promptId: string | null = null): void {
+  public sendPromptMessage(
+    prompt: string,
+    editFormat: EditFormat | null = null,
+    architectModel: string | null = null,
+    promptId: string | null = null,
+    clearContext = false,
+  ): void {
     const message: PromptMessage = {
       action: 'prompt',
       prompt,
       editFormat,
       architectModel,
       promptId,
+      clearContext,
     };
     this.sendMessage(message);
   }

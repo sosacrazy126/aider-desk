@@ -460,6 +460,7 @@ export class McpAgent {
             finished: true,
             usageReport,
           });
+          project.addLogMessage('loading');
         }
 
         if (!aiMessage.tool_calls?.length) {

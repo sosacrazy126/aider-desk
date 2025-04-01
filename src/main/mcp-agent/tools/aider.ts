@@ -54,8 +54,8 @@ export const createAiderTools = (project: Project, editFormat: EditFormat = 'cod
   );
 
   const runPromptTool = tool(
-    async (params: { prompt: string; editFormat?: EditFormat }) => {
-      const responses = await project.sendPrompt(params.prompt, editFormat);
+    async (params: { prompt: string; clearContext?: boolean }) => {
+      const responses = await project.sendPrompt(params.prompt, editFormat, params.clearContext);
 
       // Merge all responses into a single cohesive response
       const mergedResponse = responses
@@ -73,6 +73,7 @@ export const createAiderTools = (project: Project, editFormat: EditFormat = 'cod
         'Run a prompt in Aider to perform coding tasks. Before running this tool, make sure all the necessary files are added to the context, if possible.',
       schema: z.object({
         prompt: z.string().describe('The prompt to run'),
+        clearContext: z.boolean().describe('Whether to clear the context before running the prompt. Clear only when user specifically asks for it.'),
       }),
     },
   );
