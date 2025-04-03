@@ -332,6 +332,7 @@ class Connector:
         architect_model = message.get('architectModel')
         prompt_id = message.get('promptId')
         clear_context = message.get('clearContext')
+
         if not prompt:
           return
 
@@ -440,7 +441,7 @@ class Connector:
 
     coder_model = self.coder.main_model
 
-    if edit_format and edit_format != "code":
+    if (edit_format and edit_format != "code") or clear_context:
       running_model = self.coder.main_model
       if edit_format == "architect" and architect_model:
         running_model = models.Model(architect_model, weak_model=coder_model.weak_model.name, editor_model=coder_model.name)
