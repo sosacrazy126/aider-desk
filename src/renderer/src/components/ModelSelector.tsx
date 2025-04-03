@@ -1,4 +1,5 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState, KeyboardEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { MdClose, MdKeyboardArrowUp, MdKeyboardReturn } from 'react-icons/md';
 import { useDebounce } from 'react-use';
 
@@ -17,6 +18,7 @@ type Props = {
 };
 
 export const ModelSelector = forwardRef<ModelSelectorRef, Props>(({ models, selectedModel, onChange }, ref) => {
+  const { t } = useTranslation();
   const { settings, saveSettings } = useSettings();
   const [modelSearchTerm, setModelSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
@@ -145,7 +147,7 @@ export const ModelSelector = forwardRef<ModelSelectorRef, Props>(({ models, sele
           <button
             onClick={handleRemovePreferredModel}
             className="px-2 py-1 text-neutral-500 hover:text-neutral-400 transition-colors duration-200"
-            title="Remove from preferred models"
+            title={t('modelSelector.removePreferred')}
           >
             <MdClose className="w-4 h-4" />
           </button>
@@ -157,7 +159,7 @@ export const ModelSelector = forwardRef<ModelSelectorRef, Props>(({ models, sele
   return (
     <div className="relative" ref={modelSelectorRef}>
       <button onClick={toggleVisible} className="flex items-center hover:text-neutral-300 focus:outline-none transition-colors duration-200 text-xs">
-        <span>{selectedModel || 'Loading...'}</span>
+        <span>{selectedModel || t('common.loading')}</span>
         <MdKeyboardArrowUp className="w-3 h-3 ml-1 transform rotate-180" />
       </button>
       {visible && (
@@ -166,7 +168,7 @@ export const ModelSelector = forwardRef<ModelSelectorRef, Props>(({ models, sele
             <input
               type="text"
               autoFocus={true}
-              placeholder="Search models or enter custom name..."
+              placeholder={t('modelSelector.searchPlaceholder')}
               className="flex-grow px-2 py-1 text-xs bg-neutral-800 text-white rounded border border-neutral-600 focus:outline-none focus:border-neutral-500"
               value={modelSearchTerm}
               onChange={(e) => setModelSearchTerm(e.target.value)}

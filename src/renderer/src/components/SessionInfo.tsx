@@ -1,5 +1,6 @@
 import { TokensInfoData } from '@common/types';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { IoClose, IoChevronDown, IoChevronUp } from 'react-icons/io5';
 import { MdOutlineRefresh } from 'react-icons/md';
 
@@ -16,13 +17,14 @@ type Props = {
 };
 
 export const SessionInfo = ({ tokensInfo, lastMessageCost, aiderTotalCost, mcpAgentTotalCost, clearMessages, refreshRepoMap, restartProject }: Props) => {
+  const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
   const [refreshingAnimation, setRefreshingAnimation] = useState(false);
   const REFRESH_ANIMATION_DURATION = 2000;
 
-  const renderLabelValue = (label: string, value: string) => (
+  const renderLabelValue = (label: string, value: string, t: (key: string) => string) => (
     <div className="flex justify-between h-[20px]">
-      <span>{label}: </span>
+      <span>{t(label)}: </span>
       <span>{value}</span>
     </div>
   );
@@ -44,9 +46,9 @@ export const SessionInfo = ({ tokensInfo, lastMessageCost, aiderTotalCost, mcpAg
       </div>
       <div className="text-xxs text-neutral-400">
         <div className={`overflow-hidden transition-all duration-300 ${isExpanded ? 'max-h-24 mb-2' : 'max-h-0'}`}>
-          {renderLabelValue('Files', `${filesTotalTokens} tokens, $${filesTotalCost.toFixed(5)}`)}
+          {renderLabelValue('sessionInfo.files', `${filesTotalTokens} tokens, $${filesTotalCost.toFixed(5)}`, t)}
           <div className="flex items-center h-[20px]">
-            <div className="flex-1">{renderLabelValue('Repo map', `${repoMapTokens} tokens, $${repoMapCost.toFixed(5)}`)}</div>
+            <div className="flex-1">{renderLabelValue('sessionInfo.repoMap', `${repoMapTokens} tokens, $${repoMapCost.toFixed(5)}`, t)}</div>
             {refreshRepoMap && (
               <div className="ml-0 max-w-0 group-hover:max-w-xs opacity-0 group-hover:opacity-100 group-hover:px-1 group-hover:ml-1 transition-all duration-300 overflow-hidden">
                 <button
@@ -57,7 +59,7 @@ export const SessionInfo = ({ tokensInfo, lastMessageCost, aiderTotalCost, mcpAg
                   }}
                   className="p-0.5 hover:bg-neutral-700 rounded-md"
                   data-tooltip-id="refresh-repo-map-tooltip"
-                  data-tooltip-content="Refresh repository map"
+                  data-tooltip-content={t('sessionInfo.refreshRepoMap')}
                   disabled={refreshingAnimation}
                 >
                   <MdOutlineRefresh className={`w-4 h-4 ${refreshingAnimation ? 'animate-spin' : ''}`} />
@@ -68,13 +70,15 @@ export const SessionInfo = ({ tokensInfo, lastMessageCost, aiderTotalCost, mcpAg
           </div>
           {tokensInfo?.chatHistory && (
             <div className="flex items-center h-[20px]">
-              <div className="flex-1">{renderLabelValue('Chat', `${tokensInfo.chatHistory.tokens} tokens, $${tokensInfo.chatHistory.cost.toFixed(5)}`)}</div>
+              <div className="flex-1">
+                {renderLabelValue('sessionInfo.chat', `${tokensInfo.chatHistory.tokens} tokens, $${tokensInfo.chatHistory.cost.toFixed(5)}`, t)}
+              </div>
               <div className="ml-0 max-w-0 group-hover:max-w-xs opacity-0 group-hover:opacity-100 group-hover:px-1 group-hover:ml-1 transition-all duration-300 overflow-hidden">
                 <button
                   onClick={clearMessages}
                   data-tooltip-id="clear-message-history"
                   className="p-0.5 hover:bg-neutral-700 rounded-md text-neutral-500 hover:text-neutral-300 transition-colors"
-                  data-tooltip-content="Clear message history"
+                  data-tooltip-content={t('sessionInfo.clearMessages')}
                 >
                   <IoClose className="w-4 h-4" />
                 </button>
@@ -83,22 +87,22 @@ export const SessionInfo = ({ tokensInfo, lastMessageCost, aiderTotalCost, mcpAg
             </div>
           )}
         </div>
-        {lastMessageCost !== undefined && renderLabelValue('Last message', `$${(lastMessageCost ?? 0).toFixed(5)}`)}
+        {lastMessageCost !== undefined && renderLabelValue('sessionInfo.lastMessage', `$${(lastMessageCost ?? 0).toFixed(5)}`, t)}
         {mcpAgentTotalCost ? (
           <>
-            {renderLabelValue('MCP agent', `$${mcpAgentTotalCost.toFixed(5)}`)}
-            {renderLabelValue('Aider', `$${aiderTotalCost.toFixed(5)}`)}
+            {renderLabelValue('sessionInfo.mcpAgent', `$${mcpAgentTotalCost.toFixed(5)}`, t)}
+            {renderLabelValue('sessionInfo.aider', `$${aiderTotalCost.toFixed(5)}`, t)}
           </>
         ) : null}
         <div className="flex items-center h-[20px]">
-          <div className="flex-1">{renderLabelValue('Session', `$${(aiderTotalCost + mcpAgentTotalCost).toFixed(5)}`)}</div>
+          <div className="flex-1">{renderLabelValue('sessionInfo.session', `$${(aiderTotalCost + mcpAgentTotalCost).toFixed(5)}`, t)}</div>
           <div className="ml-0 max-w-0 group-hover:max-w-xs opacity-0 group-hover:opacity-100 group-hover:px-1 group-hover:ml-1 transition-all duration-300 overflow-hidden">
             {restartProject && (
               <button
                 onClick={restartProject}
                 data-tooltip-id="restart-project-tooltip"
                 className="p-0.5 hover:bg-neutral-700 rounded-md text-neutral-500 hover:text-neutral-300 transition-colors"
-                data-tooltip-content="Restart session"
+                data-tooltip-content={t('sessionInfo.restartSession')}
               >
                 <MdOutlineRefresh className="w-4 h-4" />
               </button>

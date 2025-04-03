@@ -1,6 +1,7 @@
 import { MouseEvent, useState } from 'react';
 import { FaBrain, FaChevronDown, FaChevronRight } from 'react-icons/fa';
 import { MdOutlineLightbulb } from 'react-icons/md';
+import { useTranslation } from 'react-i18next';
 
 import { CopyMessageButton } from './CopyMessageButton';
 import { parseMessageContent } from './utils';
@@ -13,6 +14,7 @@ type Props = {
 };
 
 export const ThinkingAnswerBlock = ({ thinking, answer, baseDir = '', allFiles = [] }: Props) => {
+  const { t } = useTranslation();
   const [isThinkingExpanded, setIsThinkingExpanded] = useState(false);
 
   const handleToggleThinking = (e: MouseEvent<HTMLDivElement>) => {
@@ -30,7 +32,7 @@ export const ThinkingAnswerBlock = ({ thinking, answer, baseDir = '', allFiles =
             <div className={`text-neutral-200 ${!answer ? 'animate-pulse' : ''}`}>
               <FaBrain size={16} />
             </div>
-            <div className={`font-medium text-neutral-100 ${!answer ? 'animate-pulse' : ''}`}>THINKING</div>
+            <div className={`font-medium text-neutral-100 ${!answer ? 'animate-pulse' : ''}`}>{t('thinkingAnswer.thinking')}</div>
           </div>
           {thinking && <CopyMessageButton content={thinking} className="text-neutral-600 hover:text-neutral-300" />}
         </div>
@@ -48,7 +50,7 @@ export const ThinkingAnswerBlock = ({ thinking, answer, baseDir = '', allFiles =
               <div className="text-neutral-200">
                 <MdOutlineLightbulb size={18} />
               </div>
-              <div className="font-medium text-neutral-100">ANSWER</div>
+              <div className="font-medium text-neutral-100">{t('thinkingAnswer.answer')}</div>
             </div>
             <CopyMessageButton content={answer} className="text-neutral-600 hover:text-neutral-300" />
           </div>

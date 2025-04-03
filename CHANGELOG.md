@@ -6,6 +6,7 @@
 - option to disable specific MCP server tools
 - removed tool response limiting
 - fixed issue with tool responses when using Gemini models
+- added localization support (currently English and Chinese)
 
 ## [0.7.1]
 

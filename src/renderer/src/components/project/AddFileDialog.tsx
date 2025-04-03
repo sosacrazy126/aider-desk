@@ -1,6 +1,7 @@
 import { matchSorter } from 'match-sorter';
 import { useState, useEffect } from 'react';
 import { FaFolder } from 'react-icons/fa';
+import { useTranslation } from 'react-i18next';
 
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { AutocompletionInput } from '@/components/AutocompletionInput';
@@ -14,6 +15,7 @@ type Props = {
 };
 
 export const AddFileDialog = ({ onClose, onAddFile, baseDir, initialReadOnly = false }: Props) => {
+  const { t } = useTranslation();
   const [filePath, setFilePath] = useState('');
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isValidPath, setIsValidPath] = useState(false);
@@ -98,10 +100,10 @@ export const AddFileDialog = ({ onClose, onAddFile, baseDir, initialReadOnly = f
 
   return (
     <ConfirmDialog
-      title="ADD CONTEXT FILE"
+      title={t('addFileDialog.title')}
       onCancel={onClose}
       onConfirm={handleAddFile}
-      confirmButtonText="Add"
+      confirmButtonText={t('common.add')}
       disabled={!filePath || !isValidPath}
       width={600}
       closeOnEscape
@@ -113,14 +115,14 @@ export const AddFileDialog = ({ onClose, onAddFile, baseDir, initialReadOnly = f
           setShowSuggestions(!isFromSuggestion);
           setFilePath(value);
         }}
-        placeholder="Choose file to add"
+        placeholder={t('addFileDialog.placeholder')}
         autoFocus
         className="w-full p-3 pr-12 rounded-lg bg-neutral-900/50 border border-neutral-700/50 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-neutral-500/50 focus:ring-1 focus:ring-neutral-500/50 transition-colors"
         rightElement={
           <button
             onClick={handleBrowse}
             className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-neutral-400 hover:text-white hover:bg-neutral-700/50 transition-colors"
-            title="Browse files"
+            title={t('addFileDialog.browse')}
           >
             <FaFolder className="w-4 h-4" />
           </button>
@@ -128,7 +130,7 @@ export const AddFileDialog = ({ onClose, onAddFile, baseDir, initialReadOnly = f
         onSubmit={handleAddFile}
       />
       <div className="mt-3 ml-2">
-        <Checkbox label="Read-Only" checked={isReadOnly} onChange={toggleReadOnly} />
+        <Checkbox label={t('addFileDialog.readOnly')} checked={isReadOnly} onChange={toggleReadOnly} />
       </div>
     </ConfirmDialog>
   );

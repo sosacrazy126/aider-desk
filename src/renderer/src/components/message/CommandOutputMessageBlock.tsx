@@ -1,4 +1,5 @@
 import { BiTerminal } from 'react-icons/bi';
+import { useTranslation } from 'react-i18next';
 
 import { CopyMessageButton } from './CopyMessageButton';
 
@@ -9,6 +10,7 @@ type Props = {
 };
 
 export const CommandOutputMessageBlock = ({ message }: Props) => {
+  const { t } = useTranslation();
   const baseClasses = 'rounded-md p-3 mb-2 max-w-full break-words whitespace-pre-wrap text-xs bg-neutral-900 border border-neutral-800 text-gray-100';
 
   return (
@@ -17,7 +19,7 @@ export const CommandOutputMessageBlock = ({ message }: Props) => {
         <div className="flex items-center space-x-2">
           <BiTerminal className="text-neutral-500 h-4 w-4" />
           <div className="flex items-center space-x-1">
-            <span className="opacity-60 text-xs">Command:</span>
+            <span className="opacity-60 text-xs">{t('commandOutput.command')}:</span>
             <span className="text-neutral-400">{message.command}</span>
           </div>
         </div>

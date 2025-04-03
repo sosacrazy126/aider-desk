@@ -1,6 +1,7 @@
 import { SettingsData } from '@common/types';
 import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/react';
 import { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { AiderSettings } from '@/components/settings/AiderSettings';
 import { GeneralSettings } from '@/components/settings/GeneralSettings';
@@ -9,10 +10,13 @@ import { McpSettings } from '@/components/settings/McpSettings';
 type Props = {
   settings: SettingsData;
   updateSettings: (settings: SettingsData) => void;
+  onLanguageChange: (language: string) => void;
   initialTab?: number;
 };
 
-export const Settings = ({ settings, updateSettings, initialTab = 0 }: Props) => {
+export const Settings = ({ settings, updateSettings, onLanguageChange, initialTab = 0 }: Props) => {
+  const { t } = useTranslation();
+
   const renderTab = (label: string) => (
     <Tab
       className={({ selected }) =>
@@ -36,12 +40,12 @@ export const Settings = ({ settings, updateSettings, initialTab = 0 }: Props) =>
   return (
     <TabGroup className="flex flex-col flex-1 min-h-0" defaultIndex={initialTab}>
       <TabList className="flex space-x-1 bg-neutral-800  backdrop-blur-sm border border-neutral-800 rounded-t-lg">
-        {renderTab('General')}
-        {renderTab('Aider')}
-        {renderTab('MCP Config')}
+        {renderTab(t('settings.tabs.general'))}
+        {renderTab(t('settings.tabs.aider'))}
+        {renderTab(t('settings.tabs.mcpAgent'))}
       </TabList>
       <TabPanels className="flex flex-col flex-1 overflow-hidden">
-        {renderTabPanel(<GeneralSettings settings={settings} setSettings={updateSettings} />)}
+        {renderTabPanel(<GeneralSettings settings={settings} setSettings={updateSettings} onLanguageChange={onLanguageChange} />)}
         {renderTabPanel(<AiderSettings settings={settings} setSettings={updateSettings} />)}
         {renderTabPanel(<McpSettings settings={settings} setSettings={updateSettings} />)}
       </TabPanels>

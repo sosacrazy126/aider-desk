@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { SettingsData, StartupMode } from '@common/types';
 
 import { RadioButton } from '../common/RadioButton';
@@ -9,9 +10,11 @@ import { LanguageSelector } from './LanguageSelector';
 type Props = {
   settings: SettingsData;
   setSettings: (settings: SettingsData) => void;
+  onLanguageChange: (language: string) => void;
 };
 
-export const GeneralSettings = ({ settings, setSettings }: Props) => {
+export const GeneralSettings = ({ settings, setSettings, onLanguageChange }: Props) => {
+  const { t } = useTranslation();
   const [sessions, setSessions] = useState<Option[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -55,18 +58,11 @@ export const GeneralSettings = ({ settings, setSettings }: Props) => {
     handleStartupModeChange(value as StartupMode);
   };
 
-  const handleLanguageChanged = (language: string) => {
-    setSettings({
-      ...settings,
-      language,
-    });
-  };
-
   return (
     <div className="space-y-8 min-h-[300px]">
-      <LanguageSelector language={settings.language} onChange={handleLanguageChanged} />
+      <LanguageSelector language={settings.language} onChange={onLanguageChange} />
       <div className="relative border border-neutral-700 rounded-md pt-2 mt-4">
-        <h2 className="absolute -top-3 left-4 px-2 bg-neutral-850 text-sm font-medium text-neutral-100">Start Up</h2>
+        <h2 className="absolute -top-3 left-4 px-2 bg-neutral-850 text-sm font-medium text-neutral-100">{t('settings.startup.title')}</h2>
         <div className="px-4 py-3 space-y-3">
           <RadioButton
             id="startup-empty"
@@ -74,7 +70,7 @@ export const GeneralSettings = ({ settings, setSettings }: Props) => {
             value={StartupMode.Empty}
             checked={settings.startupMode === StartupMode.Empty}
             onChange={handleStartupModeClick}
-            label="Start with empty session"
+            label={t('settings.startup.emptySession')}
           />
 
           <RadioButton
@@ -83,7 +79,7 @@ export const GeneralSettings = ({ settings, setSettings }: Props) => {
             value={StartupMode.Last}
             checked={settings.startupMode === StartupMode.Last}
             onChange={handleStartupModeClick}
-            label="Load last session"
+            label={t('settings.startup.lastSession')}
           />
 
           <div className="flex flex-col space-y-2">
@@ -93,7 +89,7 @@ export const GeneralSettings = ({ settings, setSettings }: Props) => {
               value={StartupMode.Specific}
               checked={settings.startupMode === StartupMode.Specific}
               onChange={handleStartupModeClick}
-              label="Load specific session"
+              label={t('settings.startup.specificSession')}
             />
 
             {settings.startupMode === StartupMode.Specific && (
@@ -103,10 +99,10 @@ export const GeneralSettings = ({ settings, setSettings }: Props) => {
                   onChange={handleSessionChange}
                   options={
                     loading
-                      ? [{ label: 'Loading sessions...', value: '' }]
+                      ? [{ label: t('select.loadingSessions'), value: '' }]
                       : sessions.length === 0
-                        ? [{ label: 'No saved sessions', value: '' }]
-                        : [{ label: 'Select a session', value: '' }, ...sessions]
+                        ? [{ label: t('sessions.empty'), value: '' }]
+                        : [{ label: t('select.placeholder'), value: '' }, ...sessions]
                   }
                   className="w-full"
                 />

@@ -1,5 +1,6 @@
 import { EditFormat, QuestionData, SettingsData } from '@common/types';
 import React, { useCallback, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDebounce } from 'react-use';
 import { matchSorter } from 'match-sorter';
 import { BiSend } from 'react-icons/bi';
@@ -11,25 +12,6 @@ import { useSettings } from '@/context/SettingsContext';
 import { showErrorNotification } from '@/utils/notifications';
 import { FormatSelector } from '@/components/FormatSelector';
 import { McpSelector } from '@/components/McpSelector';
-
-const PLACEHOLDERS = [
-  'How can I help you today?',
-  'What task can I assist you with?',
-  'What would you like me to code?',
-  'Let me help you solve a problem',
-  'Can I help you with an improvement?',
-  'Wanna refactor some code?',
-  'Can I help you optimize some algorithm?',
-  'Let me help you design a new feature',
-  'Can I help you debug an issue?',
-  'Let me help you create a test suite',
-  'Let me help you implement a design pattern',
-  'Can I explain some code to you?',
-  'Let me help you modernize some legacy code',
-  'Can I help you write documentation?',
-  'Let me help you improve performance',
-  'Give me some task!',
-];
 
 const COMMANDS = ['/code', '/context', '/ask', '/architect', '/add', '/model', '/read-only', '/mcp'];
 const CONFIRM_COMMANDS = ['/clear', '/web', '/undo', '/test', '/map-refresh', '/map', '/run', '/reasoning-effort', '/think-tokens'];
@@ -87,12 +69,12 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
     }: Props,
     ref,
   ) => {
+    const { t } = useTranslation();
     const [text, setText] = useState('');
     const [suggestionsVisible, setSuggestionsVisible] = useState(false);
     const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
     const [currentWord, setCurrentWord] = useState('');
     const [cursorPosition, setCursorPosition] = useState({ top: 0, left: 0 });
-    const [placeholder] = useState(PLACEHOLDERS[Math.floor(Math.random() * PLACEHOLDERS.length)]);
     const [highlightedSuggestionIndex, setHighlightedSuggestionIndex] = useState(-1);
     const [historyIndex, setHistoryIndex] = useState<number>(-1);
     const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
@@ -299,7 +281,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
     const handleSubmit = () => {
       if (text) {
         if (text.startsWith('/') && ![...COMMANDS, ...CONFIRM_COMMANDS].some((cmd) => text.startsWith(cmd))) {
-          showErrorNotification('Invalid command');
+          showErrorNotification(t('promptField.invalidCommand'));
           return;
         }
 
@@ -441,28 +423,28 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
                 className={`px-2 py-0.5 text-xs rounded hover:bg-neutral-700 border border-neutral-600 ${selectedAnswer === 'y' ? 'bg-neutral-700' : 'bg-neutral-800'}`}
                 title="Yes (Y)"
               >
-                (Y)es
+                {t('promptField.answers.yes')}
               </button>
               <button
                 onClick={() => answerQuestion?.('n')}
                 className={`px-2 py-0.5 text-xs rounded hover:bg-neutral-700 border border-neutral-600 ${selectedAnswer === 'n' ? 'bg-neutral-700' : 'bg-neutral-800'}`}
-                title="No (N)"
+                title={t('promptField.answers.no')}
               >
-                (N)o
+                {t('promptField.answers.no')}
               </button>
               <button
                 onClick={() => answerQuestion?.('a')}
                 className={`px-2 py-0.5 text-xs rounded hover:bg-neutral-700 border border-neutral-600 ${selectedAnswer === 'a' ? 'bg-neutral-700' : 'bg-neutral-800'}`}
-                title="Always (A)"
+                title={t('promptField.answers.always')}
               >
-                (A)lways
+                {t('promptField.answers.always')}
               </button>
               <button
                 onClick={() => answerQuestion?.('d')}
                 className={`px-2 py-0.5 text-xs rounded hover:bg-neutral-700 border border-neutral-600 ${selectedAnswer === 'd' ? 'bg-neutral-700' : 'bg-neutral-800'}`}
-                title="Don't ask again (D)"
+                title={t('promptField.answers.dontAsk')}
               >
-                (D)on&apos;t ask again
+                {t('promptField.answers.dontAsk')}
               </button>
             </div>
           </div>
@@ -475,7 +457,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
               onChange={handleChange}
               onKeyDown={handleKeyDown}
               onPaste={handlePaste}
-              placeholder={question ? '...or suggest something else' : placeholder}
+              placeholder={question ? t('promptField.questionPlaceholder') : t(`promptField.placeholders.${Math.floor(Math.random() * 16)}`)}
               disabled={disabled}
               minRows={1}
               maxRows={20}
@@ -486,7 +468,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
                 <button
                   onClick={interruptResponse}
                   className="hover:text-neutral-300 hover:bg-neutral-700 rounded p-1 transition-colors duration-200"
-                  title="Stop response"
+                  title={t('promptField.stopResponse')}
                 >
                   <MdStop className="w-4 h-4" />
                 </button>
@@ -498,7 +480,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
                 disabled={!text.trim()}
                 className={`absolute right-2 top-1/2 -translate-y-[16px] text-neutral-400 hover:text-neutral-300 hover:bg-neutral-700 rounded p-1 transition-all duration-200
                 ${!text.trim() ? 'opacity-0' : 'opacity-100'}`}
-                title="Send message (Enter)"
+                title={t('promptField.sendMessage')}
               >
                 <BiSend className="w-4 h-4" />
               </button>

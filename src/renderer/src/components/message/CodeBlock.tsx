@@ -1,5 +1,6 @@
 import Prism from 'prismjs';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import 'prismjs/themes/prism-tomorrow.css';
 import 'prismjs/components/prism-typescript';
 import 'prismjs/components/prism-python';
@@ -104,6 +105,7 @@ type Props = {
 };
 
 export const CodeBlock = ({ baseDir, language, children, file, isComplete = true }: Props) => {
+  const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(true);
   const [changesReverted, setChangesReverted] = useState(false);
   const isDiff = isDiffContent(children);
@@ -181,7 +183,7 @@ export const CodeBlock = ({ baseDir, language, children, file, isComplete = true
                     <IconButton
                       icon={<MdUndo size={16} />}
                       onClick={handleRevertChanges}
-                      tooltip="Revert changes"
+                      tooltip={t('codeBlock.revertChanges')}
                       className="opacity-0 group-hover:opacity-100"
                     />
                   </div>

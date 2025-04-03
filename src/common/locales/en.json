@@ -1,4 +1,8 @@
 {
+  "languages": {
+    "en": "English",
+    "zh": "中文"
+  },
   "common": {
     "settings": "Settings",
     "cancel": "Cancel",
@@ -14,66 +18,110 @@
     "finish": "Finish",
     "search": "Search",
     "loading": "Loading...",
+    "startingUp": "Starting up...",
     "error": "Error",
     "success": "Success",
     "warning": "Warning",
     "info": "Info",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "open": "Open",
+    "openProject": "Open Project"
   },
   "onboarding": {
     "title": "Welcome to Aider Desk",
-    "description": "Let's set up your environment",
+    "description": "Aider Desk is your desktop companion for AI-assisted coding. This application brings the power of Aider's AI coding assistant to a user-friendly interface, helping you:",
     "finish": "Finish Setup",
     "features": {
-      "1": "AI-powered coding assistance",
-      "2": "Multi-language support",
-      "3": "Real-time collaboration",
-      "4": "Customizable workflows"
+      "1": "Manage multiple coding projects",
+      "2": "Track your AI usage and costs",
+      "3": "Interact with AI models in a structured way",
+      "4": "Visualize and manage your code files"
     },
-    "getStarted": "Let's get started with the setup",
-    "configureSettings": "Configure your basic settings",
-    "setupSteps": {
-      "1": "Set your preferred language",
-      "2": "Configure Aider options"
-    },
-    "configureLater": "You can change these settings later in the Settings panel"
+    "getStarted": "Let's get started by configuring your Aider settings.",
+    "aider": {
+      "title": "Configure Aider",
+      "description": "To get started, please configure your Aider settings. You'll need to:",
+      "options": {
+        "1": "Add your API keys for the LLM provider you want to use",
+        "2": "Set any additional options for Aider"
+      },
+      "configureLater": "You can also do that later in the Settings."
+    }
+  },
+  "noProjectsOpen": {
+    "welcome": "Welcome to",
+    "description": "To get started, open a project directory. This will allow Aider you know and love to work with your code."
   },
   "home": {
     "title": "Home",
     "noProjectsOpen": "No Projects Open",
     "openProject": "Open Project",
     "addFile": "Add File",
-    "projectView": "Project View"
+    "projectView": "Project View",
+    "recentProjects": "Recent projects"
   },
   "tips": {
     "multipleProjects": "Tip: You can open multiple projects and switch between them using the tabs at the top (or CTRL+Tab)."
   },
   "mcpServer": {
     "addServer": "Add MCP Server",
+    "editServer": "Edit MCP Server: {{name}}",
     "serverConfigJson": "Server Config JSON",
-    "pasteServerAs": "Paste your server as:"
+    "pasteServerAs": "Paste your server as:\n\n{\n  \"mcpServers\": {\n    \"puppeteer\": {\n      \"command\": \"npx\",\n      \"args\": [\"-y\", \"@modelcontextprotocol/server-puppeteer\"]\n    }\n  }\n}",
+    "invalidConfig": "Invalid configuration",
+    "emptyConfig": "Configuration cannot be empty"
   },
   "model": {
-    "label": "Model"
+    "label": "Model",
+    "selectLabel": "Model"
+  },
+  "openai": {
+    "apiKey": "API Key",
+    "model": "Model",
+    "baseUrl": "Base URL",
+    "modelName": "Model Name",
+    "baseUrlPlaceholder": "e.g. http://localhost:8080/v1",
+    "modelNamePlaceholder": "Enter model name"
+  },
+  "anthropic": {
+    "apiKey": "API Key"
+  },
+  "gemini": {
+    "apiKey": "API Key"
+  },
+  "deepseek": {
+    "apiKey": "API Key"
+  },
+  "bedrock": {
+    "apiKey": "API Key",
+    "region": "Region",
+    "regionPlaceholder": "e.g. us-east-1",
+    "accessKeyId": "Access Key ID",
+    "accessKeyIdTooltip": "AWS access key ID. Can be left empty if AWS_PROFILE is set in environment.",
+    "secretAccessKey": "Secret Access Key",
+    "secretAccessKeyTooltip": "AWS secret access key. Can be left empty if AWS_PROFILE is set in environment."
   },
   "select": {
-    "placeholder": "Select an option"
+    "placeholder": "Select an option",
+    "loadingSessions": "Loading sessions..."
   },
   "settings": {
     "title": "Settings",
-    "general": "General",
-    "appearance": "Appearance",
+    "tabs": {
+      "general": "General",
+      "aider": "Aider",
+      "mcpAgent": "MCP Agent"
+    },
+    "startup": {
+      "title": "Start Up",
+      "emptySession": "Start with empty session",
+      "lastSession": "Load last session",
+      "specificSession": "Load specific session"
+    },
     "language": "Language",
-    "english": "English",
-    "chinese": "Chinese",
-    "providers": "Providers",
-    "mcpServers": "MCP Servers",
-    "addServer": "Add Server",
-    "serverName": "Server Name",
-    "serverUrl": "Server URL",
-    "apiKey": "API Key",
     "mcp": {
+      "mcpServers": "MCP Servers",
       "provider": "Provider",
       "maxIterations": "Max Iterations",
       "minTimeBetweenToolCalls": "Min Time Between Tool Calls (ms)",
@@ -82,27 +130,39 @@
       "systemPromptWarning": "Warning: Modifying the system prompt can cause the MCP agent to behave unexpectedly. Only change this if you understand the implications.",
       "noServersConfigured": "No MCP servers configured.",
       "computationalResources": "Maximum number of iterations for MCP tool calls. Helps control computational resources.",
-      "rateLimiting": "Sets the minimum time between tool calls to prevent rate limiting (e.g., for Brave or other API-constrained services).",
-      "tokensPerResponse": "Maximum number of tokens the MCP agent can use per response."
+      "rateLimiting": "Sets the minimum time between tool calls to prevent rate limiting (e.g. for Brave or other API-constrained services).",
+      "tokensPerResponse": "Maximum number of tokens the MCP agent can use per response.",
+      "addServer": "Add server"
     },
     "aider": {
       "options": "Options",
+      "optionsPlaceholder": "e.g. --no-auto-commits --cache-prompts",
       "environmentVariables": "Environment Variables",
+      "envVarsPlaceholder": "#################\n# LLM parameters:\n#\n# Include xxx_API_KEY parameters and other params needed for your LLMs.\n# See https://aider.chat/docs/llms.html for details.\n\n## OpenAI\n#OPENAI_API_KEY=\n\n## Anthropic\n#ANTHROPIC_API_KEY=",
       "optionsDocumentation": "Check the documentation for available options at",
       "envVarsDocumentation": "Check the documentation for environment variables at"
+    },
+    "common": {
+      "showSecrets": "Show Secrets"
     }
   },
   "messages": {
     "thinking": "Thinking...",
     "loading": "Loading...",
     "copy": "Copy",
-    "copied": "Copied!"
+    "copied": "Copied!",
+    "interrupted": "Interrupted by user."
+  },
+  "errors": {
+    "frozenTitle": "AIDER FROZEN?",
+    "frozenMessage": "Aider process seems to be frozen. Would you like to restart the session?"
   },
   "dialogs": {
     "confirm": "Confirm",
     "confirmDelete": "Are you sure you want to delete this?",
     "addFile": "Add File",
     "openProject": "Open Project",
+    "recentProjects": "Recent projects",
     "openProjectTitle": "OPEN PROJECT",
     "projectPathPlaceholder": "Type the path to your project or use icon to browse",
     "openButton": "Open",
@@ -113,6 +173,12 @@
     "ask": "Ask",
     "architect": "Architect",
     "context": "Context"
+  },
+  "addFileDialog": {
+    "title": "ADD CONTEXT FILE",
+    "placeholder": "Choose file to add",
+    "browse": "Browse files",
+    "readOnly": "Read-Only"
   },
   "contextFiles": {
     "title": "Context Files",
@@ -127,13 +193,23 @@
     "maxTokens": "Max tokens:",
     "reasoning": "Reasoning",
     "thinkingTokens": "Thinking tokens",
-    "loadingModel": "Loading model..."
+    "loadingModel": "Loading model...",
+    "searchPlaceholder": "Search models or enter custom name...",
+    "removePreferred": "Remove from preferred models"
   },
   "mcp": {
+    "noDescription": "No description",
+    "serverToolStatus": "{{enabledCount}} of {{count}} tools enabled",
     "loading": "Loading...",
-    "servers": "MCP Servers",
+    "toolsCount_one": "{{count}} tool",
+    "toolsCount_other": "{{count}} tools",
+    "loadToolsError": "Failed to load MCP server tools",
+    "noToolsFound": "No tools could be found. Check your configuration.",
+    "server_one": "server",
+    "server_other": "servers",
     "agentEnabled": "MCP agent enabled",
     "agentDisabled": "MCP agent disabled",
+    "aider": "aider",
     "aiderOnly": "aider only",
     "withFiles": "with files",
     "useAiderTools": "Use Aider tools",
@@ -141,6 +217,65 @@
     "includeContextFiles": "Include context files",
     "includeFilesTooltip": "Adds content of context files into the chat of MCP agent. This will increase token usage.",
     "configureServers": "Configure servers"
+  },
+  "autocompletion": {
+    "placeholder": "Type to search..."
+  },
+  "session": {
+    "edit": "Edit Session",
+    "save": "Save Session",
+    "name": "Session Name",
+    "namePlaceholder": "Enter session name",
+    "loadSettings": "Load Settings",
+    "loadMessages": "Load messages from this session",
+    "loadFiles": "Load context files from this session"
+  },
+  "sessionInfo": {
+    "title": "Sessions",
+    "files": "Files",
+    "repoMap": "Repo map",
+    "refreshRepoMap": "Refresh repository map",
+    "chat": "Chat",
+    "clearMessages": "Clear message history",
+    "lastMessage": "Last message",
+    "mcpAgent": "MCP agent",
+    "aider": "Aider",
+    "session": "Session",
+    "restartSession": "Restart session"
+  },
+  "sessions": {
+    "title": "SESSIONS",
+    "empty": "No saved sessions",
+    "loadsMessages_one": "Loads {{count}} message",
+    "loadsMessages_other": "Loads {{count}} messages",
+    "loadsFiles_one": "Loads {{count}} file",
+    "loadsFiles_other": "Loads {{count}} files",
+    "saveAsNew": "Save as new",
+    "deleteTitle": "Delete Session",
+    "deleteConfirm": "Are you sure you want to delete the session \"{{name}}\"?",
+    "deleteWarning": "This action cannot be undone."
+  },
+  "commandOutput": {
+    "command": "Command"
+  },
+  "reflectedMessage": {
+    "title": "Reflected Message"
+  },
+  "responseMessage": {
+    "usageReport": "{{sent}} tokens sent, {{received}} tokens received, cost: ${{cost}}"
+  },
+  "thinkingAnswer": {
+    "thinking": "THINKING",
+    "answer": "ANSWER"
+  },
+  "toolMessage": {
+    "toolLabel": "Tool: {{server}}/{{tool}}",
+    "arguments": "Arguments:",
+    "executing": "Tool is executing...",
+    "result": "Result:"
+  },
+  "codeBlock": {
+    "revertChanges": "Revert changes"
   },
   "promptField": {
     "placeholders": {

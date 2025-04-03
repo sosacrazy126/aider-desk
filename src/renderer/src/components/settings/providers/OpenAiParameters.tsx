@@ -1,4 +1,5 @@
 import { ChangeEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { SettingsData } from '@common/types';
 import { isOpenAiProvider } from '@common/llm-providers';
 
@@ -12,6 +13,8 @@ type Props = {
 };
 
 export const OpenAiParameters = ({ settings, setSettings }: Props) => {
+  const { t } = useTranslation();
+
   const activeProvider = settings.mcpAgent.providers.find((provider) => provider.active && isOpenAiProvider(provider));
   const apiKey = activeProvider && isOpenAiProvider(activeProvider) ? activeProvider.apiKey : '';
   const model = activeProvider && isOpenAiProvider(activeProvider) ? activeProvider.model : '';
@@ -43,7 +46,7 @@ export const OpenAiParameters = ({ settings, setSettings }: Props) => {
   return (
     <div className="mt-2 space-y-2">
       <ModelSelect providerName="openai" currentModel={model} onChange={handleModelChange} />
-      <Input label="API Key" type="password" value={apiKey} onChange={handleApiKeyChange} />
+      <Input label={t('openai.apiKey')} type="password" value={apiKey} onChange={handleApiKeyChange} />
     </div>
   );
 };

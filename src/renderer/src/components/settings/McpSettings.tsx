@@ -1,5 +1,6 @@
 import { McpAgent, McpServerConfig, SettingsData } from '@common/types';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FaPlus } from 'react-icons/fa';
 import {
   LlmProvider,
@@ -37,6 +38,7 @@ type EditingServer = {
 };
 
 export const McpSettings = ({ settings, setSettings }: Props) => {
+  const { t } = useTranslation();
   const handleToggleTool = (toolId: string) => {
     const disabledTools = settings.mcpAgent.disabledTools;
     const updatedDisabledTools = disabledTools.includes(toolId) ? disabledTools.filter((id) => id !== toolId) : [...disabledTools, toolId];
@@ -171,7 +173,7 @@ export const McpSettings = ({ settings, setSettings }: Props) => {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <div>
-                <Select label="Provider" value={activeProvider?.name || ''} onChange={handleProviderChanged} options={AVAILABLE_PROVIDERS} />
+                <Select label={t('settings.mcp.provider')} value={activeProvider?.name || ''} onChange={handleProviderChanged} options={AVAILABLE_PROVIDERS} />
               </div>
               {activeProvider && isOpenAiProvider(activeProvider) && <OpenAiParameters settings={settings} setSettings={setSettings} />}
               {activeProvider && isAnthropicProvider(activeProvider) && <AnthropicParameters settings={settings} setSettings={setSettings} />}
@@ -185,8 +187,8 @@ export const McpSettings = ({ settings, setSettings }: Props) => {
                 <Slider
                   label={
                     <div className="flex items-center">
-                      <span>Max Iterations</span>
-                      <InfoIcon className="ml-1" tooltip="Maximum number of iterations for MCP tool calls. Helps control computational resources." />
+                      <span>{t('settings.mcp.maxIterations')}</span>
+                      <InfoIcon className="ml-1" tooltip={t('settings.mcp.computationalResources')} />
                     </div>
                   }
                   min={1}
@@ -199,11 +201,8 @@ export const McpSettings = ({ settings, setSettings }: Props) => {
                 <Input
                   label={
                     <div className="flex items-center">
-                      <span>Min Time Between Tool Calls (ms)</span>
-                      <InfoIcon
-                        className="ml-1"
-                        tooltip="Sets the minimum time between tool calls to prevent rate limiting (e.g., for Brave or other API-constrained services)."
-                      />
+                      <span>{t('settings.mcp.minTimeBetweenToolCalls')}</span>
+                      <InfoIcon className="ml-1" tooltip={t('settings.mcp.rateLimiting')} />
                     </div>
                   }
                   type="number"
@@ -218,8 +217,8 @@ export const McpSettings = ({ settings, setSettings }: Props) => {
                 <Input
                   label={
                     <div className="flex items-center">
-                      <span>Max Tokens</span>
-                      <InfoIcon className="ml-1" tooltip="Maximum number of tokens the MCP agent can use per response." />
+                      <span>{t('settings.mcp.maxTokens')}</span>
+                      <InfoIcon className="ml-1" tooltip={t('settings.mcp.tokensPerResponse')} />
                     </div>
                   }
                   type="number"
@@ -232,17 +231,15 @@ export const McpSettings = ({ settings, setSettings }: Props) => {
           </div>
 
           <div className="mt-4">
-            <Accordion title="System Prompt" className="text-sm">
-              <div className="text-xxs text-amber-500 mb-2">
-                Warning: Modifying the system prompt can cause the MCP agent to behave unexpectedly. Only change this if you understand the implications.
-              </div>
+            <Accordion title={t('settings.mcp.systemPrompt')} className="text-sm">
+              <div className="text-xxs text-amber-500 mb-2">{t('settings.mcp.systemPromptWarning')}</div>
               <TextArea value={mcpAgent.systemPrompt} onChange={(e) => handleSystemPromptChanged(e.target.value)} rows={20} className="w-full resize-none" />
             </Accordion>
           </div>
           <div className="mt-4">
-            <div className="text-sm text-neutral-100 font-medium mb-2 mt-4">MCP Servers</div>
+            <div className="text-sm text-neutral-100 font-medium mb-2 mt-4">{t('settings.mcp.mcpServers')}</div>
             {Object.keys(mcpAgent.mcpServers).length === 0 ? (
-              <div className="text-xs text-gray-500 mb-2">No MCP servers configured.</div>
+              <div className="text-xs text-gray-500 mb-2">{t('mcp.noServersConfigured')}</div>
             ) : (
               Object.entries(mcpAgent.mcpServers).map(([serverName, config]) => (
                 <McpServerItem
@@ -258,7 +255,7 @@ export const McpSettings = ({ settings, setSettings }: Props) => {
             )}
             <div className="flex justify-center">
               <Button onClick={() => setIsAddingServer(true)} variant="text" className="mt-3 flex items-center text-sm">
-                <FaPlus className="mr-2 w-2 h-2" /> Add server
+                <FaPlus className="mr-2 w-2 h-2" /> {t('settings.mcp.addServer')}
               </Button>
             </div>
           </div>

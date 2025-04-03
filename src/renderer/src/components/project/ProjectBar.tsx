@@ -1,6 +1,7 @@
 import { ModelsData, SessionData } from '@common/types';
 import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { MdHistory } from 'react-icons/md';
+import { useTranslation } from 'react-i18next';
 
 import { ModelSelector, ModelSelectorRef } from '@/components/ModelSelector';
 import { SessionsPopup } from '@/components/SessionsPopup';
@@ -22,6 +23,7 @@ export type ProjectTopBarRef = {
 };
 
 export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(({ baseDir, allModels = [], modelsData, architectMode, onModelChange }, ref) => {
+  const { t } = useTranslation();
   const mainModelSelectorRef = useRef<ModelSelectorRef>(null);
   const architectModelSelectorRef = useRef<ModelSelectorRef>(null);
   const [sessions, setSessions] = useState<SessionData[]>([]);
@@ -155,14 +157,14 @@ export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(({ baseDir, 
   return (
     <div className="relative group">
       {!modelsData ? (
-        <div className="text-xs">Loading model...</div>
+        <div className="text-xs">{t('modelSelector.loadingModel')}</div>
       ) : (
         <div className="flex items-center">
           <div className="flex-grow flex items-center space-x-3">
             {architectMode && (
               <>
                 <div className="flex items-center space-x-1">
-                  <span className="text-xs">Architect model:</span>
+                  <span className="text-xs">{t('modelSelector.architectModel')}</span>
                   <ModelSelector
                     ref={architectModelSelectorRef}
                     models={allModels}
@@ -174,19 +176,19 @@ export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(({ baseDir, 
               </>
             )}
             <div className="flex items-center space-x-1">
-              <span className="text-xs">{architectMode ? 'Editor model:' : 'Main model:'}</span>
+              <span className="text-xs">{t(architectMode ? 'modelSelector.editorModel' : 'modelSelector.mainModel')}</span>
               <ModelSelector ref={mainModelSelectorRef} models={allModels} selectedModel={modelsData.mainModel} onChange={updateMainModel} />
             </div>
             <div className="h-3 w-px bg-neutral-600/50"></div>
             <div className="flex items-center space-x-1">
-              <span className="text-xs">Weak model:</span>
+              <span className="text-xs">{t('modelSelector.weakModel')}</span>
               <ModelSelector models={allModels} selectedModel={modelsData.weakModel || modelsData.mainModel} onChange={updateWeakModel} />
             </div>
             {modelsData.maxChatHistoryTokens && (
               <>
                 <div className="h-3 w-px bg-neutral-600/50"></div>
                 <div className="flex items-center space-x-1">
-                  <span className="text-xs">Max tokens:</span>
+                  <span className="text-xs">{t('modelSelector.maxTokens')}</span>
                   <span className="text-neutral-400 text-xs">{modelsData.maxChatHistoryTokens}</span>
                 </div>
               </>
@@ -195,7 +197,7 @@ export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(({ baseDir, 
               <>
                 <div className="h-3 w-px bg-neutral-600/50"></div>
                 <div className="flex items-center space-x-1">
-                  <span className="text-xs">Reasoning:</span>
+                  <span className="text-xs">{t('modelSelector.reasoning')}</span>
                   <span className="text-neutral-400 text-xs">{modelsData.reasoningEffort}</span>
                 </div>
               </>
@@ -204,7 +206,7 @@ export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(({ baseDir, 
               <>
                 <div className="h-3 w-px bg-neutral-600/50"></div>
                 <div className="flex items-center space-x-1">
-                  <span className="text-xs">Thinking tokens:</span>
+                  <span className="text-xs">{t('modelSelector.thinkingTokens')}</span>
                   <span className="text-neutral-400 text-xs">{modelsData.thinkingTokens}</span>
                 </div>
               </>
@@ -215,7 +217,7 @@ export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(({ baseDir, 
               onClick={showSessionPopup}
               className="p-0.5 hover:bg-neutral-700 rounded-md flex text-neutral-200"
               data-tooltip-id="session-history-tooltip"
-              data-tooltip-content="Session history"
+              data-tooltip-content={t('sessionInfo.title')}
             >
               <MdHistory className="w-4 h-4" />
             </button>

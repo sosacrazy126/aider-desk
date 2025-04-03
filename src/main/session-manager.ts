@@ -93,7 +93,16 @@ export class SessionManager {
   }
 
   dropContextFile(filePath: string) {
-    const file = this.contextFiles.find((f) => f.path === filePath);
+    const absolutePath = path.resolve(this.project.baseDir, filePath);
+
+    const file = this.contextFiles.find((f) => {
+      const contextFileAbsolutePath = path.resolve(this.project.baseDir, f.path);
+      return (
+        f.path === filePath || // Exact match
+        contextFileAbsolutePath === filePath || // Absolute path matches
+        contextFileAbsolutePath === absolutePath // Relative path matches when converted to absolute
+      );
+    });
 
     if (file) {
       this.contextFiles = this.contextFiles.filter((f) => f !== file);

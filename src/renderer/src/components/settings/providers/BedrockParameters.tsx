@@ -1,4 +1,5 @@
 import { ChangeEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { SettingsData } from '@common/types';
 import { BedrockProvider, isBedrockProvider } from '@common/llm-providers';
 
@@ -13,6 +14,8 @@ type Props = {
 };
 
 export const BedrockParameters = ({ settings, setSettings }: Props) => {
+  const { t } = useTranslation();
+
   const activeProvider = settings.mcpAgent.providers.find((provider) => provider.active && isBedrockProvider(provider)) as BedrockProvider | undefined;
 
   const region = activeProvider?.region || '';
@@ -71,12 +74,12 @@ export const BedrockParameters = ({ settings, setSettings }: Props) => {
   return (
     <div className="mt-2 space-y-2">
       <ModelSelect providerName="bedrock" currentModel={model} onChange={handleModelChange} />
-      <Input label="Region" value={region} onChange={handleRegionChange} placeholder="e.g., us-east-1" />
+      <Input label={t('bedrock.region')} value={region} onChange={handleRegionChange} placeholder={t('bedrock.regionPlaceholder')} />
       <Input
         label={
           <div className="flex items-center">
-            <span>Access Key ID</span>
-            <InfoIcon className="ml-1" tooltip="AWS access key ID. Can be left empty if AWS_PROFILE is set in environment." />
+            <span>{t('bedrock.accessKeyId')}</span>
+            <InfoIcon className="ml-1" tooltip={t('bedrock.accessKeyIdTooltip')} />
           </div>
         }
         value={accessKeyId}
@@ -85,8 +88,8 @@ export const BedrockParameters = ({ settings, setSettings }: Props) => {
       <Input
         label={
           <div className="flex items-center">
-            <span>Secret Access Key</span>
-            <InfoIcon className="ml-1" tooltip="AWS secret access key. Can be left empty if AWS_PROFILE is set in environment." />
+            <span>{t('bedrock.secretAccessKey')}</span>
+            <InfoIcon className="ml-1" tooltip={t('bedrock.secretAccessKeyTooltip')} />
           </div>
         }
         type="password"

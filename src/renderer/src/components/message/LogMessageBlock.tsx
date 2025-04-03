@@ -1,4 +1,5 @@
 import { FaInfoCircle, FaExclamationTriangle, FaExclamationCircle } from 'react-icons/fa';
+import { useTranslation } from 'react-i18next';
 
 import { CopyMessageButton } from './CopyMessageButton';
 
@@ -9,6 +10,7 @@ type Props = {
 };
 
 export const LogMessageBlock = ({ message }: Props) => {
+  const { t } = useTranslation();
   const baseClasses = 'rounded-md p-3 mb-2 max-w-full break-words whitespace-pre-wrap text-xs border';
 
   const levelConfig = {
@@ -36,7 +38,7 @@ export const LogMessageBlock = ({ message }: Props) => {
     <div className={`${baseClasses} ${config.levelClasses} relative group`}>
       <div className="flex items-start gap-3">
         <Icon className="inline-block h-3 w-3 flex-shrink-0 mt-[3px]" />
-        <div>{message.content}</div>
+        <div>{t(message.content)}</div>
       </div>
       <div className="absolute top-2 right-2">
         <CopyMessageButton content={message.content} className={config.tooltipClass} />

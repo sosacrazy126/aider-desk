@@ -1,4 +1,5 @@
 import { ChangeEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { SettingsData } from '@common/types';
 import { OpenAiCompatibleProvider, isOpenAiCompatibleProvider } from '@common/llm-providers';
 
@@ -10,6 +11,7 @@ type Props = {
 };
 
 export const OpenAiCompatibleParameters = ({ settings, setSettings }: Props) => {
+  const { t } = useTranslation();
   const activeProvider = settings.mcpAgent.providers.find((provider) => provider.active && isOpenAiCompatibleProvider(provider)) as
     | OpenAiCompatibleProvider
     | undefined;
@@ -56,9 +58,15 @@ export const OpenAiCompatibleParameters = ({ settings, setSettings }: Props) => 
 
   return (
     <div className="mt-2 space-y-2">
-      <Input label="Base URL" type="text" value={baseUrl} onChange={handleBaseUrlChange} placeholder="e.g., http://localhost:8080/v1" />
-      <Input label="Model Name" type="text" value={model} onChange={(e) => handleModelChange(e.target.value)} placeholder="Enter model name" />
-      <Input label="API Key" type="password" value={apiKey} onChange={handleApiKeyChange} />
+      <Input label={t('openai.baseUrl')} type="text" value={baseUrl} onChange={handleBaseUrlChange} placeholder={t('openai.baseUrlPlaceholder')} />
+      <Input
+        label={t('openai.modelName')}
+        type="text"
+        value={model}
+        onChange={(e) => handleModelChange(e.target.value)}
+        placeholder={t('openai.modelNamePlaceholder')}
+      />
+      <Input label={t('openai.apiKey')} type="password" value={apiKey} onChange={handleApiKeyChange} />
     </div>
   );
 };

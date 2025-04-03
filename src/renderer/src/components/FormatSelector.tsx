@@ -2,15 +2,11 @@ import { useState, useRef } from 'react';
 import { CgLock, CgLockUnlock } from 'react-icons/cg';
 import { MdKeyboardArrowUp } from 'react-icons/md';
 import { EditFormat } from '@common/types';
+import { useTranslation } from 'react-i18next';
 
 import { useClickOutside } from '@/hooks/useClickOutside';
 
-const EDIT_FORMATS: { value: EditFormat; label: string }[] = [
-  { value: 'code', label: 'Code' },
-  { value: 'ask', label: 'Ask' },
-  { value: 'architect', label: 'Architect' },
-  { value: 'context', label: 'Context' },
-];
+const EDIT_FORMATS: EditFormat[] = ['code', 'ask', 'architect', 'context'];
 
 type Props = {
   editFormat: string;
@@ -20,6 +16,7 @@ type Props = {
 };
 
 export const FormatSelector = ({ editFormat, editFormatLocked, onFormatChange, onLockChange }: Props) => {
+  const { t } = useTranslation();
   const [formatSelectorVisible, setFormatSelectorVisible] = useState(false);
   const formatSelectorRef = useRef<HTMLDivElement>(null);
 
@@ -36,7 +33,7 @@ export const FormatSelector = ({ editFormat, editFormatLocked, onFormatChange, o
         className="flex items-center hover:text-neutral-300 focus:outline-none transition-colors duration-200 text-xs"
       >
         <MdKeyboardArrowUp className="w-3 h-3 mr-0.5" />
-        <span className="capitalize">{editFormat}</span>
+        <span className="capitalize">{t(`formatSelector.${editFormat}`)}</span>
         {editFormat !== 'code' && (
           <span className="ml-1">
             {editFormatLocked ? (
@@ -61,7 +58,7 @@ export const FormatSelector = ({ editFormat, editFormatLocked, onFormatChange, o
       </button>
       {formatSelectorVisible && (
         <div className="absolute bottom-full mb-1 bg-neutral-900 border border-neutral-700 rounded-md shadow-lg z-10 ml-2">
-          {EDIT_FORMATS.map(({ label, value }) => (
+          {EDIT_FORMATS.map((value) => (
             <button
               key={value}
               onClick={() => {
@@ -71,7 +68,7 @@ export const FormatSelector = ({ editFormat, editFormatLocked, onFormatChange, o
               className={`w-full px-3 py-1 text-left hover:bg-neutral-700 transition-colors duration-200 text-xs
               ${value === editFormat ? 'text-white font-bold' : 'text-neutral-300'}`}
             >
-              {label}
+              {t(`formatSelector.${value}`)}
             </button>
           ))}
         </div>

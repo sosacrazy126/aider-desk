@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { MdKeyboardArrowUp, MdSettings } from 'react-icons/md';
 import { SettingsData } from '@common/types';
 
@@ -12,6 +13,7 @@ import { useSettings } from '@/context/SettingsContext';
 import { useClickOutside } from '@/hooks/useClickOutside';
 
 export const McpSelector = () => {
+  const { t } = useTranslation();
   const [selectorVisible, setSelectorVisible] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const selectorRef = useRef<HTMLDivElement>(null);
@@ -20,7 +22,7 @@ export const McpSelector = () => {
   useClickOutside(selectorRef, () => setSelectorVisible(false));
 
   if (!settings) {
-    return <div className="text-xs text-neutral-400">Loading...</div>;
+    return <div className="text-xs text-neutral-400">{t('common.loading')}</div>;
   }
 
   const getTriState = (): 'checked' | 'unchecked' | 'indeterminate' => {
@@ -130,26 +132,26 @@ export const McpSelector = () => {
     void saveSettings(updatedSettings);
   };
 
-  const renderConfigureServersButton = () => (
+  const renderConfigureServersButton = (t: (key: string) => string) => (
     <>
       <div className="py-1 border-b border-neutral-700 ">
         <div className="px-3 py-1 text-xs text-neutral-300 flex items-center gap-2">
-          <Checkbox checked={settings.mcpAgent.useAiderTools} onChange={handleToggleUseAiderTools} label="Use Aider tools" className="flex-1 mr-1" />
-          <InfoIcon tooltip="MCP agent can use Aider to manage context files and run prompts." />
+          <Checkbox checked={settings.mcpAgent.useAiderTools} onChange={handleToggleUseAiderTools} label={t('mcp.useAiderTools')} className="flex-1 mr-1" />
+          <InfoIcon tooltip={t('mcp.aiderToolsTooltip')} />
         </div>
         <div className="px-3 py-1 text-xs text-neutral-300 flex items-center gap-2">
           <Checkbox
             checked={settings.mcpAgent.includeContextFiles}
             onChange={handleToggleIncludeContextFiles}
-            label="Include context files"
+            label={t('mcp.includeContextFiles')}
             className="flex-1 mr-1"
           />
-          <InfoIcon tooltip="Adds content of context files into the chat of MCP agent. This will increase token usage." />
+          <InfoIcon tooltip={t('mcp.includeFilesTooltip')} />
         </div>
       </div>
       <button onClick={handleOpenSettings} className="w-full flex items-center px-3 py-2 text-xs text-neutral-300 hover:bg-neutral-700 transition-colors">
         <MdSettings className="w-3 h-3 mr-2" />
-        Configure servers
+        {t('mcp.configureServers')}
       </button>
     </>
   );
@@ -164,9 +166,10 @@ export const McpSelector = () => {
         <span>
           {settings.mcpAgent.agentEnabled && (enabledServers > 0 || settings.mcpAgent.useAiderTools)
             ? enabledServers === 0
-              ? `MCP agent enabled (aider only${settings.mcpAgent.includeContextFiles ? ', with files' : ''})`
-              : `MCP agent enabled (${enabledServers} server${enabledServers === 1 ? '' : 's'}${settings.mcpAgent.useAiderTools ? ' + aider' : ''}${settings.mcpAgent.includeContextFiles ? ', with files' : ''})`
-            : 'MCP agent disabled'}
+              ? t('mcp.agentEnabled') + ` (${t('mcp.aiderOnly')}${settings.mcpAgent.includeContextFiles ? `, ${t('mcp.withFiles')}` : ''})`
+              : t('mcp.agentEnabled') +
+                ` (${enabledServers} ${t('mcp.server', { count: enabledServers })}${settings.mcpAgent.useAiderTools ? ` + ${t('mcp.aider')}` : ''}${settings.mcpAgent.includeContextFiles ? `, ${t('mcp.withFiles')}` : ''})`
+            : t('mcp.agentDisabled')}
         </span>
         <MdKeyboardArrowUp className="w-3 h-3 ml-0.5" />
       </button>
@@ -179,7 +182,7 @@ export const McpSelector = () => {
                 className="px-3 py-2 text-xs font-medium text-neutral-300 border-b border-neutral-700 mb-1 flex items-center select-none cursor-pointer"
                 onClick={handleToggleAllServers}
               >
-                <TriStateCheckbox state={getTriState()} onChange={handleToggleAllServers} className="mr-2" label="MCP Servers" />
+                <TriStateCheckbox state={getTriState()} onChange={handleToggleAllServers} className="mr-2" label={t('mcp.servers')} />
               </div>
               {serverNames.map((serverName) => (
                 <McpServerSelectorItem
@@ -190,10 +193,10 @@ export const McpSelector = () => {
                   onToggle={toggleServer}
                 />
               ))}
-              <div className="border-t border-neutral-700 mt-1">{renderConfigureServersButton()}</div>
+              <div className="border-t border-neutral-700 mt-1">{renderConfigureServersButton(t)}</div>
             </>
           ) : (
-            renderConfigureServersButton()
+            renderConfigureServersButton(t)
           )}
         </div>
       )}

@@ -1,4 +1,5 @@
 import { PROVIDER_MODELS, ProviderName } from '@common/llm-providers';
+import { useTranslation } from 'react-i18next';
 
 import { Option, Select } from '@/components/common/Select';
 
@@ -9,6 +10,8 @@ type Props = {
 };
 
 export const ModelSelect = ({ providerName, currentModel, onChange }: Props) => {
+  const { t } = useTranslation();
+
   const handleChange = (value: string) => {
     onChange(value);
   };
@@ -21,5 +24,5 @@ export const ModelSelect = ({ providerName, currentModel, onChange }: Props) => 
     }));
   };
 
-  return <Select label="Model" value={currentModel} onChange={handleChange} options={getModelOptions()} />;
+  return <Select label={t('model.selectLabel')} value={currentModel} onChange={handleChange} options={getModelOptions()} />;
 };

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { BaseDialog } from './BaseDialog';
 import { Button } from './common/Button';
@@ -15,6 +16,7 @@ type Props = {
 };
 
 export const SessionDialog = ({ onClose, onSave, initialName = '', initialLoadMessages = true, initialLoadFiles = true, isEdit = false }: Props) => {
+  const { t } = useTranslation();
   const [name, setName] = useState(initialName);
   const [loadMessages, setLoadMessages] = useState(initialLoadMessages);
   const [loadFiles, setLoadFiles] = useState(initialLoadFiles);
@@ -29,27 +31,27 @@ export const SessionDialog = ({ onClose, onSave, initialName = '', initialLoadMe
 
   return (
     <BaseDialog
-      title={isEdit ? 'Edit Session' : 'Save Session'}
+      title={isEdit ? t('session.edit') : t('session.save')}
       onClose={onClose}
       footer={
         <>
           <Button variant="text" onClick={onClose}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button onClick={handleSave} disabled={!name.trim()}>
-            {isEdit ? 'Update' : 'Save'}
+            {isEdit ? t('common.update') : t('common.save')}
           </Button>
         </>
       }
     >
       <div className="space-y-4">
-        <Input label="Session Name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter session name" autoFocus />
+        <Input label={t('session.name')} value={name} onChange={(e) => setName(e.target.value)} placeholder={t('session.namePlaceholder')} autoFocus />
 
         <div className="pt-2">
-          <h3 className="text-sm font-medium mb-2">Load Settings</h3>
+          <h3 className="text-sm font-medium mb-2">{t('session.loadSettings')}</h3>
           <div className="space-y-2">
-            <Checkbox label="Load messages from this session" checked={loadMessages} onChange={() => setLoadMessages(!loadMessages)} />
-            <Checkbox label="Load context files from this session" checked={loadFiles} onChange={() => setLoadFiles(!loadFiles)} />
+            <Checkbox label={t('session.loadMessages')} checked={loadMessages} onChange={() => setLoadMessages(!loadMessages)} />
+            <Checkbox label={t('session.loadFiles')} checked={loadFiles} onChange={() => setLoadFiles(!loadFiles)} />
           </div>
         </div>
       </div>

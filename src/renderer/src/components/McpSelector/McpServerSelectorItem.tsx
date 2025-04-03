@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { CgSpinner } from 'react-icons/cg';
+import { useTranslation } from 'react-i18next';
 
 import { Checkbox } from '../common/Checkbox';
 
@@ -11,6 +12,7 @@ type Props = {
 };
 
 export const McpServerSelectorItem = ({ serverName, disabled, disabledTools, onToggle }: Props) => {
+  const { t } = useTranslation();
   const [toolsCount, setToolsCount] = useState<number | null>(null);
 
   useEffect(() => {
@@ -33,9 +35,7 @@ export const McpServerSelectorItem = ({ serverName, disabled, disabledTools, onT
       {toolsCount === null ? (
         <CgSpinner className="animate-spin text-xs text-neutral-700 ml-2" />
       ) : (
-        <span className="text-xxs text-neutral-700 ml-2 whitespace-nowrap">
-          {toolsCount} tool{toolsCount === 1 ? '' : 's'}
-        </span>
+        <span className="text-xxs text-neutral-700 ml-2 whitespace-nowrap">{t('mcp.toolsCount', { count: toolsCount })}</span>
       )}
     </div>
   );

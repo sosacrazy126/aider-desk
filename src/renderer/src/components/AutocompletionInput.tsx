@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 
 type Props = {
@@ -13,6 +14,7 @@ type Props = {
 };
 
 export const AutocompletionInput = ({ value, suggestions, onChange, placeholder, className, rightElement, autoFocus, onSubmit }: Props) => {
+  const { t } = useTranslation();
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -131,7 +133,7 @@ export const AutocompletionInput = ({ value, suggestions, onChange, placeholder,
         onChange={(e) => onChange(e.target.value, false)}
         onKeyDown={handleKeyDown}
         onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-        placeholder={placeholder}
+        placeholder={placeholder ? t(placeholder) : undefined}
         autoFocus={autoFocus}
       />
       {rightElement}

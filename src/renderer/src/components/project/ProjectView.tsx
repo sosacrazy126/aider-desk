@@ -13,6 +13,7 @@ import {
   UserMessageData,
   EditFormat,
 } from '@common/types';
+import { useTranslation } from 'react-i18next';
 import { IpcRendererEvent } from 'electron';
 import { useEffect, useRef, useState } from 'react';
 import { CgSpinner } from 'react-icons/cg';
@@ -50,6 +51,7 @@ type Props = {
 };
 
 export const ProjectView = ({ project, isActive = false }: Props) => {
+  const { t } = useTranslation();
   const [messages, setMessages] = useState<Message[]>([]);
   const [processing, setProcessing] = useState(false);
   const [addFileDialogOptions, setAddFileDialogOptions] = useState<AddFileDialogOptions | null>(null);
@@ -432,7 +434,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
       id: uuidv4(),
       type: 'log',
       level: 'warning',
-      content: 'Interrupted by user.',
+      content: t('messages.interrupted'),
     };
     setMessages((prevMessages) => [...prevMessages.filter((message) => !isLoadingMessage(message)), interruptMessage]);
 
@@ -471,7 +473,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
       {loading && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-neutral-950 to-neutral-900 z-10">
           <CgSpinner className="animate-spin w-10 h-10" />
-          <div className="mt-2 text-sm text-center text-white">Starting up...</div>
+          <div className="mt-2 text-sm text-center text-white">{t('common.startingUp')}</div>
         </div>
       )}
       <div className="flex flex-col flex-grow overflow-hidden">
@@ -545,14 +547,14 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
       </ResizableBox>
       {showFrozenDialog && (
         <ConfirmDialog
-          title="AIDER FROZEN?"
+          title={t('errors.frozenTitle')}
           onConfirm={restartProject}
           onCancel={() => setShowFrozenDialog(false)}
           confirmButtonText="Restart"
           cancelButtonText="Wait"
           closeOnEscape={false}
         >
-          Aider process seems to be frozen. Would you like to restart the session?
+          {t('errors.frozenMessage')}
         </ConfirmDialog>
       )}
       {addFileDialogOptions && (

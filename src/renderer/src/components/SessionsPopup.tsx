@@ -1,5 +1,6 @@
 import { SessionData } from '@common/types';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { IoDocumentTextOutline, IoListOutline, IoPencil, IoTrashOutline } from 'react-icons/io5';
 
 import { SessionDialog } from './SessionDialog';
@@ -17,6 +18,7 @@ type Props = {
 };
 
 export const SessionsPopup = ({ sessions, onLoadSession, onSaveSession, onUpdateSession, onDeleteSession }: Props) => {
+  const { t } = useTranslation();
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [editSession, setEditSession] = useState<SessionData | null>(null);
   const [sessionToDelete, setSessionToDelete] = useState<string | null>(null);
@@ -48,9 +50,9 @@ export const SessionsPopup = ({ sessions, onLoadSession, onSaveSession, onUpdate
   return (
     <div className="absolute right-0 top-full mt-1 bg-neutral-800 border border-neutral-700 rounded-md shadow-lg z-50 w-64">
       <div className="">
-        <div className="p-2 text-xs font-medium border-b border-neutral-700">SESSIONS</div>
+        <div className="p-2 text-xs font-medium border-b border-neutral-700">{t('sessions.title')}</div>
         {sessions.length === 0 ? (
-          <div className="text-xs text-neutral-400 p-2">No saved sessions</div>
+          <div className="text-xs text-neutral-400 p-2">{t('sessions.empty')}</div>
         ) : (
           <div className="max-h-60 overflow-y-auto">
             {sessions.map((session) => (
@@ -67,7 +69,7 @@ export const SessionsPopup = ({ sessions, onLoadSession, onSaveSession, onUpdate
                     <div
                       className="p-1"
                       data-tooltip-id={`loads-messages-tooltip-${session.name}`}
-                      data-tooltip-content={`Loads ${session.messages || 0} messages`}
+                      data-tooltip-content={t('sessions.loadsMessages', { count: session.messages || 0 })}
                     >
                       <IoListOutline className="text-neutral-500 w-3 h-3" />
                       <StyledTooltip id={`loads-messages-tooltip-${session.name}`} />
@@ -88,7 +90,7 @@ export const SessionsPopup = ({ sessions, onLoadSession, onSaveSession, onUpdate
                           setEditSession(session);
                         }}
                         data-tooltip-id="edit-session-tooltip"
-                        data-tooltip-content="Edit session"
+                        data-tooltip-content={t('common.edit')}
                       >
                         <IoPencil className="text-neutral-200 w-3 h-3" />
                       </button>
@@ -103,7 +105,7 @@ export const SessionsPopup = ({ sessions, onLoadSession, onSaveSession, onUpdate
                       setSessionToDelete(session.name);
                     }}
                     data-tooltip-id="delete-session-tooltip"
-                    data-tooltip-content="Delete session"
+                    data-tooltip-content={t('common.delete')}
                   >
                     <IoTrashOutline className="text-neutral-200 w-3 h-3" />
                   </button>
@@ -115,7 +117,7 @@ export const SessionsPopup = ({ sessions, onLoadSession, onSaveSession, onUpdate
         )}
         <div className="px-2 pb-2 border-t border-neutral-700 flex justify-center">
           <Button variant="text" className="text-xs mt-2" onClick={() => setShowSaveDialog(true)}>
-            Save as new
+            {t('sessions.saveAsNew')}
           </Button>
         </div>
       </div>
@@ -134,12 +136,14 @@ export const SessionsPopup = ({ sessions, onLoadSession, onSaveSession, onUpdate
       )}
 
       {sessionToDelete && (
-        <ConfirmDialog title="Delete Session" onConfirm={handleDeleteSession} onCancel={() => setSessionToDelete(null)} confirmButtonText="Delete">
-          <p>
-            Are you sure you want to delete the session &quot;{sessionToDelete}
-            &quot;?
-          </p>
-          <p className="text-sm text-neutral-400 mt-1">This action cannot be undone.</p>
+        <ConfirmDialog
+          title={t('sessions.deleteTitle')}
+          onConfirm={handleDeleteSession}
+          onCancel={() => setSessionToDelete(null)}
+          confirmButtonText={t('common.delete')}
+        >
+          <p>{t('sessions.deleteConfirm', { name: sessionToDelete })}</p>
+          <p className="text-sm text-neutral-400 mt-1">{t('sessions.deleteWarning')}</p>
         </ConfirmDialog>
       )}
     </div>

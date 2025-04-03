@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+
 import { CopyMessageButton } from './CopyMessageButton';
 import { parseMessageContent } from './utils';
 
@@ -10,12 +12,13 @@ type Props = {
 };
 
 export const ResponseMessageBlock = ({ baseDir, message, allFiles }: Props) => {
+  const { t } = useTranslation();
   const baseClasses = 'rounded-md p-3 mb-2 max-w-full break-words whitespace-pre-wrap text-xs bg-neutral-850 border border-neutral-800 text-gray-100';
 
   return (
     <div className={`${baseClasses} relative flex flex-col group`}>
       <div className={`flex-1 max-w-full ${message.content ? 'pb-2' : ''}`}>
-        {message.content ? parseMessageContent(baseDir, message.content, allFiles) : 'Thinking...'}
+        {message.content ? parseMessageContent(baseDir, message.content, allFiles) : t('messages.thinking')}
       </div>
       <div className="absolute top-2 right-2 flex items-center gap-2">
         <CopyMessageButton content={message.content} className="text-neutral-600 hover:text-neutral-300" />
@@ -28,8 +31,11 @@ export const ResponseMessageBlock = ({ baseDir, message, allFiles }: Props) => {
           bg-neutral-900 border border-neutral-700"
         >
           <span className="text-xs text-neutral-300 hover:text-neutral-100">
-            {message.usageReport.sentTokens} tokens sent, {message.usageReport.receivedTokens} tokens received, cost: $
-            {message.usageReport.messageCost.toFixed(5)}
+            {t('responseMessage.usageReport', {
+              sent: message.usageReport.sentTokens,
+              received: message.usageReport.receivedTokens,
+              cost: message.usageReport.messageCost.toFixed(5),
+            })}
           </span>
         </div>
       )}

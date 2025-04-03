@@ -1,6 +1,304 @@
 {
+  "common": {
+    "settings": "设置",
+    "cancel": "取消",
+    "save": "保存",
+    "delete": "删除",
+    "edit": "编辑",
+    "add": "添加",
+    "remove": "移除",
+    "close": "关闭",
+    "confirm": "确认",
+    "back": "返回",
+    "next": "下一步",
+    "finish": "完成",
+    "search": "搜索",
+    "loading": "加载中...",
+    "startingUp": "正在启动...",
+    "error": "错误",
+    "success": "成功",
+    "warning": "警告",
+    "info": "信息",
+    "yes": "是",
+    "no": "否",
+    "open": "打开",
+    "openProject": "打开项目"
+  },
+  "onboarding": {
+    "title": "欢迎使用 Aider Desk",
+    "description": "Aider Desk 是您的 AI 辅助编程桌面伴侣。本应用将 Aider 的 AI 编程助手功能带到用户友好的界面中，帮助您：",
+    "finish": "完成设置",
+    "features": {
+      "1": "管理多个编程项目",
+      "2": "跟踪您的 AI 使用情况和成本",
+      "3": "以结构化方式与 AI 模型交互",
+      "4": "可视化和管理您的代码文件"
+    },
+    "getStarted": "让我们从配置您的 Aider 设置开始。",
+    "aider": {
+      "title": "配置 Aider",
+      "description": "要开始使用，请配置您的 Aider 设置。您需要：",
+      "options": {
+        "1": "添加您想要使用的 LLM 提供商的 API 密钥",
+        "2": "为 Aider 设置任何其他选项"
+      },
+      "configureLater": "您也可以稍后在设置中进行配置。"
+    }
+  },
+  "noProjectsOpen": {
+    "welcome": "欢迎使用",
+    "description": "要开始使用，请打开一个项目目录。这将允许您熟悉和喜爱的 Aider 与您的代码一起工作。"
+  },
+  "home": {
+    "title": "首页",
+    "noProjectsOpen": "没有打开的项目",
+    "openProject": "打开项目",
+    "addFile": "添加文件",
+    "projectView": "项目视图",
+    "recentProjects": "最近的项目"
+  },
+  "tips": {
+    "multipleProjects": "提示：您可以打开多个项目并使用顶部的标签页(或 CTRL+Tab)在它们之间切换。"
+  },
+  "mcpServer": {
+    "addServer": "添加 MCP 服务器",
+    "editServer": "编辑 MCP 服务器: {{name}}",
+    "serverConfigJson": "服务器配置 JSON",
+    "pasteServerAs": "粘贴您的服务器配置为:\n\n{\n  \"mcpServers\": {\n    \"puppeteer\": {\n      \"command\": \"npx\",\n      \"args\": [\"-y\", \"@modelcontextprotocol/server-puppeteer\"]\n    }\n  }\n}",
+    "invalidConfig": "无效配置",
+    "emptyConfig": "配置不能为空"
+  },
+  "model": {
+    "label": "模型",
+    "selectLabel": "模型"
+  },
+  "openai": {
+    "apiKey": "API 密钥",
+    "model": "模型",
+    "baseUrl": "基础 URL",
+    "modelName": "模型名称",
+    "baseUrlPlaceholder": "例如 http://localhost:8080/v1",
+    "modelNamePlaceholder": "输入模型名称"
+  },
+  "anthropic": {
+    "apiKey": "API 密钥"
+  },
+  "gemini": {
+    "apiKey": "API 密钥"
+  },
+  "deepseek": {
+    "apiKey": "API 密钥"
+  },
+  "bedrock": {
+    "apiKey": "API 密钥",
+    "region": "区域",
+    "regionPlaceholder": "例如 us-east-1",
+    "accessKeyId": "访问密钥 ID",
+    "accessKeyIdTooltip": "AWS 访问密钥 ID。如果设置了 AWS_PROFILE 环境变量，可以留空。",
+    "secretAccessKey": "秘密访问密钥",
+    "secretAccessKeyTooltip": "AWS 秘密访问密钥。如果设置了 AWS_PROFILE 环境变量，可以留空。"
+  },
+  "select": {
+    "placeholder": "选择选项",
+    "loadingSessions": "正在加载会话..."
+  },
+  "settings": {
+    "title": "设置",
+    "tabs": {
+      "general": "通用",
+      "aider": "Aider",
+      "mcpAgent": "MCP 服务器"
+    },
+    "startup": {
+      "title": "启动",
+      "emptySession": "以空会话启动",
+      "lastSession": "加载上次会话",
+      "specificSession": "加载特定会话"
+    },
+    "language": "语言",
+    "mcp": {
+      "mcpServers": "MCP 服务器",
+      "provider": "提供商",
+      "maxIterations": "最大迭代次数",
+      "minTimeBetweenToolCalls": "工具调用最小间隔时间(毫秒)",
+      "maxTokens": "最大令牌数",
+      "systemPrompt": "系统提示",
+      "systemPromptWarning": "警告：修改系统提示可能导致 MCP 代理行为异常。只有在理解影响的情况下才更改此设置。",
+      "noServersConfigured": "未配置 MCP 服务器。",
+      "computationalResources": "MCP 工具调用的最大迭代次数。帮助控制计算资源。",
+      "rateLimiting": "设置工具调用之间的最小时间以防止速率限制(例如对于 Brave 或其他 API 受限的服务)。",
+      "tokensPerResponse": "MCP 代理每次响应可以使用的最大令牌数。",
+      "addServer": "添加服务器"
+    },
+    "aider": {
+      "options": "选项",
+      "optionsPlaceholder": "例如 --no-auto-commits --cache-prompts",
+      "environmentVariables": "环境变量",
+      "envVarsPlaceholder": "#################\n# LLM 参数:\n#\n# 包含 xxx_API_KEY 参数和您的 LLM 所需的其他参数。\n# 详情请见 https://aider.chat/docs/llms.html\n\n## OpenAI\n#OPENAI_API_KEY=\n\n## Anthropic\n#ANTHROPIC_API_KEY=",
+      "optionsDocumentation": "查看文档了解可用选项",
+      "envVarsDocumentation": "查看文档了解环境变量"
+    },
+    "common": {
+      "showSecrets": "显示密钥"
+    }
+  },
+  "messages": {
+    "thinking": "思考中...",
+    "loading": "加载中...",
+    "copy": "复制",
+    "copied": "已复制!",
+    "interrupted": "被用户中断。"
+  },
+  "errors": {
+    "frozenTitle": "AIDER冻结了?",
+    "frozenMessage": "Aider进程似乎已冻结。您想重启会话吗?"
+  },
+  "dialogs": {
+    "confirm": "确认",
+    "confirmDelete": "确定要删除吗?",
+    "addFile": "添加文件",
+    "openProject": "打开项目",
+    "recentProjects": "最近的项目",
+    "openProjectTitle": "打开项目",
+    "projectPathPlaceholder": "输入项目路径或使用图标浏览",
+    "openButton": "打开",
+    "browseFoldersTooltip": "浏览文件夹"
+  },
+  "formatSelector": {
+    "code": "代码",
+    "ask": "提问",
+    "architect": "架构",
+    "context": "上下文"
+  },
+  "addFileDialog": {
+    "title": "添加上下文文件",
+    "placeholder": "选择要添加的文件",
+    "browse": "浏览文件",
+    "readOnly": "只读"
+  },
   "contextFiles": {
+    "title": "上下文文件",
     "add": "添加上下文文件",
     "readOnly": "只读文件"
+  },
+  "modelSelector": {
+    "mainModel": "主模型:",
+    "editorModel": "编辑器模型:",
+    "weakModel": "弱模型:",
+    "architectModel": "架构模型:",
+    "maxTokens": "最大令牌数:",
+    "reasoning": "推理",
+    "thinkingTokens": "思考令牌",
+    "loadingModel": "加载模型中...",
+    "searchPlaceholder": "搜索模型或输入自定义名称...",
+    "removePreferred": "从首选模型中移除"
+  },
+  "mcp": {
+    "noDescription": "无描述",
+    "serverToolStatus": "已启用{{enabledCount}}个工具，共{{count}}个",
+    "loading": "加载中...",
+    "toolsCount_one": "{{count}}个工具",
+    "toolsCount_other": "{{count}}个工具",
+    "loadToolsError": "加载MCP服务器工具失败",
+    "noToolsFound": "未找到工具。请检查您的配置。",
+    "server_one": "服务器",
+    "server_other": "服务器",
+    "agentEnabled": "MCP代理已启用",
+    "agentDisabled": "MCP代理已禁用",
+    "aider": "aider",
+    "aiderOnly": "仅aider",
+    "withFiles": "包含文件",
+    "useAiderTools": "使用Aider工具",
+    "aiderToolsTooltip": "MCP代理可以使用Aider执行添加/删除上下文文件操作和运行提示。",
+    "includeContextFiles": "包含上下文文件",
+    "includeFilesTooltip": "将上下文文件内容添加到MCP代理的聊天中。这将增加令牌使用量。",
+    "configureServers": "配置服务器"
+  },
+  "autocompletion": {
+    "placeholder": "输入以搜索..."
+  },
+  "session": {
+    "edit": "编辑会话",
+    "save": "保存会话",
+    "name": "会话名称",
+    "namePlaceholder": "输入会话名称",
+    "loadSettings": "加载设置",
+    "loadMessages": "从该会话加载消息",
+    "loadFiles": "从该会话加载上下文文件"
+  },
+  "sessionInfo": {
+    "title": "会话",
+    "files": "文件",
+    "repoMap": "仓库地图",
+    "refreshRepoMap": "刷新仓库地图",
+    "chat": "聊天",
+    "clearMessages": "清除消息历史",
+    "lastMessage": "最后消息",
+    "mcpAgent": "MCP代理",
+    "aider": "Aider",
+    "session": "会话",
+    "restartSession": "重启会话"
+  },
+  "sessions": {
+    "title": "会话",
+    "empty": "无保存的会话",
+    "loadsMessages": "加载{{count}}条消息",
+    "loadsFiles": "加载{{count}}个文件",
+    "saveAsNew": "另存为新",
+    "deleteTitle": "删除会话",
+    "deleteConfirm": "确定要删除会话\"{{name}}\"?",
+    "deleteWarning": "此操作无法撤销。"
+  },
+  "commandOutput": {
+    "command": "命令"
+  },
+  "reflectedMessage": {
+    "title": "反射消息"
+  },
+  "responseMessage": {
+    "usageReport": "发送{{sent}}个令牌，接收{{received}}个令牌，成本: ${{cost}}"
+  },
+  "thinkingAnswer": {
+    "thinking": "思考中",
+    "answer": "回答"
+  },
+  "toolMessage": {
+    "toolLabel": "工具: {{server}}/{{tool}}",
+    "arguments": "参数:",
+    "executing": "工具执行中...",
+    "result": "结果:"
+  },
+  "codeBlock": {
+    "revertChanges": "撤销更改"
+  },
+  "promptField": {
+    "placeholders": {
+      "0": "今天我能帮您什么?",
+      "1": "有什么任务需要我协助?",
+      "2": "您想让我编写什么代码?",
+      "3": "让我帮您解决问题",
+      "4": "需要我帮您改进什么吗?",
+      "5": "想重构一些代码吗?",
+      "6": "需要我帮您优化算法吗?",
+      "7": "让我帮您设计新功能",
+      "8": "需要我帮您调试问题吗?",
+      "9": "让我帮您创建测试套件",
+      "10": "让我帮您实现设计模式",
+      "11": "需要我解释一些代码吗?",
+      "12": "让我帮您现代化遗留代码",
+      "13": "需要我帮您编写文档吗?",
+      "14": "让我帮您提高性能",
+      "15": "给我一些任务吧!"
+    },
+    "questionPlaceholder": "...或建议其他内容",
+    "answers": {
+      "yes": "(Y)是",
+      "no": "(N)否",
+      "always": "(A)总是",
+      "dontAsk": "(D)不再询问"
+    },
+    "invalidCommand": "无效命令",
+    "stopResponse": "停止响应",
+    "sendMessage": "发送消息(Enter)"
   }
 }
