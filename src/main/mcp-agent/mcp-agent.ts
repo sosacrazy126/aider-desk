@@ -1,7 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 
-import { ContextFile, ContextMessage, EditFormat, McpServerConfig, McpTool, UsageReportData } from '@common/types';
+import { ContextFile, ContextMessage, McpServerConfig, McpTool, UsageReportData } from '@common/types';
 import { ChatAnthropic } from '@langchain/anthropic';
 import { AIMessage, HumanMessage, SystemMessage, ToolMessage } from '@langchain/core/messages';
 import { StructuredTool, tool } from '@langchain/core/tools';
@@ -16,6 +16,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { delay } from '@common/utils';
 import { BaseMessage } from '@langchain/core/dist/messages/base';
 import {
+  getActiveProvider,
   isAnthropicProvider,
   isBedrockProvider,
   isDeepseekProvider,
@@ -23,7 +24,6 @@ import {
   isOpenAiCompatibleProvider,
   isOpenAiProvider,
   LlmProvider,
-  getActiveProvider,
 } from '@common/llm-providers';
 import { BaseChatModel } from '@langchain/core/dist/language_models/chat_models';
 
@@ -355,7 +355,7 @@ export class McpAgent {
     return messages;
   }
 
-  async runAgent(project: Project, prompt: string, editFormat?: EditFormat): Promise<ContextMessage[]> {
+  async runAgent(project: Project, prompt: string): Promise<ContextMessage[]> {
     // Wait for any ongoing initialization to complete
     while (this.currentInitId) {
       logger.debug(`MCP Agent is initializing (ID: ${this.currentInitId}), waiting...`);
@@ -371,15 +371,9 @@ export class McpAgent {
     // Track new messages created during this run
     const newMessages: ContextMessage[] = [];
     const enabledClients = this.clients.filter((clientHolder) => !mcpAgent.disabledServers.includes(clientHolder.serverName));
-    const enabled = mcpAgent.agentEnabled && (enabledClients.length > 0 || mcpAgent.useAiderTools);
-    const messages = await this.prepareMessages(project, enabled);
+    const messages = await this.prepareMessages(project);
 
     newMessages.push(new HumanMessage(prompt));
-
-    if (!enabled) {
-      logger.debug('MCP agent disabled, returning original prompt');
-      return [];
-    }
 
     // Check if we need to reinitialize for a different project
     if (this.initializedForProject?.baseDir !== project.baseDir) {
@@ -403,7 +397,7 @@ export class McpAgent {
     // Add Aider tools if enabled
     const allTools = [...mcpServerTools];
     if (mcpAgent.useAiderTools) {
-      const aiderTools = createAiderTools(project, editFormat);
+      const aiderTools = createAiderTools(project);
       allTools.push(...aiderTools);
     }
 
@@ -572,12 +566,12 @@ Current Date/Time: ${currentDate}
 Operating System: ${osInfo}`;
   }
 
-  private async prepareMessages(project: Project, enabled: boolean): Promise<readonly BaseMessage[]> {
+  private async prepareMessages(project: Project): Promise<readonly BaseMessage[]> {
     const { mcpAgent } = this.store.getSettings();
     const systemMessageContent = this.getSystemMessage(project, mcpAgent.systemPrompt);
     const messages = [new SystemMessage(systemMessageContent), ...project.getContextMessages()];
 
-    if (mcpAgent.includeContextFiles && enabled) {
+    if (mcpAgent.includeContextFiles) {
       // Get and store new context files messages
       const contextFilesMessages = await this.getContextFilesMessages(project);
       messages.push(...contextFilesMessages);

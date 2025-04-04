@@ -1,10 +1,9 @@
 import { StructuredTool, tool } from '@langchain/core/tools';
 import { z } from 'zod';
-import { EditFormat } from '@common/types';
 
 import { Project } from '../../project';
 
-export const createAiderTools = (project: Project, editFormat: EditFormat = 'code'): StructuredTool[] => {
+export const createAiderTools = (project: Project): StructuredTool[] => {
   const getContextFilesTool = tool(
     async () => {
       const files = project.getContextFiles();
@@ -55,7 +54,10 @@ export const createAiderTools = (project: Project, editFormat: EditFormat = 'cod
 
   const runPromptTool = tool(
     async (params: { prompt: string; clearContext?: boolean }) => {
-      const responses = await project.sendPrompt(params.prompt, editFormat, params.clearContext);
+      const responses = await project.sendPrompt(params.prompt, 'code', params.clearContext);
+
+      // notify that we are still processing after aider finishes
+      project.addLogMessage('loading');
 
       // Merge all responses into a single cohesive response
       const mergedResponse = responses

@@ -1,4 +1,4 @@
-import { EditFormat, FileEdit, McpServerConfig, MessageRole, ProjectData, ProjectSettings, SettingsData } from '@common/types';
+import { Mode, FileEdit, McpServerConfig, MessageRole, ProjectData, ProjectSettings, SettingsData } from '@common/types';
 import { normalizeBaseDir } from '@common/utils';
 import { BrowserWindow, dialog, ipcMain } from 'electron';
 import { McpAgent } from 'src/main/mcp-agent';
@@ -25,8 +25,8 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, projectManager: Proj
     return store.getSettings();
   });
 
-  ipcMain.on('run-prompt', (_, baseDir: string, prompt: string, editFormat?: EditFormat) => {
-    void projectManager.getProject(baseDir).runPrompt(prompt, editFormat);
+  ipcMain.on('run-prompt', (_, baseDir: string, prompt: string, mode?: Mode) => {
+    void projectManager.getProject(baseDir).runPrompt(prompt, mode);
   });
 
   ipcMain.on('answer-question', (_, baseDir: string, answer: string) => {

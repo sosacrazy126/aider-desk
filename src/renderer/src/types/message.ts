@@ -1,4 +1,4 @@
-import { ModelsData, TokensInfoData, UsageReportData } from '@common/types';
+import { Mode, ModelsData, TokensInfoData, UsageReportData } from '@common/types';
 
 export interface Message {
   id: string;
@@ -8,7 +8,7 @@ export interface Message {
 
 export interface UserMessage extends Message {
   type: 'user';
-  editFormat?: string;
+  mode?: Mode;
 }
 
 export interface ResponseMessage extends Message {

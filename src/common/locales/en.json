@@ -26,7 +26,9 @@
     "yes": "Yes",
     "no": "No",
     "open": "Open",
-    "openProject": "Open Project"
+    "openProject": "Open Project",
+    "lock": "Lock",
+    "unlock": "Unlock"
   },
   "onboarding": {
     "title": "Welcome to Aider Desk",
@@ -168,11 +170,12 @@
     "openButton": "Open",
     "browseFoldersTooltip": "Browse folders"
   },
-  "formatSelector": {
+  "mode": {
     "code": "Code",
     "ask": "Ask",
     "architect": "Architect",
-    "context": "Context"
+    "context": "Context",
+    "agent": "Agent"
   },
   "addFileDialog": {
     "title": "ADD CONTEXT FILE",
@@ -216,6 +219,7 @@
     "aiderToolsTooltip": "MCP agent can use Aider to perform add/drop context files actions and run prompts.",
     "includeContextFiles": "Include context files",
     "includeFilesTooltip": "Adds content of context files into the chat of MCP agent. This will increase token usage.",
+    "servers": "MCP servers",
     "configureServers": "Configure servers"
   },
   "autocompletion": {

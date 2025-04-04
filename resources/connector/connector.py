@@ -328,7 +328,7 @@ class Connector:
 
       if action == "prompt":
         prompt = message.get('prompt')
-        edit_format = message.get('editFormat')
+        mode = message.get('mode')
         architect_model = message.get('architectModel')
         prompt_id = message.get('promptId')
         clear_context = message.get('clearContext')
@@ -337,7 +337,7 @@ class Connector:
           return
 
         try:
-            await self.run_prompt(prompt, edit_format, architect_model, prompt_id, clear_context)
+            await self.run_prompt(prompt, mode, architect_model, prompt_id, clear_context)
         finally:
             if prompt_id:
                 await self.send_action({
@@ -436,20 +436,20 @@ class Connector:
     self.coder.io.reset_state()
     self.interrupted = False
 
-  async def run_prompt(self, prompt, edit_format=None, architect_model=None, prompt_id=None, clear_context=False):
+  async def run_prompt(self, prompt, mode=None, architect_model=None, prompt_id=None, clear_context=False):
     self.coder.io.add_to_input_history(prompt)
 
     coder_model = self.coder.main_model
 
-    if (edit_format and edit_format != "code") or clear_context:
+    if (mode and mode != "code") or clear_context:
       running_model = self.coder.main_model
-      if edit_format == "architect" and architect_model:
+      if mode == "architect" and architect_model:
         running_model = models.Model(architect_model, weak_model=coder_model.weak_model.name, editor_model=coder_model.name)
         models.sanity_check_models(self.coder.io, running_model)
 
       self.running_coder = Coder.create(
         from_coder=self.coder,
-        edit_format=edit_format,
+        edit_format=mode,
         main_model=running_model,
         summarize_from_coder=False,
       )

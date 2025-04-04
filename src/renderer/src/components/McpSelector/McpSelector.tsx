@@ -1,6 +1,7 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MdKeyboardArrowUp, MdSettings } from 'react-icons/md';
+import { MdOutlineHdrAuto, MdOutlineFileCopy, MdSettings } from 'react-icons/md';
+import { RiToolsFill } from 'react-icons/ri';
 import { SettingsData } from '@common/types';
 
 import { McpServerSelectorItem } from './McpServerSelectorItem';
@@ -16,10 +17,58 @@ export const McpSelector = () => {
   const { t } = useTranslation();
   const [selectorVisible, setSelectorVisible] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [enabledToolsCount, setEnabledToolsCount] = useState<number | null>(null);
   const selectorRef = useRef<HTMLDivElement>(null);
   const { settings, saveSettings } = useSettings();
 
   useClickOutside(selectorRef, () => setSelectorVisible(false));
+
+  useEffect(() => {
+    const calculateEnabledTools = async () => {
+      if (!settings) {
+        return;
+      }
+
+      const { mcpServers, disabledServers, disabledTools } = settings.mcpAgent;
+      const serverNames = Object.keys(mcpServers);
+      const enabledServerNames = serverNames.filter((name) => !disabledServers.includes(name));
+
+      if (enabledServerNames.length === 0) {
+        setEnabledToolsCount(0);
+        return;
+      }
+
+      // set to loading state after 1 second
+      const timeoutId = setTimeout(() => setEnabledToolsCount(null), 1000);
+
+      try {
+        const toolCounts = await Promise.all(
+          enabledServerNames.map(async (serverName) => {
+            try {
+              const tools = await window.api.loadMcpServerTools(serverName);
+              const serverTotalTools = tools?.length ?? 0;
+              const serverDisabledTools = disabledTools.filter((toolId) => toolId.startsWith(`${serverName}-`)).length;
+              return Math.max(0, serverTotalTools - serverDisabledTools);
+            } catch (error) {
+              console.error(`Failed to load tools for server ${serverName}:`, error);
+              return 0; // Count 0 tools if loading fails for a server
+            }
+          }),
+        );
+
+        const totalEnabledTools = toolCounts.reduce((sum, count) => sum + count, 0);
+        setEnabledToolsCount(totalEnabledTools);
+      } catch (error) {
+        console.error('Failed to calculate total enabled tools:', error);
+        setEnabledToolsCount(0); // Set to 0 on overall failure
+      }
+
+      clearTimeout(timeoutId);
+    };
+
+    void calculateEnabledTools();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settings?.mcpAgent.mcpServers, settings?.mcpAgent.disabledServers, settings?.mcpAgent.disabledTools]);
 
   if (!settings) {
     return <div className="text-xs text-neutral-400">{t('common.loading')}</div>;
@@ -63,17 +112,6 @@ export const McpSelector = () => {
     void saveSettings(updatedSettings);
   };
 
-  const handleToggleEnabled = () => {
-    const updatedSettings: SettingsData = {
-      ...settings,
-      mcpAgent: {
-        ...settings.mcpAgent,
-        agentEnabled: !settings.mcpAgent.agentEnabled,
-      },
-    };
-    void saveSettings(updatedSettings);
-  };
-
   const toggleSelectorVisible = () => {
     setSelectorVisible((prev) => !prev);
   };
@@ -107,8 +145,6 @@ export const McpSelector = () => {
   };
 
   const serverNames = Object.keys(settings.mcpAgent.mcpServers);
-  const totalServers = serverNames.length;
-  const enabledServers = totalServers - settings.mcpAgent.disabledServers.filter((name) => serverNames.includes(name)).length;
 
   const handleToggleIncludeContextFiles = () => {
     const updatedSettings: SettingsData = {
@@ -135,11 +171,11 @@ export const McpSelector = () => {
   const renderConfigureServersButton = (t: (key: string) => string) => (
     <>
       <div className="py-1 border-b border-neutral-700 ">
-        <div className="px-3 py-1 text-xs text-neutral-300 flex items-center gap-2">
+        <div className="px-3 py-1 text-xs text-neutral-300 hover:text-neutral-100 flex items-center gap-2">
           <Checkbox checked={settings.mcpAgent.useAiderTools} onChange={handleToggleUseAiderTools} label={t('mcp.useAiderTools')} className="flex-1 mr-1" />
           <InfoIcon tooltip={t('mcp.aiderToolsTooltip')} />
         </div>
-        <div className="px-3 py-1 text-xs text-neutral-300 flex items-center gap-2">
+        <div className="px-3 py-1 text-xs text-neutral-300 hover:text-neutral-100 flex items-center gap-2">
           <Checkbox
             checked={settings.mcpAgent.includeContextFiles}
             onChange={handleToggleIncludeContextFiles}
@@ -160,22 +196,16 @@ export const McpSelector = () => {
     <div className="relative" ref={selectorRef}>
       <button
         onClick={toggleSelectorVisible}
-        className="flex items-center hover:text-neutral-300 focus:outline-none transition-colors duration-200 text-xs ml-3"
+        className="flex items-center gap-1.5 px-2 py-1 bg-neutral-850 text-neutral-300 hover:bg-neutral-800 hover:text-neutral-100 focus:outline-none transition-colors duration-200 text-xs border-neutral-600 border rounded-md"
       >
-        {serverNames.length > 0 && <Checkbox checked={settings.mcpAgent.agentEnabled} onChange={handleToggleEnabled} className="mr-2" />}
-        <span>
-          {settings.mcpAgent.agentEnabled && (enabledServers > 0 || settings.mcpAgent.useAiderTools)
-            ? enabledServers === 0
-              ? t('mcp.agentEnabled') + ` (${t('mcp.aiderOnly')}${settings.mcpAgent.includeContextFiles ? `, ${t('mcp.withFiles')}` : ''})`
-              : t('mcp.agentEnabled') +
-                ` (${enabledServers} ${t('mcp.server', { count: enabledServers })}${settings.mcpAgent.useAiderTools ? ` + ${t('mcp.aider')}` : ''}${settings.mcpAgent.includeContextFiles ? `, ${t('mcp.withFiles')}` : ''})`
-            : t('mcp.agentDisabled')}
-        </span>
-        <MdKeyboardArrowUp className="w-3 h-3 ml-0.5" />
+        <RiToolsFill className="w-4 h-4" />
+        <span className="text-xxs font-mono">{enabledToolsCount ?? '...'}</span>
+        {settings.mcpAgent.useAiderTools && <MdOutlineHdrAuto className="w-4 h-4 text-green-400 opacity-50" title={t('mcp.useAiderTools')} />}
+        {settings.mcpAgent.includeContextFiles && <MdOutlineFileCopy className="w-3 h-3 text-yellow-400 opacity-50" title={t('mcp.includeContextFiles')} />}
       </button>
 
       {selectorVisible && (
-        <div className="absolute bottom-full right-0 mb-1 bg-neutral-900 border border-neutral-700 rounded-md shadow-lg z-10 ml-2 min-w-[250px]">
+        <div className="absolute bottom-full left-0 mb-1 bg-neutral-900 border border-neutral-700 rounded-md shadow-lg z-10 min-w-[250px]">
           {serverNames.length > 0 ? (
             <>
               <div

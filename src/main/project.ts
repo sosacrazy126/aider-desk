@@ -6,7 +6,7 @@ import path from 'path';
 
 import {
   ContextFile,
-  EditFormat,
+  Mode,
   FileEdit,
   InputHistoryData,
   LogData,
@@ -351,7 +351,7 @@ export class Project {
     return this.connectors.filter((connector) => connector.listenTo.includes(action));
   }
 
-  public async runPrompt(prompt: string, editFormat?: EditFormat): Promise<ResponseCompletedData[]> {
+  public async runPrompt(prompt: string, mode?: Mode): Promise<ResponseCompletedData[]> {
     if (this.currentQuestion) {
       this.answerQuestion('n');
     }
@@ -367,47 +367,46 @@ export class Project {
     logger.info('Running prompt:', {
       baseDir: this.baseDir,
       prompt,
-      editFormat,
+      mode,
     });
 
     await this.addToInputHistory(prompt);
 
-    this.addUserMessage(prompt, editFormat);
+    this.addUserMessage(prompt, mode);
     this.addLogMessage('loading');
 
-    // try MCP agent run first
-    const agentMessages = await this.mcpAgent.runAgent(this, prompt, editFormat);
-    if (agentMessages.length > 0) {
-      agentMessages.forEach((message) => this.sessionManager.addContextMessage(message));
+    if (mode === 'agent') {
+      const agentMessages = await this.mcpAgent.runAgent(this, prompt);
+      if (agentMessages.length > 0) {
+        agentMessages.forEach((message) => this.sessionManager.addContextMessage(message));
 
-      this.sessionManager.filterUserAndAssistantMessages(agentMessages).forEach((message) => {
-        this.sendAddMessage(message.role, message.content);
-      });
-
-      // in case MCP agent handled the prompt, return empty array of response data
-      return [];
-    }
-
-    const responses = await this.sendPrompt(prompt, editFormat);
-
-    // add messages to session
-    this.sessionManager.addContextMessage(MessageRole.User, prompt);
-    for (const response of responses) {
-      if (response.content) {
-        this.sessionManager.addContextMessage(MessageRole.Assistant, response.content);
+        this.sessionManager.filterUserAndAssistantMessages(agentMessages).forEach((message) => {
+          this.sendAddMessage(message.role, message.content);
+        });
       }
-    }
+      return [];
+    } else {
+      const responses = await this.sendPrompt(prompt, mode);
 
-    return responses;
+      // add messages to session
+      this.sessionManager.addContextMessage(MessageRole.User, prompt);
+      for (const response of responses) {
+        if (response.content) {
+          this.sessionManager.addContextMessage(MessageRole.Assistant, response.content);
+        }
+      }
+
+      return responses;
+    }
   }
 
-  public sendPrompt(prompt: string, editFormat?: EditFormat, clearContext = false): Promise<ResponseCompletedData[]> {
+  public sendPrompt(prompt: string, mode?: Mode, clearContext = false): Promise<ResponseCompletedData[]> {
     this.currentPromptResponses = [];
     this.currentResponseMessageId = null;
     this.currentPromptId = uuidv4();
 
     this.findMessageConnectors('prompt').forEach((connector) =>
-      connector.sendPromptMessage(prompt, editFormat, this.getArchitectModel(), this.currentPromptId, clearContext),
+      connector.sendPromptMessage(prompt, mode, this.getArchitectModel(), this.currentPromptId, clearContext),
     );
 
     // Wait for prompt to finish and return collected responses
@@ -800,17 +799,17 @@ export class Project {
     }
   }
 
-  public addUserMessage(content: string, editFormat?: string) {
+  public addUserMessage(content: string, mode?: Mode) {
     logger.info('Adding user message:', {
       baseDir: this.baseDir,
       content,
-      editFormat,
+      mode,
     });
 
     const data: UserMessageData = {
       baseDir: this.baseDir,
       content,
-      editFormat,
+      mode,
     };
 
     this.mainWindow.webContents.send('user-message', data);

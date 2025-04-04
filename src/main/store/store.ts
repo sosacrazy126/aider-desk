@@ -35,7 +35,6 @@ export const DEFAULT_SETTINGS: SettingsData = {
     mcpServers: {},
     disabledServers: [],
     disabledTools: [],
-    agentEnabled: false,
     includeContextFiles: false,
     useAiderTools: true,
     systemPrompt: `You are an AI agent specializing in software engineering. You have access to multiple tools, including an advanced coding assistant, to assist with not only coding tasks dynamically.

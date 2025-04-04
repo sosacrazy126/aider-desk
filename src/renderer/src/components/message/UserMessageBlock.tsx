@@ -1,7 +1,8 @@
 import { CgTerminal } from 'react-icons/cg';
 import { FaRegQuestionCircle } from 'react-icons/fa';
 import { AiOutlineFileSearch } from 'react-icons/ai';
-import { IoConstruct } from 'react-icons/io5';
+import { RiRobot2Line } from 'react-icons/ri';
+import { GoProjectRoadmap } from 'react-icons/go';
 
 import { CopyMessageButton } from './CopyMessageButton';
 import { parseMessageContent } from './utils';
@@ -20,10 +21,11 @@ export const UserMessageBlock = ({ baseDir, message, allFiles }: Props) => {
   return (
     <div className={`${baseClasses} relative flex items-start gap-3 group`}>
       <div className="mt-[1px]">
-        {(message.editFormat === 'code' || !message.editFormat) && <CgTerminal className="text-neutral-200" size={16} />}
-        {message.editFormat === 'ask' && <FaRegQuestionCircle className="text-neutral-200" size={16} />}
-        {message.editFormat === 'architect' && <IoConstruct className="text-neutral-200" size={16} />}
-        {message.editFormat === 'context' && <AiOutlineFileSearch className="text-neutral-200" size={16} />}
+        {(message.mode === 'code' || !message.mode) && <CgTerminal className="text-neutral-200" size={16} title="Code Mode" />}
+        {message.mode === 'ask' && <FaRegQuestionCircle className="text-neutral-200" size={16} title="Ask Mode" />}
+        {message.mode === 'architect' && <GoProjectRoadmap className="text-neutral-200" size={16} title="Architect Mode" />}
+        {message.mode === 'context' && <AiOutlineFileSearch className="text-neutral-200" size={16} title="Context Mode" />}
+        {message.mode === 'agent' && <RiRobot2Line className="text-neutral-200" size={16} title="Agent Mode" />}
       </div>
       <div className="flex-grow-1">{parseMessageContent(baseDir, message.content, allFiles)}</div>
       <div className="absolute top-2 right-2">

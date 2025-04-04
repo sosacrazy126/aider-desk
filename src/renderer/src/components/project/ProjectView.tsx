@@ -11,7 +11,7 @@ import {
   ToolData,
   InputHistoryData,
   UserMessageData,
-  EditFormat,
+  Mode,
 } from '@common/types';
 import { useTranslation } from 'react-i18next';
 import { IpcRendererEvent } from 'electron';
@@ -64,7 +64,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
   const [mcpAgentTotalCost, setMcpAgentTotalCost] = useState(0);
   const [tokensInfo, setTokensInfo] = useState<TokensInfoData | null>(null);
   const [question, setQuestion] = useState<QuestionData | null>(null);
-  const [editFormat, setEditFormat] = useState<EditFormat>('code');
+  const [mode, setMode] = useState<Mode>('code');
   const [showFrozenDialog, setShowFrozenDialog] = useState(false);
   const processingMessageRef = useRef<ResponseMessage | null>(null);
   const promptFieldRef = useRef<PromptFieldRef>(null);
@@ -289,7 +289,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
       const userMessage: UserMessage = {
         id: uuidv4(),
         type: 'user',
-        editFormat: data.editFormat || 'code',
+        mode: data.mode || 'code',
         content: data.content,
       };
 
@@ -483,7 +483,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
             baseDir={project.baseDir}
             modelsData={modelsData}
             allModels={autocompletionData?.models}
-            architectMode={editFormat === 'architect'}
+            architectMode={mode === 'architect'}
             onModelChange={handleModelChange}
           />
         </div>
@@ -496,8 +496,8 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
             baseDir={project.baseDir}
             inputHistory={inputHistory}
             processing={processing}
-            editFormat={editFormat}
-            setEditFormat={setEditFormat}
+            mode={mode}
+            onModeChanged={setMode}
             isActive={isActive}
             words={autocompletionData?.words}
             clearMessages={clearMessages}

@@ -7,6 +7,7 @@
 - removed tool response limiting
 - fixed issue with tool responses when using Gemini models
 - added localization support (currently English and Chinese)
+- added Agent mode as one of the available modes instead of having it as a separate setting
 
 ## [0.7.1]
 

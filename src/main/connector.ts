@@ -1,6 +1,6 @@
 import path from 'path';
 
-import { ContextFile, FileEdit, MessageRole, EditFormat } from '@common/types';
+import { ContextFile, FileEdit, MessageRole, Mode } from '@common/types';
 import { Socket } from 'socket.io';
 
 import logger from './logger';
@@ -45,7 +45,7 @@ export class Connector {
 
   public sendPromptMessage(
     prompt: string,
-    editFormat: EditFormat | null = null,
+    mode: Mode | null = null,
     architectModel: string | null = null,
     promptId: string | null = null,
     clearContext = false,
@@ -53,7 +53,7 @@ export class Connector {
     const message: PromptMessage = {
       action: 'prompt',
       prompt,
-      editFormat,
+      mode,
       architectModel,
       promptId,
       clearContext,

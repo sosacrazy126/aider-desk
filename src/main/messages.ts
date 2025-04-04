@@ -1,4 +1,4 @@
-import { ContextFileSourceType, ContextFile, TokensCost, FileEdit, UsageReportData, LogLevel, EditFormat, MessageRole } from '@common/types';
+import { ContextFileSourceType, ContextFile, TokensCost, FileEdit, UsageReportData, LogLevel, Mode, MessageRole } from '@common/types';
 
 export type MessageAction =
   | 'init'
@@ -43,7 +43,7 @@ export const isInitMessage = (message: Message): message is InitMessage => {
 export interface PromptMessage extends Message {
   action: 'prompt';
   prompt: string;
-  editFormat: EditFormat | null;
+  mode: Mode | null;
   architectModel: string | null;
   promptId?: string | null;
   clearContext?: boolean;

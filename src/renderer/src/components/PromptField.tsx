@@ -1,4 +1,4 @@
-import { EditFormat, QuestionData, SettingsData } from '@common/types';
+import { Mode, QuestionData } from '@common/types';
 import React, { useCallback, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDebounce } from 'react-use';
@@ -8,12 +8,10 @@ import { MdStop } from 'react-icons/md';
 import TextareaAutosize from 'react-textarea-autosize';
 import getCaretCoordinates from 'textarea-caret';
 
-import { useSettings } from '@/context/SettingsContext';
 import { showErrorNotification } from '@/utils/notifications';
-import { FormatSelector } from '@/components/FormatSelector';
-import { McpSelector } from '@/components/McpSelector';
+import { ModeSelector } from '@/components/ModeSelector';
 
-const COMMANDS = ['/code', '/context', '/ask', '/architect', '/add', '/model', '/read-only', '/mcp'];
+const COMMANDS = ['/code', '/context', '/agent', '/ask', '/architect', '/add', '/model', '/read-only'];
 const CONFIRM_COMMANDS = ['/clear', '/web', '/undo', '/test', '/map-refresh', '/map', '/run', '/reasoning-effort', '/think-tokens'];
 
 const ANSWERS = ['y', 'n', 'a', 'd'];
@@ -29,9 +27,9 @@ type Props = {
   words?: string[];
   inputHistory?: string[];
   openModelSelector?: () => void;
-  defaultEditFormat?: EditFormat;
-  editFormat: EditFormat;
-  setEditFormat: (format: EditFormat) => void;
+  defaultEditFormat?: Mode;
+  mode: Mode;
+  onModeChanged: (mode: Mode) => void;
   onSubmitted?: (prompt: string) => void;
   showFileDialog: (readOnly: boolean) => void;
   clearMessages: () => void;
@@ -53,8 +51,8 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
       words = [],
       inputHistory = [],
       defaultEditFormat = 'code',
-      editFormat,
-      setEditFormat,
+      mode,
+      onModeChanged,
       showFileDialog,
       onSubmitted,
       clearMessages,
@@ -74,12 +72,12 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
     const [suggestionsVisible, setSuggestionsVisible] = useState(false);
     const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
     const [currentWord, setCurrentWord] = useState('');
+    const [placeholderIndex] = useState(Math.floor(Math.random() * 16));
     const [cursorPosition, setCursorPosition] = useState({ top: 0, left: 0 });
     const [highlightedSuggestionIndex, setHighlightedSuggestionIndex] = useState(-1);
     const [historyIndex, setHistoryIndex] = useState<number>(-1);
     const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
-    const [editFormatLocked, setEditFormatLocked] = useState(false);
-    const { settings, saveSettings } = useSettings();
+    const [modeLocked, setModeLocked] = useState(false);
     const inputRef = useRef<HTMLTextAreaElement>(null);
 
     useDebounce(
@@ -107,19 +105,23 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
           case '/code':
           case '/context':
           case '/ask':
+          case '/agent':
           case '/architect': {
             const prompt = text.replace(command, '').trim();
             setText(prompt);
-            const newFormat = command.slice(1) as EditFormat;
+            const newMode = command.slice(1) as Mode;
 
-            // If the same command is used twice, toggle the lock
-            if (editFormat === newFormat) {
-              setEditFormatLocked((prev) => !prev);
+            if (newMode === 'code' || newMode === 'agent') {
+              // If the mode is code or agent, lock the mode
+              setModeLocked(true);
+            } else if (mode === newMode) {
+              // If the same command is used twice, toggle the lock
+              setModeLocked((prev) => !prev);
             } else {
-              setEditFormatLocked(false);
+              setModeLocked(false);
             }
 
-            setEditFormat(newFormat);
+            onModeChanged(newMode);
             break;
           }
           case '/add':
@@ -133,19 +135,6 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
           case '/model':
             setText('');
             openModelSelector?.();
-            break;
-          case '/mcp':
-            if (settings) {
-              const updatedSettings: SettingsData = {
-                ...settings,
-                mcpAgent: {
-                  ...settings.mcpAgent,
-                  agentEnabled: !settings.mcpAgent.agentEnabled,
-                },
-              };
-              void saveSettings(updatedSettings);
-            }
-            setText('');
             break;
           case '/web': {
             const url = text.replace('/web', '').trim();
@@ -168,7 +157,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
           }
         }
       },
-      [editFormat, text, runTests],
+      [mode, text, runTests],
     );
 
     useEffect(() => {
@@ -289,9 +278,9 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
         if (confirmCommandMatch) {
           invokeCommand(confirmCommandMatch, text.split(' ').slice(1).join(' '));
         } else {
-          window.api.runPrompt(baseDir, text, editFormat);
-          if (!editFormatLocked) {
-            setEditFormat(defaultEditFormat);
+          window.api.runPrompt(baseDir, text, mode);
+          if (!modeLocked) {
+            onModeChanged(defaultEditFormat);
           }
           onSubmitted?.(text);
         }
@@ -411,6 +400,16 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
       }
     };
 
+    const handleModeChange = (mode: Mode) => {
+      onModeChanged(mode);
+      setModeLocked(mode === 'code' || mode === 'agent');
+    };
+
+    const handleLockChange = (locked: boolean) => {
+      setModeLocked(locked);
+      inputRef.current?.focus();
+    };
+
     return (
       <div className="w-full relative">
         {question && (
@@ -457,11 +456,11 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
               onChange={handleChange}
               onKeyDown={handleKeyDown}
               onPaste={handlePaste}
-              placeholder={question ? t('promptField.questionPlaceholder') : t(`promptField.placeholders.${Math.floor(Math.random() * 16)}`)}
+              placeholder={question ? t('promptField.questionPlaceholder') : t(`promptField.placeholders.${placeholderIndex}`)}
               disabled={disabled}
               minRows={1}
               maxRows={20}
-              className="w-full px-2 py-2 pr- border-2 border-neutral-700 rounded-md focus:outline-none focus:border-neutral-500 text-sm bg-neutral-850 text-white placeholder-neutral-600 resize-none overflow-y-auto transition-colors duration-200 max-h-[60vh] scrollbar-thin scrollbar-track-neutral-800 scrollbar-thumb-neutral-600 hover:scrollbar-thumb-neutral-600"
+              className="w-full px-2 py-2 pr- border-2 border-neutral-700 rounded-md focus:outline-none focus:border-neutral-400 text-sm bg-neutral-850 text-white placeholder-neutral-600 resize-none overflow-y-auto transition-colors duration-200 max-h-[60vh] scrollbar-thin scrollbar-track-neutral-800 scrollbar-thumb-neutral-600 hover:scrollbar-thumb-neutral-600"
             />
             {processing ? (
               <div className="absolute right-3 top-1/2 -translate-y-[16px] flex items-center space-x-2 text-neutral-400">
@@ -486,24 +485,8 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
               </button>
             )}
           </div>
-          <div className="relative flex items-center text-sm text-neutral-400 w-full">
-            <div className="flex-grow">
-              <FormatSelector
-                editFormat={editFormat}
-                editFormatLocked={editFormatLocked}
-                onFormatChange={(format) => {
-                  setEditFormat(format);
-                  if (format !== 'code') {
-                    setEditFormatLocked(false);
-                  }
-                }}
-                onLockChange={(locked) => {
-                  setEditFormatLocked(locked);
-                  inputRef.current?.focus();
-                }}
-              />
-            </div>
-            <McpSelector />
+          <div className="relative flex items-center text-sm text-neutral-400 w-full h-7">
+            <ModeSelector mode={mode} locked={modeLocked} onModeChange={handleModeChange} onLockedChange={handleLockChange} />
           </div>
         </div>
         {suggestionsVisible && filteredSuggestions.length > 0 && (

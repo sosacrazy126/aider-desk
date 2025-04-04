@@ -18,6 +18,7 @@ import {
   McpTool,
   ToolData,
   CommandOutputData,
+  Mode,
 } from '@/common/types';
 
 export interface ApplicationAPI {
@@ -26,7 +27,7 @@ export interface ApplicationAPI {
   startProject: (baseDir: string) => void;
   stopProject: (baseDir: string) => void;
   restartProject: (baseDir: string) => void;
-  runPrompt: (baseDir: string, prompt: string, editFormat?: string) => void;
+  runPrompt: (baseDir: string, prompt: string, mode?: Mode) => void;
   answerQuestion: (baseDir: string, answer: string) => void;
   loadInputHistory: (baseDir: string) => Promise<string[]>;
   dialog: {

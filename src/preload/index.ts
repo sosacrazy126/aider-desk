@@ -7,6 +7,7 @@ import {
   InputHistoryData,
   LogData,
   McpServerConfig,
+  Mode,
   ModelsData,
   QuestionData,
   ResponseChunkData,
@@ -47,7 +48,7 @@ const api: ApplicationAPI = {
   startProject: (baseDir: string) => ipcRenderer.send('start-project', baseDir),
   stopProject: (baseDir: string) => ipcRenderer.send('stop-project', baseDir),
   restartProject: (baseDir: string) => ipcRenderer.send('restart-project', baseDir),
-  runPrompt: (baseDir: string, prompt: string, editFormat?: string) => ipcRenderer.send('run-prompt', baseDir, prompt, editFormat),
+  runPrompt: (baseDir, prompt, mode: Mode) => ipcRenderer.send('run-prompt', baseDir, prompt, mode),
   answerQuestion: (baseDir: string, answer: string) => ipcRenderer.send('answer-question', baseDir, answer),
   loadInputHistory: (baseDir: string) => ipcRenderer.invoke('load-input-history', baseDir),
   dialog: {

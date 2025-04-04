@@ -3,7 +3,7 @@ import { BaseMessage } from '@langchain/core/messages';
 
 import type { JsonSchema } from '@n8n/json-schema-to-zod';
 
-export type EditFormat = 'code' | 'ask' | 'architect' | 'context';
+export type Mode = 'code' | 'ask' | 'architect' | 'context' | 'agent';
 
 export interface ResponseChunkData {
   messageId: string;
@@ -152,7 +152,6 @@ export interface McpAgent {
   mcpServers: {
     [key: string]: McpServerConfig;
   };
-  agentEnabled: boolean;
   disabledServers: string[];
   disabledTools: string[];
   systemPrompt: string;
@@ -189,7 +188,7 @@ export interface InputHistoryData {
 export interface UserMessageData {
   baseDir: string;
   content: string;
-  editFormat?: string;
+  mode?: Mode;
 }
 
 export interface FileEdit {
