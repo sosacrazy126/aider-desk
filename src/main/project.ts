@@ -378,7 +378,6 @@ export class Project {
     if (mode === 'agent') {
       const agentMessages = await this.agent.runAgent(this, prompt);
       if (agentMessages.length > 0) {
-        console.log('agentMessages', agentMessages);
         agentMessages.forEach((message) => this.sessionManager.addContextMessage(message));
 
         // send messages to connectors (aider)
