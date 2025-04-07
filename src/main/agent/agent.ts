@@ -2,7 +2,7 @@ import fs from 'fs/promises';
 import path from 'path';
 
 import { ContextFile, ContextMessage, McpServerConfig, McpTool, UsageReportData } from '@common/types';
-import { generateText, NoSuchToolError, streamText } from 'ai';
+import { generateText, InvalidToolArgumentsError, NoSuchToolError, streamText } from 'ai'; // Added InvalidToolArgumentsError
 import { v4 as uuidv4 } from 'uuid';
 import { calculateCost, delay, extractServerNameToolName, SERVER_TOOL_SEPARATOR } from '@common/utils';
 import { getActiveProvider, LlmProvider } from '@common/llm-providers';
@@ -332,7 +332,7 @@ export class Agent {
 
       // repairToolCall function that attempts to repair tool calls
       const repairToolCall = async ({ toolCall, tools, error, messages, system }) => {
-        logger.error('Error during tool call:', { error, toolCall });
+        logger.warn('Error during tool call:', { error, toolCall });
 
         if (NoSuchToolError.isInstance(error)) {
           // If the tool doesn't exist, return a call to the helper tool
@@ -345,52 +345,73 @@ export class Agent {
             args: JSON.stringify({
               toolName: error.toolName,
               availableTools: error.availableTools,
-            }), // Pass the original tool name as args
+            }),
+          };
+        } else if (InvalidToolArgumentsError.isInstance(error)) {
+          // If the arguments are invalid, return a call to the helper tool
+          // to inform the LLM about the argument error.
+          logger.warn(`Invalid arguments for tool: ${error.toolName}`, { args: error.toolArgs, error: error.message });
+          return {
+            toolCallType: 'function' as const,
+            toolCallId: toolCall.toolCallId,
+            toolName: `helpers${SERVER_TOOL_SEPARATOR}invalid_tool_arguments`,
+            args: JSON.stringify({
+              toolName: error.toolName,
+              toolArgs: JSON.stringify(error.toolArgs), // Pass the problematic args
+              error: error.message, // Pass the validation error message
+            }),
           };
         }
 
-        // Existing repair logic for other errors
-        const result = await generateText({
-          model,
-          system,
-          messages: [
-            ...messages,
-            {
-              role: 'assistant',
-              content: [
-                {
-                  type: 'tool-call',
-                  toolCallId: toolCall.toolCallId,
-                  toolName: toolCall.toolName,
-                  args: toolCall.args,
-                },
-              ],
-            },
-            {
-              role: 'tool' as const,
-              content: [
-                {
-                  type: 'tool-result',
-                  toolCallId: toolCall.toolCallId,
-                  toolName: toolCall.toolName,
-                  result: error.message,
-                },
-              ],
-            },
-          ],
-          tools,
-        });
+        // Attempt generic repair for other types of errors
+        try {
+          logger.info(`Attempting generic repair for tool call error: ${toolCall.toolName}`);
+          const result = await generateText({
+            model,
+            system,
+            messages: [
+              ...messages,
+              {
+                role: 'assistant',
+                content: [
+                  {
+                    type: 'tool-call',
+                    toolCallId: toolCall.toolCallId,
+                    toolName: toolCall.toolName,
+                    args: JSON.stringify(toolCall.args),
+                  },
+                ],
+              },
+              {
+                role: 'tool' as const,
+                content: [
+                  {
+                    type: 'tool-result',
+                    toolCallId: toolCall.toolCallId,
+                    toolName: toolCall.toolName,
+                    result: error.message,
+                  },
+                ],
+              },
+            ],
+            tools,
+          });
 
-        const newToolCall = result.toolCalls.find((newToolCall) => newToolCall.toolName === toolCall.toolName);
-        return newToolCall != null
-          ? {
-              toolCallType: 'function' as const,
-              toolCallId: toolCall.toolCallId,
-              toolName: toolCall.toolName,
-              // Ensure args are stringified for the AI SDK tool call format
-              args: typeof newToolCall.args === 'string' ? newToolCall.args : JSON.stringify(newToolCall.args),
-            }
-          : null; // Return null if the LLM couldn't repair the call
+          logger.info('Repair tool call result:', result);
+          const newToolCall = result.toolCalls.find((newToolCall) => newToolCall.toolName === toolCall.toolName);
+          return newToolCall != null
+            ? {
+                toolCallType: 'function' as const,
+                toolCallId: toolCall.toolCallId,
+                toolName: toolCall.toolName,
+                // Ensure args are stringified for the AI SDK tool call format
+                args: typeof newToolCall.args === 'string' ? newToolCall.args : JSON.stringify(newToolCall.args),
+              }
+            : null; // Return null if the LLM couldn't repair the call
+        } catch (repairError) {
+          logger.error('Error during tool call repair:', repairError);
+          return null;
+        }
       };
 
       let currentResponseId: null | string = null;
@@ -405,6 +426,7 @@ export class Agent {
         maxTokens: agentConfig.maxTokens,
         temperature: 0, // Keep deterministic for agent behavior
         onError: ({ error }) => {
+          logger.error('Error during prompt:', { error });
           if (typeof error === 'string') {
             project.addLogMessage('error', error);
           } else if (error instanceof Error) {
