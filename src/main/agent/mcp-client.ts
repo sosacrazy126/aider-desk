@@ -159,8 +159,7 @@ export const convertMpcToolToAiSdkTool = (
     zodSchema = jsonSchemaToZod({ type: 'object', properties: {} });
   }
 
-  const execute = async (params: { [x: string]: unknown } | undefined, { toolCallId, messages }: ToolExecutionOptions) => {
-    logger.info('Messages: ', { messages });
+  const execute = async (params: { [x: string]: unknown } | undefined, { toolCallId }: ToolExecutionOptions) => {
     project.addToolMessage(toolCallId, serverName, toolDef.name, params);
 
     // Enforce minimum time between tool calls

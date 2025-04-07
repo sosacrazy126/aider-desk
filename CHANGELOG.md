@@ -5,6 +5,7 @@
 - fixed editor response in architect mode
 - fixed right padding in prompt field
 - added invalidToolArguments tool for handling invalid tool arguments error in agent
+- updated tool message rendering
 
 ## [0.8.0]
 
