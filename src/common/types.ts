@@ -209,13 +209,3 @@ export interface McpServerConfig {
   args: string[];
   env?: Readonly<Record<string, string>>;
 }
-
-export const JIRA_ISSUE_MAPPING: Record<string, string[]> = {
-  'Vladimir Hrusovsky': ['DAIMA-298', 'DAIMA-297', 'DAIMA-284', 'DAIMA-250', 'DAIMA-251', 'DAIMA-253', 'DAIMA-255', 'DAIMA-256'],
-  'Jozef Radonak': ['DAIMA-296'],
-  'Štefan Varšo': ['DAIMA-295', 'DAIMA-269'],
-  'Michal Kascak': ['DAIMA-294'],
-  'Diego Giuliani': ['DAIMA-287'],
-  'Jozef Kovac': ['DAIMA-252'],
-  Unassigned: [],
-};
