@@ -3,6 +3,7 @@
 ## UNRELEASED
 
 - fixed editor response in architect mode
+- fixed right padding in prompt field
 
 ## [0.8.0]
 
