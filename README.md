@@ -18,9 +18,9 @@ Transform your AI coding experience with AiderDesk - all the power of the Aider 
 
 ## 🎬 Quick Demo
 
-<div align="left">
+<div align="center">
   <a href="https://www.youtube.com/watch?v=9JkUwn9rk2g">
-    <img src="https://img.youtube.com/vi/9JkUwn9rk2g/0.jpg" alt="Demo Video" width=400>
+    <img src="https://img.youtube.com/vi/9JkUwn9rk2g/0.jpg" alt="Demo Video" width=600>
   </a>
 </div>
 
@@ -140,6 +140,12 @@ $env:AIDER_DESK_NO_AUTO_UPDATE = "true"
 </div>
 
 ## 🤖 Agent Mode & MCP Support
+
+<div align="center">
+  <a href="https://youtu.be/Lsd7QReXfy4">
+    <img src="https://img.youtube.com/vi/Lsd7QReXfy4/0.jpg" alt="Demo Video" width=600>
+  </a>
+</div>
 
 AiderDesk features a powerful **Agent mode** built on the Vercel AI SDK. This mode provides a flexible framework for an AI agent to handle complex tasks. The agent's capabilities are defined by the tools *you* provide, primarily through Model Context Protocol (MCP) servers, alongside its built-in ability to interact with Aider.
 
