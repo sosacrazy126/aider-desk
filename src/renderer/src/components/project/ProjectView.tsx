@@ -549,6 +549,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
           <div className="flex-grow flex flex-col overflow-y-hidden">
             <ContextFiles
               baseDir={project.baseDir}
+              allFiles={autocompletionData?.allFiles || []}
               showFileDialog={() =>
                 setAddFileDialogOptions({
                   readOnly: false,

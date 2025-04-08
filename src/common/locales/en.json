@@ -186,7 +186,11 @@
   "contextFiles": {
     "title": "Context Files",
     "add": "Add context file",
-    "readOnly": "Read-only file"
+    "readOnly": "Read-only file",
+    "showAllFiles": "Show all files",
+    "hideAllFiles": "Hide all files",
+    "expandAll": "Expand all",
+    "collapseAll": "Collapse all"
   },
   "modelSelector": {
     "mainModel": "Main model:",

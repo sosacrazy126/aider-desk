@@ -6,6 +6,7 @@
 - fixed right padding in prompt field
 - added invalidToolArguments tool for handling invalid tool arguments error in agent
 - updated tool message rendering
+- added option to show and manage all project files in Context Files
 
 ## [0.8.0]
 

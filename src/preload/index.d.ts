@@ -1,6 +1,5 @@
 import type { ElectronAPI } from '@electron-toolkit/preload';
-
-import {
+import type {
   AutocompletionData,
   ContextFilesUpdatedData,
   InputHistoryData,

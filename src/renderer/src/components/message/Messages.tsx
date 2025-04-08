@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, WheelEvent } from 'react';
 
 import { MessageBlock } from './MessageBlock';
 
-import { isLoadingMessage, Message } from '@/types/message';
+import { Message } from '@/types/message';
 
 type Props = {
   baseDir: string;
@@ -14,15 +14,13 @@ export const Messages = ({ baseDir, messages, allFiles = [] }: Props) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [scrollingPaused, setScrollingPaused] = useState(false);
 
-  const handleScroll = (e: React.WheelEvent<HTMLDivElement>) => {
+  const handleScroll = (e: WheelEvent<HTMLDivElement>) => {
     const element = e.currentTarget;
     const isAtBottom = element.scrollHeight - element.scrollTop === element.clientHeight;
     setScrollingPaused(!isAtBottom);
   };
 
   useEffect(() => {
-    console.log('Loading messages: ', messages.filter(isLoadingMessage).length);
-
     const hasLoadingMessage = messages.some((msg) => msg.type === 'loading');
     if (hasLoadingMessage) {
       setScrollingPaused(false);

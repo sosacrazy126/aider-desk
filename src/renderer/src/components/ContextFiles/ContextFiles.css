@@ -1,7 +1,3 @@
-.rct-tree-item-li {
-  @apply list-none;
-}
-
 .rct-tree-items-container {
   padding-left: 7px;
 }

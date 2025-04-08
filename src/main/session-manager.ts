@@ -86,9 +86,13 @@ export class SessionManager {
       return false;
     }
 
-    if (await this.isFileIgnored(contextFile)) {
-      logger.debug('Skipping ignored file:', { path: contextFile.path });
-      return false;
+    // skip ignore check for folders
+    const isFolder = contextFile.path.endsWith('/') || contextFile.path.endsWith(path.sep);
+    if (!isFolder) {
+      if (await this.isFileIgnored(contextFile)) {
+        logger.debug('Skipping ignored file:', { path: contextFile.path });
+        return false;
+      }
     }
 
     this.contextFiles.push({
@@ -279,7 +283,7 @@ export class SessionManager {
       if (sessionData.loadFiles && sessionData.contextFiles) {
         // Drop all current files
         this.getContextFiles().forEach((contextFile) => {
-          this.project.sendDropFile(contextFile);
+          this.project.sendDropFile(contextFile.path, contextFile.readOnly);
         });
 
         this.contextFiles = sessionData.contextFiles;

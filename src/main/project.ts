@@ -524,7 +524,7 @@ export class Project {
   }
 
   public async addFile(contextFile: ContextFile): Promise<void> {
-    logger.info('Adding file:', {
+    logger.info('Adding file or folder:', {
       path: contextFile.path,
       readOnly: contextFile.readOnly,
     });
@@ -539,17 +539,20 @@ export class Project {
   }
 
   public dropFile(filePath: string): void {
-    logger.info('Dropping file:', { path: filePath });
+    logger.info('Dropping file or folder:', { path: filePath });
     const file = this.sessionManager.dropContextFile(filePath);
     if (file) {
-      this.sendDropFile(file);
+      this.sendDropFile(file.path, file.readOnly);
+    } else {
+      // send the path as it might be a folder
+      this.sendDropFile(filePath);
     }
   }
 
-  public sendDropFile(file: ContextFile): void {
-    const absolutePath = path.resolve(this.baseDir, file.path);
+  public sendDropFile(filePath: string, readOnly?: boolean): void {
+    const absolutePath = path.resolve(this.baseDir, filePath);
     const isOutsideProject = !absolutePath.startsWith(path.resolve(this.baseDir));
-    const pathToSend = file?.readOnly || isOutsideProject ? absolutePath : file.path.startsWith(this.baseDir) ? file.path : path.join(this.baseDir, file.path);
+    const pathToSend = readOnly || isOutsideProject ? absolutePath : filePath.startsWith(this.baseDir) ? filePath : path.join(this.baseDir, filePath);
 
     this.findMessageConnectors('drop-file').forEach((connector) => connector.sendDropFileMessage(pathToSend));
   }
