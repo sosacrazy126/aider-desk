@@ -139,19 +139,27 @@ export class SessionManager {
   }
 
   filterUserAndAssistantMessages(contextMessages: ContextMessage[] = this.contextMessages): { role: MessageRole; content: string }[] {
-    return contextMessages
-      .filter((message) => message.role === MessageRole.User || message.role === MessageRole.Assistant)
-      .map((message) => {
+    return contextMessages.flatMap((message) => {
+      if (message.role === MessageRole.User || message.role === MessageRole.Assistant) {
         const content = extractTextContent(message.content);
         if (!content) {
-          return null;
+          return [];
         }
-        return {
-          role: message.role as MessageRole,
-          content,
-        };
-      })
-      .filter(Boolean) as { role: MessageRole; content: string }[];
+        return [
+          {
+            role: message.role,
+            content,
+          },
+        ];
+      } else if (message.role === 'tool') {
+        return message.content.map((part) => ({
+          role: MessageRole.Assistant,
+          content: `I called tool ${part.toolName} and got result:\n${JSON.stringify(part.result)}`,
+        }));
+      } else {
+        return [];
+      }
+    }) as { role: MessageRole; content: string }[];
   }
 
   async save(name?: string, loadMessages?: boolean, loadFiles?: boolean): Promise<SessionData> {
@@ -272,7 +280,7 @@ export class SessionManager {
           } else if (message.role === 'tool') {
             for (const part of message.content) {
               if (part.type === 'tool-result') {
-                const [serverName, toolName] = part.toolName.split('-');
+                const [serverName, toolName] = extractServerNameToolName(part.toolName);
                 this.project.addToolMessage(part.toolCallId, serverName, toolName, undefined, JSON.stringify(part.result));
               }
             }

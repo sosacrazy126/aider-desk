@@ -772,6 +772,7 @@ export class Project {
 
   public addToolMessage(id: string, serverName: string, toolName: string, args?: Record<string, unknown>, response?: string, usageReport?: UsageReportData) {
     logger.debug('Sending tool message:', {
+      id,
       baseDir: this.baseDir,
       serverName,
       name: toolName,
@@ -820,5 +821,16 @@ export class Project {
     };
 
     this.mainWindow.webContents.send('user-message', data);
+  }
+
+  public addContextMessage(role: MessageRole, content: string) {
+    logger.info('Adding context message:', {
+      baseDir: this.baseDir,
+      role,
+      content,
+    });
+
+    this.sessionManager.addContextMessage(role, content);
+    this.sendAddMessage(role, content, false);
   }
 }

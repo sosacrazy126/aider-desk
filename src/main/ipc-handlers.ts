@@ -196,7 +196,7 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, projectManager: Proj
 
   ipcMain.handle('scrape-web', async (_, baseDir: string, url: string) => {
     const content = await scrapeWeb(url);
-    projectManager.getProject(baseDir).sendAddMessage(MessageRole.User, content);
+    projectManager.getProject(baseDir).addContextMessage(MessageRole.User, `I have scraped the following content from ${url}:\n\n${content}`);
   });
 
   ipcMain.handle('save-session', async (_, baseDir: string, name: string, loadMessages = true, loadFiles = true) => {

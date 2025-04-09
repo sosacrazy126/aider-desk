@@ -8,6 +8,7 @@
 - updated tool message rendering
 - added option to show and manage all project files in Context Files
 - added gemini-2.0-flash-exp model in Agent
+- improved tool message handling within session
 
 ## [0.8.0]
 
