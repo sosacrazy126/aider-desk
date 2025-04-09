@@ -192,6 +192,7 @@ export const ContextFiles = ({ baseDir, allFiles, showFileDialog }: Props) => {
 
   return (
     <div className="flex-grow w-full h-full flex flex-col pb-2 overflow-hidden">
+      <StyledTooltip id="context-files-tooltip" />
       <div className="flex items-center mb-2 flex-shrink-0 p-2">
         <h3 className="text-md font-semibold uppercase pl-1 flex-grow">{t('contextFiles.title')}</h3>
         {showAllFiles && (
@@ -201,19 +202,19 @@ export const ContextFiles = ({ baseDir, allFiles, showFileDialog }: Props) => {
               className="p-1 hover:bg-neutral-700 rounded-md"
               data-tooltip-id="context-files-tooltip"
               data-tooltip-content={t('contextFiles.expandAll') || 'Expand all'}
+              data-tooltip-delay-show={500}
             >
               <BiExpandVertical className="w-4 h-4" />
             </button>
-            <StyledTooltip id="context-files-tooltip" />
             <button
               onClick={handleCollapseAll}
               className="p-1 hover:bg-neutral-700 rounded-md"
               data-tooltip-id="context-files-tooltip"
               data-tooltip-content={t('contextFiles.collapseAll') || 'Collapse all'}
+              data-tooltip-delay-show={500}
             >
               <BiCollapseVertical className="w-4 h-4" />
             </button>
-            <StyledTooltip id="context-files-tooltip" />
           </>
         )}
         <button
@@ -221,19 +222,19 @@ export const ContextFiles = ({ baseDir, allFiles, showFileDialog }: Props) => {
           className="p-1 hover:bg-neutral-700 rounded-md"
           data-tooltip-id="context-files-tooltip"
           data-tooltip-content={showAllFiles ? t('contextFiles.hideAllFiles') : t('contextFiles.showAllFiles')}
+          data-tooltip-delay-show={500}
         >
           <LuFolderTree className={`w-4 h-4 ${showAllFiles ? 'text-neutral-100' : 'text-neutral-800'}`} />
         </button>
-        <StyledTooltip id="context-files-tooltip" />
         <button
           onClick={showFileDialog}
           className="p-1 hover:bg-neutral-700 rounded-md"
           data-tooltip-id="context-files-tooltip"
           data-tooltip-content={t('contextFiles.add')}
+          data-tooltip-delay-show={500}
         >
           <HiPlus className="w-5 h-5" />
         </button>
-        <StyledTooltip id="context-files-tooltip" />
       </div>
       <div className="flex-grow w-full overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-neutral-700 scrollbar-track-neutral-900 scrollbar-rounded px-1">
         <ControlledTreeEnvironment
