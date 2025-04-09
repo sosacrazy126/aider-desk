@@ -7,6 +7,7 @@
 - added invalidToolArguments tool for handling invalid tool arguments error in agent
 - updated tool message rendering
 - added option to show and manage all project files in Context Files
+- added gemini-2.0-flash-exp model in Agent
 
 ## [0.8.0]
 

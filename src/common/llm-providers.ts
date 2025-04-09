@@ -100,6 +100,10 @@ export const PROVIDER_MODELS = {
         inputCost: 0.1,
         outputCost: 0.4,
       },
+      'gemini-2.0-flash-exp': {
+        inputCost: 0,
+        outputCost: 0,
+      },
     },
   },
   deepseek: {
