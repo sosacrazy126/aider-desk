@@ -199,7 +199,7 @@ export const ContextFiles = ({ baseDir, allFiles, showFileDialog }: Props) => {
           <>
             <button
               onClick={handleExpandAll}
-              className="p-1 hover:bg-neutral-700 rounded-md"
+              className="p-1.5 hover:bg-neutral-700 rounded-md"
               data-tooltip-id="context-files-tooltip"
               data-tooltip-content={t('contextFiles.expandAll') || 'Expand all'}
               data-tooltip-delay-show={500}
@@ -208,7 +208,7 @@ export const ContextFiles = ({ baseDir, allFiles, showFileDialog }: Props) => {
             </button>
             <button
               onClick={handleCollapseAll}
-              className="p-1 hover:bg-neutral-700 rounded-md"
+              className="p-1.5 hover:bg-neutral-700 rounded-md"
               data-tooltip-id="context-files-tooltip"
               data-tooltip-content={t('contextFiles.collapseAll') || 'Collapse all'}
               data-tooltip-delay-show={500}
@@ -219,12 +219,12 @@ export const ContextFiles = ({ baseDir, allFiles, showFileDialog }: Props) => {
         )}
         <button
           onClick={() => setShowAllFiles(!showAllFiles)}
-          className="p-1 hover:bg-neutral-700 rounded-md"
+          className="p-1.5 hover:bg-neutral-700 rounded-md"
           data-tooltip-id="context-files-tooltip"
           data-tooltip-content={showAllFiles ? t('contextFiles.hideAllFiles') : t('contextFiles.showAllFiles')}
           data-tooltip-delay-show={500}
         >
-          <LuFolderTree className={`w-4 h-4 ${showAllFiles ? 'text-neutral-100' : 'text-neutral-800'}`} />
+          <LuFolderTree className={`w-4 h-4 ${showAllFiles ? 'text-neutral-100' : 'text-neutral-700'}`} />
         </button>
         <button
           onClick={showFileDialog}
@@ -291,11 +291,7 @@ export const ContextFiles = ({ baseDir, allFiles, showFileDialog }: Props) => {
                           <HiPlus className="w-4 h-4" />
                         </button>
                       </>
-                    ) : (
-                      <button onClick={dropFile(item as TreeItem)} className="px-1 py-1 rounded hover:bg-neutral-900 text-neutral-500 hover:text-red-800">
-                        <HiX className="w-4 h-4" />
-                      </button>
-                    )}
+                    ) : null}
                   </>
                 ) : (
                   <div className="flex items-center gap-1 flex-shrink-0">
