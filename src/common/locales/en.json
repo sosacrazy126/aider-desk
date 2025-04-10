@@ -72,7 +72,8 @@
     "serverConfigJson": "Server Config JSON",
     "pasteServerAs": "Paste your server as:\n\n{\n  \"mcpServers\": {\n    \"puppeteer\": {\n      \"command\": \"npx\",\n      \"args\": [\"-y\", \"@modelcontextprotocol/server-puppeteer\"]\n    }\n  }\n}",
     "invalidConfig": "Invalid configuration",
-    "emptyConfig": "Configuration cannot be empty"
+    "emptyConfig": "Configuration cannot be empty",
+    "multipleServersHint": "You can add multiple servers at once by pasting a JSON object with multiple server configurations."
   },
   "model": {
     "label": "Model",

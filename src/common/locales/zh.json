@@ -68,7 +68,8 @@
     "serverConfigJson": "服务器配置 JSON",
     "pasteServerAs": "粘贴您的服务器配置为:\n\n{\n  \"mcpServers\": {\n    \"puppeteer\": {\n      \"command\": \"npx\",\n      \"args\": [\"-y\", \"@modelcontextprotocol/server-puppeteer\"]\n    }\n  }\n}",
     "invalidConfig": "无效配置",
-    "emptyConfig": "配置不能为空"
+    "emptyConfig": "配置不能为空",
+    "multipleServersHint": "您可以一次添加多个服务器，方法是粘贴包含多个服务器配置的 JSON 对象。"
   },
   "model": {
     "label": "模型",

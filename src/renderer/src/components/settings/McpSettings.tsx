@@ -1,5 +1,5 @@
 import { AgentConfig, McpServerConfig, SettingsData } from '@common/types';
-import { useState } from 'react';
+import { useState, ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaPlus } from 'react-icons/fa';
 import {
@@ -132,10 +132,10 @@ export const McpSettings = ({ settings, setSettings }: Props) => {
     setSettings({ ...settings, agentConfig: updatedMcpConfig });
   };
 
-  const handleServerConfigSave = (newServerName: string, newServerConfig: McpServerConfig) => {
+  const handleServerConfigSave = (newServers: Record<string, McpServerConfig>) => {
     const updatedMcpServers = {
       ...settings.agentConfig.mcpServers,
-      [newServerName]: newServerConfig,
+      ...newServers,
     };
     const updatedMcpConfig: AgentConfig = {
       ...settings.agentConfig,
@@ -210,7 +210,7 @@ export const McpSettings = ({ settings, setSettings }: Props) => {
                   max={10000}
                   step={100}
                   value={agentConfig.minTimeBetweenToolCalls.toString()}
-                  onChange={(e) => handleDelayBetweenIterationsChanged(Number(e.target.value))}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => handleDelayBetweenIterationsChanged(Number(e.target.value))}
                 />
               </div>
               <div className="mt-2">
@@ -224,7 +224,7 @@ export const McpSettings = ({ settings, setSettings }: Props) => {
                   type="number"
                   min={1}
                   value={agentConfig.maxTokens.toString()}
-                  onChange={(e) => handleMaxTokenChanged(Number(e.target.value))}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => handleMaxTokenChanged(Number(e.target.value))}
                 />
               </div>
             </div>

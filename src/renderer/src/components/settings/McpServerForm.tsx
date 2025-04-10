@@ -1,5 +1,5 @@
 import { McpServerConfig } from '@common/types';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, ChangeEvent } from 'react';
 import { FaArrowLeft } from 'react-icons/fa';
 import { z } from 'zod';
 import { useTranslation } from 'react-i18next';
@@ -19,7 +19,7 @@ export const McpServerConfigSchema = z.object({
 });
 
 type Props = {
-  onSave: (name: string, config: McpServerConfig) => void;
+  onSave: (servers: Record<string, McpServerConfig>) => void;
   onCancel: () => void;
   initialName?: string;
   initialConfig?: McpServerConfig;
@@ -55,10 +55,12 @@ export const McpServerForm = ({ onSave, onCancel, initialName, initialConfig }: 
   const handleAddServer = () => {
     if (isValidJson) {
       const parsed = JSON.parse(configJSON);
-      const serverName = Object.keys(parsed.mcpServers)[0];
-      const serverConfig = parsed.mcpServers[serverName];
-      onSave(serverName, serverConfig);
+      onSave(parsed.mcpServers);
     }
+  };
+
+  const handleChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
+    setConfigJSON(e.target.value);
   };
 
   return (
@@ -74,9 +76,10 @@ export const McpServerForm = ({ onSave, onCancel, initialName, initialConfig }: 
           label={t('mcpServer.serverConfigJson')}
           placeholder={t('mcpServer.pasteServerAs')}
           value={configJSON}
-          onChange={(e) => setConfigJSON(e.target.value)}
+          onChange={handleChange}
           className={`w-full h-60 p-2 resize-none ${configJSON && !isValidJson ? 'border-red-800/50 focus:border-red-800/50' : ''}`}
         />
+        <div className="text-xs text-gray-500 mt-1">{t('mcpServer.multipleServersHint')}</div>
       </div>
       <div className="flex justify-end">
         <Button onClick={handleAddServer} variant="contained" disabled={!isValidJson || !configJSON}>
