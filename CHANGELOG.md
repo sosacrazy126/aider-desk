@@ -9,6 +9,7 @@
 - added option to show and manage all project files in Context Files
 - added gemini-2.0-flash-exp model in Agent
 - improved tool message handling within session
+- fixed overflowing of the code blocks in messages
 
 ## [0.8.0]
 

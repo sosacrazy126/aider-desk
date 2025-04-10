@@ -744,7 +744,7 @@ export class Project {
   }
 
   public sendAddMessage(role: MessageRole = MessageRole.User, content: string, acknowledge = true) {
-    logger.info('Adding message:', {
+    logger.debug('Adding message:', {
       baseDir: this.baseDir,
       role,
       content,

@@ -27,7 +27,7 @@ export const UserMessageBlock = ({ baseDir, message, allFiles }: Props) => {
         {message.mode === 'context' && <AiOutlineFileSearch className="text-neutral-200" size={16} title="Context Mode" />}
         {message.mode === 'agent' && <RiRobot2Line className="text-neutral-200" size={16} title="Agent Mode" />}
       </div>
-      <div className="flex-grow-1">{parseMessageContent(baseDir, message.content, allFiles)}</div>
+      <div className="flex-grow-1 max-w-full overflow-hidden">{parseMessageContent(baseDir, message.content, allFiles)}</div>
       <div className="absolute top-2 right-2">
         <CopyMessageButton content={message.content} className="text-neutral-600 hover:text-neutral-300" />
       </div>

@@ -168,8 +168,8 @@ export const CodeBlock = ({ baseDir, language, children, file, isComplete = true
   };
 
   return (
-    <div className="mt-1 overflow-x-auto max-w-full">
-      <div className="bg-gray-950 text-white rounded-md px-3 py-2 mb-4 overflow-x-auto text-xs">
+    <div className="mt-1 max-w-full">
+      <div className="bg-gray-950 text-white rounded-md px-3 py-2 mb-4 overflow-x-auto text-xs scrollbar-thin scrollbar-track-neutral-900 scrollbar-thumb-neutral-800 hover:scrollbar-thumb-neutral-700">
         {file ? (
           <>
             <div className="text-neutral-100 text-xs py-1 w-full cursor-pointer flex items-center justify-between" onClick={() => setIsExpanded(!isExpanded)}>
