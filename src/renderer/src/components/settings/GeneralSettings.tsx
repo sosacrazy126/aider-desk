@@ -1,9 +1,7 @@
-import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SettingsData, StartupMode } from '@common/types';
 
 import { RadioButton } from '../common/RadioButton';
-import Select, { Option } from '../common/Select';
 
 import { LanguageSelector } from './LanguageSelector';
 
@@ -15,42 +13,11 @@ type Props = {
 
 export const GeneralSettings = ({ settings, setSettings, onLanguageChange }: Props) => {
   const { t } = useTranslation();
-  const [sessions, setSessions] = useState<Option[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    const loadSessions = async () => {
-      try {
-        setLoading(true);
-        // Get the active project's baseDir
-        const projects = await window.api.getOpenProjects();
-        const activeProject = projects.find((p) => p.active);
-
-        if (activeProject) {
-          const sessionsList = await window.api.listSessions(activeProject.baseDir);
-          setSessions(sessionsList.map((s) => ({ label: s.name, value: s.name })));
-        }
-      } catch (error) {
-        console.error('Failed to load sessions:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void loadSessions();
-  }, []);
 
   const handleStartupModeChange = (mode: StartupMode) => {
     setSettings({
       ...settings,
       startupMode: mode,
-    });
-  };
-
-  const handleSessionChange = (value: string) => {
-    setSettings({
-      ...settings,
-      startupSessionName: value,
     });
   };
 
@@ -81,34 +48,6 @@ export const GeneralSettings = ({ settings, setSettings, onLanguageChange }: Pro
             onChange={handleStartupModeClick}
             label={t('settings.startup.lastSession')}
           />
-
-          <div className="flex flex-col space-y-2">
-            <RadioButton
-              id="startup-specific"
-              name="startup-mode"
-              value={StartupMode.Specific}
-              checked={settings.startupMode === StartupMode.Specific}
-              onChange={handleStartupModeClick}
-              label={t('settings.startup.specificSession')}
-            />
-
-            {settings.startupMode === StartupMode.Specific && (
-              <div className="ml-6">
-                <Select
-                  value={settings.startupSessionName || ''}
-                  onChange={handleSessionChange}
-                  options={
-                    loading
-                      ? [{ label: t('select.loadingSessions'), value: '' }]
-                      : sessions.length === 0
-                        ? [{ label: t('sessions.empty'), value: '' }]
-                        : [{ label: t('select.placeholder'), value: '' }, ...sessions]
-                  }
-                  className="w-full"
-                />
-              </div>
-            )}
-          </div>
         </div>
       </div>
     </div>

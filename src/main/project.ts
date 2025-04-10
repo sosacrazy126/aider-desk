@@ -77,16 +77,6 @@ export class Project {
           logger.info('Loading autosaved session');
           await this.sessionManager.loadAutosaved();
           break;
-
-        case StartupMode.Specific:
-          if (settings.startupSessionName) {
-            // Load the specific session
-            logger.info(`Loading specific session: ${settings.startupSessionName}`);
-            await this.sessionManager.load(settings.startupSessionName);
-          } else {
-            logger.warn('Specific session mode selected but no session name provided, starting with empty session');
-          }
-          break;
       }
     } catch (error) {
       logger.error('Error loading session:', { error });

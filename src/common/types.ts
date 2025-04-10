@@ -123,14 +123,12 @@ export interface ModelsData {
 export enum StartupMode {
   Empty = 'empty',
   Last = 'last',
-  Specific = 'specific',
 }
 
 export interface SettingsData {
   onboardingFinished?: boolean;
   language: string;
   startupMode?: StartupMode;
-  startupSessionName?: string;
   aider: {
     options: string;
     environmentVariables: string;
