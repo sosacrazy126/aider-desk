@@ -292,6 +292,11 @@ export class Agent {
 
     // Build the toolSet directly from enabled clients and tools
     const toolSet: ToolSet = this.clients.reduce((acc, clientHolder) => {
+      // Skip if serverName is not specified in agentConfig.mcpServers
+      if (!(clientHolder.serverName in agentConfig.mcpServers)) {
+        return acc;
+      }
+
       // Skip disabled servers
       if (agentConfig.disabledServers.includes(clientHolder.serverName)) {
         return acc;
