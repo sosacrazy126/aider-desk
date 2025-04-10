@@ -2,7 +2,7 @@ import path from 'path';
 import { promises as fs } from 'fs';
 
 import { ContextFile, ContextMessage, MessageRole, SessionData } from '@common/types';
-import { extractServerNameToolName, extractTextContent, fileExists, isTextContent } from '@common/utils';
+import { extractServerNameToolName, extractTextContent, fileExists, isTextContent, isMessageEmpty } from '@common/utils';
 import ignore from 'ignore';
 
 import logger from './logger';
@@ -49,6 +49,11 @@ export class SessionManager {
       };
     } else {
       message = roleOrMessage;
+    }
+
+    if (isMessageEmpty(message.content)) {
+      // Skip adding empty messages
+      return;
     }
 
     this.contextMessages.push(message);

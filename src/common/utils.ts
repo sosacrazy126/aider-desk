@@ -103,3 +103,27 @@ export const extractServerNameToolName = (toolCallName: string): [string, string
 
   return [serverName, toolName];
 };
+
+export const isMessageEmpty = (content: unknown): boolean => {
+  if (typeof content === 'string') {
+    return content.trim().length === 0;
+  }
+
+  if (Array.isArray(content)) {
+    return content.every((part) => {
+      if (typeof part === 'string') {
+        return part.trim().length === 0;
+      }
+      if (part && typeof part === 'object' && 'type' in part && part.type === 'text' && 'text' in part) {
+        return typeof part.text === 'string' ? part.text.trim().length === 0 : true;
+      }
+      return true;
+    });
+  }
+
+  if (typeof content === 'object' && content !== null && 'content' in content) {
+    return isMessageEmpty((content as { content: unknown }).content);
+  }
+
+  return true;
+};
