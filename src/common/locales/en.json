@@ -239,30 +239,32 @@
     "loadMessages": "Load messages from this session",
     "loadFiles": "Load context files from this session"
   },
-  "sessionInfo": {
-    "title": "Sessions",
+  "costInfo": {
     "files": "Files",
     "repoMap": "Repo map",
     "refreshRepoMap": "Refresh repository map",
-    "chat": "Chat",
+    "messages": "Messages",
     "clearMessages": "Clear message history",
     "lastMessage": "Last message",
     "agent": "Agent",
     "aider": "Aider",
-    "session": "Session",
+    "total": "Total",
     "restartSession": "Restart session"
   },
   "sessions": {
-    "title": "SESSIONS",
+    "title": "Sessions",
     "empty": "No saved sessions",
-    "loadsMessages_one": "Loads {{count}} message",
-    "loadsMessages_other": "Loads {{count}} messages",
-    "loadsFiles_one": "Loads {{count}} file",
-    "loadsFiles_other": "Loads {{count}} files",
+    "loadMessages_one": "Load {{count}} message",
+    "loadMessages_other": "Load {{count}} messages",
+    "loadFiles_one": "Load {{count}} file",
+    "loadFiles_other": "Load {{count}} files",
     "saveAsNew": "Save as new",
     "deleteTitle": "Delete Session",
     "deleteConfirm": "Are you sure you want to delete the session \"{{name}}\"?",
-    "deleteWarning": "This action cannot be undone."
+    "deleteWarning": "This action cannot be undone.",
+    "save": "Save session",
+    "add": "Add new session",
+    "newSessionPlaceholder": "Enter session name"
   },
   "commandOutput": {
     "command": "Command"

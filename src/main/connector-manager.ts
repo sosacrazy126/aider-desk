@@ -115,7 +115,7 @@ export class ConnectorManager {
           return;
         }
         logger.info('Dropping file in project', { baseDir: connector.baseDir });
-        this.projectManager.getProject(connector.baseDir).dropFile(message.path);
+        void this.projectManager.getProject(connector.baseDir).dropFile(message.path);
       } else if (isUpdateAutocompletionMessage(message)) {
         const connector = this.findConnectorBySocket(socket);
         if (!connector) {

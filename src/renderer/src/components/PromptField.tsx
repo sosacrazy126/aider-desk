@@ -157,6 +157,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
           }
         }
       },
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       [mode, text, runTests],
     );
 
@@ -485,7 +486,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
               </button>
             )}
           </div>
-          <div className="relative flex items-center text-sm text-neutral-400 w-full h-7">
+          <div className="relative w-full h-7">
             <ModeSelector mode={mode} locked={modeLocked} onModeChange={handleModeChange} onLockedChange={handleLockChange} />
           </div>
         </div>

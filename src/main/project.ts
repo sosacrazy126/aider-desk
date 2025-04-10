@@ -73,9 +73,9 @@ export class Project {
           break;
 
         case StartupMode.Last:
-          // Load the last active session
-          logger.info('Loading last active session');
-          await this.sessionManager.loadLastActive();
+          // Load the autosaved session
+          logger.info('Loading autosaved session');
+          await this.sessionManager.loadAutosaved();
           break;
 
         case StartupMode.Specific:
@@ -274,38 +274,38 @@ export class Project {
 
   public async close() {
     logger.info('Closing project...', { baseDir: this.baseDir });
-    try {
-      await this.sessionManager.save();
-    } catch (error) {
-      logger.error('Failed to save session on close:', { error });
-    }
     await this.killAider();
   }
 
-  public async saveSession(name: string, loadMessages = true, loadFiles = true): Promise<void> {
+  public async saveSession(name: string): Promise<void> {
     logger.info('Saving session:', {
       baseDir: this.baseDir,
       name,
-      loadMessages,
-      loadFiles,
     });
-    await this.sessionManager.save(name, loadMessages, loadFiles);
+    await this.sessionManager.save(name);
+  }
+
+  public async loadSessionMessages(name: string) {
+    const session = await this.sessionManager.findSession(name);
+    if (!session?.contextMessages) {
+      return;
+    }
+
+    await this.sessionManager.loadMessages(session);
+  }
+
+  public async loadSessionFiles(name: string) {
+    const session = await this.sessionManager.findSession(name);
+    if (!session) {
+      return;
+    }
+
+    await this.sessionManager.loadFiles(session);
   }
 
   public async deleteSession(name: string): Promise<void> {
     logger.info('Deleting session:', { baseDir: this.baseDir, name });
-    const lastActiveSession = this.sessionManager.getActiveSessionName();
     await this.sessionManager.delete(name);
-
-    if (lastActiveSession !== this.sessionManager.getActiveSessionName()) {
-      await this.sessionManager.loadLastActive();
-    }
-  }
-
-  public async loadSession(name: string): Promise<void> {
-    logger.info('Loading session:', { baseDir: this.baseDir, name });
-    await this.sessionManager.save();
-    await this.sessionManager.load(name);
   }
 
   public async listSessions(): Promise<SessionData[]> {
@@ -538,7 +538,7 @@ export class Project {
     this.findMessageConnectors('add-file').forEach((connector) => connector.sendAddFileMessage(contextFile));
   }
 
-  public dropFile(filePath: string): void {
+  public dropFile(filePath: string) {
     logger.info('Dropping file or folder:', { path: filePath });
     const file = this.sessionManager.dropContextFile(filePath);
     if (file) {

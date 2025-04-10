@@ -11,6 +11,7 @@
 - improved tool message handling within session
 - fixed overflowing of the code blocks in messages
 - pasting multiple MCP servers at once within the same JSON will add all the servers
+- revamped session management
 
 ## [0.8.0]
 

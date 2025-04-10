@@ -93,47 +93,47 @@ export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(({ baseDir, 
       const sessionsList = await window.api.listSessions(baseDir);
       setSessions(sessionsList);
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Failed to load sessions:', error);
       setSessions([]);
     }
   }, [baseDir]);
 
   const saveSession = useCallback(
-    async (name: string, loadMessages: boolean, loadFiles: boolean) => {
+    async (name: string) => {
       try {
-        await window.api.saveSession(baseDir, name, loadMessages, loadFiles);
+        await window.api.saveSession(baseDir, name);
         await loadSessions();
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.error('Failed to save session:', error);
       }
     },
     [baseDir, loadSessions],
   );
 
-  const updateSession = useCallback(
-    async (name: string, loadMessages: boolean, loadFiles: boolean) => {
-      try {
-        await window.api.updateSession(baseDir, name, loadMessages, loadFiles);
-        await loadSessions();
-      } catch (error) {
-        console.error('Failed to update session:', error);
-      }
-    },
-    [baseDir, loadSessions],
-  );
-
-  const loadSession = useCallback(
+  const loadSessionMessages = useCallback(
     async (name: string) => {
       try {
-        await window.api.loadSession(baseDir, name);
-        hideSessionPopup();
-        // Refresh the sessions list to update the active session
-        void loadSessions();
+        await window.api.loadSessionMessages(baseDir, name);
       } catch (error) {
-        console.error('Failed to load session:', error);
+        // eslint-disable-next-line no-console
+        console.error('Failed to load session messages:', error);
       }
     },
-    [baseDir, hideSessionPopup, loadSessions],
+    [baseDir],
+  );
+
+  const loadSessionFiles = useCallback(
+    async (name: string) => {
+      try {
+        await window.api.loadSessionFiles(baseDir, name);
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error('Failed to load session files:', error);
+      }
+    },
+    [baseDir],
   );
 
   const deleteSession = useCallback(
@@ -215,9 +215,9 @@ export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(({ baseDir, 
           <div className="relative">
             <button
               onClick={showSessionPopup}
-              className="p-0.5 hover:bg-neutral-700 rounded-md flex text-neutral-200"
+              className="p-1 hover:bg-neutral-700 rounded-md flex text-neutral-200"
               data-tooltip-id="session-history-tooltip"
-              data-tooltip-content={t('sessionInfo.title')}
+              data-tooltip-content={t('sessions.title')}
             >
               <MdHistory className="w-4 h-4" />
             </button>
@@ -226,16 +226,10 @@ export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(({ baseDir, 
               <div ref={sessionPopupRef}>
                 <SessionsPopup
                   sessions={sessions}
-                  onLoadSession={(name) => void loadSession(name)}
-                  onSaveSession={(name, loadMessages, loadFiles) => {
-                    void saveSession(name, loadMessages, loadFiles);
-                  }}
-                  onUpdateSession={(name, loadMessages, loadFiles) => {
-                    void updateSession(name, loadMessages, loadFiles);
-                  }}
-                  onDeleteSession={(name) => {
-                    void deleteSession(name);
-                  }}
+                  onLoadSessionMessages={loadSessionMessages}
+                  onLoadSessionFiles={loadSessionFiles}
+                  onSaveSession={saveSession}
+                  onDeleteSession={deleteSession}
                   onClose={hideSessionPopup}
                 />
               </div>

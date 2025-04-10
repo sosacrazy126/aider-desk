@@ -34,7 +34,7 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, projectManager: Proj
   });
 
   ipcMain.on('drop-file', (_, baseDir: string, filePath: string) => {
-    projectManager.getProject(baseDir).dropFile(filePath);
+    void projectManager.getProject(baseDir).dropFile(filePath);
   });
 
   ipcMain.on('add-file', (_, baseDir: string, filePath: string, readOnly = false) => {
@@ -199,21 +199,17 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, projectManager: Proj
     projectManager.getProject(baseDir).addContextMessage(MessageRole.User, `I have scraped the following content from ${url}:\n\n${content}`);
   });
 
-  ipcMain.handle('save-session', async (_, baseDir: string, name: string, loadMessages = true, loadFiles = true) => {
-    await projectManager.getProject(baseDir).saveSession(name, loadMessages, loadFiles);
+  ipcMain.handle('save-session', async (_, baseDir: string, name: string) => {
+    await projectManager.getProject(baseDir).saveSession(name);
     return true;
   });
 
-  ipcMain.handle('load-session', async (_, baseDir: string, name: string) => {
-    await projectManager.getProject(baseDir).loadSession(name);
-    return true;
+  ipcMain.handle('load-session-messages', async (_, baseDir: string, name: string) => {
+    return await projectManager.getProject(baseDir).loadSessionMessages(name);
   });
 
-  ipcMain.handle('update-session', async (_, baseDir: string, name: string, loadMessages = true, loadFiles = true) => {
-    // Just update the session settings without changing content
-    const project = projectManager.getProject(baseDir);
-    await project.saveSession(name, loadMessages, loadFiles);
-    return true;
+  ipcMain.handle('load-session-files', async (_, baseDir: string, name: string) => {
+    return await projectManager.getProject(baseDir).loadSessionFiles(name);
   });
 
   ipcMain.handle('delete-session', async (_, baseDir: string, name: string) => {

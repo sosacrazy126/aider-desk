@@ -62,9 +62,6 @@ export interface AutocompletionData {
 
 export interface SessionData {
   name: string;
-  active: boolean;
-  loadMessages?: boolean;
-  loadFiles?: boolean;
   messages?: number;
   files?: number;
 }

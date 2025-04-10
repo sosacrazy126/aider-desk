@@ -72,12 +72,10 @@ const api: ApplicationAPI = {
   runCommand: (baseDir: string, command: string) => ipcRenderer.send('run-command', baseDir, command),
   scrapeWeb: (baseDir: string, url: string) => ipcRenderer.invoke('scrape-web', baseDir, url),
   loadMcpServerTools: (serverName: string, config?: McpServerConfig) => ipcRenderer.invoke('load-mcp-server-tools', serverName, config),
-  saveSession: (baseDir: string, name: string, loadMessages = true, loadFiles = true) =>
-    ipcRenderer.invoke('save-session', baseDir, name, loadMessages, loadFiles),
-  updateSession: (baseDir: string, name: string, loadMessages = true, loadFiles = true) =>
-    ipcRenderer.invoke('update-session', baseDir, name, loadMessages, loadFiles),
+  saveSession: (baseDir: string, name: string) => ipcRenderer.invoke('save-session', baseDir, name),
   deleteSession: (baseDir: string, name: string) => ipcRenderer.invoke('delete-session', baseDir, name),
-  loadSession: (baseDir: string, name: string) => ipcRenderer.invoke('load-session', baseDir, name),
+  loadSessionMessages: (baseDir: string, name: string) => ipcRenderer.invoke('load-session-messages', baseDir, name),
+  loadSessionFiles: (baseDir: string, name: string) => ipcRenderer.invoke('load-session-files', baseDir, name),
   listSessions: (baseDir: string) => ipcRenderer.invoke('list-sessions', baseDir),
   getRecentProjects: () => ipcRenderer.invoke('get-recent-projects'),
   addRecentProject: (baseDir: string) => ipcRenderer.invoke('add-recent-project', baseDir),
@@ -340,6 +338,7 @@ if (process.contextIsolated) {
     contextBridge.exposeInMainWorld('electron', electronAPI);
     contextBridge.exposeInMainWorld('api', api);
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error(error);
   }
 } else {

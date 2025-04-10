@@ -50,10 +50,10 @@ export interface ApplicationAPI {
   runCommand: (baseDir: string, command: string) => void;
   scrapeWeb: (baseDir: string, url: string) => Promise<string>;
   loadMcpServerTools: (serverName: string, config?: McpServerConfig) => Promise<McpTool[] | null>;
-  saveSession: (baseDir: string, name: string, loadMessages?: boolean, loadFiles?: boolean) => Promise<boolean>;
-  updateSession: (baseDir: string, name: string, loadMessages?: boolean, loadFiles?: boolean) => Promise<boolean>;
+  saveSession: (baseDir: string, name: string) => Promise<boolean>;
   deleteSession: (baseDir: string, name: string) => Promise<boolean>;
-  loadSession: (baseDir: string, name: string) => Promise<boolean>;
+  loadSessionMessages: (baseDir: string, name: string) => Promise<void>;
+  loadSessionFiles: (baseDir: string, name: string) => Promise<void>;
   listSessions: (baseDir: string) => Promise<SessionData[]>;
   getRecentProjects: () => Promise<string[]>;
   addRecentProject: (baseDir: string) => Promise<void>;

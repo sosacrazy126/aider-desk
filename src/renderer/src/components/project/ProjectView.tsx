@@ -37,7 +37,7 @@ import { Messages } from '@/components/message/Messages';
 import { AddFileDialog } from '@/components/project/AddFileDialog';
 import { ProjectBar, ProjectTopBarRef } from '@/components/project/ProjectBar';
 import { PromptField, PromptFieldRef } from '@/components/PromptField';
-import { SessionInfo } from '@/components/SessionInfo';
+import { CostInfo } from '@/components/CostInfo';
 import 'react-resizable/css/styles.css';
 
 type AddFileDialogOptions = {
@@ -557,7 +557,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
               }
             />
           </div>
-          <SessionInfo
+          <CostInfo
             tokensInfo={tokensInfo}
             aiderTotalCost={aiderTotalCost}
             lastMessageCost={lastMessageCost}
