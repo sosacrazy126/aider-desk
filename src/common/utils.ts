@@ -117,11 +117,9 @@ export const isMessageEmpty = (content: unknown): boolean => {
       if (part && typeof part === 'object' && 'type' in part && part.type === 'text' && 'text' in part) {
         return typeof part.text === 'string' ? part.text.trim().length === 0 : true;
       }
-      return true;
+      return false;
     });
-  }
-
-  if (typeof content === 'object' && content !== null && 'content' in content) {
+  } else if (typeof content === 'object' && content !== null && 'content' in content) {
     return isMessageEmpty((content as { content: unknown }).content);
   }
 

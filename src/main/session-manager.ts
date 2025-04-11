@@ -43,6 +43,7 @@ export class SessionManager {
       message = roleOrMessage;
 
       if (roleOrMessage.role === 'assistant' && isMessageEmpty(message.content)) {
+        logger.debug('Skipping empty assistant message');
         // Skip adding empty assistant messages
         return;
       }
