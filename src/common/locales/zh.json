@@ -66,7 +66,7 @@
     "addServer": "添加 MCP 服务器",
     "editServer": "编辑 MCP 服务器: {{name}}",
     "serverConfigJson": "服务器配置 JSON",
-    "pasteServerAs": "粘贴您的服务器配置为:\n\n{\n  \"mcpServers\": {\n    \"puppeteer\": {\n      \"command\": \"npx\",\n      \"args\": [\"-y\", \"@modelcontextprotocol/server-puppeteer\"]\n    }\n  }\n}",
+    "pasteServerAs": "粘贴您的服务器配置为:\n\n{{example}}\n\n或\n\n{{exampleNoParent}}\n\n或\n\n{{exampleBare}}",
     "invalidConfig": "无效配置",
     "emptyConfig": "配置不能为空",
     "multipleServersHint": "您可以一次添加多个服务器，方法是粘贴包含多个服务器配置的 JSON 对象。"
@@ -131,7 +131,8 @@
       "computationalResources": "MCP 工具调用的最大迭代次数。帮助控制计算资源。",
       "rateLimiting": "设置工具调用之间的最小时间以防止速率限制(例如对于 Brave 或其他 API 受限的服务)。",
       "tokensPerResponse": "MCP 代理每次响应可以使用的最大令牌数。",
-      "addServer": "添加服务器"
+      "addServer": "添加服务器",
+      "editConfig": "编辑配置"
     },
     "aider": {
       "options": "选项",

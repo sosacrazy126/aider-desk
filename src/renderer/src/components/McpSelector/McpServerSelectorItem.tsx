@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { CgSpinner } from 'react-icons/cg';
 import { useTranslation } from 'react-i18next';
+import { SERVER_TOOL_SEPARATOR } from '@common/utils';
 
 import { Checkbox } from '../common/Checkbox';
 
@@ -19,7 +20,7 @@ export const McpServerSelectorItem = ({ serverName, disabled, disabledTools, onT
     const loadTools = async () => {
       try {
         const tools = await window.api.loadMcpServerTools(serverName);
-        setToolsCount((tools?.length ?? 0) - disabledTools.filter((toolName) => toolName.startsWith(`${serverName}-`)).length);
+        setToolsCount((tools?.length ?? 0) - disabledTools.filter((toolName) => toolName.startsWith(`${serverName}${SERVER_TOOL_SEPARATOR}`)).length);
       } catch (error) {
         console.error('Failed to load MCP server tools:', error);
         setToolsCount(0);

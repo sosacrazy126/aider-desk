@@ -65,8 +65,22 @@ export const McpServerItem = ({ serverName, config, onRemove, onEdit, toggleTool
               </div>
             </div>
           )}
-          {onEdit && <IconButton icon={<FaPencilAlt className="text-neutral-200" />} onClick={onEdit} tooltip={t('common.edit')} className="ml-4" />}
-          <IconButton icon={<FaTrash className="text-red-500/60" />} onClick={onRemove} tooltip={t('common.remove')} className="ml-3" />
+          {onEdit && (
+            <IconButton
+              icon={<FaPencilAlt className="text-neutral-200" />}
+              onClick={onEdit}
+              tooltip={t('common.edit')}
+              className="ml-4"
+              tooltipId="mcp-server-item"
+            />
+          )}
+          <IconButton
+            icon={<FaTrash className="text-red-500/60" />}
+            onClick={onRemove}
+            tooltip={t('common.remove')}
+            className="ml-3"
+            tooltipId="mcp-server-item"
+          />
         </div>
       </div>
     );

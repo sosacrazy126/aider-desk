@@ -70,7 +70,7 @@
     "addServer": "Add MCP Server",
     "editServer": "Edit MCP Server: {{name}}",
     "serverConfigJson": "Server Config JSON",
-    "pasteServerAs": "Paste your server as:\n\n{\n  \"mcpServers\": {\n    \"puppeteer\": {\n      \"command\": \"npx\",\n      \"args\": [\"-y\", \"@modelcontextprotocol/server-puppeteer\"]\n    }\n  }\n}",
+    "pasteServerAs": "Paste your server as:\n\n{{example}}\n\nor\n\n{{exampleNoParent}}\n\nor\n\n{{exampleBare}}",
     "invalidConfig": "Invalid configuration",
     "emptyConfig": "Configuration cannot be empty",
     "multipleServersHint": "You can add multiple servers at once by pasting a JSON object with multiple server configurations."
@@ -135,7 +135,8 @@
       "computationalResources": "Maximum number of iterations for MCP tool calls. Helps control computational resources.",
       "rateLimiting": "Sets the minimum time between tool calls to prevent rate limiting (e.g. for Brave or other API-constrained services).",
       "tokensPerResponse": "Maximum number of tokens the MCP agent can use per response.",
-      "addServer": "Add server"
+      "addServer": "Add server",
+      "editConfig": "Edit Config"
     },
     "aider": {
       "options": "Options",

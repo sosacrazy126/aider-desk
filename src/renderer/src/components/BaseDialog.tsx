@@ -31,7 +31,7 @@ export const BaseDialog = ({ title, onClose, children, footer, width = 384, clos
   }, [closeOnEscape, onClose]);
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+    <div className="fixed inset-0 top-0 bottom-0 left-0 right-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
       <FocusTrap>
         <div
           style={{ width: `${width}px` }}

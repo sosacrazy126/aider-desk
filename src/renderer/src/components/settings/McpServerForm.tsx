@@ -1,39 +1,71 @@
 import { McpServerConfig } from '@common/types';
 import { useState, useMemo, ChangeEvent } from 'react';
-import { FaArrowLeft } from 'react-icons/fa';
 import { z } from 'zod';
 import { useTranslation } from 'react-i18next';
+
+const MCP_SERVER_EXAMPLE_JSON = `{
+  "mcpServers": {
+    "puppeteer": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-puppeteer"]
+    }
+  }
+}`;
+
+const MCP_SERVER_EXAMPLE_NO_PARENT = `{
+  "puppeteer": {
+    "command": "npx",
+    "args": ["-y", "@modelcontextprotocol/server-puppeteer"]
+  }
+}`;
+
+const MCP_SERVER_EXAMPLE_BARE = `"puppeteer": {
+  "command": "npx",
+  "args": ["-y", "@modelcontextprotocol/server-puppeteer"]
+}`;
 
 import { TextArea } from '@/components/common/TextArea';
 import { Button } from '@/components/common/Button';
 
-export const McpServerConfigSchema = z.object({
-  mcpServers: z.record(
-    z.object({
-      command: z.string(),
-      args: z.array(z.string()).readonly(),
-      env: z.record(z.string()).readonly().optional(),
-      enabled: z.boolean().optional(),
-    }),
-  ),
-});
+const McpServersRecordSchema = z.record(
+  z.object({
+    command: z.string(),
+    args: z.array(z.string()).readonly(),
+    env: z.record(z.string()).readonly().optional(),
+    enabled: z.boolean().optional(),
+  }),
+);
+
+export const McpServerConfigSchema = z.union([
+  z.object({
+    mcpServers: McpServersRecordSchema,
+  }),
+  McpServersRecordSchema,
+]);
+
+export type McpServer = {
+  name: string;
+  config: McpServerConfig;
+};
 
 type Props = {
   onSave: (servers: Record<string, McpServerConfig>) => void;
   onCancel: () => void;
-  initialName?: string;
-  initialConfig?: McpServerConfig;
+  servers?: McpServer[];
 };
 
-export const McpServerForm = ({ onSave, onCancel, initialName, initialConfig }: Props) => {
+export const McpServerForm = ({ onSave, onCancel, servers }: Props) => {
   const { t } = useTranslation();
   const [configJSON, setConfigJSON] = useState(() => {
-    if (initialName && initialConfig) {
+    if (servers && servers.length > 0) {
+      // If multiple servers, merge them into a single object
+      const serversObj: Record<string, McpServerConfig> = {};
+      servers.forEach(({ name, config }) => {
+        serversObj[name] = config;
+      });
       return JSON.stringify(
         {
-          mcpServers: {
-            [initialName]: initialConfig,
-          },
+          mcpServers: serversObj,
         },
         null,
         2,
@@ -42,20 +74,42 @@ export const McpServerForm = ({ onSave, onCancel, initialName, initialConfig }: 
     return '';
   });
 
-  const isValidJson = useMemo(() => {
+  // Try to parse as JSON, or as a "bare" object (without enclosing {})
+  const parseConfig = (text: string) => {
     try {
-      const parsed = JSON.parse(configJSON);
-      const result = McpServerConfigSchema.safeParse(parsed);
-      return result.success;
+      // Try as full JSON first
+      return JSON.parse(text);
     } catch {
+      // Try as "bare" object: wrap in braces and parse
+      try {
+        return JSON.parse(`{${text}}`);
+      } catch {
+        return null;
+      }
+    }
+  };
+
+  const isValidJson = useMemo(() => {
+    const parsed = parseConfig(configJSON);
+    if (!parsed) {
       return false;
     }
+    const result = McpServerConfigSchema.safeParse(parsed);
+    return result.success;
   }, [configJSON]);
 
   const handleAddServer = () => {
     if (isValidJson) {
-      const parsed = JSON.parse(configJSON);
-      onSave(parsed.mcpServers);
+      const parsed = parseConfig(configJSON);
+      if (!parsed) {
+        return;
+      }
+      // Accept both { mcpServers: {...} } and just { ... }
+      if ('mcpServers' in parsed && typeof parsed.mcpServers === 'object') {
+        onSave(parsed.mcpServers);
+      } else {
+        onSave(parsed);
+      }
     }
   };
 
@@ -65,23 +119,32 @@ export const McpServerForm = ({ onSave, onCancel, initialName, initialConfig }: 
 
   return (
     <div>
-      <div className="flex items-center mb-2 text-neutral-200">
-        <button onClick={onCancel} className="mr-2 hover:bg-neutral-700 rounded-md p-2 text-md">
-          <FaArrowLeft />
-        </button>
-        <h3 className="text-md font-medium uppercase">{initialName ? t('mcpServer.editServer', { name: initialName }) : t('mcpServer.addServer')}</h3>
+      <div className="flex items-center mb-2 text-neutral-100">
+        <h3 className="text-md font-medium uppercase mb-1">
+          {servers && servers.length === 1
+            ? t('mcpServer.editServer', { name: servers[0].name })
+            : servers && servers.length > 1
+              ? t('settings.mcp.editConfig')
+              : t('mcpServer.addServer')}
+        </h3>
       </div>
       <div className="mb-2">
         <TextArea
-          label={t('mcpServer.serverConfigJson')}
-          placeholder={t('mcpServer.pasteServerAs')}
+          placeholder={t('mcpServer.pasteServerAs', {
+            example: MCP_SERVER_EXAMPLE_JSON,
+            exampleNoParent: MCP_SERVER_EXAMPLE_NO_PARENT,
+            exampleBare: MCP_SERVER_EXAMPLE_BARE,
+          })}
           value={configJSON}
           onChange={handleChange}
           className={`w-full h-60 p-2 resize-none ${configJSON && !isValidJson ? 'border-red-800/50 focus:border-red-800/50' : ''}`}
         />
-        <div className="text-xs text-gray-500 mt-1">{t('mcpServer.multipleServersHint')}</div>
+        {!servers && <div className="text-xs text-gray-500 mt-1">{t('mcpServer.multipleServersHint')}</div>}
       </div>
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        <Button onClick={onCancel} variant="text">
+          {t('common.cancel')}
+        </Button>
         <Button onClick={handleAddServer} variant="contained" disabled={!isValidJson || !configJSON}>
           {t('common.save')}
         </Button>

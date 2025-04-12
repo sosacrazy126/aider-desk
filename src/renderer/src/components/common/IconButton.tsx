@@ -8,10 +8,11 @@ type Props = {
   onClick: () => void;
   tooltip?: string;
   className?: string;
+  tooltipId?: string;
 };
 
-export const IconButton = ({ icon, onClick, tooltip, className }: Props) => {
-  const tooltipIdRef = useRef<string>(`icon-button-tooltip-${uuidv4()}`);
+export const IconButton = ({ icon, onClick, tooltip, className, tooltipId }: Props) => {
+  const tooltipIdRef = useRef<string>(tooltipId || `icon-button-tooltip-${uuidv4()}`);
 
   const baseClasses = 'text-neutral-500 cursor-pointer hover:text-neutral-300 transition-opacity focus:outline-none';
   const combinedClassName = `${baseClasses} ${className || ''}`;
@@ -30,7 +31,7 @@ export const IconButton = ({ icon, onClick, tooltip, className }: Props) => {
   return (
     <>
       {renderButton()}
-      {tooltip && <StyledTooltip id={tooltipIdRef.current} />}
+      {tooltip && !tooltipId && <StyledTooltip id={tooltipIdRef.current} />}
     </>
   );
 };

@@ -14,6 +14,7 @@
 - revamped session management
 - adding command output to context messages for Agent
 - fixed PATH environment variable on MacOS
+- enhanced MCP server configuration with possibility to update the whole config
 
 ## [0.8.0]
 
