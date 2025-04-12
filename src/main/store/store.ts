@@ -103,7 +103,7 @@ export class Store {
   }
 
   private migrate(settings: SettingsData): SettingsData {
-    let settingsVersion = this.store.get('settingsVersion') || 0;
+    let settingsVersion = this.store.get('settingsVersion') ?? CURRENT_SETTINGS_VERSION;
 
     if (settingsVersion < CURRENT_SETTINGS_VERSION) {
       logger.info(`Migrating settings from version ${settingsVersion} to ${CURRENT_SETTINGS_VERSION}`);
