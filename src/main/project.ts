@@ -50,6 +50,7 @@ export class Project {
   private currentPromptResponses: ResponseCompletedData[] = [];
   private runPromptResolves: ((value: ResponseCompletedData[]) => void)[] = [];
   private sessionManager: SessionManager = new SessionManager(this);
+  private commandOutputs: Map<string, string> = new Map();
 
   mcpAgentTotalCost: number = 0;
   aiderTotalCost: number = 0;
@@ -239,11 +240,11 @@ export class Project {
     this.process.stderr.on('data', (data) => {
       const output = data.toString();
       if (output.startsWith('Warning:')) {
-        logger.debug(data);
+        logger.debug('Aider warning:', { output });
         return;
       }
       if (output.startsWith('usage:')) {
-        logger.debug(output);
+        logger.debug('Aider usage:', { output });
         this.addLogMessage('error', output.includes('error:') ? output.substring(output.indexOf('error:')) : output);
         return;
       }
@@ -499,8 +500,9 @@ export class Project {
       answer,
     });
 
-    const yesNoAnswer = answer.toLowerCase() === 'a' || answer.toLowerCase() === 'y' ? 'y' : 'n';
-    if (answer.toLowerCase() === 'd' || answer.toLowerCase() === 'a') {
+    const normalized = answer.toLowerCase();
+    const yesNoAnswer = normalized === 'a' || normalized === 'y' ? 'y' : 'n';
+    if (normalized === 'd' || normalized === 'a') {
       logger.info('Storing answer for question:', {
         baseDir: this.baseDir,
         question: this.currentQuestion,
@@ -704,17 +706,32 @@ export class Project {
 
   public openCommandOutput(command: string) {
     this.currentCommand = command;
+    this.commandOutputs.set(command, '');
     this.addCommandOutput(command, '');
   }
 
   public closeCommandOutput() {
+    if (!this.currentCommand) {
+      return;
+    }
+    const command = this.currentCommand;
+    const output = this.commandOutputs.get(command);
+    if (output && output.trim()) {
+      // Add the command output to the session manager as an assistant message, prepending the command
+      this.sessionManager.addContextMessage(MessageRole.Assistant, `${command}\n\n${output}`);
+    }
+    this.commandOutputs.delete(command);
     this.currentCommand = null;
   }
 
   private addCommandOutput(command: string, output: string) {
+    // Append output to the commandOutputs map
+    const prev = this.commandOutputs.get(command) || '';
+    this.commandOutputs.set(command, prev + output);
+
     this.mainWindow.webContents.send('command-output', {
       baseDir: this.baseDir,
-      command: command,
+      command,
       output,
     });
   }
