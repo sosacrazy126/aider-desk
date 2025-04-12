@@ -120,18 +120,21 @@ export const ContextFiles = ({ baseDir, allFiles, showFileDialog }: Props) => {
   const treeKey = useMemo(() => {
     if (showAllFiles) {
       return objectHash(sortedAllFiles);
+    } else {
+      return objectHash(sortedFiles.map((file) => file.path));
     }
-    return objectHash(sortedFiles.map((file) => file.path));
   }, [showAllFiles, sortedFiles, sortedAllFiles]);
 
   const treeData = useMemo(() => {
     if (showAllFiles) {
       const allFileObjects: ContextFile[] = sortedAllFiles.map((path) => ({
         path,
+        readOnly: sortedFiles.find((file) => file.path === path)?.readOnly,
       }));
       return createFileTree(allFileObjects);
+    } else {
+      return createFileTree(sortedFiles);
     }
-    return createFileTree(sortedFiles);
   }, [showAllFiles, sortedFiles, sortedAllFiles]);
 
   useEffect(() => {
@@ -295,15 +298,12 @@ export const ContextFiles = ({ baseDir, allFiles, showFileDialog }: Props) => {
                   </>
                 ) : (
                   <div className="flex items-center gap-1 flex-shrink-0">
-                    {(item as TreeItem).file?.readOnly && !showAllFiles && (
-                      <>
-                        <TbPencilOff
-                          className="w-4 h-4 text-neutral-400"
-                          data-tooltip-id={`readonly-file-tooltip-${(item as TreeItem).file?.path}`}
-                          data-tooltip-content={t('contextFiles.readOnly')}
-                        />
-                        <StyledTooltip id={`readonly-file-tooltip-${(item as TreeItem).file?.path}`} />
-                      </>
+                    {(item as TreeItem).file?.readOnly && (
+                      <TbPencilOff
+                        className="w-4 h-4 text-neutral-400"
+                        data-tooltip-id="context-files-tooltip"
+                        data-tooltip-content={t('contextFiles.readOnly')}
+                      />
                     )}
                     {showAllFiles ? (
                       files.some((f) => f.path === (item as TreeItem).file?.path) ? (

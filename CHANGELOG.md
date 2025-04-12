@@ -38,6 +38,7 @@
 - added General settings with Start Up section with options to load context messages and files from last session
 - added support for managing sessions
 - fixed issue with 0.80.0 aider version
+- show read-only icon in Context Files when all files are displayed
 
 ## [0.6.0]
 
