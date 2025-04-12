@@ -3,6 +3,7 @@ import { createOpenAI } from '@ai-sdk/openai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createDeepSeek } from '@ai-sdk/deepseek';
 import { createAmazonBedrock } from '@ai-sdk/amazon-bedrock';
+import { createOllama } from 'ollama-ai-provider';
 import { fromNodeProviderChain } from '@aws-sdk/credential-providers';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import {
@@ -10,6 +11,7 @@ import {
   isBedrockProvider,
   isDeepseekProvider,
   isGeminiProvider,
+  isOllamaProvider,
   isOpenAiCompatibleProvider,
   isOpenAiProvider,
   LlmProvider,
@@ -80,6 +82,17 @@ export const createLlm = (provider: LlmProvider): LanguageModel => {
       credentialProvider: (!provider.accessKeyId && !provider.secretAccessKey && fromNodeProviderChain()) || undefined,
     });
     return bedrockProviderInstance(provider.model);
+  } else if (isOllamaProvider(provider)) {
+    if (!provider.baseUrl) {
+      throw new Error('Base URL is required for Ollama provider');
+    }
+    if (!provider.model) {
+      throw new Error('Model name is required for Ollama provider');
+    }
+    const ollamaInstance = createOllama({ baseURL: provider.baseUrl });
+    return ollamaInstance(provider.model, {
+      simulateStreaming: true,
+    });
   } else {
     throw new Error(`Unsupported MCP provider: ${JSON.stringify(provider)}`);
   }

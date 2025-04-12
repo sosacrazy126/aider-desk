@@ -25,7 +25,7 @@ export const DEFAULT_SETTINGS: SettingsData = {
       {
         name: 'anthropic',
         apiKey: '',
-        model: PROVIDER_MODELS.anthropic.models[0],
+        model: Object.keys(PROVIDER_MODELS.anthropic.models)[0],
         active: true,
       },
     ],
@@ -51,10 +51,11 @@ export const DEFAULT_SETTINGS: SettingsData = {
 ## Task Execution Process
 
 1. Analyze the user's request and determine necessary actions
-2. Use search tools to understand the codebase and user query
-3. Implement the solution using all available tools
-4. Verify the solution with tests when possible
-5. Complete a checklist to ensure all tasks are fulfilled
+2. Use available tools to understand the codebase and user query
+3. Use available tools to find relevant files for the user's request
+4. Implement the solution using all available tools
+5. Verify the solution with tests when possible
+6. Complete a checklist to ensure all tasks are fulfilled
 
 ## Code Style and Conventions
 

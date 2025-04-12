@@ -1,9 +1,14 @@
-export type ProviderName = 'openai' | 'anthropic' | 'gemini' | 'bedrock' | 'deepseek' | 'openai-compatible';
+export type ProviderName = 'openai' | 'anthropic' | 'gemini' | 'bedrock' | 'deepseek' | 'openai-compatible' | 'ollama';
 
 export interface LlmProviderBase {
   name: ProviderName;
   model: string;
   active: boolean;
+}
+
+export interface OllamaProvider extends LlmProviderBase {
+  name: 'ollama';
+  baseUrl: string;
 }
 
 export const AVAILABLE_PROVIDERS = [
@@ -13,6 +18,7 @@ export const AVAILABLE_PROVIDERS = [
   { value: 'bedrock', label: 'Bedrock' },
   { value: 'deepseek', label: 'Deepseek' },
   { value: 'openai-compatible', label: 'OpenAI Compatible' },
+  { value: 'ollama', label: 'Ollama' },
 ];
 
 export interface OpenAiProvider extends LlmProviderBase {
@@ -54,14 +60,16 @@ export interface OpenAiCompatibleProvider extends LlmProviderBase {
 }
 export const isOpenAiCompatibleProvider = (provider: LlmProviderBase): provider is OpenAiCompatibleProvider => provider.name === 'openai-compatible';
 
-export type LlmProvider = OpenAiProvider | AnthropicProvider | GeminiProvider | BedrockProvider | DeepseekProvider | OpenAiCompatibleProvider;
+export const isOllamaProvider = (provider: LlmProviderBase): provider is OllamaProvider => provider.name === 'ollama';
+
+export type LlmProvider = OpenAiProvider | AnthropicProvider | GeminiProvider | BedrockProvider | DeepseekProvider | OpenAiCompatibleProvider | OllamaProvider;
 
 export const getActiveProvider = (providers: LlmProvider[]): LlmProvider | null => {
   return providers.find((provider) => provider.active) || null;
 };
 
 // prices in dollars per million tokens
-export const PROVIDER_MODELS = {
+export const PROVIDER_MODELS: Record<string, { models: Record<string, { inputCost: number; outputCost: number }> }> = {
   openai: {
     models: {
       'gpt-4o-mini': {

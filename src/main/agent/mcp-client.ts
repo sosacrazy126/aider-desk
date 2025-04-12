@@ -1,7 +1,7 @@
 import { Project } from 'src/main/project';
 import { AgentConfig, McpServerConfig, McpTool } from '@common/types';
 import { ZodSchema } from 'zod';
-import { Client as McpSdkClient } from '@modelcontextprotocol/sdk/client/index.js'; // Use the SDK client
+import { Client as McpSdkClient } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { jsonSchemaToZod } from '@n8n/json-schema-to-zod';
 import logger from 'src/main/logger';

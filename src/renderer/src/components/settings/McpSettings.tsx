@@ -12,13 +12,22 @@ import {
   isGeminiProvider,
   isDeepseekProvider,
   isOpenAiCompatibleProvider,
+  isOllamaProvider,
   getActiveProvider,
 } from '@common/llm-providers';
 import { SERVER_TOOL_SEPARATOR } from '@common/utils';
 
 import { McpServer, McpServerForm } from './McpServerForm';
 import { McpServerItem } from './McpServerItem';
-import { OpenAiParameters, AnthropicParameters, GeminiParameters, BedrockParameters, DeepseekParameters, OpenAiCompatibleParameters } from './providers';
+import {
+  OpenAiParameters,
+  AnthropicParameters,
+  GeminiParameters,
+  BedrockParameters,
+  DeepseekParameters,
+  OpenAiCompatibleParameters,
+  OllamaParameters,
+} from './providers';
 
 import { Select } from '@/components/common/Select';
 import { Button } from '@/components/common/Button';
@@ -73,6 +82,13 @@ export const McpSettings = ({ settings, setSettings }: Props) => {
           model: Object.keys(PROVIDER_MODELS[newProviderName].models)[0],
           active: true,
         };
+      } else if (newProviderName === 'ollama') {
+        newProvider = {
+          name: 'ollama',
+          baseUrl: 'http://localhost:11434/api',
+          model: '',
+          active: true,
+        } as LlmProvider;
       } else {
         newProvider = {
           name: newProviderName,
@@ -226,6 +242,7 @@ export const McpSettings = ({ settings, setSettings }: Props) => {
               {activeProvider && isDeepseekProvider(activeProvider) && <DeepseekParameters settings={settings} setSettings={setSettings} />}
               {activeProvider && isBedrockProvider(activeProvider) && <BedrockParameters settings={settings} setSettings={setSettings} />}
               {activeProvider && isOpenAiCompatibleProvider(activeProvider) && <OpenAiCompatibleParameters settings={settings} setSettings={setSettings} />}
+              {activeProvider && isOllamaProvider(activeProvider) && <OllamaParameters settings={settings} setSettings={setSettings} />}
             </div>
             <div>
               <div>

@@ -77,15 +77,18 @@
   },
   "model": {
     "label": "Model",
-    "selectLabel": "Model"
+    "selectLabel": "Model",
+    "placeholder": "Enter model name"
   },
   "openai": {
     "apiKey": "API Key",
-    "model": "Model",
     "baseUrl": "Base URL",
     "modelName": "Model Name",
-    "baseUrlPlaceholder": "e.g. http://localhost:8080/v1",
-    "modelNamePlaceholder": "Enter model name"
+    "baseUrlPlaceholder": "e.g. http://localhost:8080/v1"
+  },
+  "ollama": {
+    "baseUrl": "Base URL",
+    "baseUrlPlaceholder": "e.g. http://localhost:11434/api"
   },
   "anthropic": {
     "apiKey": "API Key"

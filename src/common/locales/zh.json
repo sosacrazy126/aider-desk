@@ -73,18 +73,21 @@
   },
   "model": {
     "label": "模型",
-    "selectLabel": "模型"
+    "selectLabel": "模型",
+    "placeholder": "输入模型名称"
   },
   "openai": {
     "apiKey": "API 密钥",
     "model": "模型",
     "baseUrl": "基础 URL",
-    "modelName": "模型名称",
-    "baseUrlPlaceholder": "例如 http://localhost:8080/v1",
-    "modelNamePlaceholder": "输入模型名称"
+    "baseUrlPlaceholder": "例如 http://localhost:8080/v1"
   },
   "anthropic": {
     "apiKey": "API 密钥"
+  },
+  "ollama": {
+    "baseUrl": "基础 URL",
+    "baseUrlPlaceholder": "例如 http://localhost:11434/api"
   },
   "gemini": {
     "apiKey": "API 密钥"

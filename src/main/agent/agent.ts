@@ -2,7 +2,7 @@ import fs from 'fs/promises';
 import path from 'path';
 
 import { ContextFile, ContextMessage, McpServerConfig, McpTool, UsageReportData } from '@common/types';
-import { generateText, InvalidToolArgumentsError, NoSuchToolError, streamText } from 'ai'; // Added InvalidToolArgumentsError
+import { APICallError, generateText, InvalidToolArgumentsError, NoSuchToolError, streamText } from 'ai'; // Added InvalidToolArgumentsError
 import { v4 as uuidv4 } from 'uuid';
 import { calculateCost, delay, extractServerNameToolName, SERVER_TOOL_SEPARATOR } from '@common/utils';
 import { getActiveProvider, LlmProvider } from '@common/llm-providers';
@@ -434,6 +434,8 @@ export class Agent {
           logger.error('Error during prompt:', { error });
           if (typeof error === 'string') {
             project.addLogMessage('error', error);
+          } else if (error instanceof APICallError) {
+            project.addLogMessage('error', `${error.message}: ${error.responseBody}`);
           } else if (error instanceof Error) {
             project.addLogMessage('error', error.message);
           } else {
