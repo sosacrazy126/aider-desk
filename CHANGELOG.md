@@ -13,6 +13,7 @@
 - pasting multiple MCP servers at once within the same JSON will add all the servers
 - revamped session management
 - adding command output to context messages for Agent
+- fixed PATH environment variable on MacOS
 
 ## [0.8.0]
 

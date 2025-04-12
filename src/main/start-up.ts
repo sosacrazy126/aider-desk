@@ -185,7 +185,7 @@ const installAiderConnectorRequirements = async (cleanInstall: boolean, updatePr
 
 const setupMcpServer = async () => {
   if (is.dev) {
-    logger.info('Skipping MCP server setup in dev mode');
+    logger.info('Skipping AiderDesk MCP server setup in dev mode');
     return;
   }
 

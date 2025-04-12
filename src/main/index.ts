@@ -16,6 +16,7 @@ import { setupIpcHandlers } from './ipc-handlers';
 import { ProjectManager } from './project-manager';
 import { performStartUp, UpdateProgressData } from './start-up';
 import { Store } from './store';
+import logger from './logger';
 
 const initStore = async (): Promise<Store> => {
   const store = new Store();
@@ -23,7 +24,7 @@ const initStore = async (): Promise<Store> => {
   return store;
 };
 
-const initWindow = (store: Store) => {
+const initWindow = async (store: Store) => {
   const lastWindowState = store.getWindowState();
   const mainWindow = new BrowserWindow({
     width: lastWindowState.width,
@@ -66,6 +67,9 @@ const initWindow = (store: Store) => {
   mainWindow.on('maximize', saveWindowState);
   mainWindow.on('unmaximize', saveWindowState);
 
+  logger.info('Initializing fix-path...');
+  (await import('fix-path')).default();
+
   const agent = new Agent(store);
   void agent.initMcpServers();
 
@@ -100,9 +104,9 @@ const initWindow = (store: Store) => {
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-    void mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL']);
+    await mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL']);
   } else {
-    void mainWindow.loadFile(join(__dirname, '../renderer/index.html'));
+    await mainWindow.loadFile(join(__dirname, '../renderer/index.html'));
   }
 
   return mainWindow;
@@ -183,13 +187,13 @@ app.whenReady().then(async () => {
   }
 
   const store = await initStore();
-  initWindow(store);
+  await initWindow(store);
 
   progressBar.close();
 
   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) {
-      initWindow(store);
+      void initWindow(store);
     }
   });
 });
