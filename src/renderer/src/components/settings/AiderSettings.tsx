@@ -10,11 +10,12 @@ import { TextArea } from '@/components/common/TextArea';
 type Props = {
   settings: SettingsData;
   setSettings: (settings: SettingsData) => void;
+  initialShowEnvVars?: boolean;
 };
 
-export const AiderSettings = ({ settings, setSettings }: Props) => {
+export const AiderSettings = ({ settings, setSettings, initialShowEnvVars = false }: Props) => {
   const { t } = useTranslation();
-  const [showEnvVars, setShowEnvVars] = useState(false);
+  const [showEnvVars, setShowEnvVars] = useState(initialShowEnvVars);
 
   return (
     <>
