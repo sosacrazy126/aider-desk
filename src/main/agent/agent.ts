@@ -6,6 +6,7 @@ import { APICallError, generateText, InvalidToolArgumentsError, NoSuchToolError,
 import { v4 as uuidv4 } from 'uuid';
 import { calculateCost, delay, extractServerNameToolName, SERVER_TOOL_SEPARATOR } from '@common/utils';
 import { getActiveProvider, LlmProvider } from '@common/llm-providers';
+import { getSystemPrompt } from 'src/main/agent/prompts';
 
 import logger from '../logger';
 import { Store } from '../store';
@@ -333,7 +334,7 @@ export class Agent {
 
     try {
       const model = createLlm(activeProvider);
-      const systemPrompt = await this.getSystemMessage(project, agentConfig.systemPrompt);
+      const systemPrompt = await getSystemPrompt(project.baseDir, agentConfig.useAiderTools, agentConfig.includeContextFiles, agentConfig.customInstructions);
 
       // repairToolCall function that attempts to repair tool calls
       const repairToolCall = async ({ toolCall, tools, error, messages, system }) => {
@@ -355,7 +356,10 @@ export class Agent {
         } else if (InvalidToolArgumentsError.isInstance(error)) {
           // If the arguments are invalid, return a call to the helper tool
           // to inform the LLM about the argument error.
-          logger.warn(`Invalid arguments for tool: ${error.toolName}`, { args: error.toolArgs, error: error.message });
+          logger.warn(`Invalid arguments for tool: ${error.toolName}`, {
+            args: error.toolArgs,
+            error: error.message,
+          });
           return {
             toolCallType: 'function' as const,
             toolCallId: toolCall.toolCallId,
@@ -505,20 +509,6 @@ export class Agent {
     }
 
     return agentMessages;
-  }
-
-  private async getSystemMessage(project: Project, systemPrompt: string): Promise<string> {
-    const currentDate = new Date().toISOString();
-    const osName = (await import('os-name')).default;
-
-    return `${systemPrompt}
-
-## System Information
-
-Current Date: ${currentDate}
-Operating System: ${osName()}
-Current Working/Project Directory: ${project.baseDir}
-`;
   }
 
   private async prepareMessages(project: Project): Promise<CoreMessage[]> {

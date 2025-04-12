@@ -16,6 +16,7 @@
 - fixed PATH environment variable on MacOS
 - enhanced MCP server configuration with possibility to update the whole config
 - added support for Ollama provider in Agent
+- replace system prompt with custom instructions for Agent
 
 ## [0.8.0]
 

@@ -38,6 +38,11 @@ import { Accordion } from '@/components/common/Accordion';
 import { Input } from '@/components/common/Input';
 import { StyledTooltip } from '@/components/common/StyledTooltip';
 
+const CUSTOM_INSTRUCTIONS_PLACEHOLDER = `## Probe Tools Usage
+
+- use probe tools when you need to find files related to users request
+- think about the search queries you need to use to find the files`;
+
 type Props = {
   settings: SettingsData;
   setSettings: (settings: SettingsData) => void;
@@ -138,7 +143,7 @@ export const McpSettings = ({ settings, setSettings }: Props) => {
     setSettings({ ...settings, agentConfig: updatedMcpConfig });
   };
 
-  const handleSystemPromptChanged = (newSystemPrompt: string) => {
+  const handleCustomInstructionsChanged = (newSystemPrompt: string) => {
     const updatedMcpConfig = {
       ...settings.agentConfig,
       systemPrompt: newSystemPrompt,
@@ -293,9 +298,15 @@ export const McpSettings = ({ settings, setSettings }: Props) => {
           </div>
 
           <div className="mt-4">
-            <Accordion title={t('settings.mcp.systemPrompt')} className="text-sm">
-              <div className="text-xxs text-amber-500 mb-2">{t('settings.mcp.systemPromptWarning')}</div>
-              <TextArea value={agentConfig.systemPrompt} onChange={(e) => handleSystemPromptChanged(e.target.value)} rows={20} className="w-full resize-none" />
+            <Accordion title={t('settings.mcp.customInstructions')} className="text-sm">
+              <div className="text-xxs text-amber-500 mt-2 mb-2">{t('settings.mcp.customInstructionsInfo')}</div>
+              <TextArea
+                value={agentConfig.customInstructions}
+                onChange={(e) => handleCustomInstructionsChanged(e.target.value)}
+                rows={15}
+                className="w-full resize-none"
+                placeholder={CUSTOM_INSTRUCTIONS_PLACEHOLDER}
+              />
             </Accordion>
           </div>
           <div className="mt-4">

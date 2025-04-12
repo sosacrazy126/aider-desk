@@ -149,9 +149,9 @@ export interface AgentConfig {
   };
   disabledServers: string[];
   disabledTools: string[];
-  systemPrompt: string;
   includeContextFiles: boolean;
   useAiderTools: boolean;
+  customInstructions: string;
 }
 
 export interface UsageReportData {
