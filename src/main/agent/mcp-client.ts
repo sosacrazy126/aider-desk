@@ -53,14 +53,23 @@ export const initMcpClient = async (serverName: string, originalServerConfig: Mc
   logger.debug(`Server configuration: ${JSON.stringify(serverConfig)}`);
 
   const env = { ...serverConfig.env };
-  if (!env.PATH) {
-    env.PATH = process.env.PATH || '';
+  if (!env.PATH && process.env.PATH) {
+    env.PATH = process.env.PATH;
+  }
+
+  // Handle npx command on Windows
+  let command = serverConfig.command;
+  let args = serverConfig.args;
+  if (process.platform === 'win32' && command === 'npx') {
+    command = 'cmd.exe';
+    args = ['/c', 'npx', ...args];
   }
 
   const transport = new StdioClientTransport({
-    command: serverConfig.command,
-    args: serverConfig.args,
+    command,
+    args,
     env,
+    cwd: project?.baseDir,
   });
 
   const client = new McpSdkClient(
