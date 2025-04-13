@@ -1,6 +1,6 @@
 # Changelog
 
-## UNRELEASED
+## [0.9.0]
 
 - fixed editor response in architect mode
 - fixed right padding in prompt field
