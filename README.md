@@ -9,8 +9,10 @@ Transform your AI coding experience with AiderDesk - all the power of the Aider 
 ## Table of Contents
 - [✨ Key Features](#-key-features)
 - [📥 Installation](#-installation)
-- [📸 Screenshots](#-screenshots)
+- [📸 Previews](#-previews)
 - [🤖 Agent Mode & MCP Support](#-agent-mode--mcp-support)
+- [📄 Comprehensive Context File Management](#-comprehensive-context-file-management)
+- [💾 Session Management](#-session-management)
 - [🌐 REST API](#-rest-api)
 - [👨‍💻 Development Setup](#-development-setup)
 - [🤝 Contributing](#-contributing)
@@ -37,12 +39,12 @@ Transform your AI coding experience with AiderDesk - all the power of the Aider 
 *   **🔑 Settings Management** - Easily configure API keys and environment variables
 *   **💰 Cost Tracking** - Monitor token usage and expenses for both Aider and the Agent.
 *   **📨 Structured Messages** - View code, prompts, agent thoughts, and tool outputs in a clear, organized manner
-*   **📄 Visual File Management** - Add, remove, and manage context files with ease
+*   **📄 Comprehensive Context File Management** - Automatically manage context files via IDE plugins (IntelliJ/VSCode) or manually add/drop files using the integrated view that shows *all* project files.
 *   **🔄 Model Switching** - Seamlessly switch between different AI models while preserving context
 *   **🔍 Code Diff Viewer** - Review changes with side-by-side comparison
 *   **⏪ One-Click Reverts** - Undo specific AI-generated changes while keeping others
 *   **📋 Easy Sharing** - Copy and share code changes or conversations instantly
-*   **💾 Session Management** - Save and load coding sessions to preserve context and progress
+*   **💾 Session Management** - Save your current work (messages, context files) as a session and load it later to pick up exactly where you left off.
 
 ## 📥 Installation
 
@@ -89,7 +91,7 @@ Or on Windows:
 $env:AIDER_DESK_NO_AUTO_UPDATE = "true"
 ```
 
-## 📸 Screenshots
+## 📸 Previews
 
 <div align="center">
 
@@ -104,10 +106,6 @@ $env:AIDER_DESK_NO_AUTO_UPDATE = "true"
 ### 📂 Multiple Project Management
 <img src="docs/images/multiple-projects.gif" alt="Multiple Projects" width="800"/>
 <p><em>Manage and switch between multiple projects</em></p>
-
-### 📄 Context File Management
-<img src="docs/images/contex-files.png" alt="Context Files" width="200"/>
-<p><em>Manage files included in the AI context</em></p>
 
 ### 🔄 Model Switching Interface
 <img src="docs/images/model-selector.gif" alt="Model Switching" width="800"/>
@@ -132,10 +130,6 @@ $env:AIDER_DESK_NO_AUTO_UPDATE = "true"
 ### 🛠️ MCP Server Integration
 <img src="docs/images/mcp-servers.gif" alt="MCP Servers" width="800"/>
 <p><em>Configure and manage Model Context Protocol servers for enhanced AI capabilities</em></p>
-
-### 💾 Session Management
-<img src="docs/images/session-management.gif" alt="Session Management" width="800"/>
-<p><em>Save and load coding sessions to preserve context and progress</em></p>
 
 </div>
 
@@ -263,6 +257,42 @@ The AiderDesk MCP server provides the following tools:
 These tools allow MCP clients (Claude Desktop, Claude Code, Cursor, Windsurf...) to interact with your AiderDesk, managing context files and running prompts.
 
 **Note:** The AiderDesk application must be running for the MCP server to function.
+
+## 📄 Comprehensive Context File Management
+
+<div align="center">
+  <a href="https://youtu.be/_hA1_NJDK3s">
+    <img src="https://img.youtube.com/vi/_hA1_NJDK3s/0.jpg" alt="Context Files Demo Video" width=400>
+  </a>
+</div>
+
+Keep your AI context perfectly synchronized with the files relevant to your current task. AiderDesk offers two flexible ways to manage context files:
+
+1.  **Automatic Management via IDE Plugins**: Integrate AiderDesk with your favorite IDE (IntelliJ IDEA or VSCode) using our dedicated plugins. The plugins automatically add the currently active file(s) in your editor to the AiderDesk context and remove them when you switch away. This ensures the AI always has the most relevant code in view.
+    *   IntelliJ IDEA ([Plugin](https://plugins.jetbrains.com/plugin/26313-aiderdesk-connector) | [GitHub](https://github.com/hotovo/aider-desk-connector-intellij-plugin))
+    *   VSCode ([Extension](https://marketplace.visualstudio.com/items?itemName=hotovo-sk.aider-desk-connector) | [GitHub](https://github.com/hotovo/aider-desk-connector-vscode-extension))
+2.  **Manual Management via Sidebar**: Use the dedicated "Context Files" panel within AiderDesk. This panel can display *all* files within your project directory. Simply click on any file to add it to or remove it from the AI's context. This provides granular control when you need to include specific files beyond what's currently open in your editor.
+
+This combination allows for both seamless, automated context tracking and precise manual control over the information provided to the AI.
+
+## 💾 Session Management
+
+<div align="center">
+  <a href="https://youtu.be/eFCod0fOhjI">
+    <img src="https://img.youtube.com/vi/eFCod0fOhjI/0.jpg" alt="Sessions Demo Video" width=400>
+  </a>
+</div>
+
+Never lose your train of thought or coding progress again. AiderDesk's session management allows you to save the complete state of your current workspace, including:
+
+-   **Chat History**: All messages exchanged with the AI.
+-   **Context Files**: The list of files currently included in the AI's context.
+
+You can save multiple named sessions per project. Later, simply load a session to restore the chat history and context files exactly as they were, allowing you to seamlessly switch between different tasks, branches, or experiments without losing valuable context. This is particularly useful for:
+
+-   Managing multiple features or bug fixes within the same project.
+-   Pausing work on a complex task and resuming later.
+-   Comparing different approaches or AI interactions side-by-side.
 
 ## 🌐 REST API
 
