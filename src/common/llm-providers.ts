@@ -80,6 +80,14 @@ export const PROVIDER_MODELS: Record<string, { models: Record<string, { inputCos
         inputCost: 1.1,
         outputCost: 4.4,
       },
+      'gpt-4.1': {
+        inputCost: 2,
+        outputCost: 8,
+      },
+      'gpt-4.1-mini': {
+        inputCost: 0.4,
+        outputCost: 1.6,
+      },
     },
   },
   anthropic: {

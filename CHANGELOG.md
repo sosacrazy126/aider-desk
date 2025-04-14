@@ -4,6 +4,7 @@
 
 - arrow up/down does not change the history prompt after editing the text anymore
 - improved agent system prompt
+- added gpt-4.1 and gpt-4.1-mini models for Agent
 
 ## [0.9.0]
 
