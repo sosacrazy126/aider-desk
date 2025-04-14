@@ -1,10 +1,11 @@
-import { ModelsData, SessionData } from '@common/types';
-import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { ModelsData, SessionData, RawModelInfo } from '@common/types';
+import React, { ReactNode, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { MdHistory } from 'react-icons/md';
 import { useTranslation } from 'react-i18next';
 
 import { ModelSelector, ModelSelectorRef } from '@/components/ModelSelector';
 import { SessionsPopup } from '@/components/SessionsPopup';
+import { InfoIcon } from '@/components/common/InfoIcon';
 import { StyledTooltip } from '@/components/common/StyledTooltip';
 import { useSettings } from '@/context/SettingsContext';
 import { useClickOutside } from '@/hooks/useClickOutside';
@@ -31,6 +32,32 @@ export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(({ baseDir, 
   const sessionPopupRef = useRef<HTMLDivElement>(null);
 
   useClickOutside(sessionPopupRef, hideSessionPopup);
+
+  const renderModelInfo = useCallback(
+    (info: RawModelInfo | undefined): ReactNode => {
+      if (!info) {
+        return <div>{t('modelInfo.noInfo')}</div>;
+      }
+
+      return (
+        <div className="text-xxs space-y-0.5 text-neutral-200">
+          <div className="flex items-center">
+            <span className="font-semibold flex-1 mr-2">{t('modelInfo.maxInputTokens')}:</span> {info.max_input_tokens}
+          </div>
+          <div className="flex items-center">
+            <span className="font-semibold flex-1 mr-2">{t('modelInfo.maxOutputTokens')}:</span> {info.max_output_tokens}
+          </div>
+          <div className="flex items-center">
+            <span className="font-semibold flex-1 mr-2">{t('modelInfo.inputCostPerMillion')}:</span> ${(info.input_cost_per_token ?? 0) * 1_000_000}
+          </div>
+          <div className="flex items-center">
+            <span className="font-semibold flex-1 mr-2">{t('modelInfo.outputCostPerMillion')}:</span> ${(info.output_cost_per_token ?? 0) * 1_000_000}
+          </div>
+        </div>
+      );
+    },
+    [t],
+  );
 
   useImperativeHandle(ref, () => ({
     openMainModelSelector: () => {
@@ -184,15 +211,7 @@ export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(({ baseDir, 
               <span className="text-xs">{t('modelSelector.weakModel')}</span>
               <ModelSelector models={allModels} selectedModel={modelsData.weakModel || modelsData.mainModel} onChange={updateWeakModel} />
             </div>
-            {modelsData.maxChatHistoryTokens && (
-              <>
-                <div className="h-3 w-px bg-neutral-600/50"></div>
-                <div className="flex items-center space-x-1">
-                  <span className="text-xs">{t('modelSelector.maxTokens')}</span>
-                  <span className="text-neutral-400 text-xs">{modelsData.maxChatHistoryTokens}</span>
-                </div>
-              </>
-            )}
+            {modelsData.info && <InfoIcon tooltip={renderModelInfo(modelsData.info)} className="ml-1" size="sm" />}
             {modelsData.reasoningEffort && (
               <>
                 <div className="h-3 w-px bg-neutral-600/50"></div>

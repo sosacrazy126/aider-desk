@@ -108,15 +108,24 @@ export interface ProjectData {
   settings?: ProjectSettings;
 }
 
+export interface RawModelInfo {
+  max_input_tokens: number;
+  max_output_tokens: number;
+  input_cost_per_token: number;
+  output_cost_per_token: number;
+  supports_function_calling: boolean;
+  supports_tool_choice: boolean;
+  litellm_provider: string;
+}
+
 export interface ModelsData {
   baseDir: string;
   mainModel: string;
   weakModel?: string | null;
   architectModel?: string | null;
-  maxChatHistoryTokens?: number;
   reasoningEffort?: number;
   thinkingTokens?: number;
-  info?: Record<string, unknown>;
+  info?: RawModelInfo;
   error?: string;
 }
 

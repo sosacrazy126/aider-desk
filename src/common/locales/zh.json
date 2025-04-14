@@ -206,6 +206,13 @@
     "searchPlaceholder": "搜索模型或输入自定义名称...",
     "removePreferred": "从首选模型中移除"
   },
+  "modelInfo": {
+    "noInfo": "无模型信息可用。",
+    "maxInputTokens": "最大输入令牌数",
+    "maxOutputTokens": "最大输出令牌数",
+    "inputCostPerMillion": "每百万输入令牌成本",
+    "outputCostPerMillion": "每百万输出令牌成本"
+  },
   "mcp": {
     "noDescription": "无描述",
     "serverToolStatus": "已启用{{enabledCount}}个工具，共{{count}}个",

@@ -370,8 +370,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
   };
 
   const clearMessages = (clearContext = true) => {
-    const lastModelsMessage = messages.filter((message) => message.type === 'models').pop();
-    setMessages(lastModelsMessage ? [lastModelsMessage] : []);
+    setMessages([]);
     setProcessing(false);
     processingMessageRef.current = null;
 

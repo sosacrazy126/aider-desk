@@ -209,6 +209,13 @@
     "searchPlaceholder": "Search models or enter custom name...",
     "removePreferred": "Remove from preferred models"
   },
+  "modelInfo": {
+    "noInfo": "No model information available.",
+    "maxInputTokens": "Max Input Tokens",
+    "maxOutputTokens": "Max Output Tokens",
+    "inputCostPerMillion": "Input Cost / 1M Tokens",
+    "outputCostPerMillion": "Output Cost / 1M Tokens"
+  },
   "mcp": {
     "noDescription": "No description",
     "serverToolStatus": "{{enabledCount}} of {{count}} tools enabled",

@@ -1,4 +1,4 @@
-import { ContextFileSourceType, ContextFile, TokensCost, FileEdit, UsageReportData, LogLevel, Mode, MessageRole } from '@common/types';
+import { ContextFileSourceType, ContextFile, TokensCost, FileEdit, UsageReportData, LogLevel, Mode, MessageRole, RawModelInfo } from '@common/types';
 
 export type MessageAction =
   | 'init'
@@ -123,8 +123,7 @@ export interface SetModelsMessage extends Message {
   action: 'set-models';
   mainModel: string;
   weakModel?: string | null;
-  maxChatHistoryTokens?: number;
-  info?: Record<string, unknown>;
+  info?: RawModelInfo;
   hasError?: boolean;
 }
 
