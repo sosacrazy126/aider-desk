@@ -1,5 +1,9 @@
 # Changelog
 
+## [UNRELEASED]
+
+- arrow up/down does not change the history prompt after editing the text anymore
+
 ## [0.9.0]
 
 - fixed editor response in architect mode

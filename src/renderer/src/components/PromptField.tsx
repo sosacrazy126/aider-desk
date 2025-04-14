@@ -210,6 +210,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
     const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       const newText = e.target.value;
       setText(newText);
+      setHistoryIndex(-1);
 
       const word = getCurrentWord(newText, e.target.selectionStart);
       setHighlightedSuggestionIndex(-1);
