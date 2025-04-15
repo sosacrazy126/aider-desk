@@ -504,7 +504,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
             baseDir={project.baseDir}
             modelsData={modelsData}
             allModels={autocompletionData?.models}
-            architectMode={mode === 'architect'}
+            mode={mode}
             onModelChange={handleModelChange}
           />
         </div>

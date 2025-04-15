@@ -1,69 +1,47 @@
-import { ModelsData, SessionData, RawModelInfo } from '@common/types';
+import { ModelsData, SessionData, RawModelInfo, Mode } from '@common/types';
 import React, { ReactNode, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
-import { MdHistory } from 'react-icons/md';
+import { BsFilter } from 'react-icons/bs';
+import { CgSpinner, CgTerminal } from 'react-icons/cg';
+import { GoProjectRoadmap } from 'react-icons/go';
+import { MdHistory, MdEdit } from 'react-icons/md';
+import { RiRobot2Line } from 'react-icons/ri';
 import { useTranslation } from 'react-i18next';
+import { getActiveProvider } from '@common/llm-providers';
 
 import { ModelSelector, ModelSelectorRef } from '@/components/ModelSelector';
+import { SettingsDialog } from '@/components/settings/SettingsDialog';
 import { SessionsPopup } from '@/components/SessionsPopup';
-import { InfoIcon } from '@/components/common/InfoIcon';
 import { StyledTooltip } from '@/components/common/StyledTooltip';
 import { useSettings } from '@/context/SettingsContext';
 import { useClickOutside } from '@/hooks/useClickOutside';
 import { useBooleanState } from '@/hooks/useBooleanState';
-
-type Props = {
-  baseDir: string;
-  allModels?: string[];
-  modelsData: ModelsData | null;
-  architectMode: boolean;
-  onModelChange?: () => void;
-};
+import { IconButton } from '@/components/common/IconButton';
 
 export type ProjectTopBarRef = {
   openMainModelSelector: () => void;
 };
 
-export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(({ baseDir, allModels = [], modelsData, architectMode, onModelChange }, ref) => {
+type Props = {
+  baseDir: string;
+  allModels?: string[];
+  modelsData: ModelsData | null;
+  mode: Mode;
+  onModelChange?: () => void;
+};
+
+export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(({ baseDir, allModels = [], modelsData, mode, onModelChange }, ref) => {
   const { t } = useTranslation();
+  const { settings, saveSettings } = useSettings();
   const mainModelSelectorRef = useRef<ModelSelectorRef>(null);
   const architectModelSelectorRef = useRef<ModelSelectorRef>(null);
   const [sessions, setSessions] = useState<SessionData[]>([]);
   const [sessionPopupVisible, showSessionPopup, hideSessionPopup] = useBooleanState(false);
+  const [settingsDialogVisible, showSettingsDialog, hideSettingsDialog] = useBooleanState(false);
   const sessionPopupRef = useRef<HTMLDivElement>(null);
-
-  useClickOutside(sessionPopupRef, hideSessionPopup);
-
-  const renderModelInfo = useCallback(
-    (info: RawModelInfo | undefined): ReactNode => {
-      if (!info) {
-        return <div>{t('modelInfo.noInfo')}</div>;
-      }
-
-      return (
-        <div className="text-xxs space-y-0.5 text-neutral-200">
-          <div className="flex items-center">
-            <span className="font-semibold flex-1 mr-2">{t('modelInfo.maxInputTokens')}:</span> {info.max_input_tokens}
-          </div>
-          <div className="flex items-center">
-            <span className="font-semibold flex-1 mr-2">{t('modelInfo.maxOutputTokens')}:</span> {info.max_output_tokens}
-          </div>
-          <div className="flex items-center">
-            <span className="font-semibold flex-1 mr-2">{t('modelInfo.inputCostPerMillion')}:</span> $
-            {((info.input_cost_per_token ?? 0) * 1_000_000).toFixed(2)}
-          </div>
-          <div className="flex items-center">
-            <span className="font-semibold flex-1 mr-2">{t('modelInfo.outputCostPerMillion')}:</span> $
-            {((info.output_cost_per_token ?? 0) * 1_000_000).toFixed(2)}
-          </div>
-        </div>
-      );
-    },
-    [t],
-  );
 
   useImperativeHandle(ref, () => ({
     openMainModelSelector: () => {
-      if (architectMode) {
+      if (mode === 'architect') {
         architectModelSelectorRef.current?.open();
       } else {
         mainModelSelectorRef.current?.open();
@@ -71,7 +49,34 @@ export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(({ baseDir, 
     },
   }));
 
-  const { settings, saveSettings } = useSettings();
+  useClickOutside(sessionPopupRef, hideSessionPopup);
+
+  const renderModelInfo = useCallback(
+    (modelName: string, info: RawModelInfo | undefined): ReactNode => {
+      if (!info) {
+        return <div className="text-xs text-neutral-100">{modelName}</div>;
+      }
+
+      return (
+        <div className="text-xxs text-neutral-200">
+          <div className="flex items-center font-semibold text-xs text-neutral-100 mb-0.5">{modelName}</div>
+          <div className="flex items-center">
+            <span className="flex-1 mr-2">{t('modelInfo.maxInputTokens')}:</span> {info.max_input_tokens}
+          </div>
+          <div className="flex items-center">
+            <span className="flex-1 mr-2">{t('modelInfo.maxOutputTokens')}:</span> {info.max_output_tokens}
+          </div>
+          <div className="flex items-center">
+            <span className="flex-1 mr-2">{t('modelInfo.inputCostPerMillion')}:</span> ${((info.input_cost_per_token ?? 0) * 1_000_000).toFixed(2)}
+          </div>
+          <div className="flex items-center">
+            <span className="flex-1 mr-2">{t('modelInfo.outputCostPerMillion')}:</span> ${((info.output_cost_per_token ?? 0) * 1_000_000).toFixed(2)}
+          </div>
+        </div>
+      );
+    },
+    [t],
+  );
 
   const updatePreferredModels = useCallback(
     (model: string) => {
@@ -184,41 +189,67 @@ export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(({ baseDir, 
   }, [sessionPopupVisible, loadSessions]);
 
   return (
-    <div className="relative group">
+    <div className="relative group h-[24px]">
       {!modelsData ? (
-        <div className="text-xs">{t('modelSelector.loadingModel')}</div>
+        <div className="text-xs h-full flex items-center">
+          <CgSpinner className="w-4 h-4 text-neutral-100 mr-2 animate-spin" />
+          {t('modelSelector.loadingModel')}
+        </div>
       ) : (
-        <div className="flex items-center">
+        <div className="flex items-center h-full">
           <div className="flex-grow flex items-center space-x-3">
-            {architectMode && (
+            {mode === 'agent' && settings?.agentConfig ? (
               <>
                 <div className="flex items-center space-x-1">
-                  <span className="text-xs">{t('modelSelector.architectModel')}</span>
-                  <ModelSelector
-                    ref={architectModelSelectorRef}
-                    models={allModels}
-                    selectedModel={modelsData.architectModel || modelsData.mainModel}
-                    onChange={updateArchitectModel}
-                  />
+                  <RiRobot2Line className="w-4 h-4 text-neutral-100 mr-2" data-tooltip-id="agent-tooltip" />
+                  <StyledTooltip id="agent-tooltip" content={t('modelSelector.agentModel')} />
+                  <span className="text-xs text-neutral-100">{getActiveProvider(settings.agentConfig.providers)?.model || t('common.notSet')}</span>
+                  <IconButton icon={<MdEdit className="ml-2" />} onClick={showSettingsDialog} tooltip={t('common.edit')} />
                 </div>
                 <div className="h-3 w-px bg-neutral-600/50"></div>
               </>
+            ) : (
+              <>
+                {mode === 'architect' && (
+                  <>
+                    <div className="flex items-center space-x-1">
+                      <GoProjectRoadmap
+                        className="w-4 h-4 text-neutral-100 mr-1"
+                        data-tooltip-id="architect-model-tooltip"
+                        data-tooltip-content={t('modelSelector.architectModel')}
+                      />
+                      <StyledTooltip id="architect-model-tooltip" />
+                      <ModelSelector
+                        ref={architectModelSelectorRef}
+                        models={allModels}
+                        selectedModel={modelsData.architectModel || modelsData.mainModel}
+                        onChange={updateArchitectModel}
+                      />
+                    </div>
+                    <div className="h-3 w-px bg-neutral-600/50"></div>
+                  </>
+                )}
+              </>
             )}
             <div className="flex items-center space-x-1">
-              <span className="text-xs">{t(architectMode ? 'modelSelector.editorModel' : 'modelSelector.mainModel')}</span>
+              <CgTerminal className="w-4 h-4 text-neutral-100 mr-1" data-tooltip-id="main-model-tooltip" />
+              <StyledTooltip
+                id="main-model-tooltip"
+                content={renderModelInfo(t(mode === 'architect' ? 'modelSelector.editorModel' : 'modelSelector.mainModel'), modelsData.info)}
+              />
               <ModelSelector ref={mainModelSelectorRef} models={allModels} selectedModel={modelsData.mainModel} onChange={updateMainModel} />
             </div>
             <div className="h-3 w-px bg-neutral-600/50"></div>
             <div className="flex items-center space-x-1">
-              <span className="text-xs">{t('modelSelector.weakModel')}</span>
+              <BsFilter className="w-4 h-4 text-neutral-100 mr-1" data-tooltip-id="weak-model-tooltip" data-tooltip-content={t('modelSelector.weakModel')} />
+              <StyledTooltip id="weak-model-tooltip" />
               <ModelSelector models={allModels} selectedModel={modelsData.weakModel || modelsData.mainModel} onChange={updateWeakModel} />
             </div>
-            {modelsData.info && <InfoIcon tooltip={renderModelInfo(modelsData.info)} className="ml-1" size="sm" />}
             {modelsData.reasoningEffort && (
               <>
                 <div className="h-3 w-px bg-neutral-600/50"></div>
                 <div className="flex items-center space-x-1">
-                  <span className="text-xs">{t('modelSelector.reasoning')}</span>
+                  <span className="text-xs">{t('modelSelector.reasoning')}:</span>
                   <span className="text-neutral-400 text-xs">{modelsData.reasoningEffort}</span>
                 </div>
               </>
@@ -227,7 +258,7 @@ export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(({ baseDir, 
               <>
                 <div className="h-3 w-px bg-neutral-600/50"></div>
                 <div className="flex items-center space-x-1">
-                  <span className="text-xs">{t('modelSelector.thinkingTokens')}</span>
+                  <span className="text-xs">{t('modelSelector.thinkingTokens')}:</span>
                   <span className="text-neutral-400 text-xs">{modelsData.thinkingTokens}</span>
                 </div>
               </>
@@ -258,6 +289,7 @@ export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(({ baseDir, 
           </div>
         </div>
       )}
+      {settingsDialogVisible && <SettingsDialog onClose={hideSettingsDialog} initialTab={2} />}
     </div>
   );
 });

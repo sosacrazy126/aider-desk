@@ -195,11 +195,11 @@
     "collapseAll": "全部折叠"
   },
   "modelSelector": {
-    "mainModel": "主模型:",
-    "editorModel": "编辑器模型:",
+    "mainModel": "主模型",
+    "editorModel": "编辑器模型",
     "weakModel": "弱模型:",
-    "architectModel": "架构模型:",
-    "maxTokens": "最大令牌数:",
+    "architectModel": "架构模型",
+    "agentModel": "代理模型",
     "reasoning": "推理",
     "thinkingTokens": "思考令牌",
     "loadingModel": "加载模型中...",

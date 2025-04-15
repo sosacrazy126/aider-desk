@@ -48,7 +48,7 @@ type Props = {
   setSettings: (settings: SettingsData) => void;
 };
 
-export const McpSettings = ({ settings, setSettings }: Props) => {
+export const AgentSettings = ({ settings, setSettings }: Props) => {
   const { t } = useTranslation();
   const handleToggleTool = (toolId: string) => {
     const disabledTools = settings.agentConfig.disabledTools;

@@ -198,11 +198,11 @@
     "collapseAll": "Collapse all"
   },
   "modelSelector": {
-    "mainModel": "Main model:",
-    "editorModel": "Editor model:",
-    "weakModel": "Weak model:",
-    "architectModel": "Architect model:",
-    "maxTokens": "Max tokens:",
+    "mainModel": "Main model",
+    "editorModel": "Editor model",
+    "weakModel": "Weak model",
+    "architectModel": "Architect model",
+    "agentModel": "Agent model",
     "reasoning": "Reasoning",
     "thinkingTokens": "Thinking tokens",
     "loadingModel": "Loading model...",

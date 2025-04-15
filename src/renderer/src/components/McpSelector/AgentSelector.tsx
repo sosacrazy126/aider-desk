@@ -13,7 +13,7 @@ import { SettingsDialog } from '@/components/settings/SettingsDialog';
 import { useSettings } from '@/context/SettingsContext';
 import { useClickOutside } from '@/hooks/useClickOutside';
 
-export const McpSelector = () => {
+export const AgentSelector = () => {
   const { t } = useTranslation();
   const [selectorVisible, setSelectorVisible] = useState(false);
   const [showSettings, setShowSettings] = useState(false);

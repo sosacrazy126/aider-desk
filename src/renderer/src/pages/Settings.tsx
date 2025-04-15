@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import { AiderSettings } from '@/components/settings/AiderSettings';
 import { GeneralSettings } from '@/components/settings/GeneralSettings';
-import { McpSettings } from '@/components/settings/McpSettings';
+import { AgentSettings } from '@/components/settings/AgentSettings';
 
 type Props = {
   settings: SettingsData;
@@ -47,7 +47,7 @@ export const Settings = ({ settings, updateSettings, onLanguageChange, initialTa
       <TabPanels className="flex flex-col flex-1 overflow-hidden">
         {renderTabPanel(<GeneralSettings settings={settings} setSettings={updateSettings} onLanguageChange={onLanguageChange} />)}
         {renderTabPanel(<AiderSettings settings={settings} setSettings={updateSettings} />)}
-        {renderTabPanel(<McpSettings settings={settings} setSettings={updateSettings} />)}
+        {renderTabPanel(<AgentSettings settings={settings} setSettings={updateSettings} />)}
       </TabPanels>
     </TabGroup>
   );
