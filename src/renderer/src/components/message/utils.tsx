@@ -76,6 +76,30 @@ export const parseMessageContent = (baseDir: string, content: string, allFiles: 
     return { removeLine: false };
   };
 
+  const findFileInNextLine = (currentLine: number): { file?: string; skipLine: boolean } => {
+    if (currentLine >= lines.length - 1) {
+      return { skipLine: false };
+    }
+
+    const nextLine = lines[currentLine + 1].trim();
+    if (!nextLine) {
+      return { skipLine: false };
+    }
+
+    // Check if the next line is just a filepath
+    if (allFiles.includes(nextLine)) {
+      return { file: nextLine, skipLine: true };
+    }
+
+    // Check if the next line starts with a filepath
+    const firstWord = nextLine.split(/\s+/)[0];
+    if (firstWord && allFiles.includes(firstWord)) {
+      return { file: firstWord, skipLine: true };
+    }
+
+    return { skipLine: false };
+  };
+
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
 
@@ -83,11 +107,30 @@ export const parseMessageContent = (baseDir: string, content: string, allFiles: 
       // Check if line starts a code block
       const matchingFence = ALL_FENCES.find(([start]) => line.trim().startsWith(start));
       if (matchingFence) {
-        const { file, removeLine } = findFileInPreviousLine(i);
-        if (removeLine) {
-          // Remove the last line from currentText if it contains the filename
-          currentText = currentText.split('\n').slice(0, -2).join('\n') + '\n';
+        let file: string | undefined;
+
+        // Try finding the file in the previous line first
+        const prevLineResult = findFileInPreviousLine(i);
+        if (prevLineResult.file) {
+          file = prevLineResult.file;
+
+          if (prevLineResult.removeLine) {
+            // Remove the last line from currentText if it contains the filename
+            currentText = currentText.split('\n').slice(0, -2).join('\n') + '\n';
+          }
+        } else {
+          // If not found in the previous line, check the next line
+          const nextLineResult = findFileInNextLine(i);
+          if (nextLineResult.file) {
+            file = nextLineResult.file;
+
+            if (nextLineResult.skipLine) {
+              // Skip the next line in the loop
+              i++;
+            }
+          }
         }
+
         processTextBlock();
         isInCodeBlock = true;
         currentFence = matchingFence;
