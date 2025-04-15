@@ -48,10 +48,12 @@ export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(({ baseDir, 
             <span className="font-semibold flex-1 mr-2">{t('modelInfo.maxOutputTokens')}:</span> {info.max_output_tokens}
           </div>
           <div className="flex items-center">
-            <span className="font-semibold flex-1 mr-2">{t('modelInfo.inputCostPerMillion')}:</span> ${(info.input_cost_per_token ?? 0) * 1_000_000}
+            <span className="font-semibold flex-1 mr-2">{t('modelInfo.inputCostPerMillion')}:</span> $
+            {((info.input_cost_per_token ?? 0) * 1_000_000).toFixed(2)}
           </div>
           <div className="flex items-center">
-            <span className="font-semibold flex-1 mr-2">{t('modelInfo.outputCostPerMillion')}:</span> ${(info.output_cost_per_token ?? 0) * 1_000_000}
+            <span className="font-semibold flex-1 mr-2">{t('modelInfo.outputCostPerMillion')}:</span> $
+            {((info.output_cost_per_token ?? 0) * 1_000_000).toFixed(2)}
           </div>
         </div>
       );
