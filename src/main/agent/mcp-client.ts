@@ -1,8 +1,9 @@
 import { Project } from 'src/main/project';
-import { AgentConfig, McpServerConfig, McpTool } from '@common/types';
+import { McpServerConfig, McpTool, QuestionData, ToolApprovalState } from '@common/types';
 import { ZodSchema } from 'zod';
 import { Client as McpSdkClient } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { Store } from 'src/main/store'; // Added Store
 import { jsonSchemaToZod } from '@n8n/json-schema-to-zod';
 import logger from 'src/main/logger';
 import { delay, SERVER_TOOL_SEPARATOR } from '@common/utils';
@@ -111,8 +112,6 @@ export const initMcpClient = async (serverName: string, originalServerConfig: Mc
   return clientHolder;
 };
 
-let lastToolCallTime = 0;
-
 /**
  * Fixes the input schema for various providers.
  */
@@ -170,14 +169,17 @@ const fixInputSchema = (provider: LlmProvider, inputSchema: JsonSchema): JsonSch
   return inputSchema;
 };
 
+let lastToolCallTime = 0;
+
 export const convertMpcToolToAiSdkTool = (
   provider: LlmProvider,
-  agentConfig: AgentConfig,
   serverName: string,
   project: Project,
+  store: Store,
   mcpClient: McpSdkClient,
   toolDef: McpTool,
 ): Tool => {
+  const toolId = `${serverName}${SERVER_TOOL_SEPARATOR}${toolDef.name}`;
   let zodSchema: ZodSchema;
   try {
     zodSchema = jsonSchemaToZod(fixInputSchema(provider, toolDef.inputSchema));
@@ -185,17 +187,54 @@ export const convertMpcToolToAiSdkTool = (
     logger.error(`Failed to convert JSON schema to Zod for tool ${toolDef.name}:`, e);
     // Fallback to a generic object schema if conversion fails
     zodSchema = jsonSchemaToZod({ type: 'object', properties: {} });
+    zodSchema = jsonSchemaToZod({ type: 'object', properties: {} });
   }
 
-  const execute = async (params: { [x: string]: unknown } | undefined, { toolCallId }: ToolExecutionOptions) => {
-    project.addToolMessage(toolCallId, serverName, toolDef.name, params);
+  const execute = async (args: { [x: string]: unknown } | undefined, { toolCallId }: ToolExecutionOptions) => {
+    // --- Tool Approval Logic ---
+    const currentSettings = store.getSettings();
+    const currentAgentConfig = currentSettings.agentConfig; // Use current config
+    const currentApprovalState = currentAgentConfig.toolApprovals[toolId] || ToolApprovalState.Always; // Default to Always
 
-    // Enforce minimum time between tool calls
+    if (currentApprovalState === ToolApprovalState.Never) {
+      logger.warn(`Tool execution denied (Never): ${toolId}`);
+      return `Tool execution denied by user configuration (${toolId}).`;
+    }
+
+    project.addToolMessage(toolCallId, serverName, toolDef.name, args);
+
+    if (currentApprovalState === ToolApprovalState.Ask) {
+      const questionData: QuestionData = {
+        baseDir: project.baseDir,
+        text: `Approve tool ${toolDef.name} from MCP ${serverName}?`,
+        subject: `${JSON.stringify(args)}`,
+        defaultAnswer: 'y',
+        key: toolId, // Use toolId as the key for storing the answer
+      };
+
+      // Ask the question and wait for the answer
+      const answer = await project.askQuestion(questionData); // Returns 'y' or 'n'
+
+      const isApproved = answer === 'y';
+
+      if (!isApproved) {
+        logger.warn(`Tool execution denied by user: ${toolId}`);
+        return `Tool execution denied by user (${toolId}).`;
+      }
+      logger.debug(`Tool execution approved by user: ${toolId}`);
+    } else {
+      // If Always approved
+      logger.debug(`Tool execution automatically approved (Always): ${toolId}`);
+    }
+    // --- End Tool Approval Logic ---
+
+    // Enforce minimum time between tool calls (using potentially updated agentConfig)
     const timeSinceLastCall = Date.now() - lastToolCallTime;
-    const remainingDelay = agentConfig.minTimeBetweenToolCalls - timeSinceLastCall;
+    const currentMinTime = currentAgentConfig.minTimeBetweenToolCalls; // Use current value
+    const remainingDelay = currentMinTime - timeSinceLastCall;
 
     if (remainingDelay > 0) {
-      logger.debug(`Delaying tool call by ${remainingDelay}ms to respect minTimeBetweenToolCalls`);
+      logger.debug(`Delaying tool call by ${remainingDelay}ms to respect minTimeBetweenToolCalls (${currentMinTime}ms)`);
       await delay(remainingDelay);
     }
 
@@ -203,7 +242,7 @@ export const convertMpcToolToAiSdkTool = (
       const response = await mcpClient.callTool(
         {
           name: toolDef.name,
-          arguments: params,
+          arguments: args,
         },
         undefined,
         {

@@ -41,8 +41,9 @@ export class Project {
   private connectors: Connector[] = [];
   private currentCommand: string | null = null;
   private currentQuestion: QuestionData | null = null;
-  private allTrackedFiles: string[] = [];
+  private currentQuestionPromiseResolve: ((answer: 'y' | 'n') => void) | null = null;
   private questionAnswers: Map<string, 'y' | 'n'> = new Map();
+  private allTrackedFiles: string[] = [];
   private currentResponseMessageId: string | null = null;
   private currentPromptId: string | null = null;
   private inputHistoryFile = '.aider.input.history';
@@ -95,6 +96,12 @@ export class Project {
 
     this.mcpAgentTotalCost = 0;
     this.aiderTotalCost = 0;
+    this.currentPromptId = null;
+    this.currentResponseMessageId = null;
+    this.currentCommand = null;
+    this.currentQuestion = null;
+    this.currentQuestionPromiseResolve = null;
+    this.questionAnswers.clear();
   }
 
   public addConnector(connector: Connector) {
@@ -177,9 +184,6 @@ export class Project {
     }
 
     await this.checkAndCleanupPidFile();
-
-    this.currentCommand = null;
-    this.currentQuestion = null;
 
     const settings = this.store.getSettings();
     const mainModel = this.store.getProjectSettings(this.baseDir).mainModel || DEFAULT_MAIN_MODEL;
@@ -485,8 +489,8 @@ export class Project {
     return this.currentResponseMessageId;
   }
 
-  private getQuestionKey(question: QuestionData) {
-    return `${question.text}_${question.subject || ''}`;
+  private getQuestionKey(question: QuestionData): string {
+    return question.key || `${question.text}_${question.subject || ''}`;
   }
 
   public answerQuestion(answer: string): void {
@@ -511,8 +515,16 @@ export class Project {
       this.questionAnswers.set(this.getQuestionKey(this.currentQuestion), yesNoAnswer);
     }
 
-    this.findMessageConnectors('answer-question').forEach((connector) => connector.sendAnswerQuestionMessage(yesNoAnswer));
+    if (!this.currentQuestion.internal) {
+      this.findMessageConnectors('answer-question').forEach((connector) => connector.sendAnswerQuestionMessage(yesNoAnswer));
+    }
+
+    if (this.currentQuestionPromiseResolve) {
+      this.currentQuestionPromiseResolve(yesNoAnswer);
+    }
+
     this.currentQuestion = null;
+    this.currentQuestionPromiseResolve = null;
   }
 
   public async addFile(contextFile: ContextFile): Promise<void> {
@@ -627,7 +639,7 @@ export class Project {
     this.mainWindow.webContents.send('input-history-updated', inputHistoryData);
   }
 
-  public askQuestion(questionData: QuestionData) {
+  public askQuestion(questionData: QuestionData): Promise<string> {
     this.currentQuestion = questionData;
 
     const storedAnswer = this.questionAnswers.get(this.getQuestionKey(questionData));
@@ -643,12 +655,19 @@ export class Project {
         question: questionData,
         answer: storedAnswer,
       });
-      // Auto-answer based on stored preference
-      this.answerQuestion(storedAnswer);
-      return;
+
+      if (!questionData.internal) {
+        // Auto-answer based on stored preference
+        this.answerQuestion(storedAnswer);
+      }
+      return Promise.resolve(storedAnswer);
     }
 
-    this.mainWindow.webContents.send('ask-question', questionData);
+    // Store the resolve function for the promise
+    return new Promise<string>((resolve) => {
+      this.currentQuestionPromiseResolve = resolve;
+      this.mainWindow.webContents.send('ask-question', questionData);
+    });
   }
 
   public setAllTrackedFiles(files: string[]) {

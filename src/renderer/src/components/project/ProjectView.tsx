@@ -354,15 +354,6 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
     promptFieldRef.current?.focus();
   };
 
-  const onSubmitted = () => {
-    if (question) {
-      if (question.answerFunction) {
-        question.answerFunction('n');
-      }
-      setQuestion(null);
-    }
-  };
-
   const showFileDialog = (readOnly: boolean) => {
     setAddFileDialogOptions({
       readOnly,
@@ -389,11 +380,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
 
   const answerQuestion = (answer: string) => {
     if (question) {
-      if (question.answerFunction) {
-        question.answerFunction(answer);
-      } else {
-        window.api.answerQuestion(project.baseDir, answer);
-      }
+      window.api.answerQuestion(project.baseDir, answer);
       setQuestion(null);
     }
   };
@@ -531,7 +518,6 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
             runTests={runTests}
             openModelSelector={() => projectTopBarRef.current?.openMainModelSelector()}
             disabled={!modelsData}
-            onSubmitted={onSubmitted}
           />
         </div>
       </div>

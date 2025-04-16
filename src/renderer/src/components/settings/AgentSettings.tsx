@@ -1,4 +1,4 @@
-import { AgentConfig, McpServerConfig, SettingsData } from '@common/types';
+import { AgentConfig, McpServerConfig, SettingsData, ToolApprovalState } from '@common/types';
 import { useState, ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaPlus } from 'react-icons/fa';
@@ -50,18 +50,6 @@ type Props = {
 
 export const AgentSettings = ({ settings, setSettings }: Props) => {
   const { t } = useTranslation();
-  const handleToggleTool = (toolId: string) => {
-    const disabledTools = settings.agentConfig.disabledTools;
-    const updatedDisabledTools = disabledTools.includes(toolId) ? disabledTools.filter((id) => id !== toolId) : [...disabledTools, toolId];
-
-    setSettings({
-      ...settings,
-      agentConfig: {
-        ...settings.agentConfig,
-        disabledTools: updatedDisabledTools,
-      },
-    });
-  };
   const { agentConfig } = settings;
   const [isAddingServer, setIsAddingServer] = useState(false);
   const [editingServer, setEditingServer] = useState<McpServer | null>(null);
@@ -117,6 +105,20 @@ export const AgentSettings = ({ settings, setSettings }: Props) => {
       providers: updatedProviders,
     };
     setSettings({ ...settings, agentConfig: updatedMcpConfig });
+  };
+
+  const handleApprovalChange = (toolId: string, approval: ToolApprovalState) => {
+    const updatedApprovals = {
+      ...settings.agentConfig.toolApprovals,
+      [toolId]: approval,
+    };
+    setSettings({
+      ...settings,
+      agentConfig: {
+        ...settings.agentConfig,
+        toolApprovals: updatedApprovals,
+      },
+    });
   };
 
   const handleMaxIterationsChanged = (newMaxIterations: number) => {
@@ -192,13 +194,23 @@ export const AgentSettings = ({ settings, setSettings }: Props) => {
       updatedMcpServers = { ...servers };
     }
 
+    // Filter toolApprovals to remove entries for tools belonging to removed servers
+    const updatedToolApprovals = Object.entries(settings.agentConfig.toolApprovals).reduce(
+      (acc, [toolId, approval]) => {
+        const serverName = toolId.split(SERVER_TOOL_SEPARATOR)[0];
+        if (updatedMcpServers[serverName]) {
+          acc[toolId] = approval;
+        }
+        return acc;
+      },
+      {} as Record<string, ToolApprovalState>,
+    );
+
     const updatedMcpConfig: AgentConfig = {
       ...settings.agentConfig,
       mcpServers: updatedMcpServers,
       disabledServers: settings.agentConfig.disabledServers.filter((name) => !!updatedMcpServers[name]),
-      disabledTools: settings.agentConfig.disabledTools.filter((id) =>
-        Object.keys(updatedMcpServers).some((name) => id.startsWith(`${name}${SERVER_TOOL_SEPARATOR}`)),
-      ),
+      toolApprovals: updatedToolApprovals,
     };
     setSettings({ ...settings, agentConfig: updatedMcpConfig });
     setIsAddingServer(false);
@@ -326,8 +338,8 @@ export const AgentSettings = ({ settings, setSettings }: Props) => {
                   config={config}
                   onRemove={() => handleServerConfigRemove(serverName)}
                   onEdit={() => setEditingServer({ name: serverName, config })}
-                  toggleToolDisabled={handleToggleTool}
-                  disabledTools={agentConfig.disabledTools}
+                  toolApprovals={agentConfig.toolApprovals} // Pass toolApprovals
+                  onApprovalChange={handleApprovalChange} // Pass handler
                 />
               ))
             )}

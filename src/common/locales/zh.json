@@ -78,8 +78,8 @@
   },
   "openai": {
     "apiKey": "API 密钥",
-    "model": "模型",
     "baseUrl": "基础 URL",
+    "modelName": "模型",
     "baseUrlPlaceholder": "例如 http://localhost:8080/v1"
   },
   "anthropic": {
@@ -233,7 +233,12 @@
     "includeContextFiles": "包含上下文文件",
     "includeFilesTooltip": "将上下文文件内容添加到MCP代理的聊天中。这将增加令牌使用量。",
     "servers": "MCP服务器",
-    "configureServers": "配置服务器"
+    "configureServers": "配置服务器",
+    "approval": {
+      "never": "从不",
+      "always": "总是",
+      "ask": "询问"
+    }
   },
   "autocompletion": {
     "placeholder": "输入以搜索..."

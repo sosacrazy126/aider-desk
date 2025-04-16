@@ -34,7 +34,7 @@ export const DEFAULT_SETTINGS: SettingsData = {
     minTimeBetweenToolCalls: 0,
     mcpServers: {},
     disabledServers: [],
-    disabledTools: [],
+    toolApprovals: {},
     includeContextFiles: false,
     useAiderTools: true,
     customInstructions: '',

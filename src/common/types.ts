@@ -71,7 +71,8 @@ export interface QuestionData {
   text: string;
   subject?: string;
   defaultAnswer: string;
-  answerFunction?: (answer: string) => void;
+  internal?: boolean;
+  key?: string;
 }
 
 export type ContextFileSourceType = 'companion' | 'aider' | 'app' | string;
@@ -129,6 +130,12 @@ export interface ModelsData {
   error?: string;
 }
 
+export enum ToolApprovalState {
+  Always = 'always',
+  Never = 'never',
+  Ask = 'ask',
+}
+
 export enum StartupMode {
   Empty = 'empty',
   Last = 'last',
@@ -157,7 +164,7 @@ export interface AgentConfig {
     [key: string]: McpServerConfig;
   };
   disabledServers: string[];
-  disabledTools: string[];
+  toolApprovals: Record<string, ToolApprovalState>;
   includeContextFiles: boolean;
   useAiderTools: boolean;
   customInstructions: string;

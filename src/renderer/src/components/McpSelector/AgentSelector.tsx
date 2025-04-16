@@ -2,7 +2,8 @@ import { useRef, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MdOutlineHdrAuto, MdOutlineFileCopy, MdSettings } from 'react-icons/md';
 import { RiToolsFill } from 'react-icons/ri';
-import { SettingsData } from '@common/types';
+import { SettingsData, ToolApprovalState } from '@common/types';
+import { SERVER_TOOL_SEPARATOR } from '@common/utils';
 
 import { McpServerSelectorItem } from './McpServerSelectorItem';
 
@@ -29,7 +30,7 @@ export const AgentSelector = () => {
         return;
       }
 
-      const { mcpServers, disabledServers, disabledTools } = settings.agentConfig;
+      const { mcpServers, disabledServers, toolApprovals } = settings.agentConfig;
       const serverNames = Object.keys(mcpServers);
       const enabledServerNames = serverNames.filter((name) => !disabledServers.includes(name));
 
@@ -47,7 +48,8 @@ export const AgentSelector = () => {
             try {
               const tools = await window.api.loadMcpServerTools(serverName);
               const serverTotalTools = tools?.length ?? 0;
-              const serverDisabledTools = disabledTools.filter((toolId) => toolId.startsWith(`${serverName}-`)).length;
+              const serverDisabledTools =
+                tools?.filter((tool) => toolApprovals[`${serverName}${SERVER_TOOL_SEPARATOR}${tool.name}`] === ToolApprovalState.Never).length ?? 0;
               return Math.max(0, serverTotalTools - serverDisabledTools);
             } catch (error) {
               console.error(`Failed to load tools for server ${serverName}:`, error);
@@ -68,7 +70,7 @@ export const AgentSelector = () => {
 
     void calculateEnabledTools();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings?.agentConfig.mcpServers, settings?.agentConfig.disabledServers, settings?.agentConfig.disabledTools]);
+  }, [settings?.agentConfig.mcpServers, settings?.agentConfig.disabledServers, settings?.agentConfig.toolApprovals]);
 
   if (!settings) {
     return <div className="text-xs text-neutral-400">{t('common.loading')}</div>;
@@ -219,7 +221,7 @@ export const AgentSelector = () => {
                   key={serverName}
                   serverName={serverName}
                   disabled={settings.agentConfig.disabledServers.includes(serverName)}
-                  disabledTools={settings.agentConfig.disabledTools}
+                  toolApprovals={settings.agentConfig.toolApprovals}
                   onToggle={toggleServer}
                 />
               ))}

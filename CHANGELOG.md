@@ -7,6 +7,7 @@
 - added gpt-4.1 and gpt-4.1-mini models for Agent
 - added more information about selected model (tokens, cost per 1M tokens, etc.)
 - showing Agent model in the project bar
+- implemented tool approval settings for enhanced user control
 
 ## [0.9.0]
 

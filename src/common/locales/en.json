@@ -236,7 +236,12 @@
     "includeContextFiles": "Include context files",
     "includeFilesTooltip": "Adds content of context files into the chat of MCP agent. This will increase token usage.",
     "servers": "MCP servers",
-    "configureServers": "Configure servers"
+    "configureServers": "Configure servers",
+    "approval": {
+      "never": "Never",
+      "always": "Always",
+      "ask": "Ask"
+    }
   },
   "autocompletion": {
     "placeholder": "Type to search..."

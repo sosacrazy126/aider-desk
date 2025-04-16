@@ -1,7 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 
-import { ContextFile, ContextMessage, McpServerConfig, McpTool, UsageReportData } from '@common/types';
+import { ContextFile, ContextMessage, McpServerConfig, McpTool, ToolApprovalState, UsageReportData } from '@common/types';
 import { APICallError, generateText, InvalidToolArgumentsError, NoSuchToolError, streamText } from 'ai'; // Added InvalidToolArgumentsError
 import { v4 as uuidv4 } from 'uuid';
 import { calculateCost, delay, extractServerNameToolName, SERVER_TOOL_SEPARATOR } from '@common/utils';
@@ -305,13 +305,18 @@ export class Agent {
 
       // Process tools for this enabled server
       clientHolder.tools.forEach((tool) => {
-        const fullToolName = `${clientHolder.serverName}${SERVER_TOOL_SEPARATOR}${tool.name}`;
-        // Skip disabled tools
-        if (agentConfig.disabledTools.includes(fullToolName)) {
-          return;
+        const toolId = `${clientHolder.serverName}${SERVER_TOOL_SEPARATOR}${tool.name}`;
+
+        // Check approval state first
+        const approvalState = agentConfig.toolApprovals[toolId];
+
+        // Skip tools marked as 'Never' approved
+        if (approvalState === ToolApprovalState.Never) {
+          logger.debug(`Skipping tool due to 'Never' approval state: ${toolId}`);
+          return; // Do not add the tool if it's never approved
         }
 
-        acc[fullToolName] = convertMpcToolToAiSdkTool(activeProvider, agentConfig, clientHolder.serverName, project, clientHolder.client, tool);
+        acc[toolId] = convertMpcToolToAiSdkTool(activeProvider, clientHolder.serverName, project, this.store, clientHolder.client, tool);
       });
 
       return acc;
