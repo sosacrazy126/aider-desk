@@ -49,9 +49,9 @@ export const SessionsPopup = ({ sessions, onLoadSessionMessages, onLoadSessionFi
         {sessions.length === 0 ? (
           <div className="text-xs text-neutral-400 p-2">{t('sessions.empty')}</div>
         ) : (
-          <div className="max-h-60 overflow-y-auto">
+          <div className="max-h-60 overflow-y-auto scrollbar-thin scrollbar-track-neutral-900 scrollbar-thumb-neutral-700 hover:scrollbar-thumb-neutral-600">
             {sessions.map((session) => (
-              <div key={session.name} className="flex items-center justify-between text-xs px-2 py-1">
+              <div key={session.name} className="flex items-center justify-between text-xs px-2 py-0.5">
                 <span className="truncate text-neutral-300">{session.name}</span>
                 <div className="flex items-center space-x-1 ml-2">
                   <button
