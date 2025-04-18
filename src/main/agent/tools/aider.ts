@@ -1,6 +1,7 @@
 import { tool } from 'ai';
 import { z } from 'zod';
 import { SERVER_TOOL_SEPARATOR } from '@common/utils';
+import { QuestionData } from '@common/types';
 
 import { Project } from '../../project';
 
@@ -67,6 +68,23 @@ export const createAiderToolset = (project: Project): ToolSet => {
     }),
     execute: async ({ prompt }, { toolCallId }) => {
       project.addToolMessage(toolCallId, 'aider', 'run_prompt', { prompt });
+
+      const questionData: QuestionData = {
+        baseDir: project.baseDir,
+        text: 'Approve prompt to run in Aider?',
+        subject: prompt,
+        defaultAnswer: 'y',
+        key: `aider${SERVER_TOOL_SEPARATOR}run_prompt`,
+      };
+
+      // Ask the question and wait for the answer
+      const [yesNoAnswer, userInput] = await project.askQuestion(questionData);
+
+      const isApproved = yesNoAnswer === 'y';
+
+      if (!isApproved) {
+        return `Aider prompt execution denied by user.${userInput ? ` User input: ${userInput}` : ''}`;
+      }
 
       const responses = await project.sendPrompt(prompt, 'code', true);
 

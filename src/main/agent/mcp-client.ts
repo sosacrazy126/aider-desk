@@ -187,7 +187,6 @@ export const convertMpcToolToAiSdkTool = (
     logger.error(`Failed to convert JSON schema to Zod for tool ${toolDef.name}:`, e);
     // Fallback to a generic object schema if conversion fails
     zodSchema = jsonSchemaToZod({ type: 'object', properties: {} });
-    zodSchema = jsonSchemaToZod({ type: 'object', properties: {} });
   }
 
   const execute = async (args: { [x: string]: unknown } | undefined, { toolCallId }: ToolExecutionOptions) => {
@@ -213,13 +212,13 @@ export const convertMpcToolToAiSdkTool = (
       };
 
       // Ask the question and wait for the answer
-      const answer = await project.askQuestion(questionData); // Returns 'y' or 'n'
+      const [yesNoAnswer, userInput] = await project.askQuestion(questionData);
 
-      const isApproved = answer === 'y';
+      const isApproved = yesNoAnswer === 'y';
 
       if (!isApproved) {
         logger.warn(`Tool execution denied by user: ${toolId}`);
-        return `Tool execution denied by user (${toolId}).`;
+        return `Tool execution denied by user.${userInput ? ` User input: ${userInput}` : ''}`;
       }
       logger.debug(`Tool execution approved by user: ${toolId}`);
     } else {

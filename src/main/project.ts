@@ -41,7 +41,7 @@ export class Project {
   private connectors: Connector[] = [];
   private currentCommand: string | null = null;
   private currentQuestion: QuestionData | null = null;
-  private currentQuestionPromiseResolve: ((answer: 'y' | 'n') => void) | null = null;
+  private currentQuestionPromiseResolve: ((answer: ['y' | 'n', string | undefined]) => void) | null = null;
   private questionAnswers: Map<string, 'y' | 'n'> = new Map();
   private allTrackedFiles: string[] = [];
   private currentResponseMessageId: string | null = null;
@@ -348,7 +348,10 @@ export class Project {
 
   public async runPrompt(prompt: string, mode?: Mode): Promise<ResponseCompletedData[]> {
     if (this.currentQuestion) {
-      this.answerQuestion('n');
+      if (this.answerQuestion('n', prompt)) {
+        // processed by the answerQuestion function
+        return [];
+      }
     }
 
     // If a prompt is already running, wait for it to finish
@@ -493,9 +496,9 @@ export class Project {
     return question.key || `${question.text}_${question.subject || ''}`;
   }
 
-  public answerQuestion(answer: string): void {
+  public answerQuestion(answer: string, userInput?: string): boolean {
     if (!this.currentQuestion) {
-      return;
+      return false;
     }
 
     logger.info('Answering question:', {
@@ -518,13 +521,15 @@ export class Project {
     if (!this.currentQuestion.internal) {
       this.findMessageConnectors('answer-question').forEach((connector) => connector.sendAnswerQuestionMessage(yesNoAnswer));
     }
+    this.currentQuestion = null;
 
     if (this.currentQuestionPromiseResolve) {
-      this.currentQuestionPromiseResolve(yesNoAnswer);
+      this.currentQuestionPromiseResolve([yesNoAnswer, userInput]);
+      this.currentQuestionPromiseResolve = null;
+      return true;
     }
 
-    this.currentQuestion = null;
-    this.currentQuestionPromiseResolve = null;
+    return false;
   }
 
   public async addFile(contextFile: ContextFile): Promise<void> {
@@ -639,7 +644,7 @@ export class Project {
     this.mainWindow.webContents.send('input-history-updated', inputHistoryData);
   }
 
-  public askQuestion(questionData: QuestionData): Promise<string> {
+  public askQuestion(questionData: QuestionData): Promise<[string, string | undefined]> {
     this.currentQuestion = questionData;
 
     const storedAnswer = this.questionAnswers.get(this.getQuestionKey(questionData));
@@ -660,11 +665,11 @@ export class Project {
         // Auto-answer based on stored preference
         this.answerQuestion(storedAnswer);
       }
-      return Promise.resolve(storedAnswer);
+      return Promise.resolve([storedAnswer, undefined]);
     }
 
     // Store the resolve function for the promise
-    return new Promise<string>((resolve) => {
+    return new Promise<[string, string | undefined]>((resolve) => {
       this.currentQuestionPromiseResolve = resolve;
       this.mainWindow.webContents.send('ask-question', questionData);
     });

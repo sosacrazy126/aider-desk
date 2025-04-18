@@ -9,6 +9,7 @@
 - showing Agent model in the project bar
 - implemented tool approval settings for enhanced user control
 - added o4-mini model in Agent
+- properly handling user input when tool call is denied by user
 
 ## [0.9.0]
 

@@ -461,6 +461,12 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
     }
   };
 
+  const handleSubmitted = () => {
+    if (question) {
+      setQuestion(null);
+    }
+  };
+
   const restartProject = () => {
     setShowFrozenDialog(false);
     setLoading(true);
@@ -506,6 +512,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
             processing={processing}
             mode={mode}
             onModeChanged={handleModeChange}
+            onSubmitted={handleSubmitted}
             isActive={isActive}
             words={autocompletionData?.words}
             clearMessages={clearMessages}
