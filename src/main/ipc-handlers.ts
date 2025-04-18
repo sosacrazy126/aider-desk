@@ -228,4 +228,8 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, projectManager: Proj
       return await agent.getMcpServerTools(serverName);
     }
   });
+
+  ipcMain.handle('export-session-to-markdown', async (_, baseDir: string) => {
+    return await projectManager.getProject(baseDir).exportSessionToMarkdown();
+  });
 };

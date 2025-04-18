@@ -1,7 +1,7 @@
 import { SessionData } from '@common/types';
 import { KeyboardEvent, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { IoDocumentTextOutline, IoListOutline, IoTrashOutline, IoAddOutline, IoSaveOutline, IoClose } from 'react-icons/io5';
+import { IoDocumentTextOutline, IoListOutline, IoTrashOutline, IoAddOutline, IoSaveOutline, IoClose, IoDownloadOutline } from 'react-icons/io5';
 
 import { ConfirmDialog } from './ConfirmDialog';
 import { StyledTooltip } from './common/StyledTooltip';
@@ -12,10 +12,10 @@ type Props = {
   onLoadSessionFiles: (name: string) => void;
   onSaveSession: (name: string) => void;
   onDeleteSession: (name: string) => void;
-  onClose: () => void;
+  onExportSessionToMarkdown: () => void;
 };
 
-export const SessionsPopup = ({ sessions, onLoadSessionMessages, onLoadSessionFiles, onSaveSession, onDeleteSession }: Props) => {
+export const SessionsPopup = ({ sessions, onLoadSessionMessages, onLoadSessionFiles, onSaveSession, onDeleteSession, onExportSessionToMarkdown }: Props) => {
   const { t } = useTranslation();
   const [sessionToDelete, setSessionToDelete] = useState<string | null>(null);
   const [newSessionName, setNewSessionName] = useState('');
@@ -45,7 +45,7 @@ export const SessionsPopup = ({ sessions, onLoadSessionMessages, onLoadSessionFi
   return (
     <div className="absolute right-0 top-full mt-1 bg-neutral-900 border border-neutral-700 rounded-md shadow-lg z-50 w-[320px]">
       <div>
-        <div className="p-3 text-sm font-semibold border-b border-neutral-700 uppercase">{t('sessions.title')}</div>
+        <div className="p-2 text-xs font-semibold border-b border-neutral-700">{t('sessions.title')}</div>
         {sessions.length === 0 ? (
           <div className="text-xs text-neutral-400 p-2">{t('sessions.empty')}</div>
         ) : (
@@ -120,14 +120,23 @@ export const SessionsPopup = ({ sessions, onLoadSessionMessages, onLoadSessionFi
               </button>
             </div>
           ) : (
-            <button
-              className="p-1 hover:bg-neutral-600 rounded-md self-center"
-              onClick={() => setShowNewSessionInput(true)}
-              data-tooltip-id="add-session-tooltip"
-              data-tooltip-content={t('sessions.add')}
-            >
-              <IoAddOutline className="w-4 h-4 text-neutral-200" />
-            </button>
+            <div className="flex align-center w-full justify-between">
+              <button
+                className="p-1 px-2 hover:bg-neutral-600 rounded-md flex items-center space-x-1 text-xs text-neutral-200"
+                onClick={() => setShowNewSessionInput(true)}
+              >
+                <IoAddOutline className="w-4 h-4" />
+                <span>{t('sessions.saveAsNew')}</span>
+              </button>
+              <button
+                className="p-1 px-2 hover:bg-neutral-600 rounded-md flex items-center space-x-1 text-xs text-neutral-200"
+                onClick={onExportSessionToMarkdown}
+                data-tooltip-id="export-session-tooltip"
+                data-tooltip-content={t('sessions.exportAsMarkdown')}
+              >
+                <IoDownloadOutline className="w-4 h-4" />
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -144,6 +153,8 @@ export const SessionsPopup = ({ sessions, onLoadSessionMessages, onLoadSessionFi
         </ConfirmDialog>
       )}
       <StyledTooltip id="session-tooltip" />
+      <StyledTooltip id="add-session-tooltip" />
+      <StyledTooltip id="export-session-tooltip" />
     </div>
   );
 };

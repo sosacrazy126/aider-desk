@@ -77,6 +77,7 @@ const api: ApplicationAPI = {
   loadSessionMessages: (baseDir: string, name: string) => ipcRenderer.invoke('load-session-messages', baseDir, name),
   loadSessionFiles: (baseDir: string, name: string) => ipcRenderer.invoke('load-session-files', baseDir, name),
   listSessions: (baseDir: string) => ipcRenderer.invoke('list-sessions', baseDir),
+  exportSessionToMarkdown: (baseDir: string) => ipcRenderer.invoke('export-session-to-markdown', baseDir),
   getRecentProjects: () => ipcRenderer.invoke('get-recent-projects'),
   addRecentProject: (baseDir: string) => ipcRenderer.invoke('add-recent-project', baseDir),
   removeRecentProject: (baseDir: string) => ipcRenderer.invoke('remove-recent-project', baseDir),

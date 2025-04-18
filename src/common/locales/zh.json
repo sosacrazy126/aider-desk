@@ -273,6 +273,7 @@
     "loadFiles_one": "加载{{count}}个文件",
     "loadFiles_other": "加载{{count}}个文件",
     "saveAsNew": "另存为新",
+    "exportAsMarkdown": "导出为Markdown",
     "deleteTitle": "删除会话",
     "deleteConfirm": "确定要删除会话\"{{name}}\"?",
     "deleteWarning": "此操作无法撤销。",

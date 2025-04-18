@@ -180,6 +180,15 @@ export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(({ baseDir, 
     [baseDir, loadSessions],
   );
 
+  const exportSessionToMarkdown = useCallback(async () => {
+    try {
+      const result = await window.api.exportSessionToMarkdown(baseDir);
+      console.log(result);
+    } catch (error) {
+      console.error('Failed to export session:', error);
+    }
+  }, [baseDir]);
+
   useEffect(() => {
     if (sessionPopupVisible) {
       void loadSessions();
@@ -289,7 +298,7 @@ export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(({ baseDir, 
                   onLoadSessionFiles={loadSessionFiles}
                   onSaveSession={saveSession}
                   onDeleteSession={deleteSession}
-                  onClose={hideSessionPopup}
+                  onExportSessionToMarkdown={exportSessionToMarkdown}
                 />
               </div>
             )}

@@ -14,6 +14,7 @@
 - using env vars for Agent LLM providers (API keys, etc.)
 - enhanced agent system prompt with improved structure and clarity
 - added gemini-2.5-flash-preview-04-17 model for Agent
+- added export session to Markdown functionality
 
 ## [0.9.0]
 

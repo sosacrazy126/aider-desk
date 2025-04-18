@@ -23,7 +23,7 @@ import {
   UserMessageData,
 } from '@common/types';
 import { fileExists, parseUsageReport } from '@common/utils';
-import { BrowserWindow } from 'electron';
+import { BrowserWindow, dialog } from 'electron';
 import treeKill from 'tree-kill';
 import { v4 as uuidv4 } from 'uuid';
 import { parse } from '@dotenvx/dotenvx';
@@ -863,5 +863,36 @@ export class Project {
 
     this.sessionManager.addContextMessage(role, content);
     this.sendAddMessage(role, content, false);
+  }
+
+  public async exportSessionToMarkdown(): Promise<void> {
+    logger.info('Exporting session to Markdown:', { baseDir: this.baseDir });
+    try {
+      const markdownContent = await this.sessionManager.generateSessionMarkdown();
+
+      if (markdownContent) {
+        const dialogResult = await dialog.showSaveDialog(this.mainWindow, {
+          title: 'Export Session to Markdown',
+          defaultPath: `${this.baseDir}/session-${new Date().toISOString().replace(/:/g, '-').substring(0, 19)}.md`,
+          filters: [{ name: 'Markdown Files', extensions: ['md'] }],
+        });
+        logger.info('showSaveDialog result:', { dialogResult });
+
+        const { filePath } = dialogResult;
+
+        if (filePath) {
+          try {
+            await fs.writeFile(filePath, markdownContent, 'utf8');
+            logger.info(`Session exported successfully to ${filePath}`);
+          } catch (writeError) {
+            logger.error('Failed to write session Markdown file:', { filePath, error: writeError });
+          }
+        } else {
+          logger.info('Markdown export cancelled by user.');
+        }
+      }
+    } catch (error) {
+      logger.error('Error exporting session to Markdown', { error });
+    }
   }
 }

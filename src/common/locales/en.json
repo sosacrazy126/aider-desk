@@ -276,6 +276,7 @@
     "loadFiles_one": "Load {{count}} file",
     "loadFiles_other": "Load {{count}} files",
     "saveAsNew": "Save as new",
+    "exportAsMarkdown": "Export as Markdown",
     "deleteTitle": "Delete Session",
     "deleteConfirm": "Are you sure you want to delete the session \"{{name}}\"?",
     "deleteWarning": "This action cannot be undone.",

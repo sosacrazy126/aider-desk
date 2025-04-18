@@ -55,6 +55,7 @@ export interface ApplicationAPI {
   loadSessionMessages: (baseDir: string, name: string) => Promise<void>;
   loadSessionFiles: (baseDir: string, name: string) => Promise<void>;
   listSessions: (baseDir: string) => Promise<SessionData[]>;
+  exportSessionToMarkdown: (baseDir: string) => Promise<void>;
   getRecentProjects: () => Promise<string[]>;
   addRecentProject: (baseDir: string) => Promise<void>;
   removeRecentProject: (baseDir: string) => Promise<void>;
