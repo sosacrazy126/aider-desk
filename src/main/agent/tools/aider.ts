@@ -99,7 +99,7 @@ export const createAiderToolset = (project: Project): ToolSet => {
 
       const editedFiles = responses.flatMap((response) => response.editedFiles || []).filter((value, index, self) => self.indexOf(value) === index); // Unique files
 
-      return `${mergedResponse}\n\n**RESULT:**\nI have updated the following files using the mentioned SEARCH/REPLACE blocks: ${editedFiles.join(', ')}`;
+      return `${mergedResponse}\n\n**RESULT:**\n${editedFiles.length ? `I have updated the following files as mentioned above: ${editedFiles.join(', ')}` : "I haven't updated any files."}`;
     },
   });
 
