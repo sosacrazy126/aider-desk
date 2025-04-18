@@ -251,7 +251,12 @@ export const AgentSettings = ({ settings, setSettings }: Props) => {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <div>
-                <Select label={t('settings.mcp.provider')} value={activeProvider?.name || ''} onChange={handleProviderChanged} options={AVAILABLE_PROVIDERS} />
+                <Select
+                  label={t('settings.agent.provider')}
+                  value={activeProvider?.name || ''}
+                  onChange={handleProviderChanged}
+                  options={AVAILABLE_PROVIDERS}
+                />
               </div>
               {activeProvider && isOpenAiProvider(activeProvider) && <OpenAiParameters settings={settings} setSettings={setSettings} />}
               {activeProvider && isAnthropicProvider(activeProvider) && <AnthropicParameters settings={settings} setSettings={setSettings} />}
@@ -266,8 +271,8 @@ export const AgentSettings = ({ settings, setSettings }: Props) => {
                 <Slider
                   label={
                     <div className="flex items-center">
-                      <span>{t('settings.mcp.maxIterations')}</span>
-                      <InfoIcon className="ml-1" tooltip={t('settings.mcp.computationalResources')} />
+                      <span>{t('settings.agent.maxIterations')}</span>
+                      <InfoIcon className="ml-1" tooltip={t('settings.agent.computationalResources')} />
                     </div>
                   }
                   min={1}
@@ -280,8 +285,8 @@ export const AgentSettings = ({ settings, setSettings }: Props) => {
                 <Input
                   label={
                     <div className="flex items-center">
-                      <span>{t('settings.mcp.minTimeBetweenToolCalls')}</span>
-                      <InfoIcon className="ml-1" tooltip={t('settings.mcp.rateLimiting')} />
+                      <span>{t('settings.agent.minTimeBetweenToolCalls')}</span>
+                      <InfoIcon className="ml-1" tooltip={t('settings.agent.rateLimiting')} />
                     </div>
                   }
                   type="number"
@@ -296,8 +301,8 @@ export const AgentSettings = ({ settings, setSettings }: Props) => {
                 <Input
                   label={
                     <div className="flex items-center">
-                      <span>{t('settings.mcp.maxTokens')}</span>
-                      <InfoIcon className="ml-1" tooltip={t('settings.mcp.tokensPerResponse')} />
+                      <span>{t('settings.agent.maxTokens')}</span>
+                      <InfoIcon className="ml-1" tooltip={t('settings.agent.tokensPerResponse')} />
                     </div>
                   }
                   type="number"
@@ -310,8 +315,8 @@ export const AgentSettings = ({ settings, setSettings }: Props) => {
           </div>
 
           <div className="mt-4">
-            <Accordion title={t('settings.mcp.customInstructions')} className="text-sm">
-              <div className="text-xxs text-amber-500 mt-2 mb-2">{t('settings.mcp.customInstructionsInfo')}</div>
+            <Accordion title={t('settings.agent.customInstructions')} className="text-sm">
+              <div className="text-xxs text-amber-500 mt-2 mb-2">{t('settings.agent.customInstructionsInfo')}</div>
               <TextArea
                 value={agentConfig.customInstructions}
                 onChange={(e) => handleCustomInstructionsChanged(e.target.value)}
@@ -323,13 +328,13 @@ export const AgentSettings = ({ settings, setSettings }: Props) => {
           </div>
           <div className="mt-4">
             <div className="flex items-center justify-between mb-2 mt-4">
-              <div className="text-sm text-neutral-100 font-medium">{t('settings.mcp.mcpServers')}</div>
+              <div className="text-sm text-neutral-100 font-medium">{t('settings.agent.mcpServers')}</div>
               <Button variant="text" className="ml-2 text-xs" onClick={() => setIsEditingAllServers(true)}>
-                {t('settings.mcp.editConfig')}
+                {t('settings.agent.editConfig')}
               </Button>
             </div>
             {Object.keys(agentConfig.mcpServers).length === 0 ? (
-              <div className="text-xs text-gray-500 mb-2">{t('settings.mcp.noServersConfigured')}</div>
+              <div className="text-xs text-gray-500 mb-2">{t('settings.agent.noServersConfigured')}</div>
             ) : (
               Object.entries(agentConfig.mcpServers).map(([serverName, config]) => (
                 <McpServerItem
@@ -346,7 +351,7 @@ export const AgentSettings = ({ settings, setSettings }: Props) => {
             <StyledTooltip id="mcp-server-item" />
             <div className="flex justify-center">
               <Button onClick={() => setIsAddingServer(true)} variant="text" className="mt-3 flex items-center text-sm">
-                <FaPlus className="mr-2 w-2 h-2" /> {t('settings.mcp.addServer')}
+                <FaPlus className="mr-2 w-2 h-2" /> {t('settings.agent.addServer')}
               </Button>
             </div>
           </div>

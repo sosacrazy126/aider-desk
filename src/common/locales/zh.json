@@ -122,7 +122,7 @@
       "specificSession": "加载特定会话"
     },
     "language": "语言",
-    "mcp": {
+    "agent": {
       "mcpServers": "MCP 服务器",
       "provider": "提供商",
       "maxIterations": "最大迭代次数",
@@ -136,7 +136,8 @@
       "rateLimiting": "设置工具调用之间的最小时间以防止速率限制(例如对于 Brave 或其他 API 受限的服务)。",
       "tokensPerResponse": "MCP 代理每次响应可以使用的最大令牌数。",
       "addServer": "添加服务器",
-      "editConfig": "编辑配置"
+      "editConfig": "编辑配置",
+      "envVarPlaceholder": "如果为空，则使用 {{envVar}} 环境变量"
     },
     "aider": {
       "options": "选项",

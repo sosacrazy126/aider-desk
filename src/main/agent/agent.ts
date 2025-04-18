@@ -7,6 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { calculateCost, delay, extractServerNameToolName, SERVER_TOOL_SEPARATOR } from '@common/utils';
 import { getActiveProvider, LlmProvider } from '@common/llm-providers';
 import { getSystemPrompt } from 'src/main/agent/prompts';
+import { parse } from '@dotenvx/dotenvx';
 
 import logger from '../logger';
 import { Store } from '../store';
@@ -20,15 +21,12 @@ import { ClientHolder, convertMpcToolToAiSdkTool, initMcpClient } from './mcp-cl
 import type { CoreMessage, StepResult, ToolSet } from 'ai';
 
 export class Agent {
-  private store: Store;
   private currentInitId: string | null = null;
   private initializedForProject: Project | null = null;
   private clients: ClientHolder[] = [];
   private abortController: AbortController | null = null;
 
-  constructor(store: Store) {
-    this.store = store;
-  }
+  constructor(private readonly store: Store) {}
 
   async initMcpServers(project: Project | null = this.initializedForProject, initId = uuidv4()) {
     // Set the current init ID to track this specific initialization process
@@ -338,7 +336,12 @@ export class Agent {
     });
 
     try {
-      const model = createLlm(activeProvider);
+      // Parse Aider environment variables
+      const env = parse(this.store.getSettings().aider.environmentVariables);
+      const model = createLlm(activeProvider, {
+        ...process.env,
+        ...env,
+      });
       const systemPrompt = await getSystemPrompt(project.baseDir, agentConfig.useAiderTools, agentConfig.includeContextFiles, agentConfig.customInstructions);
 
       // repairToolCall function that attempts to repair tool calls
