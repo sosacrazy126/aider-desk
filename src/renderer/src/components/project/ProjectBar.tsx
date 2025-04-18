@@ -3,19 +3,18 @@ import React, { ReactNode, useCallback, useEffect, useImperativeHandle, useRef, 
 import { BsFilter } from 'react-icons/bs';
 import { CgSpinner, CgTerminal } from 'react-icons/cg';
 import { GoProjectRoadmap } from 'react-icons/go';
-import { MdHistory, MdEdit } from 'react-icons/md';
+import { MdHistory } from 'react-icons/md';
 import { RiRobot2Line } from 'react-icons/ri';
 import { useTranslation } from 'react-i18next';
 import { getActiveProvider } from '@common/llm-providers';
 
+import { AgentModelSelector } from '@/components/AgentModelSelector';
 import { ModelSelector, ModelSelectorRef } from '@/components/ModelSelector';
-import { SettingsDialog } from '@/components/settings/SettingsDialog';
 import { SessionsPopup } from '@/components/SessionsPopup';
 import { StyledTooltip } from '@/components/common/StyledTooltip';
 import { useSettings } from '@/context/SettingsContext';
 import { useClickOutside } from '@/hooks/useClickOutside';
 import { useBooleanState } from '@/hooks/useBooleanState';
-import { IconButton } from '@/components/common/IconButton';
 
 export type ProjectTopBarRef = {
   openMainModelSelector: () => void;
@@ -36,7 +35,6 @@ export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(({ baseDir, 
   const architectModelSelectorRef = useRef<ModelSelectorRef>(null);
   const [sessions, setSessions] = useState<SessionData[]>([]);
   const [sessionPopupVisible, showSessionPopup, hideSessionPopup] = useBooleanState(false);
-  const [settingsDialogVisible, showSettingsDialog, hideSettingsDialog] = useBooleanState(false);
   const sessionPopupRef = useRef<HTMLDivElement>(null);
 
   useImperativeHandle(ref, () => ({
@@ -199,15 +197,24 @@ export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(({ baseDir, 
         <div className="flex items-center h-full">
           <div className="flex-grow flex items-center space-x-3">
             {mode === 'agent' && settings?.agentConfig ? (
-              <>
-                <div className="flex items-center space-x-1">
-                  <RiRobot2Line className="w-4 h-4 text-neutral-100 mr-2" data-tooltip-id="agent-tooltip" />
-                  <StyledTooltip id="agent-tooltip" content={t('modelSelector.agentModel')} />
-                  <span className="text-xs text-neutral-100">{getActiveProvider(settings.agentConfig.providers)?.model || t('common.notSet')}</span>
-                  <IconButton icon={<MdEdit className="ml-2" />} onClick={showSettingsDialog} tooltip={t('common.edit')} />
-                </div>
-                <div className="h-3 w-px bg-neutral-600/50"></div>
-              </>
+              getActiveProvider(settings.agentConfig.providers) ? (
+                <>
+                  <div className="flex items-center space-x-1">
+                    <RiRobot2Line className="w-4 h-4 text-neutral-100 mr-1" data-tooltip-id="agent-tooltip" />
+                    <StyledTooltip id="agent-tooltip" content={t('modelSelector.agentModel')} />
+                    <AgentModelSelector />
+                  </div>
+                  <div className="h-3 w-px bg-neutral-600/50"></div>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center space-x-1 text-xs text-neutral-400">
+                    <RiRobot2Line className="w-4 h-4 text-neutral-100 mr-1" />
+                    <span>{t('modelSelector.noActiveAgentProvider')}</span>
+                  </div>
+                  <div className="h-3 w-px bg-neutral-600/50"></div>
+                </>
+              )
             ) : (
               <>
                 {mode === 'architect' && (
@@ -289,7 +296,6 @@ export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(({ baseDir, 
           </div>
         </div>
       )}
-      {settingsDialogVisible && <SettingsDialog onClose={hideSettingsDialog} initialTab={2} />}
     </div>
   );
 });
