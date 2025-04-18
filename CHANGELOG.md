@@ -12,6 +12,7 @@
 - properly handling user input when tool call is denied by user
 - added model selector for Agent model to Project bar
 - using env vars for Agent LLM providers (API keys, etc.)
+- enhanced agent system prompt with improved structure and clarity
 
 ## [0.9.0]
 
