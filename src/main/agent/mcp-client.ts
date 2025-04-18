@@ -122,20 +122,19 @@ const fixInputSchema = (provider: LlmProvider, inputSchema: JsonSchema): JsonSch
 
     if (fixedSchema.properties) {
       for (const key of Object.keys(fixedSchema.properties)) {
-        let property = fixedSchema.properties[key];
+        const property = fixedSchema.properties[key];
 
-        // Handle anyOf with empty schemas
-        if (property.anyOf && Array.isArray(property.anyOf)) {
-          // Remove empty schemas
-          property.anyOf = property.anyOf.filter((schema: Record<string, unknown>) => Object.keys(schema).length > 0);
-
-          if (property.anyOf.length === 0) {
-            delete property.anyOf;
-          } else if (property.anyOf.length === 1) {
-            // Flatten single schema
-            fixedSchema.properties[key] = property.anyOf[0];
-            property = fixedSchema.properties[key];
-          }
+        if (property.anyOf) {
+          property.any_of = property.anyOf;
+          delete property.anyOf;
+        }
+        if (property.oneOf) {
+          property.one_of = property.oneOf;
+          delete property.oneOf;
+        }
+        if (property.allOf) {
+          property.all_of = property.allOf;
+          delete property.allOf;
         }
 
         // gemini does not like "default" in the schema
