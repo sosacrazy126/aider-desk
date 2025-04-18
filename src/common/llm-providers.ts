@@ -76,7 +76,7 @@ export const PROVIDER_MODELS: Record<string, { models: Record<string, { inputCos
         inputCost: 0.15,
         outputCost: 0.6,
       },
-      'o3-mini': {
+      'o4-mini': {
         inputCost: 1.1,
         outputCost: 4.4,
       },

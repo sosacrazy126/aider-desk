@@ -8,6 +8,7 @@
 - added more information about selected model (tokens, cost per 1M tokens, etc.)
 - showing Agent model in the project bar
 - implemented tool approval settings for enhanced user control
+- added o4-mini model in Agent
 
 ## [0.9.0]
 
