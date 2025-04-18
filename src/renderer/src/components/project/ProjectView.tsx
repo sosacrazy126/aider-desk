@@ -33,7 +33,7 @@ import {
 } from '@/types/message';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { ContextFiles } from '@/components/ContextFiles';
-import { Messages } from '@/components/message/Messages';
+import { Messages, MessagesRef } from '@/components/message/Messages';
 import { AddFileDialog } from '@/components/project/AddFileDialog';
 import { ProjectBar, ProjectTopBarRef } from '@/components/project/ProjectBar';
 import { PromptField, PromptFieldRef } from '@/components/PromptField';
@@ -68,6 +68,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
   const processingMessageRef = useRef<ResponseMessage | null>(null);
   const promptFieldRef = useRef<PromptFieldRef>(null);
   const projectTopBarRef = useRef<ProjectTopBarRef>(null);
+  const messagesRef = useRef<MessagesRef>(null);
   const frozenTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -482,6 +483,10 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
     void window.api.restartProject(project.baseDir);
   };
 
+  const exportMessagesToImage = () => {
+    messagesRef.current?.exportToImage();
+  };
+
   return (
     <div className="flex h-full bg-gradient-to-b from-neutral-950 to-neutral-900 relative">
       {loading && (
@@ -499,10 +504,11 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
             allModels={autocompletionData?.models}
             mode={mode}
             onModelChange={handleModelChange}
+            onExportSessionToImage={exportMessagesToImage}
           />
         </div>
         <div className="flex-grow overflow-y-auto">
-          <Messages baseDir={project.baseDir} messages={messages} allFiles={autocompletionData?.allFiles} />
+          <Messages ref={messagesRef} baseDir={project.baseDir} messages={messages} allFiles={autocompletionData?.allFiles} />
         </div>
         <div className="relative bottom-0 w-full p-4 pb-2 flex-shrink-0 flex border-t border-neutral-800">
           <PromptField

@@ -1,7 +1,9 @@
 import { SessionData } from '@common/types';
 import { KeyboardEvent, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { IoDocumentTextOutline, IoListOutline, IoTrashOutline, IoAddOutline, IoSaveOutline, IoClose, IoDownloadOutline } from 'react-icons/io5';
+import { IoDocumentTextOutline, IoListOutline, IoTrashOutline, IoAddOutline, IoSaveOutline, IoClose } from 'react-icons/io5';
+import { LuImageDown } from 'react-icons/lu';
+import { RiChatDownloadLine } from 'react-icons/ri';
 
 import { ConfirmDialog } from './ConfirmDialog';
 import { StyledTooltip } from './common/StyledTooltip';
@@ -13,9 +15,18 @@ type Props = {
   onSaveSession: (name: string) => void;
   onDeleteSession: (name: string) => void;
   onExportSessionToMarkdown: () => void;
+  onExportSessionToImage: () => void;
 };
 
-export const SessionsPopup = ({ sessions, onLoadSessionMessages, onLoadSessionFiles, onSaveSession, onDeleteSession, onExportSessionToMarkdown }: Props) => {
+export const SessionsPopup = ({
+  sessions,
+  onLoadSessionMessages,
+  onLoadSessionFiles,
+  onSaveSession,
+  onDeleteSession,
+  onExportSessionToMarkdown,
+  onExportSessionToImage,
+}: Props) => {
   const { t } = useTranslation();
   const [sessionToDelete, setSessionToDelete] = useState<string | null>(null);
   const [newSessionName, setNewSessionName] = useState('');
@@ -128,14 +139,24 @@ export const SessionsPopup = ({ sessions, onLoadSessionMessages, onLoadSessionFi
                 <IoAddOutline className="w-4 h-4" />
                 <span>{t('sessions.saveAsNew')}</span>
               </button>
-              <button
-                className="p-1 px-2 hover:bg-neutral-600 rounded-md flex items-center space-x-1 text-xs text-neutral-200"
-                onClick={onExportSessionToMarkdown}
-                data-tooltip-id="export-session-tooltip"
-                data-tooltip-content={t('sessions.exportAsMarkdown')}
-              >
-                <IoDownloadOutline className="w-4 h-4" />
-              </button>
+              <div className="flex items-center space-x-1">
+                <button
+                  className="p-1 px-2 hover:bg-neutral-600 rounded-md flex items-center space-x-1 text-xs text-neutral-200"
+                  onClick={onExportSessionToMarkdown}
+                  data-tooltip-id="session-tooltip"
+                  data-tooltip-content={t('sessions.exportAsMarkdown')}
+                >
+                  <RiChatDownloadLine className="w-4 h-4" />
+                </button>
+                <button
+                  className="p-1 px-2 hover:bg-neutral-600 rounded-md flex items-center space-x-1 text-xs text-neutral-200"
+                  onClick={onExportSessionToImage}
+                  data-tooltip-id="session-tooltip"
+                  data-tooltip-content={t('sessions.exportAsImage')}
+                >
+                  <LuImageDown className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -153,8 +174,6 @@ export const SessionsPopup = ({ sessions, onLoadSessionMessages, onLoadSessionFi
         </ConfirmDialog>
       )}
       <StyledTooltip id="session-tooltip" />
-      <StyledTooltip id="add-session-tooltip" />
-      <StyledTooltip id="export-session-tooltip" />
     </div>
   );
 };
