@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MdOutlineHdrAuto, MdOutlineFileCopy, MdSettings } from 'react-icons/md';
+import { MdOutlineHdrAuto, MdOutlineFileCopy, MdSettings, MdOutlineMap } from 'react-icons/md';
 import { RiToolsFill } from 'react-icons/ri';
 import { SettingsData, ToolApprovalState } from '@common/types';
 import { SERVER_TOOL_SEPARATOR } from '@common/utils';
@@ -170,6 +170,17 @@ export const AgentSelector = () => {
     void saveSettings(updatedSettings);
   };
 
+  const handleToggleIncludeRepoMap = () => {
+    const updatedSettings: SettingsData = {
+      ...settings,
+      agentConfig: {
+        ...settings.agentConfig,
+        includeRepoMap: !settings.agentConfig.includeRepoMap,
+      },
+    };
+    void saveSettings(updatedSettings);
+  };
+
   const renderConfigureServersButton = (t: (key: string) => string) => (
     <>
       <div className="py-1 border-b border-neutral-700 ">
@@ -185,6 +196,15 @@ export const AgentSelector = () => {
             className="flex-1 mr-1"
           />
           <InfoIcon tooltip={t('mcp.includeFilesTooltip')} />
+        </div>
+        <div className="px-3 py-1 text-xs text-neutral-300 hover:text-neutral-100 flex items-center gap-2">
+          <Checkbox
+            checked={settings.agentConfig.includeRepoMap}
+            onChange={handleToggleIncludeRepoMap}
+            label={t('mcp.includeRepoMap')}
+            className="flex-1 mr-1"
+          />
+          <InfoIcon tooltip={t('mcp.includeRepoMapTooltip')} />
         </div>
       </div>
       <button onClick={handleOpenSettings} className="w-full flex items-center px-3 py-2 text-xs text-neutral-300 hover:bg-neutral-700 transition-colors">
@@ -204,6 +224,7 @@ export const AgentSelector = () => {
         <span className="text-xxs font-mono">{enabledToolsCount ?? '...'}</span>
         {settings.agentConfig.useAiderTools && <MdOutlineHdrAuto className="w-4 h-4 text-green-400 opacity-50" title={t('mcp.useAiderTools')} />}
         {settings.agentConfig.includeContextFiles && <MdOutlineFileCopy className="w-3 h-3 text-yellow-400 opacity-50" title={t('mcp.includeContextFiles')} />}
+        {settings.agentConfig.includeRepoMap && <MdOutlineMap className="w-3 h-3 text-blue-400 opacity-50" title={t('mcp.includeRepoMap')} />}
       </button>
 
       {selectorVisible && (

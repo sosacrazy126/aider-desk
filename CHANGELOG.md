@@ -15,6 +15,7 @@
 - enhanced agent system prompt with improved structure and clarity
 - added gemini-2.5-flash-preview-04-17 model for Agent
 - added export session to Markdown functionality
+- added option to include repo map in Agent context
 
 ## [0.9.0]
 

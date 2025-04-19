@@ -52,6 +52,7 @@ export class Project {
   private runPromptResolves: ((value: ResponseCompletedData[]) => void)[] = [];
   private sessionManager: SessionManager = new SessionManager(this);
   private commandOutputs: Map<string, string> = new Map();
+  private repoMap: string = '';
 
   mcpAgentTotalCost: number = 0;
   aiderTotalCost: number = 0;
@@ -726,6 +727,18 @@ export class Project {
 
   public getContextFiles(): ContextFile[] {
     return this.sessionManager.getContextFiles();
+  }
+
+  public getRepoMap(): string {
+    return this.repoMap;
+  }
+
+  public setRepoMap(repoMap: string): void {
+    this.repoMap = repoMap;
+  }
+
+  public updateRepoMapFromConnector(repoMap: string): void {
+    this.setRepoMap(repoMap);
   }
 
   public openCommandOutput(command: string) {

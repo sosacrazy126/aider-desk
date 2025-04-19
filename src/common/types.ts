@@ -166,6 +166,7 @@ export interface AgentConfig {
   disabledServers: string[];
   toolApprovals: Record<string, ToolApprovalState>;
   includeContextFiles: boolean;
+  includeRepoMap: boolean;
   useAiderTools: boolean;
   customInstructions: string;
 }

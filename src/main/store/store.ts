@@ -36,6 +36,7 @@ export const DEFAULT_SETTINGS: SettingsData = {
     disabledServers: [],
     toolApprovals: {},
     includeContextFiles: false,
+    includeRepoMap: false,
     useAiderTools: true,
     customInstructions: '',
   },

@@ -17,7 +17,8 @@ export type MessageAction =
   | 'tokens-info'
   | 'add-message'
   | 'interrupt-response'
-  | 'apply-edits';
+  | 'apply-edits'
+  | 'update-repo-map';
 
 export interface Message {
   action: MessageAction;
@@ -188,3 +189,12 @@ export interface ApplyEditsMessage extends Message {
   action: 'apply-edits';
   edits: FileEdit[];
 }
+
+export interface UpdateRepoMapMessage extends Message {
+  action: 'update-repo-map';
+  repoMap: string;
+}
+
+export const isUpdateRepoMapMessage = (message: Message): message is UpdateRepoMapMessage => {
+  return message.action === 'update-repo-map';
+};

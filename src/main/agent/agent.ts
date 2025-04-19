@@ -523,6 +523,21 @@ export class Agent {
     const { agentConfig } = this.store.getSettings();
     const messages = project.getContextMessages();
 
+    // Add repo map if enabled
+    if (agentConfig.includeRepoMap) {
+      const repoMap = project.getRepoMap();
+      if (repoMap) {
+        messages.push({
+          role: 'user',
+          content: repoMap,
+        });
+        messages.push({
+          role: 'assistant',
+          content: 'Ok, I will use the repository map as a reference.',
+        });
+      }
+    }
+
     if (agentConfig.includeContextFiles) {
       // Get and store new context files messages
       const contextFilesMessages = await this.getContextFilesMessages(project);

@@ -296,6 +296,7 @@ class Connector:
     await self.send_update_context_files()
     await self.send_autocompletion()
     await self.send_current_models()
+    await self.send_repo_map()
 
   async def on_message(self, data):
     await self.process_message(data)
@@ -587,6 +588,7 @@ class Connector:
     self.running_coder = None
     await self.send_autocompletion()
     await self.send_tokens_info()
+    await self.send_repo_map()
 
     # Send prompt-finished message if we have a prompt ID
     if prompt_id:
@@ -614,7 +616,7 @@ class Connector:
 
   async def run_command(self, command):
     if command.startswith("/map"):
-      repo_map = self.coder.get_repo_map()
+      repo_map = self.coder.repo_map.get_repo_map(set(), self.coder.get_all_abs_files()) if self.coder.repo_map else None
       await asyncio.sleep(0.1)
       if repo_map:
         await self.send_log_message("info", repo_map)
@@ -638,6 +640,7 @@ class Connector:
       await asyncio.sleep(0.1)
       await self.send_log_message("info", "The repo map has been refreshed.")
       await self.send_autocompletion()
+      await self.send_repo_map()
     elif command.startswith("/reasoning-effort"):
       await asyncio.sleep(0.1)
       await self.send_current_models()
@@ -680,6 +683,24 @@ class Connector:
           "allFiles": [],
           "models": sorted(set(models.fuzzy_match_models("") + [model_settings.name for model_settings in models.MODEL_SETTINGS]))
         })
+
+  async def send_repo_map(self):
+    if self.sio and self.coder.repo_map:
+      try:
+        repo_map = self.coder.repo_map.get_repo_map(set(), self.coder.get_all_abs_files())
+        if repo_map:
+          # Remove the prefix before sending
+          prefix = self.coder.gpt_prompts.repo_content_prefix
+          if repo_map.startswith(prefix):
+              repo_map = repo_map[len(prefix):]
+
+          await self.sio.emit("message", {
+            "action": "update-repo-map",
+            "repoMap": repo_map
+          })
+      except Exception as e:
+        self.coder.io.tool_error(f"Error sending repo map: {str(e)}")
+
 
   async def send_update_context_files(self):
     if self.sio:
