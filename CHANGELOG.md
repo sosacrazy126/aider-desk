@@ -1,6 +1,6 @@
 # Changelog
 
-## [UNRELEASED]
+## [0.10.0]
 
 - arrow up/down does not change the history prompt after editing the text anymore
 - improved agent system prompt
