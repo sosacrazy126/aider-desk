@@ -3,6 +3,7 @@
 ## [UNRELEASED]
 
 - fixed issue with docker MCP server not closing properly
+- closing session popup when clicking on the button again
 
 ## [0.10.0]
 

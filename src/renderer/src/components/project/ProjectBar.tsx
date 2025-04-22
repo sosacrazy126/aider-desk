@@ -51,6 +51,14 @@ export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(
 
     useClickOutside(sessionPopupRef, hideSessionPopup);
 
+    const toggleSessionPopupVisible = useCallback(() => {
+      if (sessionPopupVisible) {
+        hideSessionPopup();
+      } else {
+        showSessionPopup();
+      }
+    }, [sessionPopupVisible, hideSessionPopup, showSessionPopup]);
+
     const renderModelInfo = useCallback(
       (modelName: string, info: RawModelInfo | undefined): ReactNode => {
         if (!info) {
@@ -282,9 +290,9 @@ export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(
                 </>
               )}
             </div>
-            <div className="relative">
+            <div className="relative" ref={sessionPopupRef}>
               <button
-                onClick={showSessionPopup}
+                onClick={toggleSessionPopupVisible}
                 className="p-1 hover:bg-neutral-700 rounded-md flex text-neutral-200"
                 data-tooltip-id="session-history-tooltip"
                 data-tooltip-content={t('sessions.title')}
@@ -293,17 +301,15 @@ export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(
               </button>
               <StyledTooltip id="session-history-tooltip" />
               {sessionPopupVisible && (
-                <div ref={sessionPopupRef}>
-                  <SessionsPopup
-                    sessions={sessions}
-                    onLoadSessionMessages={loadSessionMessages}
-                    onLoadSessionFiles={loadSessionFiles}
-                    onSaveSession={saveSession}
-                    onDeleteSession={deleteSession}
-                    onExportSessionToMarkdown={exportSessionToMarkdown}
-                    onExportSessionToImage={onExportSessionToImage}
-                  />
-                </div>
+                <SessionsPopup
+                  sessions={sessions}
+                  onLoadSessionMessages={loadSessionMessages}
+                  onLoadSessionFiles={loadSessionFiles}
+                  onSaveSession={saveSession}
+                  onDeleteSession={deleteSession}
+                  onExportSessionToMarkdown={exportSessionToMarkdown}
+                  onExportSessionToImage={onExportSessionToImage}
+                />
               )}
             </div>
           </div>
