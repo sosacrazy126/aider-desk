@@ -1,5 +1,9 @@
 # Changelog
 
+## [UNRELEASED]
+
+- fixed issue with docker MCP server not closing properly
+
 ## [0.10.0]
 
 - arrow up/down does not change the history prompt after editing the text anymore
