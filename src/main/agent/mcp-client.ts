@@ -44,13 +44,6 @@ const interpolateServerConfig = (serverConfig: McpServerConfig, project: Project
 
   config.args = config.args.map(interpolateValue);
 
-  // If command is 'docker', ensure '--init' is present so the container properly handles SIGINT and SIGTERM
-  if (config.command === 'docker') {
-    if (!config.args.includes('--init')) {
-      config.args = ['--init', ...config.args];
-    }
-  }
-
   return config;
 };
 
@@ -71,6 +64,13 @@ export const initMcpClient = async (serverName: string, originalServerConfig: Mc
   if (process.platform === 'win32' && command === 'npx') {
     command = 'cmd.exe';
     args = ['/c', 'npx', ...args];
+  }
+
+  // If command is 'docker', ensure '--init' is present so the container properly handles SIGINT and SIGTERM
+  if (command === 'docker') {
+    if (!args.includes('--init')) {
+      args = ['--init', ...args];
+    }
   }
 
   const transport = new StdioClientTransport({
