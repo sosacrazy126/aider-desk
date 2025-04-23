@@ -115,6 +115,7 @@
       "aider": "Aider",
       "agent": "服务器"
     },
+    "gui": "GUI",
     "startup": {
       "title": "启动",
       "emptySession": "以空会话启动",
@@ -149,7 +150,8 @@
     },
     "common": {
       "showSecrets": "显示密钥"
-    }
+    },
+    "zoom": "缩放级别"
   },
   "messages": {
     "thinking": "思考中...",

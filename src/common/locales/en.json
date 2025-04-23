@@ -119,6 +119,7 @@
       "aider": "Aider",
       "agent": "Agent"
     },
+    "gui": "GUI",
     "startup": {
       "title": "Start Up",
       "emptySession": "Start with empty session",
@@ -152,7 +153,8 @@
     },
     "common": {
       "showSecrets": "Show Secrets"
-    }
+    },
+    "zoom": "Zoom level"
   },
   "messages": {
     "thinking": "Thinking...",

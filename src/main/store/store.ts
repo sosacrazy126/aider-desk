@@ -13,6 +13,7 @@ export const DEFAULT_MAIN_MODEL = 'claude-3-7-sonnet-20250219';
 export const DEFAULT_SETTINGS: SettingsData = {
   language: 'en',
   startupMode: StartupMode.Empty,
+  zoomLevel: 1,
   aider: {
     options: '',
     environmentVariables: '',

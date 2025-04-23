@@ -11,10 +11,11 @@ type Props = {
   settings: SettingsData;
   updateSettings: (settings: SettingsData) => void;
   onLanguageChange: (language: string) => void;
+  onZoomChange: (zoomLevel: number) => void;
   initialTab?: number;
 };
 
-export const Settings = ({ settings, updateSettings, onLanguageChange, initialTab = 0 }: Props) => {
+export const Settings = ({ settings, updateSettings, onLanguageChange, onZoomChange, initialTab = 0 }: Props) => {
   const { t } = useTranslation();
 
   const renderTab = (label: string) => (
@@ -45,7 +46,7 @@ export const Settings = ({ settings, updateSettings, onLanguageChange, initialTa
         {renderTab(t('settings.tabs.agent'))}
       </TabList>
       <TabPanels className="flex flex-col flex-1 overflow-hidden">
-        {renderTabPanel(<GeneralSettings settings={settings} setSettings={updateSettings} onLanguageChange={onLanguageChange} />)}
+        {renderTabPanel(<GeneralSettings settings={settings} setSettings={updateSettings} onLanguageChange={onLanguageChange} onZoomChange={onZoomChange} />)}
         {renderTabPanel(<AiderSettings settings={settings} setSettings={updateSettings} />)}
         {renderTabPanel(<AgentSettings settings={settings} setSettings={updateSettings} />)}
       </TabPanels>

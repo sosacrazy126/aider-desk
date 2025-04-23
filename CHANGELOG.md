@@ -4,6 +4,7 @@
 
 - fixed issue with docker MCP server not closing properly
 - closing session popup when clicking on the button again
+- added zoom level setting
 
 ## [0.10.0]
 

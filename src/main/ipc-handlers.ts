@@ -7,6 +7,7 @@ import { getFilePathSuggestions, isProjectPath, isValidPath } from './file-syste
 import { ProjectManager } from './project-manager';
 import { DEFAULT_PROJECT_SETTINGS, Store } from './store';
 import { scrapeWeb } from './web-scrapper';
+import logger from './logger';
 
 export const setupIpcHandlers = (mainWindow: BrowserWindow, projectManager: ProjectManager, store: Store, agent: Agent) => {
   ipcMain.handle('load-settings', () => {
@@ -231,5 +232,12 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, projectManager: Proj
 
   ipcMain.handle('export-session-to-markdown', async (_, baseDir: string) => {
     return await projectManager.getProject(baseDir).exportSessionToMarkdown();
+  });
+
+  ipcMain.handle('set-zoom-level', (_, zoomLevel: number) => {
+    logger.info(`Setting zoom level to ${zoomLevel}`);
+    mainWindow.webContents.setZoomFactor(zoomLevel);
+    const currentSettings = store.getSettings();
+    store.saveSettings({ ...currentSettings, zoomLevel });
   });
 };
