@@ -5,6 +5,8 @@
 - fixed issue with docker MCP server not closing properly
 - closing session popup when clicking on the button again
 - added zoom level setting
+- properly adding Aider's reflection message as user message
+- fixed max reflections count
 
 ## [0.10.0]
 

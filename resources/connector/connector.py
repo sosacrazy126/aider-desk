@@ -411,11 +411,11 @@ class Connector:
         role = message.get('role', 'user')
         acknowledge = message.get('acknowledge', True)
 
-        self.coder.cur_messages += [
+        self.coder.done_messages += [
           dict(role=role, content=content)
         ]
         if role == "user" and acknowledge:
-          self.coder.cur_messages += [
+          self.coder.done_messages += [
             dict(role="assistant", content="Ok."),
           ]
         await self.send_tokens_info()
@@ -550,6 +550,10 @@ class Connector:
     if self.running_coder.reflected_message:
       current_reflection = 0
       while self.running_coder.reflected_message and not self.interrupted:
+        if current_reflection >= self.coder.max_reflections:
+          self.coder.io.tool_warning(f"Only {str(self.coder.max_reflections)} reflections allowed, stopping.")
+          break
+
         prompt = self.running_coder.reflected_message
         await self.send_log_message("loading", "Reflecting message...")
 
@@ -580,9 +584,6 @@ class Connector:
           self.running_coder.cur_messages += [dict(role="assistant", content=whole_content + " (interrupted)")]
 
         await self.send_update_context_files()
-        if current_reflection >= self.coder.max_reflections:
-          self.coder.io.tool_warning(f"Only {str(self.coder.max_reflections)} reflections allowed, stopping.")
-          break
         current_reflection += 1
 
     self.running_coder = None

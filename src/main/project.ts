@@ -391,6 +391,9 @@ export class Project {
       // add messages to session
       this.sessionManager.addContextMessage(MessageRole.User, prompt);
       for (const response of responses) {
+        if (response.reflectedMessage) {
+          this.sessionManager.addContextMessage(MessageRole.User, response.reflectedMessage);
+        }
         if (response.content) {
           this.sessionManager.addContextMessage(MessageRole.Assistant, response.content);
         }
