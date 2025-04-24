@@ -101,6 +101,8 @@ export interface ProjectSettings {
   mainModel: string;
   weakModel?: string | null;
   architectModel?: string | null;
+  reasoningEffort?: string;
+  thinkingTokens?: string;
 }
 
 export interface ProjectData {
@@ -124,8 +126,8 @@ export interface ModelsData {
   mainModel: string;
   weakModel?: string | null;
   architectModel?: string | null;
-  reasoningEffort?: number;
-  thinkingTokens?: number;
+  reasoningEffort?: string;
+  thinkingTokens?: string;
   info?: RawModelInfo;
   error?: string;
 }

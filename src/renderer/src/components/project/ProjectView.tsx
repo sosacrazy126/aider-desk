@@ -505,6 +505,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
             mode={mode}
             onModelChange={handleModelChange}
             onExportSessionToImage={exportMessagesToImage}
+            runCommand={runCommand}
           />
         </div>
         <div className="flex-grow overflow-y-auto">

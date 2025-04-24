@@ -7,6 +7,7 @@
 - added zoom level setting
 - properly adding Aider's reflection message as user message
 - fixed max reflections count
+- reasoning effort and thinking tokens stored for projects
 
 ## [0.10.0]
 

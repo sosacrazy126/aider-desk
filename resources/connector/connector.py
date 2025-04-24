@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import argparse
 import os
 import sys
 import asyncio
@@ -228,14 +229,24 @@ def create_coder(connector):
   coder.commands.io = io
   coder.io = io
 
+  coder.commands.io = io
+  coder.io = io
+
   return coder
 
 class Connector:
-  def __init__(self, base_dir, watch_files=False, server_url="http://localhost:24337"):
+  def __init__(self, base_dir, watch_files=False, server_url="http://localhost:24337", reasoning_effort=None, thinking_tokens=None):
     self.base_dir = base_dir
     self.server_url = server_url
+    self.reasoning_effort = reasoning_effort
+    self.thinking_tokens = thinking_tokens
 
     self.coder = create_coder(self)
+    if reasoning_effort is not None:
+      self.coder.main_model.set_reasoning_effort(reasoning_effort)
+    if thinking_tokens is not None:
+      self.coder.main_model.set_thinking_tokens(thinking_tokens)
+
     self.coder.yield_stream = True
     self.coder.stream = True
     self.coder.pretty = False
@@ -386,6 +397,9 @@ class Connector:
 
         model = models.Model(main_model, weak_model=weak_model)
         models.sanity_check_models(self.coder.io, model)
+
+        model.set_reasoning_effort(self.coder.main_model.get_reasoning_effort())
+        model.set_thinking_tokens(self.coder.main_model.get_thinking_tokens())
 
         self.coder = Coder.create(
           from_coder=self.coder,
@@ -624,6 +638,21 @@ class Connector:
       else:
         await self.send_log_message("info", "No repo map available.")
       return
+    elif command.startswith("/reasoning-effort"):
+      parts = command.split()
+      valid_values = ['high', 'medium', 'low', 'none']
+      if len(parts) != 2 or parts[1] not in valid_values:
+        await self.send_log_message("error", "Invalid reasoning effort value. Use '/reasoning-effort [high|medium|low|none]'.")
+        return
+      if parts[1] == "none":
+        # Safely remove 'reasoning_effort' if it exists
+        if self.coder.main_model.extra_params and "extra_body" in self.coder.main_model.extra_params:
+            self.coder.main_model.extra_params["extra_body"].pop("reasoning_effort", None)
+        self.reasoning_effort = None
+        await asyncio.sleep(0.1)
+        await self.send_current_models()
+        return
+      self.reasoning_effort = parts[1]
 
     if command.startswith("/test ") or command.startswith("/run "):
       self.coder.io.running_shell_command = True
@@ -646,9 +675,14 @@ class Connector:
       await asyncio.sleep(0.1)
       await self.send_current_models()
     elif command.startswith("/think-tokens"):
+      self.coder.commands.run(command)
+      if self.coder.main_model.get_raw_thinking_tokens() == 0:
+        if self.coder.main_model.extra_params:
+          self.coder.main_model.extra_params.pop("reasoning", None)
+          self.coder.main_model.extra_params.pop("thinking", None)
+        self.thinking_tokens = None
       await asyncio.sleep(0.1)
       await self.send_current_models()
-
 
   async def send_autocompletion(self):
     try:
@@ -731,8 +765,8 @@ class Connector:
         "action": "set-models",
         "mainModel": self.coder.main_model.name,
         "weakModel": self.coder.main_model.weak_model.name,
-        "reasoningEffort": self.coder.main_model.get_reasoning_effort(),
-        "thinkingTokens": self.coder.main_model.get_thinking_tokens(),
+        "reasoningEffort": self.coder.main_model.get_reasoning_effort() if self.coder.main_model.get_reasoning_effort() is not None else self.reasoning_effort,
+        "thinkingTokens": self.coder.main_model.get_thinking_tokens() if self.coder.main_model.get_thinking_tokens() is not None else self.thinking_tokens,
         "info": info,
         "error": error
       })
@@ -827,10 +861,21 @@ def main(argv=None):
   if argv is None:
     argv = sys.argv[1:]
 
-  watch_files = "--watch-files" in argv
+  parser = argparse.ArgumentParser(description="AiderDesk Connector")
+  parser.add_argument("--watch-files", action="store_true", help="Watch files for changes")
+  parser.add_argument("--reasoning-effort", type=str, default=None, help="Set the reasoning effort for the model")
+  parser.add_argument("--thinking-tokens", type=str, default=None, help="Set the thinking tokens for the model")
+  args, _ = parser.parse_known_args(argv) # Use parse_known_args to ignore unknown args
+
   server_url = os.getenv("CONNECTOR_SERVER_URL", "http://localhost:24337")
   base_dir = os.getcwd()
-  connector = Connector(base_dir, watch_files, server_url)
+  connector = Connector(
+    base_dir,
+    watch_files=args.watch_files,
+    server_url=server_url,
+    reasoning_effort=args.reasoning_effort,
+    thinking_tokens=args.thinking_tokens
+  )
   asyncio.run(connector.start())
 
 

@@ -21,6 +21,7 @@ import {
   ToolData,
   UsageReportData,
   UserMessageData,
+  ProjectSettings,
 } from '@common/types';
 import { fileExists, parseUsageReport } from '@common/utils';
 import { BrowserWindow, dialog } from 'electron';
@@ -187,33 +188,51 @@ export class Project {
     await this.checkAndCleanupPidFile();
 
     const settings = this.store.getSettings();
-    const mainModel = this.store.getProjectSettings(this.baseDir).mainModel || DEFAULT_MAIN_MODEL;
-    const weakModel = this.store.getProjectSettings(this.baseDir).weakModel;
+    const projectSettings = this.store.getProjectSettings(this.baseDir);
+    const mainModel = projectSettings.mainModel || DEFAULT_MAIN_MODEL;
+    const weakModel = projectSettings.weakModel;
+    const reasoningEffort = projectSettings.reasoningEffort;
     const environmentVariables = parse(settings.aider.environmentVariables);
+    const thinkingTokens = projectSettings.thinkingTokens;
 
     logger.info('Running Aider for project', {
       baseDir: this.baseDir,
       mainModel,
       weakModel,
+      reasoningEffort,
+      thinkingTokens,
     });
-    const options = settings.aider.options;
+
+    const rawOptionsArgs = (settings.aider.options.match(/(?:[^\s"]+|"[^"]*")+/g) as string[]) || [];
+    const optionsArgsSet = new Set(rawOptionsArgs);
+
+    const processedOptionsArgs: string[] = [];
+    for (let i = 0; i < rawOptionsArgs.length; i++) {
+      const arg = rawOptionsArgs[i];
+      if (arg === '--model') {
+        i++; // Skip the model value
+      } else {
+        processedOptionsArgs.push(arg.startsWith('"') && arg.endsWith('"') ? arg.slice(1, -1) : arg);
+      }
+    }
 
     const args = ['-m', 'connector'];
-    if (options) {
-      const optionsArgs = (options.match(/(?:[^\s"]+|"[^"]*")+/g) as string[]) || [];
-      // remove existing --model defined by user
-      const modelIndex = optionsArgs.indexOf('--model');
-      if (modelIndex !== -1 && modelIndex + 1 < optionsArgs.length) {
-        optionsArgs.splice(modelIndex, 2);
-      }
-      args.push(...optionsArgs.map((option) => (option.startsWith('"') && option.endsWith('"') ? option.slice(1, -1) : option)));
-    }
-    args.push(...['--no-check-update', '--no-show-model-warnings']);
 
+    args.push(...processedOptionsArgs);
+
+    args.push('--no-check-update', '--no-show-model-warnings');
     args.push('--model', mainModel);
 
     if (weakModel) {
       args.push('--weak-model', weakModel);
+    }
+
+    if (reasoningEffort !== undefined && !optionsArgsSet.has('--reasoning-effort')) {
+      args.push('--reasoning-effort', reasoningEffort);
+    }
+
+    if (thinkingTokens !== undefined && !optionsArgsSet.has('--thinking-tokens')) {
+      args.push('--thinking-tokens', thinkingTokens);
     }
 
     logger.info('Running Aider with args:', { args });
@@ -684,6 +703,14 @@ export class Project {
   }
 
   public setCurrentModels(modelsData: ModelsData) {
+    const currentSettings = this.store.getProjectSettings(this.baseDir);
+    const updatedSettings: ProjectSettings = {
+      ...currentSettings,
+      reasoningEffort: modelsData.reasoningEffort ? modelsData.reasoningEffort : undefined,
+      thinkingTokens: modelsData.thinkingTokens ? modelsData.thinkingTokens : undefined,
+    };
+    this.store.saveProjectSettings(this.baseDir, updatedSettings);
+
     this.models = {
       ...modelsData,
       architectModel: modelsData.architectModel !== undefined ? modelsData.architectModel : this.getArchitectModel(),

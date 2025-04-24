@@ -3,11 +3,13 @@ import React, { ReactNode, useCallback, useEffect, useImperativeHandle, useRef, 
 import { BsFilter } from 'react-icons/bs';
 import { CgSpinner, CgTerminal } from 'react-icons/cg';
 import { GoProjectRoadmap } from 'react-icons/go';
+import { IoMdClose } from 'react-icons/io';
 import { MdHistory } from 'react-icons/md';
 import { RiRobot2Line } from 'react-icons/ri';
 import { useTranslation } from 'react-i18next';
 import { getActiveProvider } from '@common/llm-providers';
 
+import { IconButton } from '@/components/common/IconButton';
 import { AgentModelSelector } from '@/components/AgentModelSelector';
 import { ModelSelector, ModelSelectorRef } from '@/components/ModelSelector';
 import { SessionsPopup } from '@/components/SessionsPopup';
@@ -27,10 +29,11 @@ type Props = {
   mode: Mode;
   onModelChange?: () => void;
   onExportSessionToImage: () => void;
+  runCommand: (command: string) => void;
 };
 
 export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(
-  ({ baseDir, allModels = [], modelsData, mode, onModelChange, onExportSessionToImage }, ref) => {
+  ({ baseDir, allModels = [], modelsData, mode, onModelChange, onExportSessionToImage, runCommand }, ref) => {
     const { t } = useTranslation();
     const { settings, saveSettings } = useSettings();
     const mainModelSelectorRef = useRef<ModelSelectorRef>(null);
@@ -271,21 +274,23 @@ export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(
                 <StyledTooltip id="weak-model-tooltip" />
                 <ModelSelector models={allModels} selectedModel={modelsData.weakModel || modelsData.mainModel} onChange={updateWeakModel} />
               </div>
-              {modelsData.reasoningEffort && (
+              {modelsData.reasoningEffort && modelsData.reasoningEffort !== 'none' && (
                 <>
                   <div className="h-3 w-px bg-neutral-600/50"></div>
-                  <div className="flex items-center space-x-1">
-                    <span className="text-xs">{t('modelSelector.reasoning')}:</span>
-                    <span className="text-neutral-400 text-xs">{modelsData.reasoningEffort}</span>
+                  <div className="flex items-center space-x-1 group/reasoning">
+                    <span className="text-xs text-neutral-400">{t('modelSelector.reasoning')}:</span>
+                    <span className="text-neutral-100 text-xs">{modelsData.reasoningEffort}</span>
+                    <IconButton icon={<IoMdClose className="w-3 h-3" />} onClick={() => runCommand('reasoning-effort none')} className="ml-0.5" />
                   </div>
                 </>
               )}
-              {modelsData.thinkingTokens && (
+              {modelsData.thinkingTokens && modelsData.thinkingTokens !== '0' && (
                 <>
                   <div className="h-3 w-px bg-neutral-600/50"></div>
-                  <div className="flex items-center space-x-1">
-                    <span className="text-xs">{t('modelSelector.thinkingTokens')}:</span>
-                    <span className="text-neutral-400 text-xs">{modelsData.thinkingTokens}</span>
+                  <div className="flex items-center space-x-1 group/thinking">
+                    <span className="text-xs text-neutral-400">{t('modelSelector.thinkingTokens')}:</span>
+                    <span className="text-neutral-100 text-xs">{modelsData.thinkingTokens}</span>
+                    <IconButton icon={<IoMdClose className="w-3 h-3" />} onClick={() => runCommand('think-tokens 0')} className="ml-0.5" />
                   </div>
                 </>
               )}
