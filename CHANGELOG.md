@@ -8,6 +8,7 @@
 - properly adding Aider's reflection message as user message
 - fixed max reflections count
 - reasoning effort and thinking tokens stored for projects
+- fixed Select dropdown positioning
 
 ## [0.10.0]
 
