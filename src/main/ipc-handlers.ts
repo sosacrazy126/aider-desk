@@ -192,7 +192,7 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, projectManager: Proj
   });
 
   ipcMain.on('clear-context', (_, baseDir: string) => {
-    projectManager.getProject(baseDir).clearContext();
+    projectManager.getProject(baseDir).clearContext(true);
   });
 
   ipcMain.handle('scrape-web', async (_, baseDir: string, url: string) => {

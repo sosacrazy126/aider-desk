@@ -10,6 +10,7 @@
 - reasoning effort and thinking tokens stored for projects
 - fixed Select dropdown positioning
 - removed mode locking functionality - mode is now always 'locked'
+- commands are now stored in input history
 
 ## [0.10.0]
 

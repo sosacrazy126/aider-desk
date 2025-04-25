@@ -589,12 +589,15 @@ export class Project {
     this.findMessageConnectors('drop-file').forEach((connector) => connector.sendDropFileMessage(pathToSend));
   }
 
-  public runCommand(command: string) {
+  public runCommand(command: string, addToHistory = true) {
     if (this.currentQuestion) {
       this.answerQuestion('n');
     }
 
     logger.info('Running command:', { command });
+    if (addToHistory) {
+      void this.addToInputHistory(`/${command}`);
+    }
     this.findMessageConnectors('run-command').forEach((connector) => connector.sendRunCommandMessage(command));
   }
 
@@ -827,9 +830,9 @@ export class Project {
     this.findMessageConnectors('add-message').forEach((connector) => connector.sendAddMessageMessage(role, content, acknowledge));
   }
 
-  public clearContext() {
+  public clearContext(addToHistory = false) {
     this.sessionManager.clearMessages();
-    this.runCommand('clear');
+    this.runCommand('clear', addToHistory);
     this.mainWindow.webContents.send('clear-messages', this.baseDir);
   }
 
