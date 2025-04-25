@@ -9,6 +9,7 @@
 - fixed max reflections count
 - reasoning effort and thinking tokens stored for projects
 - fixed Select dropdown positioning
+- removed mode locking functionality - mode is now always 'locked'
 
 ## [0.10.0]
 

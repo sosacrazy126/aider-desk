@@ -27,7 +27,6 @@ type Props = {
   words?: string[];
   inputHistory?: string[];
   openModelSelector?: () => void;
-  defaultMode?: Mode;
   mode: Mode;
   onModeChanged: (mode: Mode) => void;
   onSubmitted?: (prompt: string) => void;
@@ -50,7 +49,6 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
       isActive = false,
       words = [],
       inputHistory = [],
-      defaultMode = 'code',
       mode,
       onModeChanged,
       showFileDialog,
@@ -77,7 +75,6 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
     const [highlightedSuggestionIndex, setHighlightedSuggestionIndex] = useState(-1);
     const [historyIndex, setHistoryIndex] = useState<number>(-1);
     const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
-    const [modeLocked, setModeLocked] = useState(defaultMode === 'code' || defaultMode === 'agent');
     const inputRef = useRef<HTMLTextAreaElement>(null);
 
     useDebounce(
@@ -110,17 +107,6 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
             const prompt = text.replace(command, '').trim();
             setText(prompt);
             const newMode = command.slice(1) as Mode;
-
-            if (newMode === 'code' || newMode === 'agent') {
-              // If the mode is code or agent, lock the mode
-              setModeLocked(true);
-            } else if (mode === newMode) {
-              // If the same command is used twice, toggle the lock
-              setModeLocked((prev) => !prev);
-            } else {
-              setModeLocked(false);
-            }
-
             onModeChanged(newMode);
             break;
           }
@@ -281,9 +267,6 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
           invokeCommand(confirmCommandMatch, text.split(' ').slice(1).join(' '));
         } else {
           window.api.runPrompt(baseDir, text, mode);
-          if (!modeLocked) {
-            onModeChanged(defaultMode);
-          }
           onSubmitted?.(text);
         }
         prepareForNextPrompt();
@@ -404,12 +387,6 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
 
     const handleModeChange = (mode: Mode) => {
       onModeChanged(mode);
-      setModeLocked(mode === 'code' || mode === 'agent');
-    };
-
-    const handleLockChange = (locked: boolean) => {
-      setModeLocked(locked);
-      inputRef.current?.focus();
     };
 
     return (
@@ -488,7 +465,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
             )}
           </div>
           <div className="relative w-full h-7">
-            <ModeSelector mode={mode} locked={modeLocked} onModeChange={handleModeChange} onLockedChange={handleLockChange} />
+            <ModeSelector mode={mode} onModeChange={handleModeChange} />
           </div>
         </div>
         {suggestionsVisible && filteredSuggestions.length > 0 && (
