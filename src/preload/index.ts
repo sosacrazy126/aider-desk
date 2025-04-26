@@ -62,7 +62,7 @@ const api: ApplicationAPI = {
   updateWeakModel: (baseDir, model) => ipcRenderer.send('update-weak-model', baseDir, model),
   updateArchitectModel: (baseDir, model) => ipcRenderer.send('update-architect-model', baseDir, model),
   getProjectSettings: (baseDir) => ipcRenderer.invoke('get-project-settings', baseDir),
-  saveProjectSettings: (baseDir, settings) => ipcRenderer.invoke('save-project-settings', baseDir, settings),
+  patchProjectSettings: (baseDir, settings) => ipcRenderer.invoke('patch-project-settings', baseDir, settings),
   getFilePathSuggestions: (currentPath: string, directoriesOnly = false) => ipcRenderer.invoke('get-file-path-suggestions', currentPath, directoriesOnly),
   getAddableFiles: (baseDir: string) => ipcRenderer.invoke('get-addable-files', baseDir),
   addFile: (baseDir: string, filePath: string, readOnly = false) => ipcRenderer.send('add-file', baseDir, filePath, readOnly),

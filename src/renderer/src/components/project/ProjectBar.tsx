@@ -5,6 +5,7 @@ import { CgSpinner, CgTerminal } from 'react-icons/cg';
 import { GoProjectRoadmap } from 'react-icons/go';
 import { IoMdClose } from 'react-icons/io';
 import { MdHistory } from 'react-icons/md';
+import { IoLogoMarkdown } from 'react-icons/io5';
 import { RiRobot2Line } from 'react-icons/ri';
 import { useTranslation } from 'react-i18next';
 import { getActiveProvider } from '@common/llm-providers';
@@ -27,13 +28,15 @@ type Props = {
   allModels?: string[];
   modelsData: ModelsData | null;
   mode: Mode;
+  renderMarkdown: boolean;
   onModelChange?: () => void;
+  onRenderMarkdownChanged: (value: boolean) => void;
   onExportSessionToImage: () => void;
   runCommand: (command: string) => void;
 };
 
 export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(
-  ({ baseDir, allModels = [], modelsData, mode, onModelChange, onExportSessionToImage, runCommand }, ref) => {
+  ({ baseDir, allModels = [], modelsData, mode, renderMarkdown, onModelChange, onRenderMarkdownChanged, onExportSessionToImage, runCommand }, ref) => {
     const { t } = useTranslation();
     const { settings, saveSettings } = useSettings();
     const mainModelSelectorRef = useRef<ModelSelectorRef>(null);
@@ -295,27 +298,32 @@ export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(
                 </>
               )}
             </div>
-            <div className="relative" ref={sessionPopupRef}>
-              <button
-                onClick={toggleSessionPopupVisible}
-                className="p-1 hover:bg-neutral-700 rounded-md flex text-neutral-200"
-                data-tooltip-id="session-history-tooltip"
-                data-tooltip-content={t('sessions.title')}
-              >
-                <MdHistory className="w-4 h-4" />
-              </button>
-              <StyledTooltip id="session-history-tooltip" />
-              {sessionPopupVisible && (
-                <SessionsPopup
-                  sessions={sessions}
-                  onLoadSessionMessages={loadSessionMessages}
-                  onLoadSessionFiles={loadSessionFiles}
-                  onSaveSession={saveSession}
-                  onDeleteSession={deleteSession}
-                  onExportSessionToMarkdown={exportSessionToMarkdown}
-                  onExportSessionToImage={onExportSessionToImage}
+            <div className="flex items-center space-x-1">
+              <IconButton
+                icon={<IoLogoMarkdown className={`w-4 h-4 ${renderMarkdown ? 'text-neutral-200' : 'text-neutral-600'}`} />}
+                onClick={() => onRenderMarkdownChanged(!renderMarkdown)}
+                tooltip={t('projectBar.toggleMarkdown')}
+                className="p-1 hover:bg-neutral-700 rounded-md"
+              />
+              <div className="relative" ref={sessionPopupRef}>
+                <IconButton
+                  icon={<MdHistory className="w-4 h-4" />}
+                  onClick={toggleSessionPopupVisible}
+                  className="p-1 hover:bg-neutral-700 rounded-md"
+                  tooltip={t('sessions.title')}
                 />
-              )}
+                {sessionPopupVisible && (
+                  <SessionsPopup
+                    sessions={sessions}
+                    onLoadSessionMessages={loadSessionMessages}
+                    onLoadSessionFiles={loadSessionFiles}
+                    onSaveSession={saveSession}
+                    onDeleteSession={deleteSession}
+                    onExportSessionToMarkdown={exportSessionToMarkdown}
+                    onExportSessionToImage={onExportSessionToImage}
+                  />
+                )}
+              </div>
             </div>
           </div>
         )}

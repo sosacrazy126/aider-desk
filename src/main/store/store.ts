@@ -45,6 +45,8 @@ export const DEFAULT_SETTINGS: SettingsData = {
 
 export const DEFAULT_PROJECT_SETTINGS: ProjectSettings = {
   mainModel: DEFAULT_MAIN_MODEL,
+  currentMode: 'code',
+  renderMarkdown: false,
 };
 
 const compareBaseDirs = (baseDir1: string, baseDir2: string): boolean => {
@@ -179,7 +181,7 @@ export class Store {
     };
   }
 
-  saveProjectSettings(baseDir: string, settings: ProjectSettings): void {
+  saveProjectSettings(baseDir: string, settings: ProjectSettings): ProjectSettings {
     const projects = this.getOpenProjects();
 
     logger.info('Projects', {
@@ -197,11 +199,14 @@ export class Store {
         baseDir,
         settings,
       });
+      return settings;
     } else {
       logger.warn(`No project found for baseDir: ${baseDir}`, {
         baseDir,
         settings,
       });
+
+      return settings;
     }
   }
 

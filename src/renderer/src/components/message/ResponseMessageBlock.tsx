@@ -9,19 +9,20 @@ type Props = {
   baseDir: string;
   message: ResponseMessage;
   allFiles: string[];
+  renderMarkdown: boolean;
 };
 
-export const ResponseMessageBlock = ({ baseDir, message, allFiles }: Props) => {
+export const ResponseMessageBlock = ({ baseDir, message, allFiles, renderMarkdown }: Props) => {
   const { t } = useTranslation();
-  const baseClasses = 'rounded-md p-3 mb-2 max-w-full break-words whitespace-pre-wrap text-xs bg-neutral-850 border border-neutral-800 text-gray-100';
+  const baseClasses = 'rounded-md p-3 mb-2 max-w-full text-xs bg-neutral-850 border border-neutral-800 text-gray-100';
 
   if (!message.content) {
     return null;
   }
 
   return (
-    <div className={`${baseClasses} relative flex flex-col group`}>
-      <div className={`flex-1 max-w-full ${message.content ? 'pb-2' : ''}`}>{parseMessageContent(baseDir, message.content, allFiles)}</div>
+    <div className={`${baseClasses} relative flex flex-col group ${renderMarkdown ? '' : 'break-words whitespace-pre-wrap'}`}>
+      <div className={`flex-1 max-w-full ${message.content ? 'pb-2' : ''}`}>{parseMessageContent(baseDir, message.content, allFiles, renderMarkdown)}</div>
       <div className="absolute top-2 right-2 flex items-center gap-2">
         <CopyMessageButton content={message.content} className="text-neutral-600 hover:text-neutral-300" />
       </div>

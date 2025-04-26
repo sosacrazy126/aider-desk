@@ -64,6 +64,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
   const [tokensInfo, setTokensInfo] = useState<TokensInfoData | null>(null);
   const [question, setQuestion] = useState<QuestionData | null>(null);
   const [mode, setMode] = useState<Mode>('code');
+  const [renderMarkdown, setRenderMarkdown] = useState(project.settings?.renderMarkdown ?? false);
   const [showFrozenDialog, setShowFrozenDialog] = useState(false);
   const processingMessageRef = useRef<ResponseMessage | null>(null);
   const promptFieldRef = useRef<PromptFieldRef>(null);
@@ -72,9 +73,14 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
   const frozenTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    const savedMode = localStorage.getItem('aider-desk-mode');
-    setMode(savedMode === 'code' || savedMode === 'agent' ? savedMode : 'code');
-  }, []);
+    const loadProjectSettings = async () => {
+      const settings = await window.api.getProjectSettings(project.baseDir);
+      setMode(settings.currentMode);
+      setRenderMarkdown(settings.renderMarkdown ?? false);
+    };
+
+    void loadProjectSettings();
+  }, [project.baseDir]);
 
   useEffect(() => {
     window.api.startProject(project.baseDir);
@@ -457,9 +463,12 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
 
   const handleModeChange = (mode: Mode) => {
     setMode(mode);
-    if (mode === 'code' || mode === 'agent') {
-      localStorage.setItem('aider-desk-mode', mode);
-    }
+    window.api.patchProjectSettings(project.baseDir, { currentMode: mode });
+  };
+
+  const handleRenderMarkdownChanged = (renderMarkdown: boolean) => {
+    setRenderMarkdown(renderMarkdown);
+    window.api.patchProjectSettings(project.baseDir, { renderMarkdown });
   };
 
   const handleSubmitted = () => {
@@ -503,13 +512,15 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
             modelsData={modelsData}
             allModels={autocompletionData?.models}
             mode={mode}
+            renderMarkdown={renderMarkdown}
             onModelChange={handleModelChange}
+            onRenderMarkdownChanged={handleRenderMarkdownChanged}
             onExportSessionToImage={exportMessagesToImage}
             runCommand={runCommand}
           />
         </div>
         <div className="flex-grow overflow-y-auto">
-          <Messages ref={messagesRef} baseDir={project.baseDir} messages={messages} allFiles={autocompletionData?.allFiles} />
+          <Messages ref={messagesRef} baseDir={project.baseDir} messages={messages} allFiles={autocompletionData?.allFiles} renderMarkdown={renderMarkdown} />
         </div>
         <div className="relative bottom-0 w-full p-4 pb-2 flex-shrink-0 flex border-t border-neutral-800">
           <PromptField

@@ -13,9 +13,10 @@ type Props = {
   baseDir: string;
   messages: Message[];
   allFiles?: string[];
+  renderMarkdown: boolean;
 };
 
-export const Messages = forwardRef<MessagesRef, Props>(({ baseDir, messages, allFiles = [] }, ref) => {
+export const Messages = forwardRef<MessagesRef, Props>(({ baseDir, messages, allFiles = [], renderMarkdown }, ref) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [scrollingPaused, setScrollingPaused] = useState(false);
@@ -69,7 +70,7 @@ export const Messages = forwardRef<MessagesRef, Props>(({ baseDir, messages, all
       onWheel={handleScroll}
     >
       {messages.map((message, index) => (
-        <MessageBlock key={index} baseDir={baseDir} message={message} allFiles={allFiles} />
+        <MessageBlock key={index} baseDir={baseDir} message={message} allFiles={allFiles} renderMarkdown={renderMarkdown} />
       ))}
       <div ref={messagesEndRef} />
     </div>

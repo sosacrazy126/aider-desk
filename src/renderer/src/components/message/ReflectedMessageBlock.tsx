@@ -11,9 +11,10 @@ type Props = {
   baseDir: string;
   message: Message;
   allFiles: string[];
+  renderMarkdown: boolean;
 };
 
-export const ReflectedMessageBlock = ({ baseDir, message, allFiles }: Props) => {
+export const ReflectedMessageBlock = ({ baseDir, message, allFiles, renderMarkdown }: Props) => {
   const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -25,7 +26,7 @@ export const ReflectedMessageBlock = ({ baseDir, message, allFiles }: Props) => 
       </div>
       {isExpanded && (
         <div className="mt-2">
-          {parseMessageContent(baseDir, message.content, allFiles)}
+          {parseMessageContent(baseDir, message.content, allFiles, renderMarkdown)}
           <div className="absolute top-2 right-2">
             <CopyMessageButton content={message.content} className="text-neutral-600 hover:text-neutral-300" />
           </div>

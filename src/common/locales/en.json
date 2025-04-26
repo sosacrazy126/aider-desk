@@ -341,5 +341,8 @@
     "invalidCommand": "Invalid command",
     "stopResponse": "Stop response",
     "sendMessage": "Send message (Enter)"
+  },
+  "projectBar": {
+    "toggleMarkdown": "Markdown rendering"
   }
 }

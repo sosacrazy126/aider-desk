@@ -103,6 +103,8 @@ export interface ProjectSettings {
   architectModel?: string | null;
   reasoningEffort?: string;
   thinkingTokens?: string;
+  currentMode: Mode;
+  renderMarkdown: boolean;
 }
 
 export interface ProjectData {

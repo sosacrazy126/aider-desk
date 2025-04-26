@@ -338,5 +338,8 @@
     "invalidCommand": "无效命令",
     "stopResponse": "停止响应",
     "sendMessage": "发送消息(Enter)"
+  },
+  "projectBar": {
+    "toggleMarkdown": "Markdown 渲染"
   }
 }

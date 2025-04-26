@@ -11,6 +11,7 @@
 - fixed Select dropdown positioning
 - removed mode locking functionality - mode is now always 'locked'
 - commands are now stored in input history
+- added Markdown rendering support for messages
 
 ## [0.10.0]
 

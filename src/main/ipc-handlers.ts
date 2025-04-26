@@ -128,8 +128,12 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, projectManager: Proj
     return store.getProjectSettings(baseDir);
   });
 
-  ipcMain.handle('save-project-settings', async (_, baseDir: string, settings: ProjectSettings) => {
-    store.saveProjectSettings(baseDir, settings);
+  ipcMain.handle('patch-project-settings', async (_, baseDir: string, settings: Partial<ProjectSettings>) => {
+    const projectSettings = store.getProjectSettings(baseDir);
+    return store.saveProjectSettings(baseDir, {
+      ...projectSettings,
+      ...settings,
+    });
   });
 
   ipcMain.handle('get-addable-files', async (_, baseDir: string) => {

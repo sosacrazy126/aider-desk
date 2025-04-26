@@ -40,7 +40,7 @@ export interface ApplicationAPI {
   updateWeakModel: (baseDir: string, model: string) => void;
   updateArchitectModel: (baseDir: string, model: string) => void;
   getProjectSettings: (baseDir: string) => Promise<ProjectSettings>;
-  saveProjectSettings: (baseDir: string, settings: ProjectSettings) => Promise<void>;
+  patchProjectSettings: (baseDir: string, settings: Partial<ProjectSettings>) => Promise<ProjectSettings>;
   getFilePathSuggestions: (currentPath: string, directoriesOnly?: boolean) => Promise<string[]>;
   getAddableFiles: (baseDir: string) => Promise<string[]>;
   addFile: (baseDir: string, filePath: string, readOnly?: boolean) => void;

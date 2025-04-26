@@ -21,9 +21,10 @@ type Props = {
   baseDir: string;
   message: Message;
   allFiles: string[];
+  renderMarkdown: boolean;
 };
 
-export const MessageBlock = ({ baseDir, message, allFiles }: Props) => {
+export const MessageBlock = ({ baseDir, message, allFiles, renderMarkdown }: Props) => {
   if (isLoadingMessage(message)) {
     return <LoadingMessageBlock message={message} />;
   }
@@ -33,7 +34,7 @@ export const MessageBlock = ({ baseDir, message, allFiles }: Props) => {
   }
 
   if (isReflectedMessage(message)) {
-    return <ReflectedMessageBlock baseDir={baseDir} message={message} allFiles={allFiles} />;
+    return <ReflectedMessageBlock baseDir={baseDir} message={message} allFiles={allFiles} renderMarkdown={renderMarkdown} />;
   }
 
   if (isCommandOutputMessage(message)) {
@@ -41,11 +42,11 @@ export const MessageBlock = ({ baseDir, message, allFiles }: Props) => {
   }
 
   if (isUserMessage(message)) {
-    return <UserMessageBlock baseDir={baseDir} message={message} allFiles={allFiles} />;
+    return <UserMessageBlock baseDir={baseDir} message={message} allFiles={allFiles} renderMarkdown={renderMarkdown} />;
   }
 
   if (isResponseMessage(message)) {
-    return <ResponseMessageBlock baseDir={baseDir} message={message} allFiles={allFiles} />;
+    return <ResponseMessageBlock baseDir={baseDir} message={message} allFiles={allFiles} renderMarkdown={renderMarkdown} />;
   }
 
   if (isToolMessage(message)) {
