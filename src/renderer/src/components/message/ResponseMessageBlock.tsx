@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import clsx from 'clsx';
 
 import { CopyMessageButton } from './CopyMessageButton';
 import { parseMessageContent } from './utils';
@@ -21,8 +22,8 @@ export const ResponseMessageBlock = ({ baseDir, message, allFiles, renderMarkdow
   }
 
   return (
-    <div className={`${baseClasses} relative flex flex-col group ${renderMarkdown ? '' : 'break-words whitespace-pre-wrap'}`}>
-      <div className={`flex-1 max-w-full ${message.content ? 'pb-2' : ''}`}>{parseMessageContent(baseDir, message.content, allFiles, renderMarkdown)}</div>
+    <div className={clsx(baseClasses, 'relative flex flex-col group', !renderMarkdown && 'break-words whitespace-pre-wrap')}>
+      <div className="flex-1 max-w-full">{parseMessageContent(baseDir, message.content, allFiles, renderMarkdown)}</div>
       <div className="absolute top-2 right-2 flex items-center gap-2">
         <CopyMessageButton content={message.content} className="text-neutral-600 hover:text-neutral-300" />
       </div>
@@ -30,7 +31,7 @@ export const ResponseMessageBlock = ({ baseDir, message, allFiles, renderMarkdow
         <div
           className="absolute bottom-2 right-2 flex items-center gap-2
           opacity-0 group-hover:opacity-100
-          transition-opacity duration-300 ease-in-out  px-2 py-1 rounded-md
+          transition-opacity duration-300 ease-in-out px-2 py-1 rounded-md
           bg-neutral-900 border border-neutral-700"
         >
           <span className="text-xs text-neutral-300 hover:text-neutral-100">

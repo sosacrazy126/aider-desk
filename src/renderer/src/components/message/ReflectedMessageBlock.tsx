@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { MdKeyboardArrowDown, MdKeyboardArrowRight } from 'react-icons/md';
 import { useTranslation } from 'react-i18next';
+import clsx from 'clsx';
 
 import { CopyMessageButton } from './CopyMessageButton';
 import { parseMessageContent } from './utils';
@@ -19,7 +20,12 @@ export const ReflectedMessageBlock = ({ baseDir, message, allFiles, renderMarkdo
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <div className="rounded-md p-3 mb-2 max-w-full break-words whitespace-pre-wrap text-xs bg-neutral-900/50 border border-neutral-800/50 text-neutral-400 relative group">
+    <div
+      className={clsx(
+        'rounded-md p-3 mb-2 max-w-full text-xs bg-neutral-900/50 border border-neutral-800/50 text-neutral-400 relative group',
+        !renderMarkdown && 'break-words whitespace-pre-wrap',
+      )}
+    >
       <div className="flex items-center cursor-pointer select-none" onClick={() => setIsExpanded(!isExpanded)}>
         {isExpanded ? <MdKeyboardArrowDown className="mr-2" /> : <MdKeyboardArrowRight className="mr-2" />}
         <span className="opacity-70 text-xs">{t('reflectedMessage.title')}</span>

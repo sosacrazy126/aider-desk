@@ -2,6 +2,7 @@ import { MouseEvent, useState } from 'react';
 import { FaBrain, FaChevronDown, FaChevronRight } from 'react-icons/fa';
 import { MdOutlineLightbulb } from 'react-icons/md';
 import { useTranslation } from 'react-i18next';
+import clsx from 'clsx';
 
 import { CopyMessageButton } from './CopyMessageButton';
 import { parseMessageContent } from './utils';
@@ -39,7 +40,7 @@ export const ThinkingAnswerBlock = ({ thinking, answer, baseDir = '', allFiles =
         </div>
 
         {isThinkingExpanded && (
-          <div className="p-3 text-xs whitespace-pre-wrap text-neutral-300 bg-neutral-850">
+          <div className={clsx('p-3 text-xs text-neutral-300 bg-neutral-850', !renderMarkdown && 'whitespace-pre-wrap break-words')}>
             {parseMessageContent(baseDir, thinking, allFiles, renderMarkdown)}
           </div>
         )}
@@ -57,7 +58,7 @@ export const ThinkingAnswerBlock = ({ thinking, answer, baseDir = '', allFiles =
             </div>
             <CopyMessageButton content={answer} className="text-neutral-600 hover:text-neutral-300" />
           </div>
-          <div className="p-3 text-xs whitespace-pre-wrap text-neutral-100 bg-neutral-850">
+          <div className={clsx('p-3 text-xs text-neutral-100 bg-neutral-850', !renderMarkdown && 'whitespace-pre-wrap break-words')}>
             {parseMessageContent(baseDir, answer, allFiles, renderMarkdown)}
           </div>
         </div>
