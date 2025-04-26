@@ -296,7 +296,8 @@
     "title": "Reflected Message"
   },
   "responseMessage": {
-    "usageReport": "{{sent}} tokens sent, {{received}} tokens received, cost: ${{cost}}"
+    "inputTokens": "Input Tokens",
+    "outputTokens": "Output Tokens"
   },
   "thinkingAnswer": {
     "thinking": "THINKING",

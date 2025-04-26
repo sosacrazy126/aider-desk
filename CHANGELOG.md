@@ -12,6 +12,7 @@
 - removed mode locking functionality - mode is now always 'locked'
 - commands are now stored in input history
 - added Markdown rendering support for messages
+- added bottom bar to message with additional info and actions
 
 ## [0.10.0]
 

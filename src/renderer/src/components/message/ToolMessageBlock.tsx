@@ -10,6 +10,7 @@ import { CopyMessageButton } from './CopyMessageButton';
 import { parseToolContent } from './utils';
 
 import { ToolMessage } from '@/types/message';
+import { MessageBar } from '@/components/message/MessageBar';
 
 type Props = {
   message: ToolMessage;
@@ -104,14 +105,11 @@ export const ToolMessageBlock = ({ message }: Props) => {
   };
 
   return (
-    <div className="border border-neutral-800 rounded-md mb-2">
+    <div className="border border-neutral-800 rounded-md mb-2 group p-3 bg-neutral-850">
       {/* Header */}
-      <div
-        className="flex items-center justify-between gap-2 p-2 px-3 bg-neutral-850 cursor-pointer hover:bg-neutral-750 select-none rounded-t-md"
-        onClick={handleHeaderClick}
-      >
+      <div className="flex items-center justify-between gap-2  cursor-pointer hover:bg-neutral-750 select-none rounded-t-md" onClick={handleHeaderClick}>
         <div className="flex items-center gap-2">
-          <div className={`text-neutral-200 ${isExecuting ? 'animate-pulse' : ''}`}>
+          <div className={`text-neutral-500 ${isExecuting ? 'animate-pulse' : ''}`}>
             <RiToolsFill className="w-4 h-4" />
           </div>
           <div className={`font-medium text-xs text-neutral-100 ${isExecuting ? 'animate-pulse' : ''}`}>
@@ -154,6 +152,7 @@ export const ToolMessageBlock = ({ message }: Props) => {
           )}
         </div>
       </div>
+      <MessageBar content={message.content} usageReport={message.usageReport} />
     </div>
   );
 };

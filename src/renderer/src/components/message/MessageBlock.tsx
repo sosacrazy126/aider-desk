@@ -34,7 +34,7 @@ export const MessageBlock = ({ baseDir, message, allFiles, renderMarkdown }: Pro
   }
 
   if (isReflectedMessage(message)) {
-    return <ReflectedMessageBlock baseDir={baseDir} message={message} allFiles={allFiles} renderMarkdown={renderMarkdown} />;
+    return <ReflectedMessageBlock baseDir={baseDir} message={message} allFiles={allFiles} />;
   }
 
   if (isCommandOutputMessage(message)) {

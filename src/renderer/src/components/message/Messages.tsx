@@ -4,6 +4,7 @@ import { toPng } from 'html-to-image';
 import { MessageBlock } from './MessageBlock';
 
 import { Message } from '@/types/message';
+import { StyledTooltip } from '@/components/common/StyledTooltip';
 
 export type MessagesRef = {
   exportToImage: () => void;
@@ -69,6 +70,7 @@ export const Messages = forwardRef<MessagesRef, Props>(({ baseDir, messages, all
       hover:scrollbar-thumb-neutral-600"
       onWheel={handleScroll}
     >
+      <StyledTooltip id="usage-info-tooltip" />
       {messages.map((message, index) => (
         <MessageBlock key={index} baseDir={baseDir} message={message} allFiles={allFiles} renderMarkdown={renderMarkdown} />
       ))}
