@@ -199,6 +199,10 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, projectManager: Proj
     projectManager.getProject(baseDir).clearContext(true);
   });
 
+  ipcMain.on('remove-last-message', (_, baseDir: string) => {
+    projectManager.getProject(baseDir).removeLastMessage();
+  });
+
   ipcMain.handle('scrape-web', async (_, baseDir: string, url: string) => {
     const content = await scrapeWeb(url);
     projectManager.getProject(baseDir).addContextMessage(MessageRole.User, `I have scraped the following content from ${url}:\n\n${content}`);

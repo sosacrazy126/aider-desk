@@ -15,9 +15,10 @@ type Props = {
   messages: Message[];
   allFiles?: string[];
   renderMarkdown: boolean;
+  removeMessage: (message: Message) => void;
 };
 
-export const Messages = forwardRef<MessagesRef, Props>(({ baseDir, messages, allFiles = [], renderMarkdown }, ref) => {
+export const Messages = forwardRef<MessagesRef, Props>(({ baseDir, messages, allFiles = [], renderMarkdown, removeMessage }, ref) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [scrollingPaused, setScrollingPaused] = useState(false);
@@ -72,7 +73,15 @@ export const Messages = forwardRef<MessagesRef, Props>(({ baseDir, messages, all
     >
       <StyledTooltip id="usage-info-tooltip" />
       {messages.map((message, index) => (
-        <MessageBlock key={index} baseDir={baseDir} message={message} allFiles={allFiles} renderMarkdown={renderMarkdown} />
+        <MessageBlock
+          key={index}
+          baseDir={baseDir}
+          message={message}
+          allFiles={allFiles}
+          renderMarkdown={renderMarkdown}
+          removeMessage={() => removeMessage(message)}
+          isLastMessage={index === messages.length - 1}
+        />
       ))}
       <div ref={messagesEndRef} />
     </div>

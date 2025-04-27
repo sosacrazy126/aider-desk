@@ -11,9 +11,10 @@ type Props = {
   message: ResponseMessage;
   allFiles: string[];
   renderMarkdown: boolean;
+  onRemove?: () => void;
 };
 
-export const ResponseMessageBlock = ({ baseDir, message, allFiles, renderMarkdown }: Props) => {
+export const ResponseMessageBlock = ({ baseDir, message, allFiles, renderMarkdown, onRemove }: Props) => {
   const baseClasses = 'rounded-md p-3 mb-2 max-w-full text-xs bg-neutral-850 border border-neutral-800 text-gray-100';
 
   if (!message.content) {
@@ -28,7 +29,7 @@ export const ResponseMessageBlock = ({ baseDir, message, allFiles, renderMarkdow
         </div>
         <div className="flex-1 max-w-full">{parseMessageContent(baseDir, message.content, allFiles, renderMarkdown)}</div>
       </div>
-      <MessageBar content={message.content} usageReport={message.usageReport} />
+      <MessageBar content={message.content} usageReport={message.usageReport} removeMessage={onRemove} />
     </div>
   );
 };

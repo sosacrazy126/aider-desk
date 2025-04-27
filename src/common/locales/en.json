@@ -266,7 +266,6 @@
     "refreshRepoMap": "Refresh repository map",
     "messages": "Messages",
     "clearMessages": "Clear message history",
-    "lastMessage": "Last message",
     "agent": "Agent",
     "aider": "Aider",
     "total": "Total",
@@ -345,5 +344,8 @@
   },
   "projectBar": {
     "toggleMarkdown": "Markdown rendering"
+  },
+  "message": {
+    "delete": "Delete"
   }
 }

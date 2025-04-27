@@ -13,6 +13,7 @@
 - commands are now stored in input history
 - added Markdown rendering support for messages
 - added bottom bar to message with additional info and actions
+- added ability to remove last message from the context
 
 ## [0.10.0]
 

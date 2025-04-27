@@ -115,7 +115,7 @@ export class Project {
       this.sessionManager.getContextFiles().forEach(connector.sendAddFileMessage);
     }
     if (connector.listenTo.includes('add-message')) {
-      this.sessionManager.filterUserAndAssistantMessages().forEach((message) => {
+      this.sessionManager.toConnectorMessages().forEach((message) => {
         connector.sendAddMessageMessage(message.role, message.content, false);
       });
     }
@@ -306,7 +306,7 @@ export class Project {
       return;
     }
 
-    await this.sessionManager.loadMessages(session);
+    await this.sessionManager.loadMessages(session.contextMessages || []);
   }
 
   public async loadSessionFiles(name: string) {
@@ -315,7 +315,7 @@ export class Project {
       return;
     }
 
-    await this.sessionManager.loadFiles(session);
+    await this.sessionManager.loadFiles(session.contextFiles || []);
   }
 
   public async deleteSession(name: string): Promise<void> {
@@ -399,7 +399,7 @@ export class Project {
         agentMessages.forEach((message) => this.sessionManager.addContextMessage(message));
 
         // send messages to connectors (aider)
-        this.sessionManager.filterUserAndAssistantMessages(agentMessages).forEach((message) => {
+        this.sessionManager.toConnectorMessages(agentMessages).forEach((message) => {
           this.sendAddMessage(message.role, message.content, false);
         });
       }
@@ -504,7 +504,8 @@ export class Project {
         diff: message.diff,
         usageReport,
       };
-      this.mainWindow.webContents.send('response-completed', data);
+
+      this.addResponseCompletedMessage(data);
       this.currentResponseMessageId = null;
       this.closeCommandOutput();
 
@@ -513,6 +514,10 @@ export class Project {
     }
 
     return this.currentResponseMessageId;
+  }
+
+  addResponseCompletedMessage(data: ResponseCompletedData) {
+    this.mainWindow.webContents.send('response-completed', data);
   }
 
   private getQuestionKey(question: QuestionData): string {
@@ -898,6 +903,10 @@ export class Project {
     };
 
     this.mainWindow.webContents.send('user-message', data);
+  }
+
+  public removeLastMessage(): void {
+    this.sessionManager.removeLastMessage();
   }
 
   public addContextMessage(role: MessageRole, content: string) {

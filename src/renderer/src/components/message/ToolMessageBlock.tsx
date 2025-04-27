@@ -14,9 +14,10 @@ import { MessageBar } from '@/components/message/MessageBar';
 
 type Props = {
   message: ToolMessage;
+  onRemove?: () => void;
 };
 
-export const ToolMessageBlock = ({ message }: Props) => {
+export const ToolMessageBlock = ({ message, onRemove }: Props) => {
   const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(true); // Controls visibility
   const [isInitialAutoExpand, setIsInitialAutoExpand] = useState(true); // Tracks the initial phase
@@ -152,7 +153,7 @@ export const ToolMessageBlock = ({ message }: Props) => {
           )}
         </div>
       </div>
-      <MessageBar content={message.content} usageReport={message.usageReport} />
+      <MessageBar content={message.content} usageReport={message.usageReport} removeMessage={onRemove} />
     </div>
   );
 };

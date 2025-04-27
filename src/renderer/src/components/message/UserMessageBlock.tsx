@@ -11,9 +11,10 @@ type Props = {
   message: UserMessage;
   allFiles: string[];
   renderMarkdown: boolean;
+  onRemove?: () => void;
 };
 
-export const UserMessageBlock = ({ baseDir, message, allFiles, renderMarkdown }: Props) => {
+export const UserMessageBlock = ({ baseDir, message, allFiles, renderMarkdown, onRemove }: Props) => {
   const baseClasses = 'rounded-md p-3 mb-2 max-w-full text-xs bg-neutral-850 border border-neutral-800 text-gray-100';
 
   return (
@@ -24,7 +25,7 @@ export const UserMessageBlock = ({ baseDir, message, allFiles, renderMarkdown }:
         </div>
         <div className="flex-grow-1 max-w-full overflow-hidden">{parseMessageContent(baseDir, message.content, allFiles, renderMarkdown)}</div>
       </div>
-      <MessageBar content={message.content} />
+      <MessageBar content={message.content} removeMessage={onRemove} />
     </div>
   );
 };

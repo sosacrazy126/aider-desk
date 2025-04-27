@@ -263,7 +263,6 @@
     "refreshRepoMap": "刷新仓库地图",
     "messages": "消息",
     "clearMessages": "清除消息历史",
-    "lastMessage": "最后消息",
     "agent": "代理",
     "aider": "Aider",
     "total": "全部的",
@@ -342,5 +341,8 @@
   },
   "projectBar": {
     "toggleMarkdown": "Markdown 渲染"
+  },
+  "message": {
+    "delete": "删除"
   }
 }

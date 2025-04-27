@@ -46,23 +46,21 @@ export const createAiderToolset = (project: Project): ToolSet => {
   });
 
   const runPromptTool = tool({
-    description:
-      'Give a prompt to the coding assistant Aider to perform coding tasks. This should be used whenever request from seems to be a coding task. ' +
-      "If user's request seems to be a coding task, use this tool. " +
-      "You can give aider some steps to perform based on the user's request, but since Aider is very efficient in coding tasks, you do not need to handhold it. " +
-      "Before running this tool, make sure all the necessary files related to user's request are added to the Aider's context.\n" +
-      '- **Rules:**\n' +
-      '    - Writing, modifying, refactoring, or explaining code.\n' +
-      '    - Debugging, improving performance, and implementing new features.\n' +
-      '    - `aider` knows content of all the files you see in your context.\n' +
-      '    - `aider` should be prompted in natural language and the instructions should be clear and complete.\n' +
-      "    - before run_prompt tool, make sure all the necessary files are added to the it's context using add_context_file tool.\n" +
-      '    - treat `aider` as Medior Level programmer, ready to fulfill your requests.\n' +
-      '    - ALWAYS prefer this tool before other available tools for when creating, updating files and coding tasks.\n' +
-      '- **Restrictions:**\n' +
-      '    - **Do NOT mention specific programming languages** (e.g., Python, JavaScript, Java, C++).\n' +
-      '    - **Do NOT reference language-specific features, syntax, or libraries** in natural language prompts.\n' +
-      '    - If `aider` is used, ensure instructions are **complete, clear, and standalone**.\n',
+    description: `Give a prompt to the coding assistant Aider to perform coding tasks. This should be used whenever request from seems to be a coding task. If user's request seems to be a coding task, use this tool. You can give aider some steps to perform based on the user's request, but since Aider is very efficient in coding tasks, you do not need to handhold it. Before running this tool, make sure all the necessary files related to user's request are added to the Aider's context.
+- **Rules:**
+    - Writing, modifying, refactoring, or explaining code.
+    - Debugging, improving performance, and implementing new features.
+    - \`aider\` knows content of all the files you see in your context.
+    - \`aider\` should be prompted in natural language and the instructions should be clear and complete.
+    - before run_prompt tool, make sure all the necessary files are added to the it's context using add_context_file tool.
+    - treat \`aider\` as Medior Level programmer, ready to fulfill your requests.
+    - ALWAYS prefer this tool before other available tools for when creating, updating files and coding tasks.
+    - 'updatedFiles' will be a list of files that were updated by the tool as mentioned in 'responses'.
+- **Restrictions:**
+    - **Do NOT mention specific programming languages** (e.g., Python, JavaScript, Java, C++).
+    - **Do NOT reference language-specific features, syntax, or libraries** in natural language prompts.
+    - If \`aider\` is used, ensure instructions are **complete, clear, and standalone**.
+`,
     parameters: z.object({
       prompt: z.string().describe('The prompt to run in natural language.'),
     }),
@@ -83,7 +81,11 @@ export const createAiderToolset = (project: Project): ToolSet => {
       const isApproved = yesNoAnswer === 'y';
 
       if (!isApproved) {
-        return `Aider prompt execution denied by user.${userInput ? ` User input: ${userInput}` : ''}`;
+        return {
+          responses: [],
+          updatedFiles: [],
+          error: `Aider prompt execution denied by user.${userInput ? ` User input: ${userInput}` : ''}`,
+        };
       }
 
       const responses = await project.sendPrompt(prompt, 'code', true);
@@ -91,15 +93,14 @@ export const createAiderToolset = (project: Project): ToolSet => {
       // Notify that we are still processing after aider finishes
       project.addLogMessage('loading');
 
-      // Merge all responses into a single cohesive response
-      const mergedResponse = responses
-        .map((response) => response.content.trim())
-        .join('\n\n')
-        .replace(/\n{3,}/g, '\n\n'); // Normalize excessive newlines
-
-      const editedFiles = responses.flatMap((response) => response.editedFiles || []).filter((value, index, self) => self.indexOf(value) === index); // Unique files
-
-      return `${mergedResponse}\n\n**RESULT:**\n${editedFiles.length ? `I have updated the following files as mentioned above: ${editedFiles.join(', ')}` : "I haven't updated any files."}`;
+      return {
+        responses: responses.map((response) => ({
+          messageId: response.messageId,
+          content: response.content.trim(),
+          reflectedMessage: response.reflectedMessage,
+        })),
+        updatedFiles: responses.flatMap((response) => response.editedFiles || []).filter((value, index, self) => self.indexOf(value) === index), // Unique files
+      };
     },
   });
 

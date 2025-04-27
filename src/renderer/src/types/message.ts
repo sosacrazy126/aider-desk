@@ -19,6 +19,7 @@ export interface ResponseMessage extends Message {
 
 export interface ReflectedMessage extends Message {
   type: 'reflected-message';
+  responseMessageId: string;
 }
 
 export interface LogMessage extends Message {

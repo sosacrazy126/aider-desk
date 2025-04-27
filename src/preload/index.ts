@@ -84,6 +84,7 @@ const api: ApplicationAPI = {
   interruptResponse: (baseDir: string) => ipcRenderer.send('interrupt-response', baseDir),
   applyEdits: (baseDir: string, edits: FileEdit[]) => ipcRenderer.send('apply-edits', baseDir, edits),
   clearContext: (baseDir: string) => ipcRenderer.send('clear-context', baseDir),
+  removeLastMessage: (baseDir: string) => ipcRenderer.send('remove-last-message', baseDir),
   setZoomLevel: (level: number) => ipcRenderer.invoke('set-zoom-level', level),
 
   addResponseChunkListener: (baseDir, callback) => {
