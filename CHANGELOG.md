@@ -1,5 +1,9 @@
 # Changelog
 
+## [UNRELEASED]
+
+- using Aider's --env and --env-file options for Agent LLM providers
+
 ## [0.11.0]
 
 - fixed issue with docker MCP server not closing properly

@@ -23,6 +23,12 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, projectManager: Proj
       void agent.initMcpServers();
     }
 
+    const aiderEnvChanged = currentSettings.aider?.environmentVariables !== settings.aider?.environmentVariables;
+    const aiderOptionsChanged = currentSettings.aider?.options !== settings.aider?.options;
+    if (aiderEnvChanged || aiderOptionsChanged) {
+      agent.invalidateAiderEnv();
+    }
+
     return store.getSettings();
   });
 
