@@ -104,8 +104,8 @@ export interface ApplicationAPI {
   addInputHistoryUpdatedListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: InputHistoryData) => void) => string;
   removeInputHistoryUpdatedListener: (listenerId: string) => void;
 
-  addClearMessagesListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, baseDir: string) => void) => string;
-  removeClearMessagesListener: (listenerId: string) => void;
+  addClearProjectListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, clearMessages: boolean, clearSession: boolean) => void) => string;
+  removeClearProjectListener: (listenerId: string) => void;
 }
 
 declare global {

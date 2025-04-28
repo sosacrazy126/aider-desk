@@ -154,7 +154,13 @@
     "common": {
       "showSecrets": "Show Secrets"
     },
-    "zoom": "Zoom level"
+    "zoom": "Zoom level",
+    "aiderRestartConfirm": {
+      "title": "Restart Required",
+      "message": "Changes to Aider options or environment variables require a restart of the Aider session to take effect. Would you like to restart now?",
+      "restartNow": "Restart now",
+      "later": "I'll do it later"
+    }
   },
   "messages": {
     "thinking": "Thinking...",

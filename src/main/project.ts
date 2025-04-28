@@ -289,6 +289,7 @@ export class Project {
 
   public async close() {
     logger.info('Closing project...', { baseDir: this.baseDir });
+    this.mainWindow.webContents.send('clear-project', this.baseDir, true, true);
     await this.killAider();
   }
 
@@ -838,7 +839,7 @@ export class Project {
   public clearContext(addToHistory = false) {
     this.sessionManager.clearMessages();
     this.runCommand('clear', addToHistory);
-    this.mainWindow.webContents.send('clear-messages', this.baseDir);
+    this.mainWindow.webContents.send('clear-project', this.baseDir, true, false);
   }
 
   public interruptResponse() {

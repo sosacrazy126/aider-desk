@@ -336,8 +336,12 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
       });
     };
 
-    const handleClearMessages = () => {
-      clearMessages(false);
+    const handleClearProject = (_: IpcRendererEvent, messages: boolean, session: boolean) => {
+      if (session) {
+        clearSession();
+      } else if (messages) {
+        clearMessages(false);
+      }
     };
 
     const autocompletionListenerId = window.api.addUpdateAutocompletionListener(project.baseDir, handleUpdateAutocompletion);
@@ -351,7 +355,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
     const toolListenerId = window.api.addToolListener(project.baseDir, handleTool);
     const inputHistoryListenerId = window.api.addInputHistoryUpdatedListener(project.baseDir, handleInputHistoryUpdate);
     const userMessageListenerId = window.api.addUserMessageListener(project.baseDir, handleUserMessage);
-    const clearMessagesListenerId = window.api.addClearMessagesListener(project.baseDir, handleClearMessages);
+    const clearProjectListenerId = window.api.addClearProjectListener(project.baseDir, handleClearProject);
 
     return () => {
       window.api.removeUpdateAutocompletionListener(autocompletionListenerId);
@@ -365,7 +369,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
       window.api.removeToolListener(toolListenerId);
       window.api.removeInputHistoryUpdatedListener(inputHistoryListenerId);
       window.api.removeUserMessageListener(userMessageListenerId);
-      window.api.removeClearMessagesListener(clearMessagesListenerId);
+      window.api.removeClearProjectListener(clearProjectListenerId);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [project.baseDir]);
@@ -380,6 +384,19 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
     setAddFileDialogOptions({
       readOnly,
     });
+  };
+
+  const clearSession = () => {
+    setShowFrozenDialog(false);
+    setLoading(true);
+    setMessages([]);
+    setAiderTotalCost(0);
+    setAgentTotalCost(0);
+    setProcessing(false);
+    setTokensInfo(null);
+    setQuestion(null);
+    setModelsData(null);
+    processingMessageRef.current = null;
   };
 
   const clearMessages = (clearContext = true) => {
@@ -493,17 +510,8 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
   };
 
   const restartProject = () => {
-    setShowFrozenDialog(false);
-    setLoading(true);
-    setMessages([]);
-    setAiderTotalCost(0);
-    setAgentTotalCost(0);
-    setProcessing(false);
-    setTokensInfo(null);
-    setQuestion(null);
-    setModelsData(null);
-    processingMessageRef.current = null;
     void window.api.restartProject(project.baseDir);
+    clearSession();
   };
 
   const exportMessagesToImage = () => {
