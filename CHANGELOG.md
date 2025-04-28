@@ -1,6 +1,6 @@
 # Changelog
 
-## [UNRELEASED]
+## [0.11.0]
 
 - fixed issue with docker MCP server not closing properly
 - closing session popup when clicking on the button again
