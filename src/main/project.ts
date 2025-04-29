@@ -4,6 +4,7 @@ import { unlinkSync } from 'fs';
 import fs from 'fs/promises';
 import path from 'path';
 
+import { simpleGit } from 'simple-git';
 import {
   ContextFile,
   Mode,
@@ -37,6 +38,8 @@ import logger from './logger';
 import { MessageAction, ResponseMessage } from './messages';
 import { DEFAULT_MAIN_MODEL, Store } from './store';
 
+import type { SimpleGit } from 'simple-git';
+
 export class Project {
   private process: ChildProcessWithoutNullStreams | null = null;
   private connectors: Connector[] = [];
@@ -57,13 +60,16 @@ export class Project {
 
   mcpAgentTotalCost: number = 0;
   aiderTotalCost: number = 0;
+  public readonly git: SimpleGit;
 
   constructor(
     private readonly mainWindow: BrowserWindow,
     public readonly baseDir: string,
     private readonly store: Store,
     private readonly agent: Agent,
-  ) {}
+  ) {
+    this.git = simpleGit(this.baseDir);
+  }
 
   public async start() {
     const settings = this.store.getSettings();
@@ -561,15 +567,16 @@ export class Project {
     return false;
   }
 
-  public async addFile(contextFile: ContextFile): Promise<void> {
+  public async addFile(contextFile: ContextFile) {
     logger.info('Adding file or folder:', {
       path: contextFile.path,
       readOnly: contextFile.readOnly,
     });
     if (!(await this.sessionManager.addContextFile(contextFile))) {
-      return;
+      return false;
     }
     this.sendAddFile(contextFile);
+    return true;
   }
 
   public sendAddFile(contextFile: ContextFile) {
