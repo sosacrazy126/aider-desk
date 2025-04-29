@@ -27,7 +27,7 @@ export const ResponseMessageBlock = ({ baseDir, message, allFiles, renderMarkdow
         <div className="mt-[1px]">
           <RiRobot2Line className="text-neutral-500 w-4 h-4" />
         </div>
-        <div className="flex-1 max-w-full">{parseMessageContent(baseDir, message.content, allFiles, renderMarkdown)}</div>
+        <div className="flex-grow-1 w-full overflow-hidden">{parseMessageContent(baseDir, message.content, allFiles, renderMarkdown)}</div>
       </div>
       <MessageBar content={message.content} usageReport={message.usageReport} removeMessage={onRemove} />
     </div>

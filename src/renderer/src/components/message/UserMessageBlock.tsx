@@ -23,7 +23,7 @@ export const UserMessageBlock = ({ baseDir, message, allFiles, renderMarkdown, o
         <div className="mt-[3px]">
           <FaRegUser className="text-neutral-500 w-4 h-3" />
         </div>
-        <div className="flex-grow-1 max-w-full overflow-hidden">{parseMessageContent(baseDir, message.content, allFiles, renderMarkdown)}</div>
+        <div className="flex-grow-1 w-full overflow-hidden">{parseMessageContent(baseDir, message.content, allFiles, renderMarkdown)}</div>
       </div>
       <MessageBar content={message.content} removeMessage={onRemove} />
     </div>
