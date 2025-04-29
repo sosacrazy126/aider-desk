@@ -5,6 +5,7 @@
 - using Aider's --env and --env-file options for Agent LLM providers
 - added confirmation dialog for Aider restart after settings changes
 - improved Agent internal Aider tool description and fixed flow with adding new file to context
+- fixed editing of custom instructions for Agent settings
 
 ## [0.11.0]
 
