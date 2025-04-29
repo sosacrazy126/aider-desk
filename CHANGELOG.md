@@ -1,6 +1,6 @@
 # Changelog
 
-## [UNRELEASED]
+## [0.11.1]
 
 - using Aider's --env and --env-file options for Agent LLM providers
 - added confirmation dialog for Aider restart after settings changes
