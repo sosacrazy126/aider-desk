@@ -501,7 +501,8 @@ export class Agent {
           logger.error('Error during prompt:', { error });
           if (typeof error === 'string') {
             project.addLogMessage('error', error);
-          } else if (error instanceof APICallError) {
+            // @ts-expect-error checking keys in error
+          } else if (APICallError.isInstance(error) || ('message' in error && 'responseBody' in error)) {
             project.addLogMessage('error', `${error.message}: ${error.responseBody}`);
           } else if (error instanceof Error) {
             project.addLogMessage('error', error.message);

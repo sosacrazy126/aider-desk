@@ -1,4 +1,4 @@
-export type ProviderName = 'openai' | 'anthropic' | 'gemini' | 'bedrock' | 'deepseek' | 'openai-compatible' | 'ollama';
+export type ProviderName = 'openai' | 'anthropic' | 'gemini' | 'bedrock' | 'deepseek' | 'openai-compatible' | 'ollama' | 'openrouter';
 
 export interface LlmProviderBase {
   name: ProviderName;
@@ -12,13 +12,14 @@ export interface OllamaProvider extends LlmProviderBase {
 }
 
 export const AVAILABLE_PROVIDERS = [
-  { value: 'openai', label: 'OpenAI' },
   { value: 'anthropic', label: 'Anthropic' },
-  { value: 'gemini', label: 'Gemini' },
   { value: 'bedrock', label: 'Bedrock' },
   { value: 'deepseek', label: 'Deepseek' },
-  { value: 'openai-compatible', label: 'OpenAI Compatible' },
+  { value: 'gemini', label: 'Gemini' },
   { value: 'ollama', label: 'Ollama' },
+  { value: 'openai', label: 'OpenAI' },
+  { value: 'openai-compatible', label: 'OpenAI Compatible' },
+  { value: 'openrouter', label: 'OpenRouter' },
 ];
 
 export interface OpenAiProvider extends LlmProviderBase {
@@ -62,7 +63,21 @@ export const isOpenAiCompatibleProvider = (provider: LlmProviderBase): provider 
 
 export const isOllamaProvider = (provider: LlmProviderBase): provider is OllamaProvider => provider.name === 'ollama';
 
-export type LlmProvider = OpenAiProvider | AnthropicProvider | GeminiProvider | BedrockProvider | DeepseekProvider | OpenAiCompatibleProvider | OllamaProvider;
+export interface OpenRouterProvider extends LlmProviderBase {
+  name: 'openrouter';
+  apiKey: string;
+}
+export const isOpenRouterProvider = (provider: LlmProviderBase): provider is OpenRouterProvider => provider.name === 'openrouter';
+
+export type LlmProvider =
+  | OpenAiProvider
+  | AnthropicProvider
+  | GeminiProvider
+  | BedrockProvider
+  | DeepseekProvider
+  | OpenAiCompatibleProvider
+  | OllamaProvider
+  | OpenRouterProvider;
 
 export const getActiveProvider = (providers: LlmProvider[]): LlmProvider | null => {
   return providers.find((provider) => provider.active) || null;
@@ -157,6 +172,12 @@ export const PROVIDER_MODELS: Record<string, { models: Record<string, { inputCos
         outputCost: 15.0,
         maxInputTokens: 200_000,
       },
+    },
+  },
+  openrouter: {
+    // Placeholder: Add specific OpenRouter models and costs when available
+    models: {
+      'openrouter/auto': { inputCost: 0, outputCost: 0 }, // Example placeholder
     },
   },
 };

@@ -6,6 +6,7 @@ import { createAmazonBedrock } from '@ai-sdk/amazon-bedrock';
 import { createOllama } from 'ollama-ai-provider';
 import { fromNodeProviderChain } from '@aws-sdk/credential-providers';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
+import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import {
   isAnthropicProvider,
   isBedrockProvider,
@@ -14,6 +15,7 @@ import {
   isOllamaProvider,
   isOpenAiCompatibleProvider,
   isOpenAiProvider,
+  isOpenRouterProvider, // Added import
   LlmProvider,
 } from '@common/llm-providers';
 
@@ -116,6 +118,13 @@ export const createLlm = (provider: LlmProvider, env: Record<string, string | un
     return ollamaInstance(provider.model, {
       simulateStreaming: true,
     });
+  } else if (isOpenRouterProvider(provider)) {
+    const apiKey = provider.apiKey || env['OPENROUTER_API_KEY'];
+    if (!apiKey) {
+      throw new Error('OpenRouter API key is required in Agent provider settings or Aider environment variables (OPENROUTER_API_KEY)');
+    }
+    const openrouter = createOpenRouter({ apiKey });
+    return openrouter.chat(provider.model);
   } else {
     throw new Error(`Unsupported MCP provider: ${JSON.stringify(provider)}`);
   }

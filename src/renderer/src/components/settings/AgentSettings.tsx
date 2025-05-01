@@ -13,6 +13,7 @@ import {
   isDeepseekProvider,
   isOpenAiCompatibleProvider,
   isOllamaProvider,
+  isOpenRouterProvider,
   getActiveProvider,
 } from '@common/llm-providers';
 import { SERVER_TOOL_SEPARATOR } from '@common/utils';
@@ -37,6 +38,7 @@ import { TextArea } from '@/components/common/TextArea';
 import { Accordion } from '@/components/common/Accordion';
 import { Input } from '@/components/common/Input';
 import { StyledTooltip } from '@/components/common/StyledTooltip';
+import { OpenRouterParameters } from '@/components/settings/providers/OpenRouterParameters';
 
 const CUSTOM_INSTRUCTIONS_PLACEHOLDER = `## Probe Tools Usage
 
@@ -82,6 +84,13 @@ export const AgentSettings = ({ settings, setSettings }: Props) => {
           model: '',
           active: true,
         } as LlmProvider;
+      } else if (newProviderName === 'openrouter') {
+        newProvider = {
+          name: 'openrouter',
+          apiKey: '',
+          model: '', // OpenRouter often uses specific model identifiers like 'google/gemini-flash-1.5'
+          active: true,
+        };
       } else {
         newProvider = {
           name: newProviderName,
@@ -265,6 +274,7 @@ export const AgentSettings = ({ settings, setSettings }: Props) => {
               {activeProvider && isBedrockProvider(activeProvider) && <BedrockParameters settings={settings} setSettings={setSettings} />}
               {activeProvider && isOpenAiCompatibleProvider(activeProvider) && <OpenAiCompatibleParameters settings={settings} setSettings={setSettings} />}
               {activeProvider && isOllamaProvider(activeProvider) && <OllamaParameters settings={settings} setSettings={setSettings} />}
+              {activeProvider && isOpenRouterProvider(activeProvider) && <OpenRouterParameters settings={settings} setSettings={setSettings} />}
             </div>
             <div>
               <div>

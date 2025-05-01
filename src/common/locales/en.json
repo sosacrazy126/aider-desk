@@ -111,6 +111,10 @@
     "secretAccessKey": "Secret Access Key",
     "secretAccessKeyTooltip": "AWS secret access key. Can be left empty if AWS_PROFILE is set in environment."
   },
+  "openrouter": {
+    "apiKey": "API Key",
+    "modelPlaceholder": "e.g. anthropic/claude-3.7-sonnet"
+  },
   "select": {
     "placeholder": "Select an option",
     "loadingSessions": "Loading sessions..."
