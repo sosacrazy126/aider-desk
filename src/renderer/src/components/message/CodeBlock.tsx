@@ -127,6 +127,7 @@ export const CodeBlock = ({ baseDir, language, children, file, isComplete = true
         />
       );
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Syntax highlighting failed:', error);
       return <pre style={{ display: 'inline' }}>{code}</pre>;
     }

@@ -28,6 +28,7 @@ export const McpServerSelectorItem = ({ serverName, disabled, toolApprovals, onT
           tools?.filter((tool) => toolApprovals[`${serverName}${SERVER_TOOL_SEPARATOR}${tool.name}`] === ToolApprovalState.Never).length ?? 0;
         setToolsCount(Math.max(0, totalTools - disabledCount));
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.error('Failed to load MCP server tools:', error);
         setToolsCount(0); // Set count to 0 on error
       } finally {

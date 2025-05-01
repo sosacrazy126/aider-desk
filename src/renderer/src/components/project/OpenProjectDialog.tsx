@@ -58,6 +58,7 @@ export const OpenProjectDialog = ({ onClose, onAddProject }: Props) => {
         setProjectPath(result.filePaths[0]);
       }
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Error selecting project:', error);
     }
   };

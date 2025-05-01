@@ -25,6 +25,7 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
       const updatedSettings = await window.api.saveSettings(updated);
       setSettings(updatedSettings);
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Failed to save settings:', error);
     }
   };

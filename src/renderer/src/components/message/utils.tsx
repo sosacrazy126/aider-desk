@@ -325,14 +325,17 @@ export const parseToolContent = (rawContent: string): ToolContentResult => {
           }
         } catch (innerError) {
           // Ignore error if inner content is not valid JSON
+          // eslint-disable-next-line no-console
           console.debug('Inner content is not valid JSON:', innerError);
         }
       }
     } else {
+      // eslint-disable-next-line no-console
       console.warn('Parsed tool content does not match expected structure:', parsedOuter);
     }
   } catch (outerError) {
     // Ignore error if the raw content is not valid JSON
+    // eslint-disable-next-line no-console
     console.debug('Raw tool content is not valid JSON:', outerError);
   }
 

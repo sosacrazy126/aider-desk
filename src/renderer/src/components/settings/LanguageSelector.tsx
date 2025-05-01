@@ -1,4 +1,4 @@
-import ReactCountryFlag from 'react-country-flag';
+import { ReactCountryFlag } from 'react-country-flag';
 import { useTranslation } from 'react-i18next';
 
 import Select, { Option } from '../common/Select';

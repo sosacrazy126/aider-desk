@@ -10,6 +10,7 @@ const projectDir = process.argv[2] || '.';
 // AiderDesk API configuration
 const AIDER_DESK_API_BASE_URL = process.env.AIDER_DESK_API_BASE_URL || 'http://localhost:24337/api';
 
+// eslint-disable-next-line no-console
 console.error(`Using AiderDesk API at: ${AIDER_DESK_API_BASE_URL} for project directory: ${projectDir}`);
 
 // Create MCP server
@@ -107,14 +108,17 @@ async function main() {
   try {
     const transport = new StdioServerTransport();
     await server.connect(transport);
+    // eslint-disable-next-line no-console
     console.error('AiderDesk MCP server started on stdio');
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Error during startup:', error);
     process.exit(1);
   }
 }
 
 main().catch((error) => {
+  // eslint-disable-next-line no-console
   console.error('Fatal error in main():', error);
   process.exit(1);
 });

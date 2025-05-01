@@ -88,6 +88,7 @@ export const AddFileDialog = ({ onClose, onAddFile, baseDir, initialReadOnly = f
         setFilePath(result.filePaths[0]);
       }
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Error selecting file:', error);
     }
   };

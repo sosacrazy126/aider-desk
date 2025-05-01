@@ -52,6 +52,7 @@ export const AgentSelector = () => {
                 tools?.filter((tool) => toolApprovals[`${serverName}${SERVER_TOOL_SEPARATOR}${tool.name}`] === ToolApprovalState.Never).length ?? 0;
               return Math.max(0, serverTotalTools - serverDisabledTools);
             } catch (error) {
+              // eslint-disable-next-line no-console
               console.error(`Failed to load tools for server ${serverName}:`, error);
               return 0; // Count 0 tools if loading fails for a server
             }
@@ -61,6 +62,7 @@ export const AgentSelector = () => {
         const totalEnabledTools = toolCounts.reduce((sum, count) => sum + count, 0);
         setEnabledToolsCount(totalEnabledTools);
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.error('Failed to calculate total enabled tools:', error);
         setEnabledToolsCount(0); // Set to 0 on overall failure
       }

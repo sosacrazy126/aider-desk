@@ -69,6 +69,7 @@ export const AgentModelSelector = forwardRef<HTMLDivElement, Props>((_props, _re
 
       const [providerName, modelName] = selectedModelString.split('/');
       if (!providerName || !modelName) {
+        // eslint-disable-next-line no-console
         console.error('Invalid model string format:', selectedModelString);
         return; // Invalid format
       }
@@ -84,6 +85,7 @@ export const AgentModelSelector = forwardRef<HTMLDivElement, Props>((_props, _re
 
       // Handle case where the selected provider wasn't in the initial list (shouldn't happen with current logic, but good practice)
       if (!providerFound) {
+        // eslint-disable-next-line no-console
         console.error(`Provider ${providerName} not found in configured providers.`);
         // Optionally, add the provider if desired, or just return
         return;

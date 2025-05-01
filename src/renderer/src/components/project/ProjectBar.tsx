@@ -190,6 +190,7 @@ export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(
           await window.api.deleteSession(baseDir, name);
           await loadSessions();
         } catch (error) {
+          // eslint-disable-next-line no-console
           console.error('Failed to delete session:', error);
         }
       },
@@ -199,8 +200,10 @@ export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(
     const exportSessionToMarkdown = useCallback(async () => {
       try {
         const result = await window.api.exportSessionToMarkdown(baseDir);
+        // eslint-disable-next-line no-console
         console.log(result);
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.error('Failed to export session:', error);
       }
     }, [baseDir]);

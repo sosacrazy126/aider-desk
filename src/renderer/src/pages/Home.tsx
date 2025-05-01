@@ -23,6 +23,7 @@ export const Home = () => {
         const openProjects = await window.api.getOpenProjects();
         setOpenProjects(openProjects);
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.error('Error loading projects:', error);
       }
     };

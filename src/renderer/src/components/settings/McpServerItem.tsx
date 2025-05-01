@@ -29,6 +29,7 @@ export const McpServerItem = ({ serverName, config, onRemove, onEdit, toolApprov
         const loadedTools = await window.api.loadMcpServerTools(serverName, config);
         setTools(loadedTools);
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.error('Failed to load MCP server tools:', error);
       } finally {
         setLoading(false);
