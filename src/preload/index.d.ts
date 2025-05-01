@@ -83,8 +83,8 @@ export interface ApplicationAPI {
   addAskQuestionListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: QuestionData) => void) => string;
   removeAskQuestionListener: (listenerId: string) => void;
 
-  addSetCurrentModelsListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: ModelsData) => void) => string;
-  removeSetCurrentModelsListener: (listenerId: string) => void;
+  addUpdateAiderModelsListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: ModelsData) => void) => string;
+  removeAiderModelsListener: (listenerId: string) => void;
 
   addCommandOutputListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: CommandOutputData) => void) => string;
   removeCommandOutputListener: (listenerId: string) => void;

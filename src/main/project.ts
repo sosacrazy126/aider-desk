@@ -23,6 +23,7 @@ import {
   UsageReportData,
   UserMessageData,
   ProjectSettings,
+  TokensInfoData,
 } from '@common/types';
 import { fileExists, parseUsageReport } from '@common/utils';
 import { BrowserWindow, dialog } from 'electron';
@@ -51,16 +52,18 @@ export class Project {
   private currentResponseMessageId: string | null = null;
   private currentPromptId: string | null = null;
   private inputHistoryFile = '.aider.input.history';
-  private models: ModelsData | null = null;
+  private aiderModels: ModelsData | null = null;
+  private tokensInfo: TokensInfoData;
   private currentPromptResponses: ResponseCompletedData[] = [];
   private runPromptResolves: ((value: ResponseCompletedData[]) => void)[] = [];
   private sessionManager: SessionManager = new SessionManager(this);
   private commandOutputs: Map<string, string> = new Map();
   private repoMap: string = '';
 
-  mcpAgentTotalCost: number = 0;
   aiderTotalCost: number = 0;
-  public readonly git: SimpleGit;
+  agentTotalCost: number = 0;
+
+  readonly git: SimpleGit;
 
   constructor(
     private readonly mainWindow: BrowserWindow,
@@ -69,6 +72,14 @@ export class Project {
     private readonly agent: Agent,
   ) {
     this.git = simpleGit(this.baseDir);
+    this.tokensInfo = {
+      baseDir,
+      chatHistory: { cost: 0, tokens: 0 },
+      files: {},
+      repoMap: { cost: 0, tokens: 0 },
+      systemMessages: { cost: 0, tokens: 0 },
+      agent: { cost: 0, tokens: 0 },
+    };
   }
 
   public async start() {
@@ -102,7 +113,7 @@ export class Project {
     void this.runAider();
     void this.sendInputHistoryUpdatedEvent();
 
-    this.mcpAgentTotalCost = 0;
+    this.agentTotalCost = 0;
     this.aiderTotalCost = 0;
     this.currentPromptId = null;
     this.currentResponseMessageId = null;
@@ -110,6 +121,8 @@ export class Project {
     this.currentQuestion = null;
     this.currentQuestionPromiseResolve = null;
     this.questionAnswers.clear();
+
+    await this.updateAgentEstimatedTokens();
   }
 
   public addConnector(connector: Connector) {
@@ -314,6 +327,7 @@ export class Project {
     }
 
     await this.sessionManager.loadMessages(session.contextMessages || []);
+    await this.updateAgentEstimatedTokens();
   }
 
   public async loadSessionFiles(name: string) {
@@ -323,6 +337,7 @@ export class Project {
     }
 
     await this.sessionManager.loadFiles(session.contextFiles || []);
+    await this.updateAgentEstimatedTokens();
   }
 
   public async deleteSession(name: string): Promise<void> {
@@ -718,7 +733,7 @@ export class Project {
     this.allTrackedFiles = files;
   }
 
-  public setCurrentModels(modelsData: ModelsData) {
+  public updateAiderModels(modelsData: ModelsData) {
     const currentSettings = this.store.getProjectSettings(this.baseDir);
     const updatedSettings: ProjectSettings = {
       ...currentSettings,
@@ -727,11 +742,11 @@ export class Project {
     };
     this.store.saveProjectSettings(this.baseDir, updatedSettings);
 
-    this.models = {
+    this.aiderModels = {
       ...modelsData,
       architectModel: modelsData.architectModel !== undefined ? modelsData.architectModel : this.getArchitectModel(),
     };
-    this.mainWindow.webContents.send('set-current-models', this.models);
+    this.mainWindow.webContents.send('update-aider-models', this.aiderModels);
   }
 
   public updateModels(mainModel: string, weakModel: string | null) {
@@ -746,8 +761,8 @@ export class Project {
     logger.info('Setting architect model', {
       architectModel,
     });
-    this.setCurrentModels({
-      ...this.models!,
+    this.updateAiderModels({
+      ...this.aiderModels!,
       architectModel,
     });
   }
@@ -889,8 +904,15 @@ export class Project {
   }
 
   private updateTotalCosts(usageReport: UsageReportData) {
-    if (usageReport.mcpAgentTotalCost) {
-      this.mcpAgentTotalCost = usageReport.mcpAgentTotalCost;
+    if (usageReport.agentTotalCost) {
+      this.agentTotalCost = usageReport.agentTotalCost;
+
+      this.updateTokensInfo({
+        agent: {
+          cost: usageReport.agentTotalCost,
+          tokens: usageReport.sentTokens + usageReport.receivedTokens,
+        },
+      });
     }
     if (usageReport.aiderTotalCost) {
       this.aiderTotalCost = usageReport.aiderTotalCost;
@@ -913,8 +935,9 @@ export class Project {
     this.mainWindow.webContents.send('user-message', data);
   }
 
-  public removeLastMessage(): void {
+  public async removeLastMessage() {
     this.sessionManager.removeLastMessage();
+    await this.updateAgentEstimatedTokens();
   }
 
   public addContextMessage(role: MessageRole, content: string) {
@@ -948,7 +971,10 @@ export class Project {
             await fs.writeFile(filePath, markdownContent, 'utf8');
             logger.info(`Session exported successfully to ${filePath}`);
           } catch (writeError) {
-            logger.error('Failed to write session Markdown file:', { filePath, error: writeError });
+            logger.error('Failed to write session Markdown file:', {
+              filePath,
+              error: writeError,
+            });
           }
         } else {
           logger.info('Markdown export cancelled by user.');
@@ -957,5 +983,38 @@ export class Project {
     } catch (error) {
       logger.error('Error exporting session to Markdown', { error });
     }
+  }
+
+  updateTokensInfo(data: Partial<TokensInfoData>) {
+    this.tokensInfo = {
+      ...this.tokensInfo,
+      ...data,
+    };
+
+    this.mainWindow.webContents.send('update-tokens-info', this.tokensInfo);
+
+    if (data.files || data.repoMap) {
+      void this.updateAgentEstimatedTokens(true, true);
+    }
+  }
+
+  async updateAgentEstimatedTokens(checkContextFilesIncluded = false, checkRepoMapIncluded = false) {
+    const agentConfig = this.store.getSettings().agentConfig;
+    if (checkContextFilesIncluded && !agentConfig.includeContextFiles) {
+      return;
+    }
+
+    if (checkRepoMapIncluded && !agentConfig.includeRepoMap) {
+      return;
+    }
+
+    const tokens = await this.agent.estimateTokens(this);
+    this.updateTokensInfo({
+      agent: {
+        cost: this.agentTotalCost,
+        tokens,
+        tokensEstimated: true,
+      },
+    });
   }
 }

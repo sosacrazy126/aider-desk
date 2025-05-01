@@ -153,7 +153,7 @@ export class ConnectorManager {
           ...message,
         };
 
-        this.projectManager.getProject(connector.baseDir).setCurrentModels(modelsData);
+        this.projectManager.getProject(connector.baseDir).updateAiderModels(modelsData);
       } else if (isUpdateContextFilesMessage(message)) {
         const connector = this.findConnectorBySocket(socket);
         if (!connector) {
@@ -183,7 +183,7 @@ export class ConnectorManager {
           baseDir: connector.baseDir,
           ...message.info,
         };
-        this.mainWindow.webContents.send('update-tokens-info', data);
+        this.projectManager.getProject(connector.baseDir).updateTokensInfo(data);
       } else if (isPromptFinishedMessage(message)) {
         const connector = this.findConnectorBySocket(socket);
         if (!connector) {

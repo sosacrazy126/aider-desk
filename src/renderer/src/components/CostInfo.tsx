@@ -1,10 +1,11 @@
-import { TokensInfoData } from '@common/types';
+import { TokensInfoData, Mode } from '@common/types';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { IoClose, IoChevronDown, IoChevronUp } from 'react-icons/io5';
 import { MdOutlineRefresh } from 'react-icons/md';
 
-import { StyledTooltip } from './common/StyledTooltip';
+import { StyledTooltip } from '@/components/common/StyledTooltip';
+import { formatHumanReadable } from '@/utils/string-utils';
 
 type Props = {
   tokensInfo?: TokensInfoData | null;
@@ -13,9 +14,11 @@ type Props = {
   clearMessages?: () => void;
   refreshRepoMap?: () => void;
   restartProject?: () => void;
+  maxInputTokens?: number;
+  mode: Mode;
 };
 
-export const CostInfo = ({ tokensInfo, aiderTotalCost, agentTotalCost, clearMessages, refreshRepoMap, restartProject }: Props) => {
+export const CostInfo = ({ tokensInfo, aiderTotalCost, agentTotalCost, clearMessages, refreshRepoMap, restartProject, maxInputTokens = 0, mode }: Props) => {
   const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
   const [refreshingAnimation, setRefreshingAnimation] = useState(false);
@@ -32,9 +35,16 @@ export const CostInfo = ({ tokensInfo, aiderTotalCost, agentTotalCost, clearMess
   const filesTotalCost = tokensInfo?.files ? Object.values(tokensInfo.files).reduce((sum, file) => sum + file.cost, 0) : 0;
   const repoMapTokens = tokensInfo?.repoMap?.tokens ?? 0;
   const repoMapCost = tokensInfo?.repoMap?.cost ?? 0;
+  const chatHistoryTokens = tokensInfo?.chatHistory?.tokens ?? 0;
+  const systemMessagesTokens = tokensInfo?.systemMessages?.tokens ?? 0;
+  const agentTokens = tokensInfo?.agent?.tokens ?? 0;
+
+  const totalTokens = mode === 'agent' ? agentTokens : chatHistoryTokens + filesTotalTokens + repoMapTokens + systemMessagesTokens;
+  const tokensEstimated = mode === 'agent' ? tokensInfo?.agent?.tokensEstimated : false;
+  const progressPercentage = maxInputTokens > 0 ? Math.min((totalTokens / maxInputTokens) * 100, 100) : 0;
 
   return (
-    <div className={`border-t border-neutral-800 p-2 pb-2 ${isExpanded ? 'pt-4' : 'pt-3'} relative group`}>
+    <div className={`border-t border-neutral-800 p-2 pb-1 ${isExpanded ? 'pt-4' : 'pt-3'} relative group`}>
       <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 mt-0.5">
         <button
           onClick={() => setIsExpanded(!isExpanded)}
@@ -86,13 +96,9 @@ export const CostInfo = ({ tokensInfo, aiderTotalCost, agentTotalCost, clearMess
             </div>
           )}
         </div>
-        {agentTotalCost ? (
-          <>
-            {renderLabelValue('costInfo.agent', `$${agentTotalCost.toFixed(5)}`, t)}
-            {renderLabelValue('costInfo.aider', `$${aiderTotalCost.toFixed(5)}`, t)}
-          </>
-        ) : null}
-        <div className="flex items-center h-[20px]">
+        {renderLabelValue('costInfo.aider', `$${aiderTotalCost.toFixed(5)}`, t)}
+        {renderLabelValue('costInfo.agent', `$${agentTotalCost.toFixed(5)}`, t)}
+        <div className="flex items-center h-[20px] mt-1">
           <div className="flex-1">{renderLabelValue('costInfo.total', `$${(aiderTotalCost + agentTotalCost).toFixed(5)}`, t)}</div>
           <div className="ml-0 max-w-0 group-hover:max-w-xs opacity-0 group-hover:opacity-100 group-hover:px-1 group-hover:ml-1 transition-all duration-300 overflow-hidden">
             {restartProject && (
@@ -106,6 +112,21 @@ export const CostInfo = ({ tokensInfo, aiderTotalCost, agentTotalCost, clearMess
               </button>
             )}
             <StyledTooltip id="restart-project-tooltip" />
+          </div>
+        </div>
+
+        <div className="mt-[3px] flex items-center gap-2">
+          <div className="h-1 bg-neutral-800 rounded-sm overflow-hidden mb-1 flex-1">
+            <div className="h-full bg-neutral-200 rounded-full" style={{ width: `${progressPercentage}%` }}></div>
+          </div>
+          <div className="text-neutral-400 text-xxs">
+            {tokensEstimated && <span className="font-semibold font-mono mr-0.5">~</span>}
+            {maxInputTokens > 0
+              ? t('costInfo.tokenUsage', {
+                  usedTokens: formatHumanReadable(t, totalTokens),
+                  maxTokens: formatHumanReadable(t, maxInputTokens),
+                })
+              : formatHumanReadable(t, totalTokens)}
           </div>
         </div>
       </div>

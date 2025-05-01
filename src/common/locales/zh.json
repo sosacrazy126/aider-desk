@@ -24,7 +24,10 @@
     "open": "打开",
     "openProject": "打开项目",
     "lock": "锁定",
-    "unlock": "解锁"
+    "unlock": "解锁",
+    "suffix.billion": "十亿",
+    "suffix.million": "百万",
+    "suffix.thousand": "千"
   },
   "onboarding": {
     "title": "欢迎使用 Aider Desk",
@@ -272,7 +275,8 @@
     "agent": "代理",
     "aider": "Aider",
     "total": "全部的",
-    "restartSession": "重启会话"
+    "restartSession": "重启会话",
+    "tokenUsage": "{{usedTokens}} / {{maxTokens}}"
   },
   "sessions": {
     "title": "会话",

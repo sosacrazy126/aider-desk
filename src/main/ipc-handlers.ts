@@ -14,21 +14,10 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, projectManager: Proj
     return store.getSettings();
   });
 
-  ipcMain.handle('save-settings', (_, settings: SettingsData) => {
-    const currentSettings = store.getSettings();
-    store.saveSettings(settings);
-
-    const mcpServersChanged = JSON.stringify(currentSettings.agentConfig?.mcpServers) !== JSON.stringify(settings.agentConfig?.mcpServers);
-    if (mcpServersChanged) {
-      void agent.initMcpServers();
-    }
-
-    const aiderEnvChanged = currentSettings.aider?.environmentVariables !== settings.aider?.environmentVariables;
-    const aiderOptionsChanged = currentSettings.aider?.options !== settings.aider?.options;
-    if (aiderEnvChanged || aiderOptionsChanged) {
-      agent.invalidateAiderEnv();
-    }
-
+  ipcMain.handle('save-settings', (_, newSettings: SettingsData) => {
+    const oldSettings = store.getSettings();
+    store.saveSettings(newSettings);
+    void agent.settingsChanged(oldSettings, newSettings);
     return store.getSettings();
   });
 
@@ -206,7 +195,7 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, projectManager: Proj
   });
 
   ipcMain.on('remove-last-message', (_, baseDir: string) => {
-    projectManager.getProject(baseDir).removeLastMessage();
+    void projectManager.getProject(baseDir).removeLastMessage();
   });
 
   ipcMain.handle('scrape-web', async (_, baseDir: string, url: string) => {

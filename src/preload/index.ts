@@ -33,7 +33,7 @@ const responseFinishedListeners: Record<string, (event: Electron.IpcRendererEven
 const contextFilesUpdatedListeners: Record<string, (event: Electron.IpcRendererEvent, data: { baseDir: string; files: ContextFile[] }) => void> = {};
 const updateAutocompletionListeners: Record<string, (event: Electron.IpcRendererEvent, data: AutocompletionData) => void> = {};
 const askQuestionListeners: Record<string, (event: Electron.IpcRendererEvent, data: QuestionData) => void> = {};
-const setCurrentModelsListeners: Record<string, (event: Electron.IpcRendererEvent, data: ModelsData & { baseDir: string }) => void> = {};
+const updateAiderModelsListeners: Record<string, (event: Electron.IpcRendererEvent, data: ModelsData & { baseDir: string }) => void> = {};
 const commandOutputListeners: Record<string, (event: Electron.IpcRendererEvent, data: CommandOutputData) => void> = {};
 const logListeners: Record<string, (event: Electron.IpcRendererEvent, data: LogData) => void> = {};
 const tokensInfoListeners: Record<string, (event: Electron.IpcRendererEvent, data: TokensInfoData) => void> = {};
@@ -182,22 +182,22 @@ const api: ApplicationAPI = {
     }
   },
 
-  addSetCurrentModelsListener: (baseDir, callback) => {
+  addUpdateAiderModelsListener: (baseDir, callback) => {
     const listenerId = uuidv4();
-    setCurrentModelsListeners[listenerId] = (event: Electron.IpcRendererEvent, data: ModelsData) => {
+    updateAiderModelsListeners[listenerId] = (event: Electron.IpcRendererEvent, data: ModelsData) => {
       if (!compareBaseDirs(data.baseDir, baseDir)) {
         return;
       }
       callback(event, data);
     };
-    ipcRenderer.on('set-current-models', setCurrentModelsListeners[listenerId]);
+    ipcRenderer.on('update-aider-models', updateAiderModelsListeners[listenerId]);
     return listenerId;
   },
-  removeSetCurrentModelsListener: (listenerId) => {
-    const callback = setCurrentModelsListeners[listenerId];
+  removeAiderModelsListener: (listenerId) => {
+    const callback = updateAiderModelsListeners[listenerId];
     if (callback) {
-      ipcRenderer.removeListener('set-current-models', callback);
-      delete setCurrentModelsListeners[listenerId];
+      ipcRenderer.removeListener('update-aider-models', callback);
+      delete updateAiderModelsListeners[listenerId];
     }
   },
 

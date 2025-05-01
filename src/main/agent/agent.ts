@@ -1,11 +1,13 @@
 import fs from 'fs/promises';
 import path from 'path';
 
-import { ContextFile, ContextMessage, McpServerConfig, McpTool, ToolApprovalState, UsageReportData } from '@common/types';
+import { ContextFile, ContextMessage, McpServerConfig, McpTool, SettingsData, ToolApprovalState, UsageReportData } from '@common/types';
 import { APICallError, generateText, InvalidToolArgumentsError, NoSuchToolError, streamText } from 'ai'; // Added InvalidToolArgumentsError
 import { v4 as uuidv4 } from 'uuid';
 import { calculateCost, delay, extractServerNameToolName, SERVER_TOOL_SEPARATOR } from '@common/utils';
 import { getActiveProvider, LlmProvider } from '@common/llm-providers';
+// @ts-expect-error gpt-tokenizer is not typed
+import { countTokens } from 'gpt-tokenizer/model/gpt-4o';
 import { getSystemPrompt } from 'src/main/agent/prompts';
 import { parse } from '@dotenvx/dotenvx';
 
@@ -29,8 +31,47 @@ export class Agent {
 
   constructor(private readonly store: Store) {}
 
-  invalidateAiderEnv() {
+  private invalidateAiderEnv() {
     this.aiderEnv = null;
+  }
+
+  async settingsChanged(oldSettings: SettingsData, newSettings: SettingsData): Promise<void> {
+    const oldAgentConfig = oldSettings.agentConfig;
+    const newAgentConfig = newSettings.agentConfig;
+
+    const mcpServersChanged = JSON.stringify(oldAgentConfig?.mcpServers) !== JSON.stringify(newAgentConfig?.mcpServers);
+    if (mcpServersChanged) {
+      logger.info('MCP server configuration changed, reinitializing clients.');
+      void this.initMcpServers(); // Keep this non-blocking for client re-init
+    }
+
+    const aiderEnvChanged = oldSettings.aider?.environmentVariables !== newSettings.aider?.environmentVariables;
+    const aiderOptionsChanged = oldSettings.aider?.options !== newSettings.aider?.options;
+    if (aiderEnvChanged || aiderOptionsChanged) {
+      logger.info('Aider environment or options changed, invalidating cached environment.');
+      this.invalidateAiderEnv();
+    }
+
+    // Check for changes in agent config properties that affect token count
+    const disabledServersChanged = JSON.stringify(oldAgentConfig?.disabledServers) !== JSON.stringify(newAgentConfig?.disabledServers);
+    const toolApprovalsChanged = JSON.stringify(oldAgentConfig?.toolApprovals) !== JSON.stringify(newAgentConfig?.toolApprovals);
+    const includeContextFilesChanged = oldAgentConfig?.includeContextFiles !== newAgentConfig?.includeContextFiles;
+    const includeRepoMapChanged = oldAgentConfig?.includeRepoMap !== newAgentConfig?.includeRepoMap;
+    const useAiderToolsChanged = oldAgentConfig?.useAiderTools !== newAgentConfig?.useAiderTools;
+    const customInstructionsChanged = oldAgentConfig?.customInstructions !== newAgentConfig?.customInstructions;
+
+    const agentSettingsAffectingTokensChanged =
+      disabledServersChanged ||
+      toolApprovalsChanged ||
+      includeContextFilesChanged ||
+      includeRepoMapChanged ||
+      useAiderToolsChanged ||
+      customInstructionsChanged;
+
+    if (agentSettingsAffectingTokensChanged && this.initializedForProject) {
+      logger.info('Agent settings affecting token count changed, updating estimated tokens.');
+      await this.initializedForProject.updateAgentEstimatedTokens();
+    }
   }
 
   async initMcpServers(project: Project | null = this.initializedForProject, initId = uuidv4()) {
@@ -257,41 +298,11 @@ export class Agent {
     return messages;
   }
 
-  async runAgent(project: Project, prompt: string): Promise<ContextMessage[]> {
-    // Wait for any ongoing initialization to complete
-    while (this.currentInitId) {
-      logger.debug(`MCP Agent is initializing (ID: ${this.currentInitId}), waiting...`);
-      await delay(100); // Wait for 100ms before checking again
-    }
-
+  private getAvailableTools(project: Project): ToolSet {
     const { agentConfig } = this.store.getSettings();
-    logger.debug('McpConfig:', agentConfig);
-
     const activeProvider = getActiveProvider(agentConfig.providers);
     if (!activeProvider) {
       throw new Error('No active MCP provider found');
-    }
-
-    // Create new abort controller for this run
-    this.abortController = new AbortController();
-
-    // Track new messages created during this run
-    const agentMessages: CoreMessage[] = [{ role: 'user', content: prompt }];
-    const messages = await this.prepareMessages(project);
-
-    // add user message
-    messages.push(...agentMessages);
-
-    // Check if we need to reinitialize for a different project
-    if (this.initializedForProject?.baseDir !== project.baseDir) {
-      logger.info(`Reinitializing MCP clients for project: ${project.baseDir}`);
-      try {
-        await this.initMcpServers(project, uuidv4());
-      } catch (error) {
-        logger.error('Error reinitializing MCP clients:', error);
-        project.addLogMessage('error', `Error reinitializing MCP clients: ${error}`);
-        return [];
-      }
     }
 
     // Build the toolSet directly from enabled clients and tools
@@ -334,6 +345,47 @@ export class Agent {
     // Add helper tools
     const helperTools = createHelpersToolset();
     Object.assign(toolSet, helperTools);
+
+    return toolSet;
+  }
+
+  async runAgent(project: Project, prompt: string): Promise<ContextMessage[]> {
+    // Wait for any ongoing initialization to complete
+    while (this.currentInitId) {
+      logger.debug(`MCP Agent is initializing (ID: ${this.currentInitId}), waiting...`);
+      await delay(100); // Wait for 100ms before checking again
+    }
+
+    const { agentConfig } = this.store.getSettings();
+    logger.debug('McpConfig:', agentConfig);
+
+    const activeProvider = getActiveProvider(agentConfig.providers);
+    if (!activeProvider) {
+      throw new Error('No active MCP provider found');
+    }
+
+    // Create new abort controller for this run
+    this.abortController = new AbortController();
+
+    // Track new messages created during this run
+    const agentMessages: CoreMessage[] = [{ role: 'user', content: prompt }];
+    const messages = await this.prepareMessages(project);
+
+    // add user message
+    messages.push(...agentMessages);
+
+    // Check if we need to reinitialize for a different project
+    if (this.initializedForProject?.baseDir !== project.baseDir) {
+      logger.info(`Reinitializing MCP clients for project: ${project.baseDir}`);
+      try {
+        await this.initMcpServers(project, uuidv4());
+      } catch (error) {
+        logger.error('Error reinitializing MCP clients:', error);
+        project.addLogMessage('error', `Error reinitializing MCP clients: ${error}`);
+        return [];
+      }
+    }
+    const toolSet = this.getAvailableTools(project);
 
     logger.info(`Running prompt with ${Object.keys(toolSet).length} tools.`);
     logger.debug('Tools:', {
@@ -581,6 +633,37 @@ export class Agent {
     return messages;
   }
 
+  async estimateTokens(project: Project): Promise<number> {
+    try {
+      const { agentConfig } = this.store.getSettings();
+      const toolSet = this.getAvailableTools(project);
+      const systemPrompt = await getSystemPrompt(project.baseDir, agentConfig.useAiderTools, agentConfig.includeContextFiles, agentConfig.customInstructions);
+      const messages = await this.prepareMessages(project);
+
+      // Format tools for the prompt
+      const toolDefinitions = Object.entries(toolSet).map(([name, tool]) => ({
+        name,
+        description: tool.description,
+        parameters: tool.parameters.describe(), // Get Zod schema description
+      }));
+      const toolDefinitionsString = `Available tools: ${JSON.stringify(toolDefinitions, null, 2)}`;
+
+      // Add tool definitions and system prompt to the beginning
+      messages.unshift({ role: 'system', content: toolDefinitionsString });
+      messages.unshift({ role: 'system', content: systemPrompt });
+
+      const chatMessages = messages.map((msg) => ({
+        role: msg.role === 'tool' ? 'user' : msg.role, // Map 'tool' role to user message as gpt-tokenizer does not support tool messages
+        content: typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content), // Handle potential non-string content if necessary
+      }));
+
+      return countTokens(chatMessages);
+    } catch (error) {
+      logger.error(`Error counting tokens: ${error}`);
+      return 0;
+    }
+  }
+
   public interrupt() {
     logger.info('Interrupting MCP agent run');
     this.abortController?.abort();
@@ -605,7 +688,7 @@ export class Agent {
       sentTokens: usage.promptTokens,
       receivedTokens: usage.completionTokens,
       messageCost: messageCost,
-      mcpAgentTotalCost: project.mcpAgentTotalCost + messageCost,
+      agentTotalCost: project.agentTotalCost + messageCost,
     };
 
     // Process text/reasoning content

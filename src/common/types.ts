@@ -181,11 +181,12 @@ export interface UsageReportData {
   receivedTokens: number;
   messageCost: number;
   aiderTotalCost?: number;
-  mcpAgentTotalCost?: number;
+  agentTotalCost?: number;
 }
 
 export interface TokensCost {
   tokens: number;
+  tokensEstimated?: boolean;
   cost: number;
 }
 
@@ -195,6 +196,7 @@ export interface TokensInfoData {
   files: Record<string, TokensCost>;
   repoMap: TokensCost;
   systemMessages: TokensCost;
+  agent?: TokensCost;
 }
 
 export interface InputHistoryData {

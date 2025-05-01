@@ -1,3 +1,4 @@
+// src/renderer/src/components/project/ProjectView.tsx
 import {
   AutocompletionData,
   CommandOutputData,
@@ -15,10 +16,11 @@ import {
 } from '@common/types';
 import { useTranslation } from 'react-i18next';
 import { IpcRendererEvent } from 'electron';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { CgSpinner } from 'react-icons/cg';
 import { ResizableBox } from 'react-resizable';
 import { v4 as uuidv4 } from 'uuid';
+import { PROVIDER_MODELS, getActiveProvider } from '@common/llm-providers';
 
 import {
   CommandOutputMessage,
@@ -38,6 +40,7 @@ import {
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { ContextFiles } from '@/components/ContextFiles';
 import { Messages, MessagesRef } from '@/components/message/Messages';
+import { useSettings } from '@/context/SettingsContext';
 import { AddFileDialog } from '@/components/project/AddFileDialog';
 import { ProjectBar, ProjectTopBarRef } from '@/components/project/ProjectBar';
 import { PromptField, PromptFieldRef } from '@/components/PromptField';
@@ -55,11 +58,12 @@ type Props = {
 
 export const ProjectView = ({ project, isActive = false }: Props) => {
   const { t } = useTranslation();
+  const { settings } = useSettings();
   const [messages, setMessages] = useState<Message[]>([]);
   const [processing, setProcessing] = useState(false);
   const [addFileDialogOptions, setAddFileDialogOptions] = useState<AddFileDialogOptions | null>(null);
   const [autocompletionData, setAutocompletionData] = useState<AutocompletionData | null>(null);
-  const [modelsData, setModelsData] = useState<ModelsData | null>(null);
+  const [aiderModelsData, setAiderModelsData] = useState<ModelsData | null>(null);
   const [inputHistory, setInputHistory] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [aiderTotalCost, setAiderTotalCost] = useState(0);
@@ -74,6 +78,17 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
   const projectTopBarRef = useRef<ProjectTopBarRef>(null);
   const messagesRef = useRef<MessagesRef>(null);
   const frozenTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const maxInputTokens = useMemo(() => {
+    if (mode === 'agent') {
+      const activeProvider = getActiveProvider(settings?.agentConfig?.providers || []);
+      if (activeProvider) {
+        return PROVIDER_MODELS[activeProvider.name]?.models[activeProvider.model]?.maxInputTokens ?? 0;
+      }
+      return 0;
+    } else {
+      return aiderModelsData?.info?.max_input_tokens ?? 0;
+    }
+  }, [mode, settings, aiderModelsData]);
 
   useEffect(() => {
     const loadProjectSettings = async () => {
@@ -94,10 +109,10 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
   }, [project.baseDir]);
 
   useEffect(() => {
-    if (modelsData) {
+    if (aiderModelsData) {
       setLoading(false);
     }
-  }, [messages, modelsData]);
+  }, [messages, aiderModelsData]);
 
   useEffect(() => {
     if (!processing && frozenTimeoutRef.current) {
@@ -186,8 +201,8 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
         if (usageReport.aiderTotalCost !== undefined) {
           setAiderTotalCost(usageReport.aiderTotalCost);
         }
-        if (usageReport.mcpAgentTotalCost !== undefined) {
-          setAgentTotalCost(usageReport.mcpAgentTotalCost);
+        if (usageReport.agentTotalCost !== undefined) {
+          setAgentTotalCost(usageReport.agentTotalCost);
         }
       }
 
@@ -251,8 +266,8 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
       if (usageReport?.aiderTotalCost !== undefined) {
         setAiderTotalCost(usageReport.aiderTotalCost);
       }
-      if (usageReport?.mcpAgentTotalCost !== undefined) {
-        setAgentTotalCost(usageReport.mcpAgentTotalCost);
+      if (usageReport?.agentTotalCost !== undefined) {
+        setAgentTotalCost(usageReport.agentTotalCost);
       }
     };
 
@@ -295,8 +310,8 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
       setAutocompletionData(data);
     };
 
-    const handleSetCurrentModels = (_: IpcRendererEvent, data: ModelsData) => {
-      setModelsData(data);
+    const handleUpdateAiderModels = (_: IpcRendererEvent, data: ModelsData) => {
+      setAiderModelsData(data);
 
       if (data.error) {
         const errorMessage: LogMessage = {
@@ -345,7 +360,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
     };
 
     const autocompletionListenerId = window.api.addUpdateAutocompletionListener(project.baseDir, handleUpdateAutocompletion);
-    const currentModelsListenerId = window.api.addSetCurrentModelsListener(project.baseDir, handleSetCurrentModels);
+    const updateAiderModelsListenerId = window.api.addUpdateAiderModelsListener(project.baseDir, handleUpdateAiderModels);
     const commandOutputListenerId = window.api.addCommandOutputListener(project.baseDir, handleCommandOutput);
     const responseChunkListenerId = window.api.addResponseChunkListener(project.baseDir, handleResponseChunk);
     const responseCompletedListenerId = window.api.addResponseCompletedListener(project.baseDir, handleResponseCompleted);
@@ -359,7 +374,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
 
     return () => {
       window.api.removeUpdateAutocompletionListener(autocompletionListenerId);
-      window.api.removeSetCurrentModelsListener(currentModelsListenerId);
+      window.api.removeAiderModelsListener(updateAiderModelsListenerId);
       window.api.removeCommandOutputListener(commandOutputListenerId);
       window.api.removeResponseChunkListener(responseChunkListenerId);
       window.api.removeResponseCompletedListener(responseCompletedListenerId);
@@ -395,7 +410,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
     setProcessing(false);
     setTokensInfo(null);
     setQuestion(null);
-    setModelsData(null);
+    setAiderModelsData(null);
     processingMessageRef.current = null;
   };
 
@@ -490,7 +505,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
 
   const handleModelChange = () => {
     promptFieldRef.current?.focus();
-    setModelsData(null);
+    setAiderModelsData(null);
   };
 
   const handleModeChange = (mode: Mode) => {
@@ -541,7 +556,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
           <ProjectBar
             ref={projectTopBarRef}
             baseDir={project.baseDir}
-            modelsData={modelsData}
+            modelsData={aiderModelsData}
             allModels={autocompletionData?.models}
             mode={mode}
             renderMarkdown={renderMarkdown}
@@ -581,7 +596,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
             runCommand={runCommand}
             runTests={runTests}
             openModelSelector={() => projectTopBarRef.current?.openMainModelSelector()}
-            disabled={!modelsData}
+            disabled={!aiderModelsData}
           />
         </div>
       </div>
@@ -610,9 +625,11 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
             tokensInfo={tokensInfo}
             aiderTotalCost={aiderTotalCost}
             agentTotalCost={agentTotalCost}
+            maxInputTokens={maxInputTokens}
             clearMessages={clearMessages}
             refreshRepoMap={() => runCommand('map-refresh')}
             restartProject={restartProject}
+            mode={mode}
           />
         </div>
       </ResizableBox>

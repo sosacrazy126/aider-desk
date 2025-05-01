@@ -5,6 +5,7 @@
 - correct placement of --init flag for Docker MCP server execution
 - added support for /copy-context command
 - added support for /tokens command
+- added token usage progress bar to cost info
 
 ## [0.11.1]
 

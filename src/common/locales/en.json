@@ -28,7 +28,10 @@
     "open": "Open",
     "openProject": "Open Project",
     "lock": "Lock",
-    "unlock": "Unlock"
+    "unlock": "Unlock",
+    "suffix.billion": "B",
+    "suffix.million": "M",
+    "suffix.thousand": "K"
   },
   "onboarding": {
     "title": "Welcome to Aider Desk",
@@ -275,7 +278,8 @@
     "agent": "Agent",
     "aider": "Aider",
     "total": "Total",
-    "restartSession": "Restart session"
+    "restartSession": "Restart session",
+    "tokenUsage": "{{usedTokens}} of {{maxTokens}}"
   },
   "sessions": {
     "title": "Sessions",
