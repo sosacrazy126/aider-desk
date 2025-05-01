@@ -904,7 +904,7 @@ export class Project {
   }
 
   private updateTotalCosts(usageReport: UsageReportData) {
-    if (usageReport.agentTotalCost) {
+    if (usageReport.agentTotalCost !== undefined) {
       this.agentTotalCost = usageReport.agentTotalCost;
 
       this.updateTokensInfo({
