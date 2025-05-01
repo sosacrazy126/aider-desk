@@ -3,6 +3,8 @@
 ## [UNRELEASED]
 
 - correct placement of --init flag for Docker MCP server execution
+- added support for /copy-context command
+- added support for /tokens command
 
 ## [0.11.1]
 
