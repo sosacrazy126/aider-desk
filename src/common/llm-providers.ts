@@ -174,10 +174,4 @@ export const PROVIDER_MODELS: Record<string, { models: Record<string, { inputCos
       },
     },
   },
-  openrouter: {
-    // Placeholder: Add specific OpenRouter models and costs when available
-    models: {
-      'openrouter/auto': { inputCost: 0, outputCost: 0 }, // Example placeholder
-    },
-  },
 };
