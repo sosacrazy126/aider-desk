@@ -14,6 +14,7 @@ export const DEFAULT_SETTINGS: SettingsData = {
   language: 'en',
   startupMode: StartupMode.Empty,
   zoomLevel: 1,
+  aiderDeskAutoUpdate: true,
   aider: {
     options: '',
     environmentVariables: '',
@@ -59,6 +60,7 @@ interface StoreSchema {
   recentProjects: string[]; // baseDir paths of recently closed projects
   settings: SettingsData;
   settingsVersion: number;
+  releaseNotes?: string | null;
 }
 
 const CURRENT_SETTINGS_VERSION = 3;
@@ -226,6 +228,18 @@ export class Store {
 
   setWindowState(windowState: WindowState): void {
     this.store.set('windowState', windowState);
+  }
+
+  getReleaseNotes(): string | null {
+    return this.store.get('releaseNotes') || null;
+  }
+
+  clearReleaseNotes(): void {
+    this.store.set('releaseNotes', null);
+  }
+
+  setReleaseNotes(releaseNotes: string) {
+    this.store.set('releaseNotes', releaseNotes);
   }
 }
 

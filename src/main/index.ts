@@ -10,12 +10,12 @@ import icon from '../../resources/icon.png?asset';
 
 import { Agent } from './agent';
 import { RestApiController } from './rest-api-controller';
-import { checkForUpdates, setupAutoUpdater } from './auto-updater';
 import { ConnectorManager } from './connector-manager';
 import { setupIpcHandlers } from './ipc-handlers';
 import { ProjectManager } from './project-manager';
 import { performStartUp, UpdateProgressData } from './start-up';
 import { Store } from './store';
+import { VersionsManager } from './versions-manager';
 import logger from './logger';
 
 const initStore = async (): Promise<Store> => {
@@ -67,9 +67,6 @@ const initWindow = async (store: Store) => {
   mainWindow.on('maximize', saveWindowState);
   mainWindow.on('unmaximize', saveWindowState);
 
-  logger.info('Initializing fix-path...');
-  (await import('fix-path')).default();
-
   const agent = new Agent(store);
   void agent.initMcpServers();
 
@@ -85,19 +82,23 @@ const initWindow = async (store: Store) => {
   // Initialize connector manager with the server
   const connectorManager = new ConnectorManager(mainWindow, projectManager, httpServer);
 
-  setupIpcHandlers(mainWindow, projectManager, store, agent);
+  // Initialize Versions Manager (this also sets up listeners)
+  const versionsManager = new VersionsManager(mainWindow, store);
 
-  app.on('before-quit', async () => {
+  setupIpcHandlers(mainWindow, projectManager, store, agent, versionsManager);
+
+  const beforeQuit = async () => {
     await restApiController.close();
     await connectorManager.close();
     await projectManager.close();
-  });
+    versionsManager.destroy();
+  };
+
+  app.on('before-quit', beforeQuit);
 
   // Handle CTRL+C (SIGINT)
   process.on('SIGINT', async () => {
-    await restApiController.close();
-    await connectorManager.close();
-    await projectManager.close();
+    await beforeQuit();
     process.exit(0);
   });
 
@@ -123,10 +124,8 @@ app.whenReady().then(async () => {
     optimizer.watchWindowShortcuts(window);
   });
 
-  if (!is.dev && process.env.AIDER_DESK_NO_AUTO_UPDATE !== 'true') {
-    setupAutoUpdater();
-    await checkForUpdates();
-  }
+  logger.info('Initializing fix-path...');
+  (await import('fix-path')).default();
 
   const progressBar = new ProgressBar({
     text: 'Starting AiderDesk...',

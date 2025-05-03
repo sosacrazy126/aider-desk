@@ -986,6 +986,9 @@ export class Project {
   }
 
   updateTokensInfo(data: Partial<TokensInfoData>) {
+    const filesTokensChanged = data.files ? Object.keys(data.files).length !== Object.keys(this.tokensInfo.files).length : false;
+    const repoMapChanged = data.repoMap ? data.repoMap.tokens !== this.tokensInfo.repoMap.tokens : false;
+
     this.tokensInfo = {
       ...this.tokensInfo,
       ...data,
@@ -993,12 +996,16 @@ export class Project {
 
     this.mainWindow.webContents.send('update-tokens-info', this.tokensInfo);
 
-    if (data.files || data.repoMap) {
+    if (filesTokensChanged || repoMapChanged) {
       void this.updateAgentEstimatedTokens(true, true);
     }
   }
 
   async updateAgentEstimatedTokens(checkContextFilesIncluded = false, checkRepoMapIncluded = false) {
+    logger.info('Updating agent estimated tokens', {
+      checkContextFilesIncluded,
+      checkRepoMapIncluded,
+    });
     const agentConfig = this.store.getSettings().agentConfig;
     if (checkContextFilesIncluded && !agentConfig.includeContextFiles) {
       return;

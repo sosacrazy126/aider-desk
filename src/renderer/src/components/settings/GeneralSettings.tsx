@@ -2,7 +2,8 @@ import { useTranslation } from 'react-i18next';
 import { SettingsData, StartupMode } from '@common/types';
 
 import { RadioButton } from '../common/RadioButton';
-import { Select, Option } from '../common/Select'; // Import Select and Option
+import { Select, Option } from '../common/Select';
+import { Section } from '../common/Section';
 
 import { LanguageSelector } from './LanguageSelector';
 
@@ -47,17 +48,15 @@ export const GeneralSettings = ({ settings, setSettings, onLanguageChange, onZoo
 
   return (
     <div className="space-y-8 min-h-[300px]">
-      <div className="relative border border-neutral-700 rounded-md p-4">
-        <h2 className="absolute -top-3 left-4 px-2 bg-neutral-850 text-sm font-medium text-neutral-100">{t('settings.gui')}</h2>
-        <div className="grid grid-cols-2 gap-4">
+      <Section title={t('settings.gui')}>
+        <div className="grid grid-cols-2 gap-4 p-4">
           <LanguageSelector language={settings.language} onChange={onLanguageChange} />
           <Select label={t('settings.zoom')} options={ZOOM_OPTIONS} value={String(settings.zoomLevel ?? 1)} onChange={handleZoomChange} />
         </div>
-      </div>
+      </Section>
 
-      <div className="relative border border-neutral-700 rounded-md pt-2 mt-4">
-        <h2 className="absolute -top-3 left-4 px-2 bg-neutral-850 text-sm font-medium text-neutral-100">{t('settings.startup.title')}</h2>
-        <div className="px-4 py-3 space-y-3">
+      <Section title={t('settings.startup.title')}>
+        <div className="px-4 py-3 space-y-3 mt-2">
           <RadioButton
             id="startup-empty"
             name="startup-mode"
@@ -76,7 +75,7 @@ export const GeneralSettings = ({ settings, setSettings, onLanguageChange, onZoo
             label={t('settings.startup.lastSession')}
           />
         </div>
-      </div>
+      </Section>
     </div>
   );
 };

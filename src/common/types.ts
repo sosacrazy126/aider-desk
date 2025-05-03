@@ -150,6 +150,7 @@ export interface SettingsData {
   language: string;
   startupMode?: StartupMode;
   zoomLevel?: number;
+  aiderDeskAutoUpdate: boolean;
   aider: {
     options: string;
     environmentVariables: string;
@@ -227,4 +228,14 @@ export interface McpServerConfig {
   command: string;
   args: string[];
   env?: Readonly<Record<string, string>>;
+}
+
+export interface VersionsInfo {
+  aiderDeskCurrentVersion?: string | null;
+  aiderCurrentVersion?: string | null;
+  aiderDeskAvailableVersion?: string | null;
+  aiderAvailableVersion?: string | null;
+  aiderDeskDownloadProgress?: number;
+  aiderDeskNewVersionReady?: boolean;
+  releaseNotes?: string | null;
 }

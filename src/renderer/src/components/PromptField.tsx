@@ -315,7 +315,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
             e.preventDefault();
             if (highlightedSuggestionIndex !== -1) {
               acceptSuggestion(filteredSuggestions[highlightedSuggestionIndex]);
-            } else if (!processing && !e.shiftKey) {
+            } else if ((!processing || question) && !e.shiftKey) {
               handleSubmit();
             }
             break;
@@ -394,7 +394,11 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
         {question && (
           <div className="mb-2 p-3 bg-gradient-to-b from-neutral-950 to-neutral-900 rounded-md border border-neutral-700 text-sm">
             <div className="text-white text-sm mb-2 whitespace-pre-wrap">{question.text}</div>
-            {question.subject && <div className="text-neutral-400 text-xs mb-3 whitespace-pre-wrap">{question.subject}</div>}
+            {question.subject && (
+              <div className="text-neutral-400 text-xs mb-3 whitespace-pre-wrap max-h-[50vh] overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-700 scrollbar-track-neutral-900 scrollbar-rounded">
+                {question.subject}
+              </div>
+            )}
             <div className="flex gap-2">
               <button
                 onClick={() => answerQuestion('y')}

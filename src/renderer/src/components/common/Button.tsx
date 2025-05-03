@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 
 type ButtonVariant = 'contained' | 'text' | 'outline';
 type ButtonColor = 'primary' | 'secondary';
+type ButtonSize = 'sm' | 'md';
 
 type Props = {
   children: ReactNode;
@@ -11,6 +12,7 @@ type Props = {
   className?: string;
   disabled?: boolean;
   autoFocus?: boolean;
+  size?: ButtonSize;
 };
 
 const colorClasses: Record<ButtonColor, Record<ButtonVariant, string>> = {
@@ -26,10 +28,26 @@ const colorClasses: Record<ButtonColor, Record<ButtonVariant, string>> = {
   },
 };
 
-export const Button = ({ children, onClick, variant = 'contained', color = 'primary', className = '', disabled = false, autoFocus = false }: Props) => {
+const sizeClasses: Record<ButtonSize, string> = {
+  md: 'px-4 py-2 text-base',
+  sm: 'px-2.5 py-1.5 text-sm',
+};
+
+export const Button = ({
+  children,
+  onClick,
+  variant = 'contained',
+  color = 'primary',
+  className = '',
+  disabled = false,
+  autoFocus = false,
+  size = 'md',
+}: Props) => {
   const baseColorClasses = disabled
     ? 'bg-neutral-700/50 text-neutral-500 cursor-not-allowed hover:bg-neutral-700/50 hover:text-neutral-500'
     : colorClasses[color][variant];
+
+  const baseSizeClasses = sizeClasses[size];
 
   const borderClass = variant === 'outline' && !disabled ? 'border' : '';
 
@@ -38,7 +56,7 @@ export const Button = ({ children, onClick, variant = 'contained', color = 'prim
       onClick={onClick}
       disabled={disabled}
       autoFocus={autoFocus}
-      className={`px-4 py-2 rounded-lg font-medium transition-colors ${borderClass} ${baseColorClasses} ${className}`}
+      className={`rounded-lg font-medium transition-colors ${borderClass} ${baseColorClasses} ${baseSizeClasses} ${className}`}
     >
       {children}
     </button>

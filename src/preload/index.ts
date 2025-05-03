@@ -7,15 +7,14 @@ import {
   InputHistoryData,
   LogData,
   McpServerConfig,
-  Mode,
   ModelsData,
   QuestionData,
   ResponseChunkData,
   ResponseCompletedData,
-  SettingsData,
   TokensInfoData,
   ToolData,
   UserMessageData,
+  VersionsInfo,
 } from '@common/types';
 import { normalizeBaseDir } from '@common/utils';
 import { electronAPI } from '@electron-toolkit/preload';
@@ -41,51 +40,57 @@ const toolListeners: Record<string, (event: Electron.IpcRendererEvent, data: Too
 const inputHistoryUpdatedListeners: Record<string, (event: Electron.IpcRendererEvent, data: InputHistoryData) => void> = {};
 const userMessageListeners: Record<string, (event: Electron.IpcRendererEvent, data: UserMessageData) => void> = {};
 const clearProjectListeners: Record<string, (event: Electron.IpcRendererEvent, baseDir: string, clearMessages: boolean, clearSession: boolean) => void> = {};
+const versionsInfoUpdatedListeners: Record<string, (event: Electron.IpcRendererEvent, data: VersionsInfo) => void> = {};
 
 const api: ApplicationAPI = {
   loadSettings: () => ipcRenderer.invoke('load-settings'),
-  saveSettings: (settings: SettingsData) => ipcRenderer.invoke('save-settings', settings),
-  startProject: (baseDir: string) => ipcRenderer.send('start-project', baseDir),
-  stopProject: (baseDir: string) => ipcRenderer.send('stop-project', baseDir),
-  restartProject: (baseDir: string) => ipcRenderer.send('restart-project', baseDir),
-  runPrompt: (baseDir, prompt, mode: Mode) => ipcRenderer.send('run-prompt', baseDir, prompt, mode),
-  answerQuestion: (baseDir: string, answer: string) => ipcRenderer.send('answer-question', baseDir, answer),
-  loadInputHistory: (baseDir: string) => ipcRenderer.invoke('load-input-history', baseDir),
+  saveSettings: (settings) => ipcRenderer.invoke('save-settings', settings),
+  startProject: (baseDir) => ipcRenderer.send('start-project', baseDir),
+  stopProject: (baseDir) => ipcRenderer.send('stop-project', baseDir),
+  restartProject: (baseDir) => ipcRenderer.send('restart-project', baseDir),
+  runPrompt: (baseDir, prompt, mode) => ipcRenderer.send('run-prompt', baseDir, prompt, mode),
+  answerQuestion: (baseDir, answer) => ipcRenderer.send('answer-question', baseDir, answer),
+  loadInputHistory: (baseDir) => ipcRenderer.invoke('load-input-history', baseDir),
   dialog: {
     showOpenDialog: (options: Electron.OpenDialogSyncOptions) => ipcRenderer.invoke('show-open-dialog', options),
   },
   getOpenProjects: () => ipcRenderer.invoke('get-open-projects'),
-  addOpenProject: (baseDir: string) => ipcRenderer.invoke('add-open-project', baseDir),
+  addOpenProject: (baseDir) => ipcRenderer.invoke('add-open-project', baseDir),
   setActiveProject: (baseDir) => ipcRenderer.invoke('set-active-project', baseDir),
-  removeOpenProject: (baseDir: string) => ipcRenderer.invoke('remove-open-project', baseDir),
+  removeOpenProject: (baseDir) => ipcRenderer.invoke('remove-open-project', baseDir),
   updateMainModel: (baseDir, model) => ipcRenderer.send('update-main-model', baseDir, model),
   updateWeakModel: (baseDir, model) => ipcRenderer.send('update-weak-model', baseDir, model),
   updateArchitectModel: (baseDir, model) => ipcRenderer.send('update-architect-model', baseDir, model),
   getProjectSettings: (baseDir) => ipcRenderer.invoke('get-project-settings', baseDir),
   patchProjectSettings: (baseDir, settings) => ipcRenderer.invoke('patch-project-settings', baseDir, settings),
-  getFilePathSuggestions: (currentPath: string, directoriesOnly = false) => ipcRenderer.invoke('get-file-path-suggestions', currentPath, directoriesOnly),
-  getAddableFiles: (baseDir: string) => ipcRenderer.invoke('get-addable-files', baseDir),
-  addFile: (baseDir: string, filePath: string, readOnly = false) => ipcRenderer.send('add-file', baseDir, filePath, readOnly),
-  isValidPath: (baseDir: string, path: string) => ipcRenderer.invoke('is-valid-path', baseDir, path),
-  isProjectPath: (path: string) => ipcRenderer.invoke('is-project-path', path),
-  dropFile: (baseDir: string, path: string) => ipcRenderer.send('drop-file', baseDir, path),
-  runCommand: (baseDir: string, command: string) => ipcRenderer.send('run-command', baseDir, command),
-  scrapeWeb: (baseDir: string, url: string) => ipcRenderer.invoke('scrape-web', baseDir, url),
-  loadMcpServerTools: (serverName: string, config?: McpServerConfig) => ipcRenderer.invoke('load-mcp-server-tools', serverName, config),
-  saveSession: (baseDir: string, name: string) => ipcRenderer.invoke('save-session', baseDir, name),
-  deleteSession: (baseDir: string, name: string) => ipcRenderer.invoke('delete-session', baseDir, name),
-  loadSessionMessages: (baseDir: string, name: string) => ipcRenderer.invoke('load-session-messages', baseDir, name),
-  loadSessionFiles: (baseDir: string, name: string) => ipcRenderer.invoke('load-session-files', baseDir, name),
-  listSessions: (baseDir: string) => ipcRenderer.invoke('list-sessions', baseDir),
-  exportSessionToMarkdown: (baseDir: string) => ipcRenderer.invoke('export-session-to-markdown', baseDir),
+  getFilePathSuggestions: (currentPath, directoriesOnly = false) => ipcRenderer.invoke('get-file-path-suggestions', currentPath, directoriesOnly),
+  getAddableFiles: (baseDir) => ipcRenderer.invoke('get-addable-files', baseDir),
+  addFile: (baseDir, filePath, readOnly = false) => ipcRenderer.send('add-file', baseDir, filePath, readOnly),
+  isValidPath: (baseDir, path) => ipcRenderer.invoke('is-valid-path', baseDir, path),
+  isProjectPath: (path) => ipcRenderer.invoke('is-project-path', path),
+  dropFile: (baseDir, path) => ipcRenderer.send('drop-file', baseDir, path),
+  runCommand: (baseDir, command) => ipcRenderer.send('run-command', baseDir, command),
+  scrapeWeb: (baseDir, url) => ipcRenderer.invoke('scrape-web', baseDir, url),
+  loadMcpServerTools: (serverName, config?: McpServerConfig) => ipcRenderer.invoke('load-mcp-server-tools', serverName, config),
+  saveSession: (baseDir, name) => ipcRenderer.invoke('save-session', baseDir, name),
+  deleteSession: (baseDir, name) => ipcRenderer.invoke('delete-session', baseDir, name),
+  loadSessionMessages: (baseDir, name) => ipcRenderer.invoke('load-session-messages', baseDir, name),
+  loadSessionFiles: (baseDir, name) => ipcRenderer.invoke('load-session-files', baseDir, name),
+  listSessions: (baseDir) => ipcRenderer.invoke('list-sessions', baseDir),
+  exportSessionToMarkdown: (baseDir) => ipcRenderer.invoke('export-session-to-markdown', baseDir),
   getRecentProjects: () => ipcRenderer.invoke('get-recent-projects'),
-  addRecentProject: (baseDir: string) => ipcRenderer.invoke('add-recent-project', baseDir),
-  removeRecentProject: (baseDir: string) => ipcRenderer.invoke('remove-recent-project', baseDir),
-  interruptResponse: (baseDir: string) => ipcRenderer.send('interrupt-response', baseDir),
-  applyEdits: (baseDir: string, edits: FileEdit[]) => ipcRenderer.send('apply-edits', baseDir, edits),
-  clearContext: (baseDir: string) => ipcRenderer.send('clear-context', baseDir),
-  removeLastMessage: (baseDir: string) => ipcRenderer.send('remove-last-message', baseDir),
-  setZoomLevel: (level: number) => ipcRenderer.invoke('set-zoom-level', level),
+  addRecentProject: (baseDir) => ipcRenderer.invoke('add-recent-project', baseDir),
+  removeRecentProject: (baseDir) => ipcRenderer.invoke('remove-recent-project', baseDir),
+  interruptResponse: (baseDir) => ipcRenderer.send('interrupt-response', baseDir),
+  applyEdits: (baseDir, edits: FileEdit[]) => ipcRenderer.send('apply-edits', baseDir, edits),
+  clearContext: (baseDir) => ipcRenderer.send('clear-context', baseDir),
+  removeLastMessage: (baseDir) => ipcRenderer.send('remove-last-message', baseDir),
+  setZoomLevel: (level) => ipcRenderer.invoke('set-zoom-level', level),
+  getVersions: (forceRefresh = false) => ipcRenderer.invoke('get-versions', forceRefresh),
+  downloadLatestAiderDesk: () => ipcRenderer.invoke('download-latest-aiderdesk'),
+
+  getReleaseNotes: () => ipcRenderer.invoke('get-release-notes'),
+  clearReleaseNotes: () => ipcRenderer.invoke('clear-release-notes'),
 
   addResponseChunkListener: (baseDir, callback) => {
     const listenerId = uuidv4();
@@ -332,6 +337,22 @@ const api: ApplicationAPI = {
     if (callback) {
       ipcRenderer.removeListener('clear-project', callback);
       delete clearProjectListeners[listenerId];
+    }
+  },
+
+  addVersionsInfoUpdatedListener: (callback) => {
+    const listenerId = uuidv4();
+    versionsInfoUpdatedListeners[listenerId] = (event: Electron.IpcRendererEvent, data: VersionsInfo) => {
+      callback(event, data);
+    };
+    ipcRenderer.on('versions-info-updated', versionsInfoUpdatedListeners[listenerId]);
+    return listenerId;
+  },
+  removeVersionsInfoUpdatedListener: (listenerId) => {
+    const callback = versionsInfoUpdatedListeners[listenerId];
+    if (callback) {
+      ipcRenderer.removeListener('versions-info-updated', callback);
+      delete versionsInfoUpdatedListeners[listenerId];
     }
   },
 };

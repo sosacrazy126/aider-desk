@@ -10,7 +10,6 @@ import { formatHumanReadable } from '@/utils/string-utils';
 type Props = {
   tokensInfo?: TokensInfoData | null;
   aiderTotalCost: number;
-  agentTotalCost: number;
   clearMessages?: () => void;
   refreshRepoMap?: () => void;
   restartProject?: () => void;
@@ -18,7 +17,7 @@ type Props = {
   mode: Mode;
 };
 
-export const CostInfo = ({ tokensInfo, aiderTotalCost, agentTotalCost, clearMessages, refreshRepoMap, restartProject, maxInputTokens = 0, mode }: Props) => {
+export const CostInfo = ({ tokensInfo, aiderTotalCost, clearMessages, refreshRepoMap, restartProject, maxInputTokens = 0, mode }: Props) => {
   const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
   const [refreshingAnimation, setRefreshingAnimation] = useState(false);
@@ -38,6 +37,7 @@ export const CostInfo = ({ tokensInfo, aiderTotalCost, agentTotalCost, clearMess
   const chatHistoryTokens = tokensInfo?.chatHistory?.tokens ?? 0;
   const systemMessagesTokens = tokensInfo?.systemMessages?.tokens ?? 0;
   const agentTokens = tokensInfo?.agent?.tokens ?? 0;
+  const agentTotalCost = tokensInfo?.agent?.cost ?? 0;
 
   const totalTokens = mode === 'agent' ? agentTokens : chatHistoryTokens + filesTotalTokens + repoMapTokens + systemMessagesTokens;
   const tokensEstimated = mode === 'agent' ? tokensInfo?.agent?.tokensEstimated : false;

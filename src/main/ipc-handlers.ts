@@ -1,4 +1,4 @@
-import { Mode, FileEdit, McpServerConfig, MessageRole, ProjectData, ProjectSettings, SettingsData } from '@common/types';
+import { FileEdit, McpServerConfig, MessageRole, Mode, ProjectData, ProjectSettings, SettingsData } from '@common/types';
 import { normalizeBaseDir } from '@common/utils';
 import { BrowserWindow, dialog, ipcMain } from 'electron';
 
@@ -8,8 +8,9 @@ import { ProjectManager } from './project-manager';
 import { DEFAULT_PROJECT_SETTINGS, Store } from './store';
 import { scrapeWeb } from './web-scrapper';
 import logger from './logger';
+import { VersionsManager } from './versions-manager';
 
-export const setupIpcHandlers = (mainWindow: BrowserWindow, projectManager: ProjectManager, store: Store, agent: Agent) => {
+export const setupIpcHandlers = (mainWindow: BrowserWindow, projectManager: ProjectManager, store: Store, agent: Agent, versionsManager: VersionsManager) => {
   ipcMain.handle('load-settings', () => {
     return store.getSettings();
   });
@@ -242,5 +243,21 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, projectManager: Proj
     mainWindow.webContents.setZoomFactor(zoomLevel);
     const currentSettings = store.getSettings();
     store.saveSettings({ ...currentSettings, zoomLevel });
+  });
+
+  ipcMain.handle('get-versions', async (_, forceRefresh = false) => {
+    return await versionsManager.getVersions(forceRefresh);
+  });
+
+  ipcMain.handle('download-latest-aiderdesk', async () => {
+    await versionsManager.downloadLatestAiderDesk();
+  });
+
+  ipcMain.handle('get-release-notes', () => {
+    return store.getReleaseNotes();
+  });
+
+  ipcMain.handle('clear-release-notes', () => {
+    store.clearReleaseNotes();
   });
 };

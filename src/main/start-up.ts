@@ -7,6 +7,7 @@ import { delay } from '@common/utils';
 import { is } from '@electron-toolkit/utils';
 
 import logger from './logger';
+import { getCurrentPythonLibVersion, getLatestPythonLibVersion, getPythonVenvBinPath } from './utils';
 import {
   AIDER_DESK_DIR,
   SETUP_COMPLETE_FILENAME,
@@ -69,10 +70,6 @@ const createVirtualEnv = async (): Promise<void> => {
   });
 };
 
-const getPythonVenvBinPath = (): string => {
-  return process.platform === 'win32' ? path.join(PYTHON_VENV_DIR, 'Scripts') : path.join(PYTHON_VENV_DIR, 'bin');
-};
-
 const setupAiderConnector = async (cleanInstall: boolean, updateProgress?: UpdateProgressFunction): Promise<void> => {
   if (!fs.existsSync(AIDER_DESK_CONNECTOR_DIR)) {
     fs.mkdirSync(AIDER_DESK_CONNECTOR_DIR, { recursive: true });
@@ -104,49 +101,27 @@ const installAiderConnectorRequirements = async (cleanInstall: boolean, updatePr
       const installCommand = `"${PYTHON_COMMAND}" -m pip install --upgrade --no-cache-dir ${pkg}`;
 
       if (!cleanInstall) {
-        // First check if package is already installed
-        try {
-          const { stdout } = await execAsync(`"${PYTHON_COMMAND}" -m pip show ${pkg.split('==')[0]}`, {
-            windowsHide: true,
-            env: {
-              ...process.env,
-              VIRTUAL_ENV: PYTHON_VENV_DIR,
-              PATH: `${pythonBinPath}${path.delimiter}${process.env.PATH}`,
-            },
-          });
+        const packageName = pkg.split('==')[0];
+        const currentVersion = await getCurrentPythonLibVersion(packageName);
 
-          if (stdout) {
-            // Currently installed version
-            const currentVersion = stdout.match(/Version: (.+)/)?.[1];
-
-            if (pkg.includes('==')) {
-              // Version-pinned package - check if matches required version
-              const requiredVersion = pkg.split('==')[1];
-              if (currentVersion === requiredVersion) {
-                logger.info(`Package ${pkg} is already at required version ${requiredVersion}, skipping`);
-                continue;
-              }
-            } else {
-              // For non-version-pinned packages, check if newer version is available
-              const { stdout: latestVersion } = await execAsync(`"${PYTHON_COMMAND}" -m pip index versions ${pkg}`, {
-                windowsHide: true,
-                env: {
-                  ...process.env,
-                  VIRTUAL_ENV: PYTHON_VENV_DIR,
-                  PATH: `${pythonBinPath}${path.delimiter}${process.env.PATH}`,
-                },
-              });
-
-              const latestMatch = latestVersion.match(/LATEST:\s+(.+)/);
-              if (latestMatch && currentVersion === latestMatch[1]) {
-                logger.info(`Package ${pkg} is already at latest version ${currentVersion}, skipping`);
-                continue;
-              }
+        if (currentVersion) {
+          if (pkg.includes('==')) {
+            // Version-pinned package - check if matches required version
+            const requiredVersion = pkg.split('==')[1];
+            if (currentVersion === requiredVersion) {
+              logger.info(`Package ${pkg} is already at required version ${requiredVersion}, skipping`);
+              continue;
+            }
+          } else {
+            // For non-version-pinned packages, check if newer version is available
+            const latestVersion = await getLatestPythonLibVersion(packageName);
+            if (latestVersion && currentVersion === latestVersion) {
+              logger.info(`Package ${pkg} is already at latest version ${currentVersion}, skipping`);
+              continue;
             }
           }
-        } catch {
-          // Package not installed, proceed with installation
         }
+        // If currentVersion is null, the package is not installed, so proceed with installation.
       }
 
       logger.info(`Installing package: ${pkg}`);

@@ -1,4 +1,3 @@
-// src/renderer/src/components/project/ProjectView.tsx
 import {
   AutocompletionData,
   CommandOutputData,
@@ -67,7 +66,6 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
   const [inputHistory, setInputHistory] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [aiderTotalCost, setAiderTotalCost] = useState(0);
-  const [agentTotalCost, setAgentTotalCost] = useState(0);
   const [tokensInfo, setTokensInfo] = useState<TokensInfoData | null>(null);
   const [question, setQuestion] = useState<QuestionData | null>(null);
   const [mode, setMode] = useState<Mode>('code');
@@ -201,9 +199,6 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
         if (usageReport.aiderTotalCost !== undefined) {
           setAiderTotalCost(usageReport.aiderTotalCost);
         }
-        if (usageReport.agentTotalCost !== undefined) {
-          setAgentTotalCost(usageReport.agentTotalCost);
-        }
       }
 
       setProcessing(false);
@@ -265,9 +260,6 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
 
       if (usageReport?.aiderTotalCost !== undefined) {
         setAiderTotalCost(usageReport.aiderTotalCost);
-      }
-      if (usageReport?.agentTotalCost !== undefined) {
-        setAgentTotalCost(usageReport.agentTotalCost);
       }
     };
 
@@ -406,7 +398,6 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
     setLoading(true);
     setMessages([]);
     setAiderTotalCost(0);
-    setAgentTotalCost(0);
     setProcessing(false);
     setTokensInfo(null);
     setQuestion(null);
@@ -624,7 +615,6 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
           <CostInfo
             tokensInfo={tokensInfo}
             aiderTotalCost={aiderTotalCost}
-            agentTotalCost={agentTotalCost}
             maxInputTokens={maxInputTokens}
             clearMessages={clearMessages}
             refreshRepoMap={() => runCommand('map-refresh')}

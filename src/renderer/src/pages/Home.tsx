@@ -1,21 +1,35 @@
 import { ProjectData } from '@common/types';
 import { useCallback, useEffect, useState } from 'react';
-import { MdSettings } from 'react-icons/md';
+import { MdSettings, MdUpload } from 'react-icons/md';
+import { useTranslation } from 'react-i18next';
 
+import { IconButton } from '@/components/common/IconButton';
 import { NoProjectsOpen } from '@/components/project/NoProjectsOpen';
 import { OpenProjectDialog } from '@/components/project/OpenProjectDialog';
 import { ProjectTabs } from '@/components/project/ProjectTabs';
 import { ProjectView } from '@/components/project/ProjectView';
 import { SettingsDialog } from '@/components/settings/SettingsDialog';
+import { useVersions } from '@/hooks/useVersions';
+import { MarkdownInfoDialog } from '@/components/common/MarkdownInfoDialog';
 
 export const Home = () => {
+  const { t } = useTranslation();
+  const { versions } = useVersions();
   const [openProjects, setOpenProjects] = useState<ProjectData[]>([]);
   const [previousProjectBaseDir, setPreviousProjectBaseDir] = useState<string | null>(null);
   const [isOpenProjectDialogVisible, setIsOpenProjectDialogVisible] = useState(false);
   const [isCtrlPressed, setIsCtrlPressed] = useState(false);
   const [isTabbing, setIsTabbing] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
+  const [showSettingsTab, setShowSettingsTab] = useState<number | null>(null);
+  const [releaseNotesContent, setReleaseNotesContent] = useState<string | null>(null);
+
   const activeProject = openProjects.find((project) => project.active) || openProjects[0];
+
+  const isAiderDeskUpdateAvailable = versions?.aiderDeskAvailableVersion && versions.aiderDeskAvailableVersion !== versions.aiderDeskCurrentVersion;
+  const isAiderUpdateAvailable = versions?.aiderAvailableVersion && versions.aiderAvailableVersion !== versions.aiderCurrentVersion;
+  const isUpdateAvailable = isAiderDeskUpdateAvailable || isAiderUpdateAvailable;
+  const isDownloading = typeof versions?.aiderDeskDownloadProgress === 'number';
+  const showUpdateIcon = isDownloading || isUpdateAvailable || versions?.aiderDeskNewVersionReady;
 
   useEffect(() => {
     const loadProjects = async () => {
@@ -29,6 +43,17 @@ export const Home = () => {
     };
 
     void loadProjects();
+  }, []);
+
+  useEffect(() => {
+    const checkReleaseNotes = async () => {
+      const notes = await window.api.getReleaseNotes();
+      if (notes) {
+        setReleaseNotesContent(notes);
+      }
+    };
+
+    void checkReleaseNotes();
   }, []);
 
   const setActiveProject = async (baseDir: string) => {
@@ -100,6 +125,27 @@ export const Home = () => {
       </div>
     ));
 
+  const getUpdateTooltip = () => {
+    if (versions?.aiderDeskNewVersionReady) {
+      return t('settings.about.newAiderDeskVersionReady');
+    }
+    if (isDownloading && versions?.aiderDeskDownloadProgress) {
+      return `${t('settings.about.downloadingUpdate')}: ${Math.round(versions.aiderDeskDownloadProgress)}%`;
+    }
+    if (isAiderDeskUpdateAvailable) {
+      return t('settings.about.updateAvailable');
+    }
+    if (isAiderUpdateAvailable && versions?.aiderAvailableVersion) {
+      return t('settings.about.newAiderVersionAvailable', { version: versions.aiderAvailableVersion });
+    }
+    return ''; // Should not happen if showUpdateIcon is true
+  };
+
+  const handleCloseReleaseNotes = async () => {
+    await window.api.clearReleaseNotes();
+    setReleaseNotesContent(null);
+  };
+
   return (
     <div className="flex flex-col h-screen p-[4px] bg-gradient-to-b from-neutral-950 to-neutral-900">
       <div className="flex flex-col h-screen border-2 border-neutral-600">
@@ -111,15 +157,36 @@ export const Home = () => {
             onSetActiveProject={setActiveProject}
             onCloseProject={handleCloseProject}
           />
-          <button
-            className="px-4 py-2 text-neutral-400 hover:text-neutral-200 hover:bg-neutral-700/30 transition-colors duration-200 flex items-center justify-center"
-            onClick={() => setShowSettings(true)}
-          >
-            <MdSettings className="h-5 w-5" />
-          </button>
+          <div className="flex items-center">
+            {showUpdateIcon && (
+              <IconButton
+                icon={<MdUpload className="h-5 w-5 text-neutral-100 animate-pulse animate-slow" />}
+                tooltip={getUpdateTooltip()}
+                onClick={() => {
+                  setShowSettingsTab(3);
+                }}
+                className="px-4 py-2 hover:text-neutral-200 hover:bg-neutral-700/30 transition-colors duration-200"
+              />
+            )}
+            <IconButton
+              icon={<MdSettings className="h-5 w-5 text-neutral-200" />}
+              tooltip={t('settings.title')}
+              onClick={() => {
+                setShowSettingsTab(0);
+              }}
+              className="px-4 py-2 hover:text-neutral-200 hover:bg-neutral-700/30 transition-colors duration-200"
+            />
+          </div>
         </div>
         {isOpenProjectDialogVisible && <OpenProjectDialog onClose={() => setIsOpenProjectDialogVisible(false)} onAddProject={handleAddProject} />}
-        {showSettings && <SettingsDialog onClose={() => setShowSettings(false)} />}
+        {showSettingsTab !== null && <SettingsDialog onClose={() => setShowSettingsTab(null)} initialTab={showSettingsTab} />}
+        {releaseNotesContent && versions && (
+          <MarkdownInfoDialog
+            title={`${t('settings.about.releaseNotes')} - ${versions.aiderDeskCurrentVersion}`}
+            text={releaseNotesContent}
+            onClose={handleCloseReleaseNotes}
+          />
+        )}
         <div className="flex-grow overflow-hidden relative">
           {openProjects.length > 0 ? renderProjectPanels() : <NoProjectsOpen onOpenProject={() => setIsOpenProjectDialogVisible(true)} />}
         </div>

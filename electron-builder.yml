@@ -52,6 +52,8 @@ linux:
   category: Utility
 appImage:
   artifactName: ${name}-${version}.${ext}
+deb:
+  compression: 'gz'
 npmRebuild: false
 publish:
   provider: github

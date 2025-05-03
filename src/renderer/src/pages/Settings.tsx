@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { AiderSettings } from '@/components/settings/AiderSettings';
 import { GeneralSettings } from '@/components/settings/GeneralSettings';
 import { AgentSettings } from '@/components/settings/AgentSettings';
+import { AboutSettings } from '@/components/settings/AboutSettings'; // Import the new component
 
 type Props = {
   settings: SettingsData;
@@ -44,11 +45,13 @@ export const Settings = ({ settings, updateSettings, onLanguageChange, onZoomCha
         {renderTab(t('settings.tabs.general'))}
         {renderTab(t('settings.tabs.aider'))}
         {renderTab(t('settings.tabs.agent'))}
+        {renderTab(t('settings.tabs.about'))} {/* Add About tab */}
       </TabList>
       <TabPanels className="flex flex-col flex-1 overflow-hidden">
         {renderTabPanel(<GeneralSettings settings={settings} setSettings={updateSettings} onLanguageChange={onLanguageChange} onZoomChange={onZoomChange} />)}
         {renderTabPanel(<AiderSettings settings={settings} setSettings={updateSettings} />)}
         {renderTabPanel(<AgentSettings settings={settings} setSettings={updateSettings} />)}
+        {renderTabPanel(<AboutSettings settings={settings} setSettings={updateSettings} />)}
       </TabPanels>
     </TabGroup>
   );

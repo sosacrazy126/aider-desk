@@ -124,7 +124,8 @@
     "tabs": {
       "general": "General",
       "aider": "Aider",
-      "agent": "Agent"
+      "agent": "Agent",
+      "about": "About"
     },
     "gui": "GUI",
     "startup": {
@@ -167,6 +168,18 @@
       "message": "Changes to Aider options or environment variables require a restart of the Aider session to take effect. Would you like to restart now?",
       "restartNow": "Restart now",
       "later": "I'll do it later"
+    },
+    "about": {
+      "version": "Version",
+      "notAvailable": "N/A",
+      "checkForUpdates": "Check for updates",
+      "newAiderVersionAvailable": "New Aider version ({{version}}) is available - restart AiderDesk to install.",
+      "updateAvailable": "Update is available",
+      "downloadUpdate": "Download",
+      "downloadingUpdate": "Downloading update",
+      "newAiderDeskVersionReady": "A new version is ready. Restart AiderDesk to apply the update.",
+      "downloadAutomatically": "Download automatically",
+      "releaseNotes": "Release notes"
     }
   },
   "messages": {

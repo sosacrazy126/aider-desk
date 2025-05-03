@@ -120,7 +120,8 @@
     "tabs": {
       "general": "通用",
       "aider": "Aider",
-      "agent": "服务器"
+      "agent": "服务器",
+      "about": "关于"
     },
     "gui": "GUI",
     "startup": {
@@ -164,6 +165,17 @@
       "message": "对 Aider 选项或环境变量的更改需要重新启动 Aider 会话才能生效。您想现在重新启动吗？",
       "restartNow": "立即重启",
       "later": "稍后处理"
+    },
+    "about": {
+      "version": "版本",
+      "notAvailable": "不可用",
+      "checkForUpdates": "检查更新",
+      "newAiderVersionAvailable": "新的 Aider 版本可用 ({{version}}) - 重启 AiderDesk 以安装。",
+      "updateAvailable": "有可用更新",
+      "downloadUpdate": "下载",
+      "downloadingUpdate": "正在下载更新",
+      "newAiderDeskVersionReady": "新版本已准备好。重启 AiderDesk 以应用更新。",
+      "downloadAutomatically": "自动下载"
     }
   },
   "messages": {

@@ -18,7 +18,8 @@ import type {
   ToolData,
   CommandOutputData,
   Mode,
-} from '@/common/types';
+  VersionsInfo,
+} from '@common/types';
 
 export interface ApplicationAPI {
   loadSettings: () => Promise<SettingsData>;
@@ -65,6 +66,12 @@ export interface ApplicationAPI {
   removeLastMessage: (baseDir: string) => void;
   setZoomLevel: (level: number) => Promise<void>;
 
+  getVersions: (forceRefresh?: boolean) => Promise<VersionsInfo | null>;
+  downloadLatestAiderDesk: () => Promise<void>;
+
+  getReleaseNotes: () => Promise<string | null>;
+  clearReleaseNotes: () => Promise<void>;
+
   addResponseChunkListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: ResponseChunkData) => void) => string;
   removeResponseChunkListener: (listenerId: string) => void;
 
@@ -106,6 +113,9 @@ export interface ApplicationAPI {
 
   addClearProjectListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, clearMessages: boolean, clearSession: boolean) => void) => string;
   removeClearProjectListener: (listenerId: string) => void;
+
+  addVersionsInfoUpdatedListener: (callback: (event: Electron.IpcRendererEvent, data: VersionsInfo) => void) => string;
+  removeVersionsInfoUpdatedListener: (listenerId: string) => void;
 }
 
 declare global {

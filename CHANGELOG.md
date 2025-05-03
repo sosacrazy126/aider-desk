@@ -7,6 +7,7 @@
 - added support for /tokens command
 - added token usage progress bar to cost info
 - added direct support for OpenRouter in Agent mode
+- added version info for Aider and AiderDesk and improved update handling
 
 ## [0.11.1]
 

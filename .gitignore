@@ -9,6 +9,8 @@ out
 .junie*
 .env
 
+dev-app-update.yml
+
 # release scripts
 release-win.sh
 release-linux.sh
