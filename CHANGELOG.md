@@ -9,6 +9,7 @@
 - added direct support for OpenRouter in Agent mode
 - added version info for Aider and AiderDesk and improved update handling
 - fixed project directory compatibility when mixing IDE on Windows and AiderDesk on WSL
+- fixed issue with no attribute 'usage_report'
 
 ## [0.11.1]
 
