@@ -20,8 +20,7 @@ export class ProjectManager {
   }
 
   private findProject(baseDir: string): Project | undefined {
-    baseDir = normalizeBaseDir(baseDir);
-    return this.projects.find((project) => normalizeBaseDir(project.baseDir) === baseDir);
+    return this.projects.find((project) => normalizeBaseDir(project.baseDir) === normalizeBaseDir(baseDir));
   }
 
   private createProject(baseDir: string) {

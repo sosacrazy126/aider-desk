@@ -8,6 +8,7 @@
 - added token usage progress bar to cost info
 - added direct support for OpenRouter in Agent mode
 - added version info for Aider and AiderDesk and improved update handling
+- fixed project directory compatibility when mixing IDE on Windows and AiderDesk on WSL
 
 ## [0.11.1]
 

@@ -64,8 +64,25 @@ export const parseUsageReport = (report: string): UsageReportData => {
 };
 
 export const normalizeBaseDir = (baseDir: string): string => {
-  // On Windows, paths are case-insensitive so we normalize to lowercase
-  return process.platform === 'win32' ? baseDir.toLowerCase() : baseDir;
+  if (process.platform === 'win32') {
+    // On Windows, paths are case-insensitive so we normalize to lowercase
+    return baseDir.toLowerCase();
+  } else {
+    // Handle WSL paths like \\wsl.localhost\Ubuntu\home\user\...
+    const wslPrefix = '\\\\wsl.localhost\\';
+    if (baseDir.startsWith(wslPrefix)) {
+      // Find the third backslash which marks the end of the distro name
+      const thirdBackslashIndex = baseDir.indexOf('\\', wslPrefix.length);
+      if (thirdBackslashIndex !== -1) {
+        // Extract the path after \\wsl.localhost\<distro_name>\
+        const actualPath = baseDir.substring(thirdBackslashIndex + 1);
+        // Replace backslashes with forward slashes
+        return '/' + actualPath.replace(/\\/g, '/');
+      }
+    }
+    // Otherwise, return the path as is
+    return baseDir;
+  }
 };
 
 export const fileExists = async (fileName: string): Promise<boolean> => {
