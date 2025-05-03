@@ -9,7 +9,7 @@ import { getActiveProvider, LlmProvider } from '@common/llm-providers';
 // @ts-expect-error gpt-tokenizer is not typed
 import { countTokens } from 'gpt-tokenizer/model/gpt-4o';
 import { getSystemPrompt } from 'src/main/agent/prompts';
-import { parse } from '@dotenvx/dotenvx';
+import { parseAiderEnv } from 'src/main/utils';
 
 import logger from '../logger';
 import { Store } from '../store';
@@ -395,7 +395,7 @@ export class Agent {
     try {
       const model = createLlm(activeProvider, {
         ...process.env,
-        ...(await this.getAiderEnv()),
+        ...this.getAiderEnv(),
       });
       const systemPrompt = await getSystemPrompt(project.baseDir, agentConfig.useAiderTools, agentConfig.includeContextFiles, agentConfig.customInstructions);
 
@@ -575,32 +575,9 @@ export class Agent {
     return agentMessages;
   }
 
-  private async getAiderEnv(): Promise<Record<string, string>> {
+  private getAiderEnv(): Record<string, string> {
     if (!this.aiderEnv) {
-      // Parse Aider environment variables from settings
-      const aiderEnvVars = parse(this.store.getSettings().aider.environmentVariables);
-      const aiderOptions = this.store.getSettings().aider.options;
-      let fileEnv: Record<string, string> | null = null;
-
-      // Check for --env or --env-file in aider options
-      const envFileMatch = aiderOptions.match(/--(?:env|env-file)\s+([^\s]+)/);
-      if (envFileMatch && envFileMatch[1]) {
-        const envFilePath = envFileMatch[1];
-        try {
-          const fileContent = await fs.readFile(envFilePath, 'utf8');
-          fileEnv = parse(fileContent);
-          logger.debug(`Loaded environment variables from Aider env file: ${envFilePath}`);
-        } catch (error) {
-          logger.error(`Failed to read or parse Aider env file: ${envFilePath}`, error);
-          // Setting aiderEnv to null indicates an error state, preventing LLM creation with potentially incorrect env
-          this.aiderEnv = null;
-        }
-      }
-
-      this.aiderEnv = {
-        ...aiderEnvVars, // Start with settings env
-        ...(fileEnv ?? {}), // Override with file env if it exists
-      };
+      this.aiderEnv = parseAiderEnv(this.store.getSettings());
     }
 
     return this.aiderEnv;

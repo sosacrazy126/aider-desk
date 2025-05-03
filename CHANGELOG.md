@@ -10,6 +10,7 @@
 - added version info for Aider and AiderDesk and improved update handling
 - fixed project directory compatibility when mixing IDE on Windows and AiderDesk on WSL
 - fixed issue with no attribute 'usage_report'
+- initial model for project now respect --model option or check for API keys in environment variables
 
 ## [0.11.1]
 

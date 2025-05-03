@@ -5,7 +5,7 @@ import { BrowserWindow, dialog, ipcMain } from 'electron';
 import { Agent } from './agent';
 import { getFilePathSuggestions, isProjectPath, isValidPath } from './file-system';
 import { ProjectManager } from './project-manager';
-import { DEFAULT_PROJECT_SETTINGS, Store } from './store';
+import { Store, getDefaultProjectSettings } from './store';
 import { scrapeWeb } from './web-scrapper';
 import logger from './logger';
 import { VersionsManager } from './versions-manager';
@@ -70,7 +70,7 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, projectManager: Proj
     if (!existingProject) {
       const newProject: ProjectData = {
         baseDir: baseDir.endsWith('/') ? baseDir.slice(0, -1) : baseDir,
-        settings: DEFAULT_PROJECT_SETTINGS,
+        settings: getDefaultProjectSettings(store),
         active: true,
       };
       const updatedProjects = [...projects.map((p) => ({ ...p, active: false })), newProject];

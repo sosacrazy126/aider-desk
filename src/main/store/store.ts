@@ -1,6 +1,7 @@
 import { ProjectData, ProjectSettings, SettingsData, StartupMode, WindowState } from '@common/types';
 import { normalizeBaseDir } from '@common/utils';
 import { PROVIDER_MODELS } from '@common/llm-providers';
+import { parseAiderEnv } from 'src/main/utils';
 
 import logger from '../logger';
 
@@ -8,7 +9,12 @@ import { migrateSettingsV0toV1 } from './migrations/v0-to-v1';
 import { migrateSettingsV1toV2 } from './migrations/v1-to-v2';
 import { migrateSettingsV2toV3 } from './migrations/v2-to-v3';
 
-export const DEFAULT_MAIN_MODEL = 'claude-3-7-sonnet-20250219';
+const SONNET_MODEL = 'claude-3-7-sonnet-20250219';
+const GEMINI_MODEL = 'gemini/gemini-2.5-pro-preview-03-25';
+const OPEN_AI_DEFAULT_MODEL = 'gpt-4.1';
+const DEEPSEEK_MODEL = 'deepseek/deepseek-chat';
+
+export const DEFAULT_MAIN_MODEL = SONNET_MODEL;
 
 export const DEFAULT_SETTINGS: SettingsData = {
   language: 'en',
@@ -20,7 +26,7 @@ export const DEFAULT_SETTINGS: SettingsData = {
     environmentVariables: '',
   },
   models: {
-    preferred: ['claude-3-7-sonnet-20250219', 'gpt-4o', 'deepseek/deepseek-coder', 'claude-3-5-haiku-20241022'],
+    preferred: [SONNET_MODEL, GEMINI_MODEL, OPEN_AI_DEFAULT_MODEL, DEEPSEEK_MODEL],
   },
   agentConfig: {
     providers: [
@@ -44,10 +50,48 @@ export const DEFAULT_SETTINGS: SettingsData = {
   },
 };
 
-export const DEFAULT_PROJECT_SETTINGS: ProjectSettings = {
-  mainModel: DEFAULT_MAIN_MODEL,
-  currentMode: 'code',
-  renderMarkdown: false,
+export const determineMainModel = (settings: SettingsData): string => {
+  // Check for --model in aider options
+  const modelOptionIndex = settings.aider.options.indexOf('--model ');
+  if (modelOptionIndex !== -1) {
+    const modelStartIndex = modelOptionIndex + '--model '.length;
+    let modelEndIndex = settings.aider.options.indexOf(' ', modelStartIndex);
+    if (modelEndIndex === -1) {
+      modelEndIndex = settings.aider.options.length;
+    }
+    const modelName = settings.aider.options.substring(modelStartIndex, modelEndIndex).trim();
+    if (modelName) {
+      return modelName;
+    }
+  }
+
+  const env = {
+    ...process.env,
+    ...parseAiderEnv(settings),
+  };
+  // Check environment variables in order
+  if (env.ANTHROPIC_API_KEY) {
+    return SONNET_MODEL;
+  } else if (env.GEMINI_API_KEY) {
+    return GEMINI_MODEL;
+  } else if (env.OPENAI_API_KEY && !env.OPENAI_API_BASE) {
+    return OPEN_AI_DEFAULT_MODEL;
+  } else if (env.DEEPSEEK_API_KEY) {
+    return DEEPSEEK_MODEL;
+  } else if (env.OPENROUTER_API_KEY) {
+    return 'openrouter/google/gemini-2.5-pro-preview-03-25';
+  }
+
+  // Default model if no other condition is met
+  return DEFAULT_MAIN_MODEL;
+};
+
+export const getDefaultProjectSettings = (store: Store): ProjectSettings => {
+  return {
+    mainModel: determineMainModel(store.getSettings()),
+    currentMode: 'code',
+    renderMarkdown: true,
+  };
 };
 
 const compareBaseDirs = (baseDir1: string, baseDir2: string): boolean => {
@@ -178,7 +222,7 @@ export class Store {
     const projects = this.getOpenProjects();
     const project = projects.find((p) => compareBaseDirs(p.baseDir, baseDir));
     return {
-      ...DEFAULT_PROJECT_SETTINGS,
+      ...getDefaultProjectSettings(this),
       ...project?.settings,
     };
   }

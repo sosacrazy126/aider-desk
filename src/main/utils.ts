@@ -1,6 +1,10 @@
 import path from 'path';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import fs from 'fs';
+
+import { SettingsData } from '@common/types';
+import { parse } from '@dotenvx/dotenvx';
 
 import { PYTHON_COMMAND, PYTHON_VENV_DIR } from './constants';
 import logger from './logger';
@@ -70,4 +74,30 @@ export const getLatestPythonLibVersion = async (library: string): Promise<string
     logger.error(`Failed to get latest available version for library '${library}'`, { error });
     return null;
   }
+};
+
+export const parseAiderEnv = (settings: SettingsData): Record<string, string> => {
+  // Parse Aider environment variables from settings
+  const aiderEnvVars = parse(settings.aider.environmentVariables);
+  const aiderOptions = settings.aider.options;
+  let fileEnv: Record<string, string> | null = null;
+
+  // Check for --env or --env-file in aider options
+  const envFileMatch = aiderOptions.match(/--(?:env|env-file)\s+([^\s]+)/);
+  if (envFileMatch && envFileMatch[1]) {
+    const envFilePath = envFileMatch[1];
+    try {
+      const fileContent = fs.readFileSync(envFilePath, 'utf8');
+      fileEnv = parse(fileContent);
+      logger.debug(`Loaded environment variables from Aider env file: ${envFilePath}`);
+    } catch (error) {
+      logger.error(`Failed to read or parse Aider env file: ${envFilePath}`, error);
+      return {};
+    }
+  }
+
+  return {
+    ...aiderEnvVars, // Start with settings env
+    ...(fileEnv ?? {}), // Override with file env if it exists
+  };
 };
