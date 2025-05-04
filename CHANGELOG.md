@@ -12,6 +12,7 @@
 - fixed issue with no attribute 'usage_report'
 - initial model for project now respect --model option or check for API keys in environment variables
 - improved performance of add/drop actions when working with a large number of files in context
+- added support for /reset command
 
 ## [0.11.1]
 
