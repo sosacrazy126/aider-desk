@@ -131,7 +131,11 @@ export class Project {
     });
     this.connectors.push(connector);
     if (connector.listenTo.includes('add-file')) {
-      this.sessionManager.getContextFiles().forEach(connector.sendAddFileMessage);
+      const contextFiles = this.sessionManager.getContextFiles();
+      for (let index = 0; index < contextFiles.length; index++) {
+        const contextFile = contextFiles[index];
+        connector.sendAddFileMessage(contextFile, index !== contextFiles.length - 1);
+      }
     }
     if (connector.listenTo.includes('add-message')) {
       this.sessionManager.toConnectorMessages().forEach((message) => {
@@ -594,8 +598,8 @@ export class Project {
     return true;
   }
 
-  public sendAddFile(contextFile: ContextFile) {
-    this.findMessageConnectors('add-file').forEach((connector) => connector.sendAddFileMessage(contextFile));
+  public sendAddFile(contextFile: ContextFile, noUpdate?: boolean) {
+    this.findMessageConnectors('add-file').forEach((connector) => connector.sendAddFileMessage(contextFile, noUpdate));
   }
 
   public dropFile(filePath: string) {
@@ -609,12 +613,12 @@ export class Project {
     }
   }
 
-  public sendDropFile(filePath: string, readOnly?: boolean): void {
+  public sendDropFile(filePath: string, readOnly?: boolean, noUpdate?: boolean): void {
     const absolutePath = path.resolve(this.baseDir, filePath);
     const isOutsideProject = !absolutePath.startsWith(path.resolve(this.baseDir));
     const pathToSend = readOnly || isOutsideProject ? absolutePath : filePath.startsWith(this.baseDir) ? filePath : path.join(this.baseDir, filePath);
 
-    this.findMessageConnectors('drop-file').forEach((connector) => connector.sendDropFileMessage(pathToSend));
+    this.findMessageConnectors('drop-file').forEach((connector) => connector.sendDropFileMessage(pathToSend, noUpdate));
   }
 
   public runCommand(command: string, addToHistory = true) {

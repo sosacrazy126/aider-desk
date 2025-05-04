@@ -72,6 +72,7 @@ export interface AddFileMessage extends Message {
   path: string;
   sourceType?: ContextFileSourceType;
   readOnly?: boolean;
+  noUpdate?: boolean;
 }
 
 export const isAddFileMessage = (message: Message): message is AddFileMessage => {
@@ -82,6 +83,7 @@ export interface DropFileMessage extends Message {
   action: 'drop-file';
   path: string;
   readOnly?: boolean;
+  noUpdate?: boolean;
 }
 
 export const isDropFileMessage = (message: Message): message is DropFileMessage => {

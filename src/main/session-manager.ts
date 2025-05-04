@@ -362,14 +362,16 @@ export class SessionManager {
 
   async loadFiles(contextFiles: ContextFile[]): Promise<void> {
     // Drop all current files
-    this.getContextFiles().forEach((contextFile) => {
-      this.project.sendDropFile(contextFile.path, contextFile.readOnly);
-    });
+    for (let i = 0; i < this.contextFiles.length; i++) {
+      const contextFile = this.contextFiles[i];
+      this.project.sendDropFile(contextFile.path, contextFile.readOnly, i !== this.contextFiles.length - 1);
+    }
 
     this.contextFiles = contextFiles;
-    this.getContextFiles().forEach((contextFile) => {
-      this.project.sendAddFile(contextFile);
-    });
+    for (let i = 0; i < this.contextFiles.length; i++) {
+      const contextFile = this.contextFiles[i];
+      this.project.sendAddFile(contextFile, i !== this.contextFiles.length - 1);
+    }
   }
 
   async load(name: string): Promise<void> {

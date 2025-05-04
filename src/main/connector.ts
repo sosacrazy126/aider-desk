@@ -69,21 +69,23 @@ export class Connector {
     this.sendMessage(message);
   };
 
-  public sendAddFileMessage = (contextFile: ContextFile) => {
+  public sendAddFileMessage = (contextFile: ContextFile, noUpdate = false) => {
     const filePath = contextFile.readOnly || contextFile.path.startsWith(this.baseDir) ? contextFile.path : path.join(this.baseDir, contextFile.path);
 
     const message: AddFileMessage = {
       action: 'add-file',
       path: filePath,
       readOnly: contextFile.readOnly,
+      noUpdate,
     };
     this.sendMessage(message);
   };
 
-  public sendDropFileMessage = (path: string) => {
+  public sendDropFileMessage = (path: string, noUpdate = false) => {
     const message: DropFileMessage = {
       action: 'drop-file',
       path,
+      noUpdate,
     };
     this.sendMessage(message);
   };

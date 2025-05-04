@@ -16,6 +16,8 @@ const CONFIRM_COMMANDS = ['/clear', '/web', '/undo', '/test', '/map-refresh', '/
 
 const ANSWERS = ['y', 'n', 'a', 'd'];
 
+const MAX_SUGGESTIONS = 10;
+
 export interface PromptFieldRef {
   focus: () => void;
 }
@@ -82,7 +84,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
         // only show suggestions if the current word is at least 3 characters long
         if (currentWord.length >= 3 && !suggestionsVisible) {
           const matched = matchSorter(words, currentWord);
-          setFilteredSuggestions(matched);
+          setFilteredSuggestions(matched.slice(0, MAX_SUGGESTIONS));
           setSuggestionsVisible(matched.length > 0);
         }
       },
@@ -491,7 +493,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
               <div
                 key={index}
                 ref={index === highlightedSuggestionIndex ? (el) => el?.scrollIntoView({ block: 'nearest' }) : null}
-                className={`px-2 py-1 cursor-pointer ${index === highlightedSuggestionIndex ? 'bg-neutral-700' : 'hover:bg-neutral-700'}`}
+                className={`px-2 py-1 cursor-pointer ${index === highlightedSuggestionIndex ? 'bg-neutral-700' : 'hover:bg-neutral-850'}`}
                 onClick={() => acceptSuggestion(suggestion)}
               >
                 {suggestion}
