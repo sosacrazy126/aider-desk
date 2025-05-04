@@ -25,6 +25,7 @@ const CONFIRM_COMMANDS = [
   '/copy-context',
   '/tokens',
   '/reset',
+  '/drop',
 ];
 
 const ANSWERS = ['y', 'n', 'a', 'd'];

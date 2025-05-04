@@ -735,7 +735,7 @@ class Connector:
         self.thinking_tokens = None
       await asyncio.sleep(0.1)
       await self.send_current_models()
-    elif command.startswith("/reset"):
+    elif command.startswith("/reset") or command.startswith("/drop"):
       await self.send_update_context_files()
       await self.send_autocompletion()
       await self.send_tokens_info()
