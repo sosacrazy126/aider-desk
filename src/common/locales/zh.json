@@ -183,7 +183,9 @@
     "loading": "加载中...",
     "copy": "复制",
     "copied": "已复制!",
-    "interrupted": "被用户中断。"
+    "interrupted": "被用户中断。",
+    "delete": "删除",
+    "redo": "重做"
   },
   "errors": {
     "frozenTitle": "AIDER冻结了?",
@@ -367,8 +369,5 @@
   },
   "projectBar": {
     "toggleMarkdown": "Markdown 渲染"
-  },
-  "message": {
-    "delete": "删除"
   }
 }

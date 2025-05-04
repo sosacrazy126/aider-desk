@@ -22,11 +22,11 @@ type Props = {
   message: Message;
   allFiles: string[];
   renderMarkdown: boolean;
-  removeMessage: () => void;
-  isLastMessage: boolean;
+  remove?: () => void;
+  redo?: () => void;
 };
 
-export const MessageBlock = ({ baseDir, message, allFiles, renderMarkdown, removeMessage, isLastMessage }: Props) => {
+export const MessageBlock = ({ baseDir, message, allFiles, renderMarkdown, remove, redo }: Props) => {
   if (isLoadingMessage(message)) {
     return <LoadingMessageBlock message={message} />;
   }
@@ -44,31 +44,15 @@ export const MessageBlock = ({ baseDir, message, allFiles, renderMarkdown, remov
   }
 
   if (isUserMessage(message)) {
-    return (
-      <UserMessageBlock
-        baseDir={baseDir}
-        message={message}
-        allFiles={allFiles}
-        renderMarkdown={renderMarkdown}
-        onRemove={isLastMessage ? removeMessage : undefined}
-      />
-    );
+    return <UserMessageBlock baseDir={baseDir} message={message} allFiles={allFiles} renderMarkdown={renderMarkdown} onRemove={remove} redo={redo} />;
   }
 
   if (isResponseMessage(message)) {
-    return (
-      <ResponseMessageBlock
-        baseDir={baseDir}
-        message={message}
-        allFiles={allFiles}
-        renderMarkdown={renderMarkdown}
-        onRemove={isLastMessage ? removeMessage : undefined}
-      />
-    );
+    return <ResponseMessageBlock baseDir={baseDir} message={message} allFiles={allFiles} renderMarkdown={renderMarkdown} onRemove={remove} />;
   }
 
   if (isToolMessage(message)) {
-    return <ToolMessageBlock message={message} onRemove={isLastMessage ? removeMessage : undefined} />;
+    return <ToolMessageBlock message={message} onRemove={remove} />;
   }
 
   return null;

@@ -153,7 +153,7 @@ export const ToolMessageBlock = ({ message, onRemove }: Props) => {
           )}
         </div>
       </div>
-      <MessageBar content={message.content} usageReport={message.usageReport} removeMessage={onRemove} />
+      <MessageBar content={message.content} usageReport={message.usageReport} remove={onRemove} />
     </div>
   );
 };

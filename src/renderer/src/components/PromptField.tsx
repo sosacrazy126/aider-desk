@@ -26,6 +26,7 @@ const CONFIRM_COMMANDS = [
   '/tokens',
   '/reset',
   '/drop',
+  '/redo',
 ];
 
 const ANSWERS = ['y', 'n', 'a', 'd'];
@@ -54,6 +55,7 @@ type Props = {
   interruptResponse: () => void;
   runCommand: (command: string) => void;
   runTests: (testCmd?: string) => void;
+  redoLastUserPrompt: () => void;
   disabled?: boolean;
 };
 
@@ -76,6 +78,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
       interruptResponse,
       runCommand,
       runTests,
+      redoLastUserPrompt,
       openModelSelector,
       disabled = false,
     }: Props,
@@ -127,26 +130,30 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
             break;
           }
           case '/add':
-            setText('');
+            prepareForNextPrompt();
             showFileDialog(false);
             break;
           case '/read-only':
-            setText('');
+            prepareForNextPrompt();
             showFileDialog(true);
             break;
           case '/model':
-            setText('');
+            prepareForNextPrompt();
             openModelSelector?.();
             break;
           case '/web': {
             const url = text.replace('/web', '').trim();
-            setText('');
+            prepareForNextPrompt();
             scrapeWeb(url);
             break;
           }
           case '/clear':
-            setText('');
+            prepareForNextPrompt();
             clearMessages();
+            break;
+          case '/redo':
+            prepareForNextPrompt();
+            redoLastUserPrompt();
             break;
           case '/test': {
             runTests(args);

@@ -947,10 +947,35 @@ export class Project {
 
   public async removeLastMessage() {
     this.sessionManager.removeLastMessage();
+    this.reloadConnectorMessages();
+
     await this.updateAgentEstimatedTokens();
   }
 
-  public addContextMessage(role: MessageRole, content: string) {
+  public async redoLastUserPrompt(mode: Mode) {
+    logger.info('Redoing last user prompt:', { baseDir: this.baseDir, mode });
+    const lastUserMessageContent = this.sessionManager.removeLastUserMessage();
+
+    if (lastUserMessageContent) {
+      logger.info('Found last user message content, reloading and re-running prompt.');
+      this.reloadConnectorMessages();
+      await this.updateAgentEstimatedTokens();
+
+      // No need to await runPrompt here, let it run in the background
+      void this.runPrompt(lastUserMessageContent, mode);
+    } else {
+      logger.warn('Could not find a previous user message to redo.');
+    }
+  }
+
+  private reloadConnectorMessages() {
+    this.runCommand('clear', false);
+    this.sessionManager.toConnectorMessages().forEach((message) => {
+      this.sendAddMessage(message.role, message.content, false);
+    });
+  }
+
+  public addContextMessage(role: MessageRole, content: string, acknowledge = false) {
     logger.info('Adding context message:', {
       baseDir: this.baseDir,
       role,
@@ -958,7 +983,7 @@ export class Project {
     });
 
     this.sessionManager.addContextMessage(role, content);
-    this.sendAddMessage(role, content, false);
+    this.sendAddMessage(role, content, acknowledge);
   }
 
   public async exportSessionToMarkdown(): Promise<void> {

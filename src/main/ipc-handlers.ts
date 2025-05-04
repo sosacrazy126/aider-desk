@@ -199,9 +199,13 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, projectManager: Proj
     void projectManager.getProject(baseDir).removeLastMessage();
   });
 
+  ipcMain.on('redo-last-user-prompt', (_, baseDir: string, mode: Mode) => {
+    void projectManager.getProject(baseDir).redoLastUserPrompt(mode);
+  });
+
   ipcMain.handle('scrape-web', async (_, baseDir: string, url: string) => {
     const content = await scrapeWeb(url);
-    projectManager.getProject(baseDir).addContextMessage(MessageRole.User, `I have scraped the following content from ${url}:\n\n${content}`);
+    projectManager.getProject(baseDir).addContextMessage(MessageRole.User, `I have scraped the following content from ${url}:\n\n${content}`, true);
   });
 
   ipcMain.handle('save-session', async (_, baseDir: string, name: string) => {

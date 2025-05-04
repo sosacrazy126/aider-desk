@@ -14,6 +14,7 @@
 - improved performance of add/drop actions when working with a large number of files in context
 - added support for /reset command
 - added support for /drop command
+- added ability to redo the last user message via user message action menu or /redo command
 
 ## [0.11.1]
 

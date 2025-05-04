@@ -138,6 +138,7 @@ export class SessionManager {
 
   clearMessages() {
     this.contextMessages = [];
+    this.saveAsAutosaved();
   }
 
   removeLastMessage(): void {
@@ -184,7 +185,33 @@ export class SessionManager {
     }
 
     this.saveAsAutosaved();
-    void this.loadMessages(this.contextMessages); // Reload messages in the UI
+  }
+
+  removeLastUserMessage(): string | null {
+    let lastUserMessageContent: string | null = null;
+
+    while (this.contextMessages.length > 0) {
+      const lastMessage = this.contextMessages.pop();
+      if (!lastMessage) {
+        // Should not happen, but safety check
+        break;
+      }
+
+      logger.debug(`Session: Removing message during user message search: ${lastMessage.role}`);
+
+      if (lastMessage.role === MessageRole.User) {
+        lastUserMessageContent = extractTextContent(lastMessage.content);
+        logger.debug(`Session: Found and removed last user message. Content: ${lastUserMessageContent}. Total messages: ${this.contextMessages.length}`);
+        break; // Found the user message, stop removing
+      }
+    }
+
+    if (lastUserMessageContent !== null) {
+      // Save only if messages were removed or a user message was found
+      this.saveAsAutosaved();
+    }
+
+    return lastUserMessageContent;
   }
 
   toConnectorMessages(contextMessages: ContextMessage[] = this.contextMessages): { role: MessageRole; content: string }[] {
@@ -297,7 +324,6 @@ export class SessionManager {
     // Clear all current messages
     this.project.clearContext();
 
-    // Load messages (only supports new CoreMessage format)
     this.contextMessages = contextMessages;
 
     // Add messages to the UI
@@ -330,12 +356,10 @@ export class SessionManager {
             content: content,
             finished: true,
           });
-          this.project.sendAddMessage(MessageRole.Assistant, content, false);
         }
       } else if (message.role === 'user') {
         const content = extractTextContent(message.content);
         this.project.addUserMessage(content);
-        this.project.sendAddMessage(MessageRole.User, content, false);
       } else if (message.role === 'tool') {
         for (const part of message.content) {
           if (part.type === 'tool-result') {
@@ -358,6 +382,11 @@ export class SessionManager {
         }
       }
     }
+
+    // send messages to Connectors (Aider)
+    this.toConnectorMessages().forEach((message) => {
+      this.project.sendAddMessage(message.role, message.content, false);
+    });
   }
 
   async loadFiles(contextFiles: ContextFile[]): Promise<void> {

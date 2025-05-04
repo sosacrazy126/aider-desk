@@ -29,7 +29,7 @@ export const ResponseMessageBlock = ({ baseDir, message, allFiles, renderMarkdow
         </div>
         <div className="flex-grow-1 w-full overflow-hidden">{parseMessageContent(baseDir, message.content, allFiles, renderMarkdown)}</div>
       </div>
-      <MessageBar content={message.content} usageReport={message.usageReport} removeMessage={onRemove} />
+      <MessageBar content={message.content} usageReport={message.usageReport} remove={onRemove} />
     </div>
   );
 };

@@ -3,7 +3,7 @@ import { toPng } from 'html-to-image';
 
 import { MessageBlock } from './MessageBlock';
 
-import { Message } from '@/types/message';
+import { Message, isUserMessage } from '@/types/message';
 import { StyledTooltip } from '@/components/common/StyledTooltip';
 
 export type MessagesRef = {
@@ -16,12 +16,14 @@ type Props = {
   allFiles?: string[];
   renderMarkdown: boolean;
   removeMessage: (message: Message) => void;
+  redoLastUserPrompt: () => void;
 };
 
-export const Messages = forwardRef<MessagesRef, Props>(({ baseDir, messages, allFiles = [], renderMarkdown, removeMessage }, ref) => {
+export const Messages = forwardRef<MessagesRef, Props>(({ baseDir, messages, allFiles = [], renderMarkdown, removeMessage, redoLastUserPrompt }, ref) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [scrollingPaused, setScrollingPaused] = useState(false);
+  const lastUserMessageIndex = messages.findLastIndex(isUserMessage);
 
   const handleScroll = (e: WheelEvent<HTMLDivElement>) => {
     const element = e.currentTarget;
@@ -79,8 +81,8 @@ export const Messages = forwardRef<MessagesRef, Props>(({ baseDir, messages, all
           message={message}
           allFiles={allFiles}
           renderMarkdown={renderMarkdown}
-          removeMessage={() => removeMessage(message)}
-          isLastMessage={index === messages.length - 1}
+          remove={index === messages.length - 1 ? () => removeMessage(message) : undefined}
+          redo={index === lastUserMessageIndex ? redoLastUserPrompt : undefined}
         />
       ))}
       <div ref={messagesEndRef} />

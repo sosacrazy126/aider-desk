@@ -187,7 +187,9 @@
     "loading": "Loading...",
     "copy": "Copy",
     "copied": "Copied!",
-    "interrupted": "Interrupted by user."
+    "interrupted": "Interrupted by user.",
+    "delete": "Delete",
+    "redo": "Redo"
   },
   "errors": {
     "frozenTitle": "AIDER FROZEN?",
@@ -371,8 +373,5 @@
   },
   "projectBar": {
     "toggleMarkdown": "Markdown rendering"
-  },
-  "message": {
-    "delete": "Delete"
   }
 }

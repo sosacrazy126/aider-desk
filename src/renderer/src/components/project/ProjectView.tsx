@@ -524,6 +524,18 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
     messagesRef.current?.exportToImage();
   };
 
+  const handleRedoLastUserPrompt = () => {
+    const lastUserMessageIndex = messages.findLastIndex(isUserMessage);
+    if (lastUserMessageIndex === -1) {
+      return;
+    }
+
+    // Keep messages up to and excluding the one being redone
+    const newMessages = messages.slice(0, lastUserMessageIndex);
+    setMessages(newMessages);
+    window.api.redoLastUserPrompt(project.baseDir, mode);
+  };
+
   const handleRemoveMessage = (messageToRemove: Message) => {
     const isLastMessage = messages[messages.length - 1] === messageToRemove;
 
@@ -565,6 +577,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
             allFiles={autocompletionData?.allFiles}
             renderMarkdown={renderMarkdown}
             removeMessage={handleRemoveMessage}
+            redoLastUserPrompt={handleRedoLastUserPrompt}
           />
         </div>
         <div className="relative bottom-0 w-full p-4 pb-2 flex-shrink-0 flex border-t border-neutral-800">
@@ -586,6 +599,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
             interruptResponse={handleInterruptResponse}
             runCommand={runCommand}
             runTests={runTests}
+            redoLastUserPrompt={handleRedoLastUserPrompt}
             openModelSelector={() => projectTopBarRef.current?.openMainModelSelector()}
             disabled={!aiderModelsData}
           />
