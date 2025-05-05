@@ -524,8 +524,6 @@ class Connector:
         main_model=running_model,
         summarize_from_coder=False,
       )
-      # setting usage report to None to avoid no attribute error
-      self.running_coder.usage_report = None
 
       if clear_context:
         self.running_coder.cur_messages = []
@@ -535,6 +533,9 @@ class Connector:
       self.running_coder.auto_accept_architect=False
     else:
       self.running_coder = self.coder
+
+    # setting usage report to None to avoid no attribute error
+    self.running_coder.usage_report = None
 
     global whole_content
     whole_content = ""
