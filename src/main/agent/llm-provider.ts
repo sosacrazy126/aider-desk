@@ -123,7 +123,14 @@ export const createLlm = (provider: LlmProvider, env: Record<string, string | un
     if (!apiKey) {
       throw new Error('OpenRouter API key is required in Agent provider settings or Aider environment variables (OPENROUTER_API_KEY)');
     }
-    const openrouter = createOpenRouter({ apiKey });
+    const openrouter = createOpenRouter({
+      apiKey,
+      extraBody: {
+        provider: {
+          require_parameters: true,
+        },
+      },
+    });
     return openrouter.chat(provider.model);
   } else {
     throw new Error(`Unsupported MCP provider: ${JSON.stringify(provider)}`);

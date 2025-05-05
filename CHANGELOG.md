@@ -1,5 +1,9 @@
 # Changelog
 
+## [UNRELEASED]
+
+- improved requests to OpenRouter by adding require_parameters: true
+
 ## [0.12.0]
 
 - correct placement of --init flag for Docker MCP server execution
