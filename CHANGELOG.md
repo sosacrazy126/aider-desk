@@ -1,6 +1,6 @@
 # Changelog
 
-## [UNRELEASED]
+## [0.12.0]
 
 - correct placement of --init flag for Docker MCP server execution
 - added support for /copy-context command
