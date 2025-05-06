@@ -131,6 +131,9 @@
       "specificSession": "加载特定会话"
     },
     "language": "语言",
+    "notifications": {
+      "title": "通知"
+    },
     "agent": {
       "mcpServers": "MCP 服务器",
       "provider": "提供商",
@@ -159,6 +162,7 @@
     "common": {
       "showSecrets": "显示密钥"
     },
+    "notificationsEnabled": "通知已启用",
     "zoom": "缩放级别",
     "aiderRestartConfirm": {
       "title": "需要重启",

@@ -20,6 +20,7 @@ export const DEFAULT_SETTINGS: SettingsData = {
   language: 'en',
   startupMode: StartupMode.Empty,
   zoomLevel: 1,
+  notificationsEnabled: false,
   aiderDeskAutoUpdate: true,
   aider: {
     options: '',

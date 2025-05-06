@@ -5,6 +5,7 @@ import fs from 'fs/promises';
 import path from 'path';
 
 import { simpleGit } from 'simple-git';
+import { Notification, BrowserWindow, dialog } from 'electron';
 import {
   ContextFile,
   Mode,
@@ -27,7 +28,6 @@ import {
   EditFormat,
 } from '@common/types';
 import { fileExists, parseUsageReport } from '@common/utils';
-import { BrowserWindow, dialog } from 'electron';
 import treeKill from 'tree-kill';
 import { v4 as uuidv4 } from 'uuid';
 import { parse } from '@dotenvx/dotenvx';
@@ -313,7 +313,9 @@ export class Project {
 
   public async close() {
     logger.info('Closing project...', { baseDir: this.baseDir });
-    this.mainWindow.webContents.send('clear-project', this.baseDir, true, true);
+    if (!this.mainWindow.isDestroyed()) {
+      this.mainWindow.webContents.send('clear-project', this.baseDir, true, true);
+    }
     await this.killAider();
   }
 
@@ -430,6 +432,9 @@ export class Project {
           this.sendAddMessage(message.role, message.content, false);
         });
       }
+
+      this.notifyIfEnabled('Prompt finished', 'Your Agent task has finished.');
+
       return [];
     } else {
       const responses = await this.sendPrompt(prompt, mode);
@@ -444,6 +449,8 @@ export class Project {
           this.sessionManager.addContextMessage(MessageRole.Assistant, response.content);
         }
       }
+
+      this.notifyIfEnabled('Prompt finished', 'Your Aider task has finished.');
 
       return responses;
     }
@@ -545,6 +552,23 @@ export class Project {
 
   addResponseCompletedMessage(data: ResponseCompletedData) {
     this.mainWindow.webContents.send('response-completed', data);
+  }
+
+  private notifyIfEnabled(title: string, text: string) {
+    const settings = this.store.getSettings();
+    if (!settings.notificationsEnabled) {
+      return;
+    }
+
+    if (Notification.isSupported()) {
+      const notification = new Notification({
+        title,
+        body: text,
+      });
+      notification.show();
+    } else {
+      logger.warn('Notifications are not supported on this platform.');
+    }
   }
 
   private getQuestionKey(question: QuestionData): string {
@@ -732,6 +756,8 @@ export class Project {
       }
       return Promise.resolve([storedAnswer, undefined]);
     }
+
+    this.notifyIfEnabled('Waiting for your input', questionData.text);
 
     // Store the resolve function for the promise
     return new Promise<[string, string | undefined]>((resolve) => {

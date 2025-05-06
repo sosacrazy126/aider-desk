@@ -154,6 +154,7 @@ export interface SettingsData {
   language: string;
   startupMode?: StartupMode;
   zoomLevel?: number;
+  notificationsEnabled?: boolean;
   aiderDeskAutoUpdate: boolean;
   aider: {
     options: string;

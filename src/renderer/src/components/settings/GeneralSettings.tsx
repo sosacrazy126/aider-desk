@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { SettingsData, StartupMode } from '@common/types';
 
+import { Checkbox } from '../common/Checkbox';
 import { RadioButton } from '../common/RadioButton';
 import { Select, Option } from '../common/Select';
 import { Section } from '../common/Section';
@@ -46,6 +47,13 @@ export const GeneralSettings = ({ settings, setSettings, onLanguageChange, onZoo
     }
   };
 
+  const handleNotificationsEnabledChange = () => {
+    setSettings({
+      ...settings,
+      notificationsEnabled: !settings.notificationsEnabled,
+    });
+  };
+
   return (
     <div className="space-y-8 min-h-[300px]">
       <Section title={t('settings.gui')}>
@@ -74,6 +82,12 @@ export const GeneralSettings = ({ settings, setSettings, onLanguageChange, onZoo
             onChange={handleStartupModeClick}
             label={t('settings.startup.lastSession')}
           />
+        </div>
+      </Section>
+
+      <Section title={t('settings.notifications.title')}>
+        <div className="px-4 py-3 space-y-3 mt-2">
+          <Checkbox label={t('settings.notificationsEnabled')} checked={settings.notificationsEnabled ?? false} onChange={handleNotificationsEnabledChange} />
         </div>
       </Section>
     </div>

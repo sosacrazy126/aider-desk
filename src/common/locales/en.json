@@ -135,6 +135,9 @@
       "specificSession": "Load specific session"
     },
     "language": "Language",
+    "notifications": {
+      "title": "Notifications"
+    },
     "agent": {
       "mcpServers": "MCP Servers",
       "provider": "Provider",
@@ -162,6 +165,7 @@
     "common": {
       "showSecrets": "Show Secrets"
     },
+    "notificationsEnabled": "Notifications enabled",
     "zoom": "Zoom level",
     "aiderRestartConfirm": {
       "title": "Restart Required",
@@ -178,7 +182,7 @@
       "downloadUpdate": "Download",
       "downloadingUpdate": "Downloading update",
       "newAiderDeskVersionReady": "A new version is ready. Restart AiderDesk to apply the update.",
-      "downloadAutomatically": "Download automatically",
+      "downloadAutomatically": "Download update automatically",
       "releaseNotes": "Release notes"
     }
   },
