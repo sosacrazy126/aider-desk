@@ -1,4 +1,15 @@
-import { ContextFileSourceType, ContextFile, TokensCost, FileEdit, UsageReportData, LogLevel, Mode, MessageRole, RawModelInfo } from '@common/types';
+import {
+  ContextFileSourceType,
+  ContextFile,
+  TokensCost,
+  FileEdit,
+  UsageReportData,
+  LogLevel,
+  Mode,
+  MessageRole,
+  RawModelInfo,
+  EditFormat,
+} from '@common/types';
 
 export type MessageAction =
   | 'init'
@@ -126,6 +137,7 @@ export interface SetModelsMessage extends Message {
   action: 'set-models';
   mainModel: string;
   weakModel?: string | null;
+  editFormat?: EditFormat;
   info?: RawModelInfo;
   hasError?: boolean;
 }

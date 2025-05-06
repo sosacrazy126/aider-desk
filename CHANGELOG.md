@@ -3,6 +3,7 @@
 ## [UNRELEASED]
 
 - improved requests to OpenRouter by adding require_parameters: true
+- added code edit format selector
 
 ## [0.12.0]
 

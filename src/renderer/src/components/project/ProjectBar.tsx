@@ -1,6 +1,6 @@
-import { ModelsData, SessionData, RawModelInfo, Mode } from '@common/types';
+import { ModelsData, SessionData, RawModelInfo, Mode, EditFormat } from '@common/types';
 import React, { ReactNode, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
-import { BsFilter } from 'react-icons/bs';
+import { BsFilter, BsCodeSlash } from 'react-icons/bs';
 import { CgSpinner, CgTerminal } from 'react-icons/cg';
 import { GoProjectRoadmap } from 'react-icons/go';
 import { IoMdClose } from 'react-icons/io';
@@ -13,6 +13,7 @@ import { getActiveProvider } from '@common/llm-providers';
 import { IconButton } from '@/components/common/IconButton';
 import { AgentModelSelector } from '@/components/AgentModelSelector';
 import { ModelSelector, ModelSelectorRef } from '@/components/ModelSelector';
+import { EditFormatSelector } from '@/components/EditFormatSelector';
 import { SessionsPopup } from '@/components/SessionsPopup';
 import { StyledTooltip } from '@/components/common/StyledTooltip';
 import { useSettings } from '@/context/SettingsContext';
@@ -134,6 +135,14 @@ export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(
         onModelChange?.();
       },
       [baseDir, onModelChange, updatePreferredModels],
+    );
+
+    const updateEditFormat = useCallback(
+      (format: EditFormat) => {
+        window.api.updateEditFormat(baseDir, format);
+        onModelChange?.();
+      },
+      [baseDir, onModelChange],
     );
 
     const loadSessions = useCallback(async () => {
@@ -280,6 +289,16 @@ export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(
                 <StyledTooltip id="weak-model-tooltip" />
                 <ModelSelector models={allModels} selectedModel={modelsData.weakModel || modelsData.mainModel} onChange={updateWeakModel} />
               </div>
+              {modelsData.editFormat && (
+                <>
+                  <div className="h-3 w-px bg-neutral-600/50"></div>
+                  <div className="flex items-center space-x-1">
+                    <BsCodeSlash className="w-4 h-4 text-neutral-100 mr-1" data-tooltip-id="edit-format-tooltip" />
+                    <StyledTooltip id="edit-format-tooltip" content={t('projectBar.editFormatTooltip')} />
+                    <EditFormatSelector currentFormat={modelsData.editFormat || 'diff'} onFormatChange={updateEditFormat} />
+                  </div>
+                </>
+              )}
               {modelsData.reasoningEffort && modelsData.reasoningEffort !== 'none' && (
                 <>
                   <div className="h-3 w-px bg-neutral-600/50"></div>

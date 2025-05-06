@@ -5,6 +5,8 @@ import type { JsonSchema } from '@n8n/json-schema-to-zod';
 
 export type Mode = 'code' | 'ask' | 'architect' | 'context' | 'agent';
 
+export type EditFormat = 'diff' | 'diff-fenced' | 'whole' | 'udiff' | 'udiff-simple' | 'patch';
+
 export interface ResponseChunkData {
   messageId: string;
   baseDir: string;
@@ -101,6 +103,7 @@ export interface ProjectSettings {
   mainModel: string;
   weakModel?: string | null;
   architectModel?: string | null;
+  editFormat?: EditFormat;
   reasoningEffort?: string;
   thinkingTokens?: string;
   currentMode: Mode;
@@ -130,6 +133,7 @@ export interface ModelsData {
   architectModel?: string | null;
   reasoningEffort?: string;
   thinkingTokens?: string;
+  editFormat?: EditFormat;
   info?: RawModelInfo;
   error?: string;
 }

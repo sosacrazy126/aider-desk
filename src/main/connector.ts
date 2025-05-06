@@ -1,6 +1,6 @@
 import path from 'path';
 
-import { ContextFile, FileEdit, MessageRole, Mode } from '@common/types';
+import { ContextFile, EditFormat, FileEdit, MessageRole, Mode } from '@common/types';
 import { Socket } from 'socket.io';
 
 import logger from './logger';
@@ -90,11 +90,12 @@ export class Connector {
     this.sendMessage(message);
   };
 
-  public sendSetModelsMessage(mainModel: string, weakModel: string | null): void {
+  public sendSetModelsMessage(mainModel: string, weakModel: string | null, editFormat?: EditFormat): void {
     const message: SetModelsMessage = {
       action: 'set-models',
       mainModel,
       weakModel,
+      editFormat,
     };
     this.sendMessage(message);
   }

@@ -69,6 +69,8 @@ export class ConnectorManager {
   }
 
   public async close() {
+    logger.info('Closing Socket.IO server');
+    this.connectors.forEach((connector) => connector.socket.disconnect());
     await this.io?.close();
   }
 

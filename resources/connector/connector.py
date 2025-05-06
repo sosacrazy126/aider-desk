@@ -435,18 +435,24 @@ class Connector:
       elif action == "set-models":
         main_model = message.get('mainModel')
         weak_model = message.get('weakModel')
+        edit_format = message.get('editFormat')
         if not main_model:
           return
 
         model = models.Model(main_model, weak_model=weak_model)
         models.sanity_check_models(self.coder.io, model)
 
+        if not edit_format:
+          edit_format = model.edit_format
+
         model.set_reasoning_effort(self.coder.main_model.get_reasoning_effort())
         model.set_thinking_tokens(self.coder.main_model.get_thinking_tokens())
 
         self.coder = Coder.create(
           from_coder=self.coder,
-          main_model=model
+          main_model=model,
+          edit_format=edit_format,
+          summarize_from_coder=False
         )
         for line in self.coder.get_announcements():
           self.coder.io.tool_output(line)
@@ -855,6 +861,7 @@ class Connector:
         "weakModel": self.coder.main_model.weak_model.name,
         "reasoningEffort": self.coder.main_model.get_reasoning_effort() if self.coder.main_model.get_reasoning_effort() is not None else self.reasoning_effort,
         "thinkingTokens": self.coder.main_model.get_thinking_tokens() if self.coder.main_model.get_thinking_tokens() is not None else self.thinking_tokens,
+        "editFormat": self.coder.edit_format,
         "info": info,
         "error": error
       })

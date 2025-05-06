@@ -24,6 +24,7 @@ import {
   UserMessageData,
   ProjectSettings,
   TokensInfoData,
+  EditFormat,
 } from '@common/types';
 import { fileExists, parseUsageReport } from '@common/utils';
 import { BrowserWindow, dialog } from 'electron';
@@ -759,12 +760,13 @@ export class Project {
     this.mainWindow.webContents.send('update-aider-models', this.aiderModels);
   }
 
-  public updateModels(mainModel: string, weakModel: string | null) {
+  public updateModels(mainModel: string, weakModel: string | null, editFormat?: EditFormat) {
     logger.info('Updating models:', {
       mainModel,
       weakModel,
+      editFormat,
     });
-    this.findMessageConnectors('set-models').forEach((connector) => connector.sendSetModelsMessage(mainModel, weakModel));
+    this.findMessageConnectors('set-models').forEach((connector) => connector.sendSetModelsMessage(mainModel, weakModel, editFormat));
   }
 
   public setArchitectModel(architectModel: string) {

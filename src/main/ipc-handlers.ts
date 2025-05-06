@@ -1,4 +1,4 @@
-import { FileEdit, McpServerConfig, MessageRole, Mode, ProjectData, ProjectSettings, SettingsData } from '@common/types';
+import { EditFormat, FileEdit, McpServerConfig, MessageRole, Mode, ProjectData, ProjectSettings, SettingsData } from '@common/types';
 import { normalizeBaseDir } from '@common/utils';
 import { BrowserWindow, dialog, ipcMain } from 'electron';
 
@@ -177,6 +177,13 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, projectManager: Proj
 
     const project = projectManager.getProject(baseDir);
     project.setArchitectModel(architectModel);
+  });
+
+  ipcMain.on('update-edit-format', (_, baseDir: string, format: EditFormat) => {
+    const projectSettings = store.getProjectSettings(baseDir);
+    projectSettings.editFormat = format;
+    store.saveProjectSettings(baseDir, projectSettings);
+    projectManager.getProject(baseDir).updateModels(projectSettings.mainModel, projectSettings?.weakModel || null, format);
   });
 
   ipcMain.on('run-command', (_, baseDir: string, command: string) => {
