@@ -5,27 +5,27 @@ import fs from 'fs/promises';
 import path from 'path';
 
 import { simpleGit } from 'simple-git';
-import { Notification, BrowserWindow, dialog } from 'electron';
+import { BrowserWindow, dialog, Notification } from 'electron';
 import {
   ContextFile,
-  Mode,
+  EditFormat,
   FileEdit,
   InputHistoryData,
   LogData,
   LogLevel,
   MessageRole,
+  Mode,
   ModelsData,
+  ProjectSettings,
   QuestionData,
   ResponseChunkData,
   ResponseCompletedData,
   SessionData,
   StartupMode,
+  TokensInfoData,
   ToolData,
   UsageReportData,
   UserMessageData,
-  ProjectSettings,
-  TokensInfoData,
-  EditFormat,
 } from '@common/types';
 import { fileExists, parseUsageReport } from '@common/utils';
 import treeKill from 'tree-kill';
@@ -47,7 +47,7 @@ export class Project {
   private connectors: Connector[] = [];
   private currentCommand: string | null = null;
   private currentQuestion: QuestionData | null = null;
-  private currentQuestionPromiseResolve: ((answer: ['y' | 'n', string | undefined]) => void) | null = null;
+  private currentQuestionResolves: ((answer: ['y' | 'n', string | undefined]) => void)[] = [];
   private questionAnswers: Map<string, 'y' | 'n'> = new Map();
   private allTrackedFiles: string[] = [];
   private currentResponseMessageId: string | null = null;
@@ -120,7 +120,7 @@ export class Project {
     this.currentResponseMessageId = null;
     this.currentCommand = null;
     this.currentQuestion = null;
-    this.currentQuestionPromiseResolve = null;
+    this.currentQuestionResolves = [];
     this.questionAnswers.clear();
 
     await this.updateAgentEstimatedTokens();
@@ -607,9 +607,11 @@ export class Project {
     }
     this.currentQuestion = null;
 
-    if (this.currentQuestionPromiseResolve) {
-      this.currentQuestionPromiseResolve([yesNoAnswer, userInput]);
-      this.currentQuestionPromiseResolve = null;
+    if (this.currentQuestionResolves.length > 0) {
+      for (const currentQuestionResolve of this.currentQuestionResolves) {
+        currentQuestionResolve([yesNoAnswer, userInput]);
+      }
+      this.currentQuestionResolves = [];
       return true;
     }
 
@@ -738,8 +740,13 @@ export class Project {
     this.mainWindow.webContents.send('input-history-updated', inputHistoryData);
   }
 
-  public askQuestion(questionData: QuestionData): Promise<[string, string | undefined]> {
-    this.currentQuestion = questionData;
+  public async askQuestion(questionData: QuestionData): Promise<[string, string | undefined]> {
+    if (this.currentQuestion) {
+      // Wait if another question is already pending
+      await new Promise((resolve) => {
+        this.currentQuestionResolves.push(resolve);
+      });
+    }
 
     const storedAnswer = this.questionAnswers.get(this.getQuestionKey(questionData));
 
@@ -762,11 +769,15 @@ export class Project {
       return Promise.resolve([storedAnswer, undefined]);
     }
 
+    // At this point, this.currentQuestion should be null due to the loop above,
+    // or it was null initially.
+    this.currentQuestion = questionData;
+
     this.notifyIfEnabled('Waiting for your input', questionData.text);
 
     // Store the resolve function for the promise
     return new Promise<[string, string | undefined]>((resolve) => {
-      this.currentQuestionPromiseResolve = resolve;
+      this.currentQuestionResolves.push(resolve);
       this.mainWindow.webContents.send('ask-question', questionData);
     });
   }

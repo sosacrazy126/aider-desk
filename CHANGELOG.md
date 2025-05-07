@@ -5,6 +5,7 @@
 - improved requests to OpenRouter by adding require_parameters: true
 - added code edit format selector
 - notifications for prompt completion and questions
+- properly awaiting after the question is answered before asking the next question
 
 ## [0.12.0]
 
