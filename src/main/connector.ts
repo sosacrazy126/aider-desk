@@ -36,7 +36,7 @@ export class Connector {
       logger.warn('Socket.IO client is not connected');
       return;
     }
-    logger.info('Sending message to client:', {
+    logger.info('Sending message to connector:', {
       baseDir: this.baseDir,
       messageType: message.action,
     });

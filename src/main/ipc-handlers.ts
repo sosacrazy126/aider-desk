@@ -156,6 +156,7 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, projectManager: Proj
     if (clearWeakModel) {
       projectSettings.weakModel = null;
     }
+    projectSettings.editFormat = null;
 
     store.saveProjectSettings(baseDir, projectSettings);
     projectManager.getProject(baseDir).updateModels(mainModel, projectSettings?.weakModel || null);

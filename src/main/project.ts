@@ -215,6 +215,7 @@ export class Project {
     const projectSettings = this.store.getProjectSettings(this.baseDir);
     const mainModel = projectSettings.mainModel || DEFAULT_MAIN_MODEL;
     const weakModel = projectSettings.weakModel;
+    const editFormat = projectSettings.editFormat;
     const reasoningEffort = projectSettings.reasoningEffort;
     const environmentVariables = parse(settings.aider.environmentVariables);
     const thinkingTokens = projectSettings.thinkingTokens;
@@ -249,6 +250,10 @@ export class Project {
 
     if (weakModel) {
       args.push('--weak-model', weakModel);
+    }
+
+    if (editFormat) {
+      args.push('--edit-format', editFormat);
     }
 
     if (reasoningEffort !== undefined && !optionsArgsSet.has('--reasoning-effort')) {
@@ -896,10 +901,14 @@ export class Project {
     this.findMessageConnectors('add-message').forEach((connector) => connector.sendAddMessageMessage(role, content, acknowledge));
   }
 
-  public clearContext(addToHistory = false) {
+  public clearContext(addToHistory = false, updateEstimatedTokens = true) {
     this.sessionManager.clearMessages();
     this.runCommand('clear', addToHistory);
     this.mainWindow.webContents.send('clear-project', this.baseDir, true, false);
+
+    if (updateEstimatedTokens) {
+      void this.updateAgentEstimatedTokens();
+    }
   }
 
   public interruptResponse() {
@@ -1007,11 +1016,12 @@ export class Project {
     logger.info('Adding context message:', {
       baseDir: this.baseDir,
       role,
-      content,
+      content: content.length > 100 ? `${content.slice()}...` : content,
     });
 
     this.sessionManager.addContextMessage(role, content);
     this.sendAddMessage(role, content, acknowledge);
+    void this.updateAgentEstimatedTokens();
   }
 
   public async exportSessionToMarkdown(): Promise<void> {

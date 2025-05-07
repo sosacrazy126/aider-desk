@@ -103,7 +103,7 @@ export interface ProjectSettings {
   mainModel: string;
   weakModel?: string | null;
   architectModel?: string | null;
-  editFormat?: EditFormat;
+  editFormat?: EditFormat | null;
   reasoningEffort?: string;
   thinkingTokens?: string;
   currentMode: Mode;
