@@ -6,6 +6,7 @@
 - added code edit format selector
 - notifications for prompt completion and questions
 - properly awaiting after the question is answered before asking the next question
+- normalizing file paths before using them further
 
 ## [0.12.0]
 

@@ -155,6 +155,10 @@ export class Project {
     this.connectors = this.connectors.filter((c) => c !== connector);
   }
 
+  private normalizeFilePath(filePath: string): string {
+    return path.normalize(filePath);
+  }
+
   private getAiderProcessPidFilePath(): string {
     const hash = createHash('sha256').update(this.baseDir).digest('hex');
     return path.join(PID_FILES_DIR, `${hash}.pid`);
@@ -619,14 +623,16 @@ export class Project {
   }
 
   public async addFile(contextFile: ContextFile) {
+    const normalizedPath = this.normalizeFilePath(contextFile.path);
     logger.info('Adding file or folder:', {
-      path: contextFile.path,
+      path: normalizedPath,
       readOnly: contextFile.readOnly,
     });
-    if (!(await this.sessionManager.addContextFile(contextFile))) {
+    const fileToAdd = { ...contextFile, path: normalizedPath };
+    if (!(await this.sessionManager.addContextFile(fileToAdd))) {
       return false;
     }
-    this.sendAddFile(contextFile);
+    this.sendAddFile(fileToAdd);
     return true;
   }
 
@@ -635,13 +641,14 @@ export class Project {
   }
 
   public dropFile(filePath: string) {
-    logger.info('Dropping file or folder:', { path: filePath });
-    const file = this.sessionManager.dropContextFile(filePath);
+    const normalizedPath = this.normalizeFilePath(filePath);
+    logger.info('Dropping file or folder:', { path: normalizedPath });
+    const file = this.sessionManager.dropContextFile(normalizedPath);
     if (file) {
       this.sendDropFile(file.path, file.readOnly);
     } else {
       // send the path as it might be a folder
-      this.sendDropFile(filePath);
+      this.sendDropFile(normalizedPath);
     }
   }
 
