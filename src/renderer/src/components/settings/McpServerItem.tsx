@@ -16,15 +16,17 @@ type Props = {
   onEdit?: () => void;
   toolApprovals: Record<string, ToolApprovalState>;
   onApprovalChange: (toolId: string, approval: ToolApprovalState) => void;
+  reloadTrigger: number;
 };
 
-export const McpServerItem = ({ serverName, config, onRemove, onEdit, toolApprovals, onApprovalChange }: Props) => {
+export const McpServerItem = ({ serverName, config, onRemove, onEdit, toolApprovals, onApprovalChange, reloadTrigger }: Props) => {
   const { t } = useTranslation();
   const [tools, setTools] = useState<McpTool[] | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadTools = async () => {
+      console.log(`Loading MCP server tools for ${serverName}`);
       try {
         const loadedTools = await window.api.loadMcpServerTools(serverName, config);
         setTools(loadedTools);
@@ -36,8 +38,9 @@ export const McpServerItem = ({ serverName, config, onRemove, onEdit, toolApprov
       }
     };
 
+    setLoading(true);
     void loadTools();
-  }, [serverName, config]);
+  }, [serverName, config, reloadTrigger]);
 
   const renderTitle = () => {
     const enabledCount =
@@ -69,7 +72,7 @@ export const McpServerItem = ({ serverName, config, onRemove, onEdit, toolApprov
           )}
           {onEdit && (
             <IconButton
-              icon={<FaPencilAlt className="text-neutral-200" />}
+              icon={<FaPencilAlt className="text-neutral-200 hover:text-neutral-100" />}
               onClick={onEdit}
               tooltip={t('common.edit')}
               className="ml-4"
@@ -77,7 +80,7 @@ export const McpServerItem = ({ serverName, config, onRemove, onEdit, toolApprov
             />
           )}
           <IconButton
-            icon={<FaTrash className="text-red-500/60" />}
+            icon={<FaTrash className="text-red-500/60 hover:text-red-500" />}
             onClick={onRemove}
             tooltip={t('common.remove')}
             className="ml-3"

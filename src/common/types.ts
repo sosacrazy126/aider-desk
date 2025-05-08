@@ -171,9 +171,7 @@ export interface AgentConfig {
   maxIterations: number;
   maxTokens: number;
   minTimeBetweenToolCalls: number; // in milliseconds
-  mcpServers: {
-    [key: string]: McpServerConfig;
-  };
+  mcpServers: Record<string, McpServerConfig>;
   disabledServers: string[];
   toolApprovals: Record<string, ToolApprovalState>;
   includeContextFiles: boolean;

@@ -304,7 +304,6 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
 
     const handleUpdateAiderModels = (_: IpcRendererEvent, data: ModelsData) => {
       setAiderModelsData(data);
-      console.log('aider-models', data);
 
       if (data.error) {
         const errorMessage: LogMessage = {

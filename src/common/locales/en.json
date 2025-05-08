@@ -76,7 +76,8 @@
     "pasteServerAs": "Paste your server as:\n\n{{example}}\n\nor\n\n{{exampleNoParent}}\n\nor\n\n{{exampleBare}}",
     "invalidConfig": "Invalid configuration",
     "emptyConfig": "Configuration cannot be empty",
-    "multipleServersHint": "You can add multiple servers at once by pasting a JSON object with multiple server configurations."
+    "configHint": "You can add multiple servers at once by pasting a JSON object with multiple server configurations.\n\nYou can use ${projectDir} in env and args to reference the current project directory.",
+    "viewExamples": "View Examples"
   },
   "model": {
     "label": "Model",
@@ -152,6 +153,7 @@
       "tokensPerResponse": "Maximum number of tokens the MCP agent can use per response.",
       "addServer": "Add server",
       "editConfig": "Edit Config",
+      "reloadServers": "Reload Servers",
       "envVarPlaceholder": "{{envVar}} env if empty"
     },
     "aider": {

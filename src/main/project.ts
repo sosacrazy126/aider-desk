@@ -21,6 +21,7 @@ import {
   ResponseChunkData,
   ResponseCompletedData,
   SessionData,
+  SettingsData,
   StartupMode,
   TokensInfoData,
   ToolData,
@@ -1097,12 +1098,8 @@ export class Project {
       checkContextFilesIncluded,
       checkRepoMapIncluded,
     });
-    const agentConfig = this.store.getSettings().agentConfig;
-    if (checkContextFilesIncluded && !agentConfig.includeContextFiles) {
-      return;
-    }
-
-    if (checkRepoMapIncluded && !agentConfig.includeRepoMap) {
+    const { agentConfig } = this.store.getSettings();
+    if (checkContextFilesIncluded && !agentConfig.includeContextFiles && checkRepoMapIncluded && !agentConfig.includeRepoMap) {
       return;
     }
 
@@ -1114,5 +1111,31 @@ export class Project {
         tokensEstimated: true,
       },
     });
+  }
+
+  settingsChanged(oldSettings: SettingsData, newSettings: SettingsData) {
+    const oldAgentConfig = oldSettings.agentConfig;
+    const newAgentConfig = newSettings.agentConfig;
+
+    // Check for changes in agent config properties that affect token count
+    const disabledServersChanged = JSON.stringify(oldAgentConfig?.disabledServers) !== JSON.stringify(newAgentConfig?.disabledServers);
+    const toolApprovalsChanged = JSON.stringify(oldAgentConfig?.toolApprovals) !== JSON.stringify(newAgentConfig?.toolApprovals);
+    const includeContextFilesChanged = oldAgentConfig?.includeContextFiles !== newAgentConfig?.includeContextFiles;
+    const includeRepoMapChanged = oldAgentConfig?.includeRepoMap !== newAgentConfig?.includeRepoMap;
+    const useAiderToolsChanged = oldAgentConfig?.useAiderTools !== newAgentConfig?.useAiderTools;
+    const customInstructionsChanged = oldAgentConfig?.customInstructions !== newAgentConfig?.customInstructions;
+
+    const agentSettingsAffectingTokensChanged =
+      disabledServersChanged ||
+      toolApprovalsChanged ||
+      includeContextFilesChanged ||
+      includeRepoMapChanged ||
+      useAiderToolsChanged ||
+      customInstructionsChanged;
+
+    if (agentSettingsAffectingTokensChanged) {
+      logger.info('Agent settings affecting token count changed, updating estimated tokens.');
+      this.updateAgentEstimatedTokens();
+    }
   }
 }

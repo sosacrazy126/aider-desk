@@ -1,0 +1,251 @@
+import { McpServerConfig, McpTool, SettingsData } from '@common/types';
+import { Client as McpSdkClient } from '@modelcontextprotocol/sdk/client/index.js';
+import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+
+import logger from '../logger';
+
+// increasing timeout for MCP client requests
+export const MCP_CLIENT_TIMEOUT = 600_000;
+
+export interface McpConnector {
+  client: McpSdkClient;
+  serverName: string;
+  tools: McpTool[];
+  serverConfig: McpServerConfig;
+}
+
+export class McpManager {
+  private mcpConnectors: Record<string, Promise<McpConnector>> = {};
+  private currentProjectDir: string | null = null;
+
+  async initMcpConnectors(
+    mcpServers: Record<string, McpServerConfig>,
+    projectDir: string | null = this.currentProjectDir,
+    forceReload = false,
+  ): Promise<McpConnector[]> {
+    for (const [serverName, serverConfig] of Object.entries(mcpServers)) {
+      this.mcpConnectors[serverName] = this.initMcpConnector(
+        projectDir,
+        serverName,
+        serverConfig,
+        forceReload || (!!projectDir && projectDir !== this.currentProjectDir),
+      );
+    }
+    this.currentProjectDir = projectDir;
+
+    return Promise.all(Object.values(this.mcpConnectors));
+  }
+
+  private async initMcpConnector(projectDir: string | null, serverName: string, config: McpServerConfig, forceReload = false): Promise<McpConnector> {
+    const oldConnectorPromise = this.mcpConnectors[serverName];
+
+    config = this.interpolateServerConfig(config, projectDir);
+
+    let oldConnector: McpConnector | null = null;
+    if (oldConnectorPromise) {
+      oldConnector = await oldConnectorPromise;
+
+      if (forceReload || !this.compareServerConfig(oldConnector.serverConfig, config)) {
+        try {
+          await oldConnector.client.close();
+          logger.info(`Closed old MCP connector for server: ${serverName}`);
+          oldConnector = null; // Clear the old client reference
+        } catch (closeError) {
+          logger.error(`Error closing old MCP connector for server ${serverName}:`, closeError);
+        }
+      }
+    }
+
+    if (oldConnector) {
+      logger.debug(`Using existing MCP connector for server: ${serverName}`);
+      return oldConnector;
+    }
+
+    return this.createMcpConnector(serverName, config, projectDir).catch((error) => {
+      logger.error(`MCP Client creation failed for server during reload: ${serverName}`, error);
+      throw error;
+    });
+  }
+
+  settingsChanged(_: SettingsData, newSettings: SettingsData) {
+    void this.initMcpConnectors(newSettings.agentConfig.mcpServers);
+  }
+
+  async close(): Promise<void> {
+    const closePromises = Object.entries(this.mcpConnectors).map(async ([serverName, connectorPromise]) => {
+      try {
+        const mcpConnector = await connectorPromise;
+        await mcpConnector.client.close();
+        logger.debug(`Closed MCP client for server: ${serverName}`);
+      } catch (error) {
+        logger.error(`Error closing or awaiting MCP client for server ${serverName}:`, error);
+      }
+    });
+
+    await Promise.all(closePromises);
+    logger.debug('MCP clients closed and record cleared/updated.');
+  }
+
+  private interpolateServerConfig(serverConfig: McpServerConfig, projectDir: string | null): McpServerConfig {
+    const config = JSON.parse(JSON.stringify(serverConfig)) as McpServerConfig;
+
+    const interpolateValue = (value: string): string => {
+      return value.replace(/\${projectDir}/g, projectDir || '.');
+    };
+
+    if (config.env) {
+      const newEnv: Record<string, string> = {};
+
+      Object.keys(config.env).forEach((key) => {
+        if (typeof config.env![key] === 'string') {
+          newEnv[key] = interpolateValue(config.env![key]);
+        } else {
+          newEnv[key] = config.env![key];
+        }
+      });
+
+      config.env = newEnv;
+    }
+
+    config.args = config.args.map(interpolateValue);
+
+    return config;
+  }
+
+  private async createMcpConnector(serverName: string, config: McpServerConfig, projectDir: string | null): Promise<McpConnector> {
+    logger.info(`Initializing MCP client for server: ${serverName}`);
+    logger.debug(`Server configuration: ${JSON.stringify(config)}`);
+
+    const env = { ...config.env };
+    if (!env.PATH && process.env.PATH) {
+      env.PATH = process.env.PATH;
+    }
+
+    // Handle npx command on Windows
+    let command = config.command;
+    let args = config.args;
+    if (process.platform === 'win32' && command === 'npx') {
+      command = 'cmd.exe';
+      args = ['/c', 'npx', ...args];
+    }
+
+    // If command is 'docker', ensure '--init' is present after 'run'
+    // so the container properly handles SIGINT and SIGTERM
+    if (command === 'docker') {
+      let runSubcommandIndex = -1;
+
+      // Find the index of 'run'. This handles both 'docker run' and 'docker container run'.
+      const runIndex = args.indexOf('run');
+
+      if (runIndex !== -1) {
+        // Verify it's likely the actual 'run' subcommand
+        // e.g., 'run' is the first arg, or it follows 'container'
+        if (runIndex === 0 || (runIndex === 1 && args[0] === 'container')) {
+          runSubcommandIndex = runIndex;
+        }
+      }
+
+      if (runSubcommandIndex !== -1) {
+        // Check if '--init' already exists anywhere in the arguments
+        // (Docker might tolerate duplicates, but it's cleaner not to add it if present)
+        if (!args.includes('--init')) {
+          // Insert '--init' immediately after the 'run' subcommand
+          args.splice(runSubcommandIndex + 1, 0, '--init');
+          logger.debug(`Added '--init' flag after 'run' for server ${serverName} docker command.`);
+        }
+      } else {
+        // Log a warning if we couldn't confidently find the 'run' command
+        // This might happen with unusual docker commands defined in the config
+        logger.warn(`Could not find 'run' subcommand at the expected position in docker args for server ${serverName} from config.`);
+      }
+    }
+
+    const transport = new StdioClientTransport({
+      command,
+      args,
+      env,
+      cwd: projectDir || undefined,
+    });
+
+    const client = new McpSdkClient(
+      {
+        name: 'aider-desk-client',
+        version: '1.0.0',
+      },
+      {
+        capabilities: {
+          prompts: {},
+          resources: {},
+          tools: {},
+        },
+      },
+    );
+
+    logger.debug(`Connecting to MCP server: ${serverName}`);
+    await client.connect(transport);
+    logger.debug(`Connected to MCP server: ${serverName}`);
+
+    // Get tools from this server using the SDK client
+    logger.debug(`Fetching tools for MCP server: ${serverName}`);
+    const toolsResponse = (await client.listTools(undefined, {
+      timeout: MCP_CLIENT_TIMEOUT,
+    })) as unknown as { tools: McpTool[] }; // Cast back to expected structure
+    const toolsList = toolsResponse.tools;
+    logger.debug(`Found ${toolsList.length} tools for MCP server: ${serverName}`);
+
+    const clientHolder: McpConnector = {
+      client,
+      serverName,
+      serverConfig: config,
+      tools: toolsList.map((tool) => ({
+        ...tool,
+        serverName,
+      })),
+    };
+
+    logger.info(`MCP client initialized successfully for server: ${serverName}`);
+    return clientHolder;
+  }
+
+  async getMcpServerTools(serverName: string, config?: McpServerConfig): Promise<McpTool[] | null> {
+    if (config) {
+      // reload the connector if config is provided
+      this.mcpConnectors[serverName] = this.initMcpConnector(this.currentProjectDir, serverName, config);
+    }
+
+    const connectorPromise = this.mcpConnectors[serverName];
+    if (connectorPromise) {
+      try {
+        const connector = await connectorPromise;
+        return connector.tools;
+      } catch (error) {
+        logger.error(`Error retrieving tools for MCP server ${serverName}, client promise rejected:`, error);
+        return null;
+      }
+    }
+    logger.warn(`No MCP client promise found for server: ${serverName}`);
+    return null;
+  }
+
+  async getConnectors(): Promise<McpConnector[]> {
+    const connectorPromises = Object.values(this.mcpConnectors);
+    const results = await Promise.allSettled(connectorPromises);
+    const successfullyResolvedConnectors: McpConnector[] = [];
+
+    results.forEach((result, index) => {
+      if (result.status === 'fulfilled') {
+        successfullyResolvedConnectors.push(result.value);
+      } else {
+        const serverNames = Object.keys(this.mcpConnectors);
+        // Ensure index is within bounds for serverNames, though it should be if Object.values and Object.keys maintain order
+        const failedServerName = serverNames[index] || 'unknown server';
+        logger.warn(`Connector promise for server '${failedServerName}' was rejected when trying to get all connectors:`, result.reason);
+      }
+    });
+    return successfullyResolvedConnectors;
+  }
+
+  private compareServerConfig(config: McpServerConfig, otherConfig: McpServerConfig) {
+    return JSON.stringify(config) === JSON.stringify(otherConfig);
+  }
+}

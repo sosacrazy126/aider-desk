@@ -53,7 +53,10 @@ export interface ApplicationAPI {
   dropFile: (baseDir: string, path: string) => void;
   runCommand: (baseDir: string, command: string) => void;
   scrapeWeb: (baseDir: string, url: string) => Promise<string>;
+
   loadMcpServerTools: (serverName: string, config?: McpServerConfig) => Promise<McpTool[] | null>;
+  reloadMcpServers: (mcpServers: Record<string, McpServerConfig>, force = false) => Promise<void>;
+
   saveSession: (baseDir: string, name: string) => Promise<boolean>;
   deleteSession: (baseDir: string, name: string) => Promise<boolean>;
   loadSessionMessages: (baseDir: string, name: string) => Promise<void>;

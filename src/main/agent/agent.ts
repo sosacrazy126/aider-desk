@@ -1,15 +1,17 @@
 import fs from 'fs/promises';
 import path from 'path';
 
-import { ContextFile, ContextMessage, McpServerConfig, McpTool, SettingsData, ToolApprovalState, UsageReportData } from '@common/types';
-import { APICallError, generateText, InvalidToolArgumentsError, NoSuchToolError, streamText } from 'ai'; // Added InvalidToolArgumentsError
-import { v4 as uuidv4 } from 'uuid';
+import { ContextFile, ContextMessage, McpTool, QuestionData, SettingsData, ToolApprovalState, UsageReportData } from '@common/types';
+import { APICallError, generateText, InvalidToolArgumentsError, NoSuchToolError, streamText, type Tool, type ToolExecutionOptions } from 'ai'; // Added InvalidToolArgumentsError
 import { calculateCost, delay, extractServerNameToolName, SERVER_TOOL_SEPARATOR } from '@common/utils';
 import { getActiveProvider, LlmProvider } from '@common/llm-providers';
 // @ts-expect-error gpt-tokenizer is not typed
 import { countTokens } from 'gpt-tokenizer/model/gpt-4o';
 import { getSystemPrompt } from 'src/main/agent/prompts';
 import { parseAiderEnv } from 'src/main/utils';
+import { jsonSchemaToZod } from '@n8n/json-schema-to-zod';
+import { Client as McpSdkClient } from '@modelcontextprotocol/sdk/client/index.js';
+import { ZodSchema } from 'zod';
 
 import logger from '../logger';
 import { Store } from '../store';
@@ -18,166 +20,32 @@ import { Project } from '../project';
 import { createAiderToolset } from './tools/aider';
 import { createHelpersToolset } from './tools/helpers';
 import { createLlm } from './llm-provider';
-import { ClientHolder, convertMpcToolToAiSdkTool, initMcpClient } from './mcp-client';
+import { MCP_CLIENT_TIMEOUT, McpManager } from './mcp-manager';
 
+import type { JsonSchema } from '@n8n/json-schema-to-zod';
 import type { CoreMessage, StepResult, ToolSet } from 'ai';
 
 export class Agent {
-  private currentInitId: string | null = null;
-  private initializedForProject: Project | null = null;
-  private clients: ClientHolder[] = [];
   private abortController: AbortController | null = null;
   private aiderEnv: Record<string, string> | null = null;
+  private lastToolCallTime: number = 0;
 
-  constructor(private readonly store: Store) {}
+  constructor(
+    private readonly store: Store,
+    private readonly mcpManager: McpManager,
+  ) {}
 
   private invalidateAiderEnv() {
     this.aiderEnv = null;
   }
 
-  async settingsChanged(oldSettings: SettingsData, newSettings: SettingsData): Promise<void> {
-    const oldAgentConfig = oldSettings.agentConfig;
-    const newAgentConfig = newSettings.agentConfig;
-
-    const mcpServersChanged = JSON.stringify(oldAgentConfig?.mcpServers) !== JSON.stringify(newAgentConfig?.mcpServers);
-    if (mcpServersChanged) {
-      logger.info('MCP server configuration changed, reinitializing clients.');
-      void this.initMcpServers(); // Keep this non-blocking for client re-init
-    }
-
+  settingsChanged(oldSettings: SettingsData, newSettings: SettingsData) {
     const aiderEnvChanged = oldSettings.aider?.environmentVariables !== newSettings.aider?.environmentVariables;
     const aiderOptionsChanged = oldSettings.aider?.options !== newSettings.aider?.options;
     if (aiderEnvChanged || aiderOptionsChanged) {
       logger.info('Aider environment or options changed, invalidating cached environment.');
       this.invalidateAiderEnv();
     }
-
-    // Check for changes in agent config properties that affect token count
-    const disabledServersChanged = JSON.stringify(oldAgentConfig?.disabledServers) !== JSON.stringify(newAgentConfig?.disabledServers);
-    const toolApprovalsChanged = JSON.stringify(oldAgentConfig?.toolApprovals) !== JSON.stringify(newAgentConfig?.toolApprovals);
-    const includeContextFilesChanged = oldAgentConfig?.includeContextFiles !== newAgentConfig?.includeContextFiles;
-    const includeRepoMapChanged = oldAgentConfig?.includeRepoMap !== newAgentConfig?.includeRepoMap;
-    const useAiderToolsChanged = oldAgentConfig?.useAiderTools !== newAgentConfig?.useAiderTools;
-    const customInstructionsChanged = oldAgentConfig?.customInstructions !== newAgentConfig?.customInstructions;
-
-    const agentSettingsAffectingTokensChanged =
-      disabledServersChanged ||
-      toolApprovalsChanged ||
-      includeContextFilesChanged ||
-      includeRepoMapChanged ||
-      useAiderToolsChanged ||
-      customInstructionsChanged;
-
-    if (agentSettingsAffectingTokensChanged && this.initializedForProject) {
-      logger.info('Agent settings affecting token count changed, updating estimated tokens.');
-      await this.initializedForProject.updateAgentEstimatedTokens();
-    }
-  }
-
-  async initMcpServers(project: Project | null = this.initializedForProject, initId = uuidv4()) {
-    // Set the current init ID to track this specific initialization process
-    this.currentInitId = initId;
-    try {
-      const clients: ClientHolder[] = [];
-      const { agentConfig } = this.store.getSettings();
-
-      await this.closeClients();
-
-      // Initialize each MCP server
-      for (const [serverName, serverConfig] of Object.entries(agentConfig.mcpServers)) {
-        // Check for interruption before initializing each client
-        if (this.currentInitId !== initId) {
-          logger.info(`MCP initialization cancelled before starting server ${serverName} due to new init request.`);
-          await this.closeClients(clients); // Ensure partially initialized clients are closed
-          return;
-        }
-        try {
-          const clientHolder = await initMcpClient(serverName, serverConfig, project);
-
-          // Check for interruption again after the async operation
-          if (this.currentInitId !== initId) {
-            // If initId changed during async operation, stop initialization
-            logger.info(`MCP initialization cancelled for server ${serverName} due to new init request.`);
-            await this.closeClients(); // Ensure partially initialized clients are closed
-            return;
-          }
-          clients.push(clientHolder);
-        } catch (error) {
-          logger.error(`MCP Client initialization failed for server: ${serverName}`, error);
-          // Optionally notify the user in the UI about the specific failure
-          project?.addLogMessage('error', `Failed to initialize MCP server: ${serverName}. Check logs for details.`);
-        }
-      }
-
-      this.clients = clients;
-      this.initializedForProject = project;
-    } finally {
-      // Clear the init ID only if it matches the ID of this init call
-      // This prevents a newer init call from clearing the ID of an older, still running init
-      if (this.currentInitId === initId) {
-        this.currentInitId = null;
-      }
-    }
-  }
-
-  private async closeClients(clients = this.clients) {
-    // Create a promise for each client close operation
-    const closePromises = clients.map(async (clientHolder) => {
-      try {
-        await clientHolder.client.close();
-        logger.debug(`Closed MCP client for server: ${clientHolder.serverName}`);
-      } catch (error) {
-        logger.error(`Error closing MCP client for server ${clientHolder.serverName}:`, error);
-      }
-    });
-
-    // Wait for all close operations to complete
-    await Promise.all(closePromises);
-    clients.splice(0, clients.length); // Clear the list
-    logger.debug('All MCP clients closed and list cleared.');
-  }
-
-  async reloadMcpServer(serverName: string, config: McpServerConfig, project: Project | null = this.initializedForProject): Promise<McpTool[] | null> {
-    try {
-      const newClient = await initMcpClient(serverName, config, project);
-
-      const oldClientIndex = this.clients.findIndex((client) => client.serverName === serverName);
-
-      // Close the old client if it exists
-      if (oldClientIndex !== -1) {
-        const oldClient = this.clients[oldClientIndex];
-        try {
-          await oldClient.client.close();
-          logger.info(`Closed old MCP client for server: ${serverName}`);
-          // Remove the old client from the list immediately after closing
-          this.clients.splice(oldClientIndex, 1);
-        } catch (closeError) {
-          logger.error(`Error closing old MCP client for server ${serverName}:`, closeError);
-          // Decide if we should proceed or throw an error. For now, log and continue.
-        }
-      }
-
-      // Add the new client
-      this.clients.push(newClient);
-      logger.debug(`Added new MCP client for server: ${serverName}`);
-
-      return newClient.tools;
-    } catch (error) {
-      logger.error(`Error reloading MCP server ${serverName}:`, error);
-      project?.addLogMessage('error', `Failed to reload MCP server: ${serverName}. Check logs for details.`);
-      return null;
-    }
-  }
-
-  async getMcpServerTools(serverName: string): Promise<McpTool[] | null> {
-    // Wait for any ongoing initialization to complete
-    while (this.currentInitId) {
-      logger.debug(`MCP Agent is initializing (ID: ${this.currentInitId}), waiting...`);
-      await delay(100); // Wait for 100ms before checking again
-    }
-
-    const clientHolder = this.clients.find((client) => client.serverName === serverName);
-    return clientHolder ? clientHolder.tools : null;
   }
 
   private async getFileContentForPrompt(files: ContextFile[], project: Project): Promise<string> {
@@ -298,28 +166,30 @@ export class Agent {
     return messages;
   }
 
-  private getAvailableTools(project: Project): ToolSet {
+  private async getAvailableTools(project: Project): Promise<ToolSet> {
     const { agentConfig } = this.store.getSettings();
     const activeProvider = getActiveProvider(agentConfig.providers);
     if (!activeProvider) {
       throw new Error('No active MCP provider found');
     }
 
+    const mcpConnectors = await this.mcpManager.getConnectors();
+
     // Build the toolSet directly from enabled clients and tools
-    const toolSet: ToolSet = this.clients.reduce((acc, clientHolder) => {
+    const toolSet: ToolSet = mcpConnectors.reduce((acc, mcpConnector) => {
       // Skip if serverName is not specified in agentConfig.mcpServers
-      if (!(clientHolder.serverName in agentConfig.mcpServers)) {
+      if (!(mcpConnector.serverName in agentConfig.mcpServers)) {
         return acc;
       }
 
       // Skip disabled servers
-      if (agentConfig.disabledServers.includes(clientHolder.serverName)) {
+      if (agentConfig.disabledServers.includes(mcpConnector.serverName)) {
         return acc;
       }
 
       // Process tools for this enabled server
-      clientHolder.tools.forEach((tool) => {
-        const toolId = `${clientHolder.serverName}${SERVER_TOOL_SEPARATOR}${tool.name}`;
+      mcpConnector.tools.forEach((tool) => {
+        const toolId = `${mcpConnector.serverName}${SERVER_TOOL_SEPARATOR}${tool.name}`;
 
         // Check approval state first
         const approvalState = agentConfig.toolApprovals[toolId];
@@ -330,7 +200,7 @@ export class Agent {
           return; // Do not add the tool if it's never approved
         }
 
-        acc[toolId] = convertMpcToolToAiSdkTool(activeProvider, clientHolder.serverName, project, this.store, clientHolder.client, tool);
+        acc[toolId] = this.convertMpcToolToAiSdkTool(activeProvider, mcpConnector.serverName, project, this.store, mcpConnector.client, tool);
       });
 
       return acc;
@@ -349,12 +219,166 @@ export class Agent {
     return toolSet;
   }
 
-  async runAgent(project: Project, prompt: string): Promise<ContextMessage[]> {
-    // Wait for any ongoing initialization to complete
-    while (this.currentInitId) {
-      logger.debug(`MCP Agent is initializing (ID: ${this.currentInitId}), waiting...`);
-      await delay(100); // Wait for 100ms before checking again
+  private convertMpcToolToAiSdkTool(
+    provider: LlmProvider,
+    serverName: string,
+    project: Project,
+    store: Store,
+    mcpClient: McpSdkClient,
+    toolDef: McpTool,
+  ): Tool {
+    const toolId = `${serverName}${SERVER_TOOL_SEPARATOR}${toolDef.name}`;
+    let zodSchema: ZodSchema;
+    try {
+      zodSchema = jsonSchemaToZod(this.fixInputSchema(provider, toolDef.inputSchema));
+    } catch (e) {
+      logger.error(`Failed to convert JSON schema to Zod for tool ${toolDef.name}:`, e);
+      // Fallback to a generic object schema if conversion fails
+      zodSchema = jsonSchemaToZod({ type: 'object', properties: {} });
     }
+
+    const execute = async (args: { [x: string]: unknown } | undefined, { toolCallId }: ToolExecutionOptions) => {
+      // --- Tool Approval Logic ---
+      const currentSettings = store.getSettings();
+      const currentAgentConfig = currentSettings.agentConfig; // Use current config
+      const currentApprovalState = currentAgentConfig.toolApprovals[toolId] || ToolApprovalState.Always; // Default to Always
+
+      if (currentApprovalState === ToolApprovalState.Never) {
+        logger.warn(`Tool execution denied (Never): ${toolId}`);
+        return `Tool execution denied by user configuration (${toolId}).`;
+      }
+
+      project.addToolMessage(toolCallId, serverName, toolDef.name, args);
+
+      if (currentApprovalState === ToolApprovalState.Ask) {
+        const questionData: QuestionData = {
+          baseDir: project.baseDir,
+          text: `Approve tool ${toolDef.name} from MCP ${serverName}?`,
+          subject: `${JSON.stringify(args)}`,
+          defaultAnswer: 'y',
+          key: toolId, // Use toolId as the key for storing the answer
+        };
+
+        // Ask the question and wait for the answer
+        const [yesNoAnswer, userInput] = await project.askQuestion(questionData);
+
+        const isApproved = yesNoAnswer === 'y';
+
+        if (!isApproved) {
+          logger.warn(`Tool execution denied by user: ${toolId}`);
+          return `Tool execution denied by user.${userInput ? ` User input: ${userInput}` : ''}`;
+        }
+        logger.debug(`Tool execution approved by user: ${toolId}`);
+      } else {
+        // If Always approved
+        logger.debug(`Tool execution automatically approved (Always): ${toolId}`);
+      }
+      // --- End Tool Approval Logic ---
+
+      // Enforce minimum time between tool calls (using potentially updated agentConfig)
+      const timeSinceLastCall = Date.now() - this.lastToolCallTime;
+      const currentMinTime = currentAgentConfig.minTimeBetweenToolCalls; // Use current value
+      const remainingDelay = currentMinTime - timeSinceLastCall;
+
+      if (remainingDelay > 0) {
+        logger.debug(`Delaying tool call by ${remainingDelay}ms to respect minTimeBetweenToolCalls (${currentMinTime}ms)`);
+        await delay(remainingDelay);
+      }
+
+      try {
+        const response = await mcpClient.callTool(
+          {
+            name: toolDef.name,
+            arguments: args,
+          },
+          undefined,
+          {
+            timeout: MCP_CLIENT_TIMEOUT,
+          },
+        );
+
+        logger.debug(`Tool ${toolDef.name} returned response`, { response });
+
+        // Update last tool call time
+        this.lastToolCallTime = Date.now();
+        return response;
+      } catch (error) {
+        logger.error(`Error calling tool ${serverName}${SERVER_TOOL_SEPARATOR}${toolDef.name}:`, error);
+        // Update last tool call time even if there's an error
+        this.lastToolCallTime = Date.now();
+        // Return an error message string to the agent
+        return `Error executing tool ${toolDef.name}: ${error instanceof Error ? error.message : String(error)}`;
+      }
+    };
+
+    logger.debug(`Converting MCP tool to AI SDK tool: ${toolDef.name}`, toolDef);
+
+    return {
+      description: toolDef.description ?? '',
+      parameters: zodSchema,
+      execute,
+    };
+  }
+
+  /**
+   * Fixes the input schema for various providers.
+   */
+  private fixInputSchema(provider: LlmProvider, inputSchema: JsonSchema): JsonSchema {
+    if (provider.name === 'gemini') {
+      // Deep clone to avoid modifying the original schema
+      const fixedSchema = JSON.parse(JSON.stringify(inputSchema));
+
+      if (fixedSchema.properties) {
+        for (const key of Object.keys(fixedSchema.properties)) {
+          const property = fixedSchema.properties[key];
+
+          if (property.anyOf) {
+            property.any_of = property.anyOf;
+            delete property.anyOf;
+          }
+          if (property.oneOf) {
+            property.one_of = property.oneOf;
+            delete property.oneOf;
+          }
+          if (property.allOf) {
+            property.all_of = property.allOf;
+            delete property.allOf;
+          }
+
+          // gemini does not like "default" in the schema
+          if (property.default !== undefined) {
+            delete property.default;
+          }
+
+          if (property.type === 'string' && property.format && !['enum', 'date-time'].includes(property.format)) {
+            logger.debug(`Removing unsupported format '${property.format}' for property '${key}' in Gemini schema`);
+            delete property.format;
+          }
+
+          if (!property.type || property.type === 'null') {
+            property.type = 'string';
+          }
+        }
+        if (Object.keys(fixedSchema.properties).length === 0) {
+          // gemini requires at least one property in the schema
+          fixedSchema.properties = {
+            placeholder: {
+              type: 'string',
+              description: 'Placeholder property to satisfy Gemini schema requirements',
+            },
+          };
+        }
+      }
+
+      return fixedSchema;
+    }
+
+    return inputSchema;
+  }
+
+  async runAgent(project: Project, prompt: string): Promise<ContextMessage[]> {
+    // The waiting loop for initialization is now handled by mcpManager.getConnectors()
+    // and mcpManager.initMcpConnectors()
 
     const { agentConfig } = this.store.getSettings();
     logger.debug('McpConfig:', agentConfig);
@@ -374,18 +398,15 @@ export class Agent {
     // add user message
     messages.push(...agentMessages);
 
-    // Check if we need to reinitialize for a different project
-    if (this.initializedForProject?.baseDir !== project.baseDir) {
-      logger.info(`Reinitializing MCP clients for project: ${project.baseDir}`);
-      try {
-        await this.initMcpServers(project, uuidv4());
-      } catch (error) {
-        logger.error('Error reinitializing MCP clients:', error);
-        project.addLogMessage('error', `Error reinitializing MCP clients: ${error}`);
-        return [];
-      }
+    try {
+      // reinitialize MCP clients for the current project and wait for them to be ready
+      await this.mcpManager.initMcpConnectors(agentConfig.mcpServers, project.baseDir);
+    } catch (error) {
+      logger.error('Error reinitializing MCP clients:', error);
+      project.addLogMessage('error', `Error reinitializing MCP clients: ${error}`);
     }
-    const toolSet = this.getAvailableTools(project);
+
+    const toolSet = await this.getAvailableTools(project);
 
     logger.info(`Running prompt with ${Object.keys(toolSet).length} tools.`);
     logger.debug('Tools:', {
@@ -614,7 +635,7 @@ export class Agent {
   async estimateTokens(project: Project): Promise<number> {
     try {
       const { agentConfig } = this.store.getSettings();
-      const toolSet = this.getAvailableTools(project);
+      const toolSet = await this.getAvailableTools(project); // Now async
       const systemPrompt = await getSystemPrompt(project.baseDir, agentConfig.useAiderTools, agentConfig.includeContextFiles, agentConfig.customInstructions);
       const messages = await this.prepareMessages(project);
 

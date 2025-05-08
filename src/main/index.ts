@@ -5,6 +5,7 @@ import { delay } from '@common/utils';
 import { electronApp, is, optimizer } from '@electron-toolkit/utils';
 import { app, BrowserWindow, dialog, shell } from 'electron';
 import ProgressBar from 'electron-progressbar';
+import { McpManager } from 'src/main/agent/mcp-manager';
 
 import icon from '../../resources/icon.png?asset';
 
@@ -67,8 +68,12 @@ const initWindow = async (store: Store) => {
   mainWindow.on('maximize', saveWindowState);
   mainWindow.on('unmaximize', saveWindowState);
 
-  const agent = new Agent(store);
-  void agent.initMcpServers();
+  const mcpManager = new McpManager();
+  const activeProject = store.getOpenProjects().find((project) => project.active);
+
+  void mcpManager.initMcpConnectors(store.getSettings().agentConfig.mcpServers, activeProject?.baseDir);
+
+  const agent = new Agent(store, mcpManager);
 
   // Initialize project manager
   const projectManager = new ProjectManager(mainWindow, store, agent);
@@ -85,9 +90,10 @@ const initWindow = async (store: Store) => {
   // Initialize Versions Manager (this also sets up listeners)
   const versionsManager = new VersionsManager(mainWindow, store);
 
-  setupIpcHandlers(mainWindow, projectManager, store, agent, versionsManager);
+  setupIpcHandlers(mainWindow, projectManager, store, mcpManager, agent, versionsManager);
 
   const beforeQuit = async () => {
+    await mcpManager.close();
     await restApiController.close();
     await connectorManager.close();
     await projectManager.close();

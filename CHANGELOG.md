@@ -7,6 +7,7 @@
 - notifications for prompt completion and questions
 - properly awaiting after the question is answered before asking the next question
 - normalizing file paths before using them further
+- optimized MCP server initialization
 
 ## [0.12.0]
 

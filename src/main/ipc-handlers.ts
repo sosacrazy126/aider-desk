@@ -1,6 +1,7 @@
 import { EditFormat, FileEdit, McpServerConfig, MessageRole, Mode, ProjectData, ProjectSettings, SettingsData } from '@common/types';
 import { normalizeBaseDir } from '@common/utils';
 import { BrowserWindow, dialog, ipcMain } from 'electron';
+import { McpManager } from 'src/main/agent/mcp-manager';
 
 import { Agent } from './agent';
 import { getFilePathSuggestions, isProjectPath, isValidPath } from './file-system';
@@ -10,7 +11,14 @@ import { scrapeWeb } from './web-scrapper';
 import logger from './logger';
 import { VersionsManager } from './versions-manager';
 
-export const setupIpcHandlers = (mainWindow: BrowserWindow, projectManager: ProjectManager, store: Store, agent: Agent, versionsManager: VersionsManager) => {
+export const setupIpcHandlers = (
+  mainWindow: BrowserWindow,
+  projectManager: ProjectManager,
+  store: Store,
+  mcpManager: McpManager,
+  agent: Agent,
+  versionsManager: VersionsManager,
+) => {
   ipcMain.handle('load-settings', () => {
     return store.getSettings();
   });
@@ -18,7 +26,11 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, projectManager: Proj
   ipcMain.handle('save-settings', (_, newSettings: SettingsData) => {
     const oldSettings = store.getSettings();
     store.saveSettings(newSettings);
-    void agent.settingsChanged(oldSettings, newSettings);
+
+    mcpManager.settingsChanged(oldSettings, newSettings);
+    agent.settingsChanged(oldSettings, newSettings);
+    projectManager.settingsChanged(oldSettings, newSettings);
+
     return store.getSettings();
   });
 
@@ -103,7 +115,7 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, projectManager: Proj
 
     store.setOpenProjects(updatedProjects);
 
-    void agent.initMcpServers(projectManager.getProject(baseDir));
+    void mcpManager.initMcpConnectors(store.getSettings().agentConfig.mcpServers, baseDir);
 
     return updatedProjects;
   });
@@ -239,11 +251,14 @@ export const setupIpcHandlers = (mainWindow: BrowserWindow, projectManager: Proj
   });
 
   ipcMain.handle('load-mcp-server-tools', async (_, serverName: string, config?: McpServerConfig) => {
-    if (config) {
-      return await agent.reloadMcpServer(serverName, config);
-    } else {
-      return await agent.getMcpServerTools(serverName);
-    }
+    return await mcpManager.getMcpServerTools(serverName, config);
+  });
+
+  ipcMain.handle('reload-mcp-servers', async (_, mcpServers: Record<string, McpServerConfig>, force = false) => {
+    // Get the currently active project's base directory
+    const activeProject = store.getOpenProjects().find((p) => p.active);
+    const projectDir = activeProject ? activeProject.baseDir : null;
+    await mcpManager.initMcpConnectors(mcpServers, projectDir, force);
   });
 
   ipcMain.handle('export-session-to-markdown', async (_, baseDir: string) => {

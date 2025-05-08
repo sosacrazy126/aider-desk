@@ -72,7 +72,8 @@
     "pasteServerAs": "粘贴您的服务器配置为:\n\n{{example}}\n\n或\n\n{{exampleNoParent}}\n\n或\n\n{{exampleBare}}",
     "invalidConfig": "无效配置",
     "emptyConfig": "配置不能为空",
-    "multipleServersHint": "您可以一次添加多个服务器，方法是粘贴包含多个服务器配置的 JSON 对象。"
+    "configHint": "您可以一次添加多个服务器，方法是粘贴包含多个服务器配置的 JSON 对象。您还可以在 env 和 args 中使用 ${projectDir} 来引用当前项目目录。",
+    "viewExamples": "查看示例"
   },
   "model": {
     "label": "模型",
@@ -149,6 +150,7 @@
       "tokensPerResponse": "MCP 代理每次响应可以使用的最大令牌数。",
       "addServer": "添加服务器",
       "editConfig": "编辑配置",
+      "reloadServers": "重新加载服务器",
       "envVarPlaceholder": "如果为空，则使用 {{envVar}} 环境变量"
     },
     "aider": {

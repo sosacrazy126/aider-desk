@@ -1,7 +1,7 @@
 import { AgentConfig, McpServerConfig, SettingsData, ToolApprovalState } from '@common/types';
 import { useState, ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FaPlus } from 'react-icons/fa';
+import { FaPlus, FaPencilAlt, FaSyncAlt } from 'react-icons/fa';
 import {
   LlmProvider,
   PROVIDER_MODELS,
@@ -53,9 +53,10 @@ type Props = {
 export const AgentSettings = ({ settings, setSettings }: Props) => {
   const { t } = useTranslation();
   const { agentConfig } = settings;
-  const [isAddingServer, setIsAddingServer] = useState(false);
-  const [editingServer, setEditingServer] = useState<McpServer | null>(null);
-  const [isEditingAllServers, setIsEditingAllServers] = useState(false);
+  const [isAddingMcpServer, setIsAddingMcpServer] = useState(false);
+  const [editingMcpServer, setEditingMcpServer] = useState<McpServer | null>(null);
+  const [isEditingMcpServersConfig, setIsEditingMcpServersConfig] = useState(false);
+  const [mcpServersReloadTrigger, setMcpServersReloadTrigger] = useState(0);
   const activeProvider = getActiveProvider(agentConfig.providers);
 
   const handleProviderChanged = (newProviderName: string) => {
@@ -165,15 +166,15 @@ export const AgentSettings = ({ settings, setSettings }: Props) => {
   const handleServerConfigSave = (servers: Record<string, McpServerConfig>) => {
     let updatedMcpServers = { ...settings.agentConfig.mcpServers };
 
-    if (isAddingServer) {
+    if (isAddingMcpServer) {
       // Add new servers to the existing ones
       updatedMcpServers = {
         ...updatedMcpServers,
         ...servers,
       };
-    } else if (editingServer) {
+    } else if (editingMcpServer) {
       // If editing and the server name did not change, preserve the order
-      const oldName = editingServer.name;
+      const oldName = editingMcpServer.name;
       const newNames = Object.keys(servers);
       if (newNames.length === 1 && newNames[0] === oldName) {
         // Replace the server at the same position
@@ -198,7 +199,7 @@ export const AgentSettings = ({ settings, setSettings }: Props) => {
           ...servers,
         };
       }
-    } else if (isEditingAllServers) {
+    } else if (isEditingMcpServersConfig) {
       // Replace all servers with the new set
       updatedMcpServers = { ...servers };
     }
@@ -222,12 +223,17 @@ export const AgentSettings = ({ settings, setSettings }: Props) => {
       toolApprovals: updatedToolApprovals,
     };
     setSettings({ ...settings, agentConfig: updatedMcpConfig });
-    setIsAddingServer(false);
-    setEditingServer(null);
-    setIsEditingAllServers(false);
+    setIsAddingMcpServer(false);
+    setEditingMcpServer(null);
+    setIsEditingMcpServersConfig(false);
   };
 
-  const handleServerConfigRemove = (serverName: string) => {
+  const handleMcpServersReload = async () => {
+    void window.api.reloadMcpServers(agentConfig.mcpServers, true);
+    setMcpServersReloadTrigger((prev) => prev + 1);
+  };
+
+  const handleMcpServerConfigRemove = (serverName: string) => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { [serverName]: removedServer, ...remainingServers } = settings.agentConfig.mcpServers;
     const updatedMcpConfig = {
@@ -239,19 +245,19 @@ export const AgentSettings = ({ settings, setSettings }: Props) => {
 
   return (
     <div>
-      {isAddingServer || editingServer || isEditingAllServers ? (
+      {isAddingMcpServer || editingMcpServer || isEditingMcpServersConfig ? (
         <McpServerForm
           onSave={handleServerConfigSave}
           onCancel={() => {
-            setIsAddingServer(false);
-            setEditingServer(null);
-            setIsEditingAllServers(false);
+            setIsAddingMcpServer(false);
+            setEditingMcpServer(null);
+            setIsEditingMcpServersConfig(false);
           }}
           servers={
-            isEditingAllServers
+            isEditingMcpServersConfig
               ? Object.entries(agentConfig.mcpServers).map(([name, config]) => ({ name, config }))
-              : editingServer
-                ? [editingServer]
+              : editingMcpServer
+                ? [editingMcpServer]
                 : undefined
           }
         />
@@ -339,31 +345,44 @@ export const AgentSettings = ({ settings, setSettings }: Props) => {
           <div className="mt-4">
             <div className="flex items-center justify-between mb-2 mt-4">
               <div className="text-sm text-neutral-100 font-medium">{t('settings.agent.mcpServers')}</div>
-              <Button variant="text" className="ml-2 text-xs" onClick={() => setIsEditingAllServers(true)}>
-                {t('settings.agent.editConfig')}
-              </Button>
+              {Object.keys(agentConfig.mcpServers).length > 0 && (
+                <div className="flex items-center">
+                  <Button variant="text" className="ml-2 text-xs flex items-center" onClick={() => setIsEditingMcpServersConfig(true)}>
+                    <FaPencilAlt className="mr-1.5 w-3 h-3" /> {t('settings.agent.editConfig')}
+                  </Button>
+                  <Button variant="text" className="ml-2 text-xs flex items-center" onClick={handleMcpServersReload}>
+                    <FaSyncAlt className="mr-1.5 w-3 h-3" /> {t('settings.agent.reloadServers')}
+                  </Button>
+                  <Button onClick={() => setIsAddingMcpServer(true)} variant="text" className="ml-2 text-xs flex items-center">
+                    <FaPlus className="mr-1.5 w-3 h-3" /> {t('settings.agent.addServer')}
+                  </Button>
+                </div>
+              )}
             </div>
             {Object.keys(agentConfig.mcpServers).length === 0 ? (
-              <div className="text-xs text-gray-500 mb-2">{t('settings.agent.noServersConfigured')}</div>
+              <>
+                <div className="text-xs text-gray-500 mb-2">{t('settings.agent.noServersConfigured')}</div>
+                <div className="flex justify-center">
+                  <Button onClick={() => setIsAddingMcpServer(true)} variant="text" className="mt-3 flex items-center text-sm">
+                    <FaPlus className="mr-2 w-2 h-2" /> {t('settings.agent.addServer')}
+                  </Button>
+                </div>
+              </>
             ) : (
               Object.entries(agentConfig.mcpServers).map(([serverName, config]) => (
                 <McpServerItem
                   key={serverName}
                   serverName={serverName}
                   config={config}
-                  onRemove={() => handleServerConfigRemove(serverName)}
-                  onEdit={() => setEditingServer({ name: serverName, config })}
-                  toolApprovals={agentConfig.toolApprovals} // Pass toolApprovals
-                  onApprovalChange={handleApprovalChange} // Pass handler
+                  onRemove={() => handleMcpServerConfigRemove(serverName)}
+                  onEdit={() => setEditingMcpServer({ name: serverName, config })}
+                  toolApprovals={agentConfig.toolApprovals}
+                  onApprovalChange={handleApprovalChange}
+                  reloadTrigger={mcpServersReloadTrigger}
                 />
               ))
             )}
             <StyledTooltip id="mcp-server-item" />
-            <div className="flex justify-center">
-              <Button onClick={() => setIsAddingServer(true)} variant="text" className="mt-3 flex items-center text-sm">
-                <FaPlus className="mr-2 w-2 h-2" /> {t('settings.agent.addServer')}
-              </Button>
-            </div>
           </div>
         </>
       )}

@@ -1,5 +1,6 @@
 import { normalizeBaseDir } from '@common/utils';
 import { BrowserWindow } from 'electron';
+import { SettingsData } from '@common/types';
 
 import { Agent } from './agent';
 import logger from './logger';
@@ -27,15 +28,6 @@ export class ProjectManager {
     logger.info('Creating new project', { baseDir });
     const project = new Project(this.mainWindow, baseDir, this.store, this.agent);
     this.projects.push(project);
-
-    // Check if the project is marked as active in the store and initialize MCP agent if needed
-    const openProjects = this.store.getOpenProjects();
-    const projectData = openProjects.find((p) => normalizeBaseDir(p.baseDir) === normalizeBaseDir(baseDir));
-    if (projectData?.active) {
-      logger.info('Initializing MCP agent for active project in background', { baseDir });
-      void this.agent.initMcpServers(project);
-    }
-
     return project;
   }
 
@@ -76,5 +68,11 @@ export class ProjectManager {
     logger.info('Closing all projects');
     await Promise.all(this.projects.map((project) => project.close()));
     this.projects = [];
+  }
+
+  settingsChanged(oldSettings: SettingsData, newSettings: SettingsData) {
+    this.projects.forEach((project) => {
+      project.settingsChanged(oldSettings, newSettings);
+    });
   }
 }

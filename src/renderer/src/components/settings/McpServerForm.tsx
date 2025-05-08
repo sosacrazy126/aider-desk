@@ -2,6 +2,11 @@ import { McpServerConfig } from '@common/types';
 import { useState, useMemo, ChangeEvent } from 'react';
 import { z } from 'zod';
 import { useTranslation } from 'react-i18next';
+import { MdInfoOutline } from 'react-icons/md';
+
+import { StyledTooltip } from '@/components/common/StyledTooltip';
+import { TextArea } from '@/components/common/TextArea';
+import { Button } from '@/components/common/Button';
 
 const MCP_SERVER_EXAMPLE_JSON = `{
   "mcpServers": {
@@ -23,9 +28,6 @@ const MCP_SERVER_EXAMPLE_BARE = `"puppeteer": {
   "command": "npx",
   "args": ["-y", "@modelcontextprotocol/server-puppeteer"]
 }`;
-
-import { TextArea } from '@/components/common/TextArea';
-import { Button } from '@/components/common/Button';
 
 const McpServersRecordSchema = z.record(
   z.object({
@@ -56,6 +58,7 @@ type Props = {
 
 export const McpServerForm = ({ onSave, onCancel, servers }: Props) => {
   const { t } = useTranslation();
+  const tooltipId = useMemo(() => `mcp-config-hint-${Math.random().toString(36).substring(7)}`, []);
   const [configJSON, setConfigJSON] = useState(() => {
     if (servers && servers.length > 0) {
       // If multiple servers, merge them into a single object
@@ -119,14 +122,20 @@ export const McpServerForm = ({ onSave, onCancel, servers }: Props) => {
 
   return (
     <div>
-      <div className="flex items-center mb-2 text-neutral-100">
-        <h3 className="text-md font-medium uppercase mb-1">
+      <div className="flex items-center space-between mb-3 text-neutral-100 w-full">
+        <div className="text-md font-medium uppercase flex-1">
           {servers && servers.length === 1
             ? t('mcpServer.editServer', { name: servers[0].name })
             : servers && servers.length > 1
               ? t('settings.agent.editConfig')
               : t('mcpServer.addServer')}
-        </h3>
+        </div>
+        {!servers && (
+          <div className="mr-1">
+            <MdInfoOutline className="h-5 w-5 text-neutral-200 hover:text-neutral-100 cursor-pointer" data-tooltip-id={tooltipId} />
+            <StyledTooltip id={tooltipId} content={t('mcpServer.configHint')} />
+          </div>
+        )}
       </div>
       <div className="mb-2">
         <TextArea
@@ -137,17 +146,21 @@ export const McpServerForm = ({ onSave, onCancel, servers }: Props) => {
           })}
           value={configJSON}
           onChange={handleChange}
-          className={`w-full h-60 p-2 resize-none ${configJSON && !isValidJson ? 'border-red-800/50 focus:border-red-800/50' : ''}`}
+          className={`w-full h-96 p-2 resize-none ${configJSON && !isValidJson ? 'border-red-800/50 focus:border-red-800/50' : ''}`}
         />
-        {!servers && <div className="text-xs text-gray-500 mt-1">{t('mcpServer.multipleServersHint')}</div>}
       </div>
-      <div className="flex justify-end gap-2">
-        <Button onClick={onCancel} variant="text">
-          {t('common.cancel')}
-        </Button>
-        <Button onClick={handleAddServer} variant="contained" disabled={!isValidJson || !configJSON}>
-          {t('common.save')}
-        </Button>
+      <div className="flex justify-between items-center gap-2">
+        <a href="https://modelcontextprotocol.io/examples" target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline">
+          {t('mcpServer.viewExamples')}
+        </a>
+        <div className="flex gap-2">
+          <Button onClick={onCancel} variant="text" size="sm">
+            {t('common.cancel')}
+          </Button>
+          <Button onClick={handleAddServer} variant="contained" disabled={!isValidJson || !configJSON} size="sm">
+            {t('common.save')}
+          </Button>
+        </div>
       </div>
     </div>
   );

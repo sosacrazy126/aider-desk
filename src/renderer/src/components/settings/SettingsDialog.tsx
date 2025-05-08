@@ -38,6 +38,10 @@ export const SettingsDialog = ({ onClose, initialTab = 0 }: Props) => {
     if (originalSettings && localSettings?.zoomLevel !== originalSettings.zoomLevel) {
       void window.api.setZoomLevel(originalSettings.zoomLevel ?? 1);
     }
+    // Revert mcpServers if changed
+    if (originalSettings && localSettings && !isEqual(localSettings.agentConfig.mcpServers, originalSettings.agentConfig.mcpServers)) {
+      void window.api.reloadMcpServers(originalSettings.agentConfig.mcpServers);
+    }
     onClose();
   };
 
