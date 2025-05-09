@@ -692,6 +692,10 @@ export class Project {
     try {
       const historyPath = path.isAbsolute(this.inputHistoryFile) ? this.inputHistoryFile : path.join(this.baseDir, this.inputHistoryFile);
 
+      if (!(await fileExists(historyPath))) {
+        return [];
+      }
+
       const content = await fs.readFile(historyPath, 'utf8');
 
       if (!content) {
