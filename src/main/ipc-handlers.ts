@@ -219,8 +219,8 @@ export const setupIpcHandlers = (
     void projectManager.getProject(baseDir).removeLastMessage();
   });
 
-  ipcMain.on('redo-last-user-prompt', (_, baseDir: string, mode: Mode) => {
-    void projectManager.getProject(baseDir).redoLastUserPrompt(mode);
+  ipcMain.on('redo-last-user-prompt', (_, baseDir: string, mode: Mode, updatedPrompt?: string) => {
+    void projectManager.getProject(baseDir).redoLastUserPrompt(mode, updatedPrompt);
   });
 
   ipcMain.handle('scrape-web', async (_, baseDir: string, url: string) => {

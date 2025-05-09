@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { FaArrowDown, FaArrowUp, FaDollarSign, FaEllipsisVertical } from 'react-icons/fa6';
 import { useTranslation } from 'react-i18next';
 import { UsageReportData } from '@common/types';
-import { MdDeleteForever, MdRedo } from 'react-icons/md';
+import { MdDeleteForever, MdRedo, MdEdit } from 'react-icons/md';
 
 import { IconButton } from '../common/IconButton';
 
@@ -15,9 +15,10 @@ type Props = {
   usageReport?: UsageReportData;
   remove?: () => void;
   redo?: () => void;
+  edit?: () => void;
 };
 
-export const MessageBar = ({ content, usageReport, remove, redo }: Props) => {
+export const MessageBar = ({ content, usageReport, remove, redo, edit }: Props) => {
   const { t } = useTranslation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -34,6 +35,11 @@ export const MessageBar = ({ content, usageReport, remove, redo }: Props) => {
 
   const handleRedoClick = () => {
     redo?.();
+    setIsMenuOpen(false);
+  };
+
+  const handleEditClick = () => {
+    edit?.();
     setIsMenuOpen(false);
   };
 
@@ -55,7 +61,7 @@ export const MessageBar = ({ content, usageReport, remove, redo }: Props) => {
         </div>
       )}
       <CopyMessageButton content={content} className="transition-colors text-neutral-700 hover:text-neutral-100" alwaysShow={true} />
-      {(remove || redo) && (
+      {(remove || redo || edit) && (
         <div ref={buttonRef}>
           <IconButton
             icon={<FaEllipsisVertical className="w-4 h-4" />}
@@ -64,9 +70,18 @@ export const MessageBar = ({ content, usageReport, remove, redo }: Props) => {
           />
         </div>
       )}
-      {isMenuOpen && (remove || redo) && (
-        <div ref={menuRef} className="absolute right-0 bottom-full  w-[120px] bg-neutral-800 border border-neutral-700 rounded shadow-lg z-10">
+      {isMenuOpen && (remove || redo || edit) && (
+        <div ref={menuRef} className="absolute right-0 bottom-full mb-1 w-[120px] bg-neutral-800 border border-neutral-700 rounded shadow-lg z-10">
           <ul>
+            {edit && (
+              <li
+                className="flex items-center gap-1 px-2 py-1 text-xxs text-neutral-100 hover:bg-neutral-700 cursor-pointer transition-colors"
+                onClick={handleEditClick}
+              >
+                <MdEdit className="w-4 h-4" />
+                <span className="whitespace-nowrap mb-[-4px]">{t('messages.edit')}</span>
+              </li>
+            )}
             {redo && (
               <li
                 className="flex items-center gap-1 px-2 py-1 text-xxs text-neutral-100 hover:bg-neutral-700 cursor-pointer transition-colors"

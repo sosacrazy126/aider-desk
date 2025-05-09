@@ -50,7 +50,7 @@ const api: ApplicationAPI = {
   stopProject: (baseDir) => ipcRenderer.send('stop-project', baseDir),
   restartProject: (baseDir) => ipcRenderer.send('restart-project', baseDir),
   runPrompt: (baseDir, prompt, mode) => ipcRenderer.send('run-prompt', baseDir, prompt, mode),
-  redoLastUserPrompt: (baseDir, mode) => ipcRenderer.send('redo-last-user-prompt', baseDir, mode),
+  redoLastUserPrompt: (baseDir, mode, updatedPrompt?) => ipcRenderer.send('redo-last-user-prompt', baseDir, mode, updatedPrompt),
   answerQuestion: (baseDir, answer) => ipcRenderer.send('answer-question', baseDir, answer),
   loadInputHistory: (baseDir) => ipcRenderer.invoke('load-input-history', baseDir),
   dialog: {

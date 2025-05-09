@@ -12,11 +12,18 @@ type Props = {
   allFiles: string[];
   renderMarkdown: boolean;
   onRemove?: () => void;
-  redo?: () => void;
+  onRedo?: () => void;
+  onEdit?: (content: string) => void;
 };
 
-export const UserMessageBlock = ({ baseDir, message, allFiles, renderMarkdown, onRemove, redo }: Props) => {
+export const UserMessageBlock = ({ baseDir, message, allFiles, renderMarkdown, onRemove, onRedo, onEdit }: Props) => {
   const baseClasses = 'rounded-md p-3 mb-2 max-w-full text-xs bg-neutral-850 border border-neutral-800 text-gray-100';
+
+  const handleEdit = () => {
+    if (onEdit) {
+      onEdit(message.content);
+    }
+  };
 
   return (
     <div className={clsx(baseClasses, 'relative flex flex-col group', !renderMarkdown && 'break-words whitespace-pre-wrap')}>
@@ -26,7 +33,7 @@ export const UserMessageBlock = ({ baseDir, message, allFiles, renderMarkdown, o
         </div>
         <div className="flex-grow-1 w-full overflow-hidden">{parseMessageContent(baseDir, message.content, allFiles, renderMarkdown)}</div>
       </div>
-      <MessageBar content={message.content} remove={onRemove} redo={redo} />
+      <MessageBar content={message.content} remove={onRemove} redo={onRedo} edit={onEdit ? handleEdit : undefined} />
     </div>
   );
 };

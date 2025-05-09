@@ -20,6 +20,7 @@ import { CgSpinner } from 'react-icons/cg';
 import { ResizableBox } from 'react-resizable';
 import { v4 as uuidv4 } from 'uuid';
 import { PROVIDER_MODELS, getActiveProvider } from '@common/llm-providers';
+import clsx from 'clsx';
 
 import {
   CommandOutputMessage,
@@ -44,6 +45,7 @@ import { AddFileDialog } from '@/components/project/AddFileDialog';
 import { ProjectBar, ProjectTopBarRef } from '@/components/project/ProjectBar';
 import { PromptField, PromptFieldRef } from '@/components/PromptField';
 import { CostInfo } from '@/components/CostInfo';
+import { Button } from '@/components/common/Button';
 import 'react-resizable/css/styles.css';
 
 type AddFileDialogOptions = {
@@ -71,6 +73,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
   const [mode, setMode] = useState<Mode>('code');
   const [renderMarkdown, setRenderMarkdown] = useState(project.settings?.renderMarkdown ?? false);
   const [showFrozenDialog, setShowFrozenDialog] = useState(false);
+  const [editingMessageIndex, setEditingMessageIndex] = useState<number | null>(null);
   const processingMessageRef = useRef<ResponseMessage | null>(null);
   const promptFieldRef = useRef<PromptFieldRef>(null);
   const projectTopBarRef = useRef<ProjectTopBarRef>(null);
@@ -402,6 +405,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
     setTokensInfo(null);
     setQuestion(null);
     setAiderModelsData(null);
+    setEditingMessageIndex(null);
     processingMessageRef.current = null;
   };
 
@@ -509,10 +513,47 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
     window.api.patchProjectSettings(project.baseDir, { renderMarkdown });
   };
 
-  const handleSubmitted = () => {
+  const runPrompt = (prompt: string) => {
     if (question) {
       setQuestion(null);
     }
+
+    if (editingMessageIndex !== null) {
+      // This submission is an edit of a previous message
+      const newMessages = messages.slice(0, editingMessageIndex);
+      setEditingMessageIndex(null); // Clear editing state
+      setMessages(newMessages);
+      window.api.redoLastUserPrompt(project.baseDir, mode, prompt);
+    } else {
+      window.api.runPrompt(project.baseDir, prompt, mode);
+    }
+  };
+
+  const handleEditLastUserMessage = (content?: string) => {
+    let contentToEdit = content;
+    const messageIndex = messages.findLastIndex(isUserMessage);
+
+    if (messageIndex === -1) {
+      // eslint-disable-next-line no-console
+      console.warn('No user message found to edit.');
+      return;
+    }
+
+    if (contentToEdit === undefined) {
+      const lastUserMessage = messages[messageIndex];
+      contentToEdit = lastUserMessage.content;
+    }
+    if (contentToEdit === undefined) {
+      // eslint-disable-next-line no-console
+      console.warn('Could not determine content to edit.');
+      return;
+    }
+
+    setEditingMessageIndex(messageIndex);
+    setTimeout(() => {
+      promptFieldRef.current?.setText(contentToEdit);
+      promptFieldRef.current?.focus();
+    }, 0);
   };
 
   const restartProject = () => {
@@ -578,9 +619,27 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
             renderMarkdown={renderMarkdown}
             removeMessage={handleRemoveMessage}
             redoLastUserPrompt={handleRedoLastUserPrompt}
+            editLastUserMessage={handleEditLastUserMessage}
           />
         </div>
-        <div className="relative bottom-0 w-full p-4 pb-2 flex-shrink-0 flex border-t border-neutral-800">
+        <div
+          className={clsx('relative bottom-0 w-full p-4 pb-2 flex-shrink-0 flex flex-col border-t border-neutral-800', editingMessageIndex !== null && 'pt-1')}
+        >
+          {editingMessageIndex !== null && (
+            <div className="flex items-center justify-between px-2 py-1 text-xs text-neutral-400 border-b border-neutral-700 mb-2">
+              <span>{t('messages.editingLastMessage')}</span>
+              <Button
+                size="sm"
+                variant="text"
+                onClick={() => {
+                  setEditingMessageIndex(null);
+                  promptFieldRef.current?.setText('');
+                }}
+              >
+                {t('messages.cancelEdit')}
+              </Button>
+            </div>
+          )}
           <PromptField
             ref={promptFieldRef}
             baseDir={project.baseDir}
@@ -588,7 +647,8 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
             processing={processing}
             mode={mode}
             onModeChanged={handleModeChange}
-            onSubmitted={handleSubmitted}
+            runPrompt={runPrompt}
+            editLastUserMessage={handleEditLastUserMessage}
             isActive={isActive}
             words={autocompletionData?.words}
             clearMessages={clearMessages}

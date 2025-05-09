@@ -27,6 +27,7 @@ const CONFIRM_COMMANDS = [
   '/reset',
   '/drop',
   '/redo',
+  '/edit-last',
 ];
 
 const ANSWERS = ['y', 'n', 'a', 'd'];
@@ -35,6 +36,7 @@ const MAX_SUGGESTIONS = 10;
 
 export interface PromptFieldRef {
   focus: () => void;
+  setText: (text: string) => void;
 }
 
 type Props = {
@@ -46,7 +48,7 @@ type Props = {
   openModelSelector?: () => void;
   mode: Mode;
   onModeChanged: (mode: Mode) => void;
-  onSubmitted?: (prompt: string) => void;
+  runPrompt: (prompt: string) => void;
   showFileDialog: (readOnly: boolean) => void;
   clearMessages: () => void;
   scrapeWeb: (url: string) => void;
@@ -56,6 +58,7 @@ type Props = {
   runCommand: (command: string) => void;
   runTests: (testCmd?: string) => void;
   redoLastUserPrompt: () => void;
+  editLastUserMessage: () => void;
   disabled?: boolean;
 };
 
@@ -70,7 +73,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
       mode,
       onModeChanged,
       showFileDialog,
-      onSubmitted,
+      runPrompt,
       clearMessages,
       scrapeWeb,
       question,
@@ -79,6 +82,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
       runCommand,
       runTests,
       redoLastUserPrompt,
+      editLastUserMessage,
       openModelSelector,
       disabled = false,
     }: Props,
@@ -112,6 +116,17 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
     useImperativeHandle(ref, () => ({
       focus: () => {
         inputRef.current?.focus();
+      },
+      setText: (newText: string) => {
+        setText(newText);
+        // Ensure cursor is at the end after setting text
+        setTimeout(() => {
+          if (inputRef.current) {
+            inputRef.current.selectionStart = newText.length;
+            inputRef.current.selectionEnd = newText.length;
+            inputRef.current.focus();
+          }
+        }, 0);
       },
     }));
 
@@ -154,6 +169,10 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
           case '/redo':
             prepareForNextPrompt();
             redoLastUserPrompt();
+            break;
+          case '/edit-last':
+            prepareForNextPrompt();
+            editLastUserMessage();
             break;
           case '/test': {
             runTests(args);
@@ -289,8 +308,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
         if (confirmCommandMatch) {
           invokeCommand(confirmCommandMatch, text.split(' ').slice(1).join(' '));
         } else {
-          window.api.runPrompt(baseDir, text, mode);
-          onSubmitted?.(text);
+          runPrompt(text);
         }
         prepareForNextPrompt();
       }

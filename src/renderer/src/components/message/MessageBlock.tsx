@@ -24,9 +24,10 @@ type Props = {
   renderMarkdown: boolean;
   remove?: () => void;
   redo?: () => void;
+  edit?: (content: string) => void;
 };
 
-export const MessageBlock = ({ baseDir, message, allFiles, renderMarkdown, remove, redo }: Props) => {
+export const MessageBlock = ({ baseDir, message, allFiles, renderMarkdown, remove, redo, edit }: Props) => {
   if (isLoadingMessage(message)) {
     return <LoadingMessageBlock message={message} />;
   }
@@ -44,7 +45,9 @@ export const MessageBlock = ({ baseDir, message, allFiles, renderMarkdown, remov
   }
 
   if (isUserMessage(message)) {
-    return <UserMessageBlock baseDir={baseDir} message={message} allFiles={allFiles} renderMarkdown={renderMarkdown} onRemove={remove} redo={redo} />;
+    return (
+      <UserMessageBlock baseDir={baseDir} message={message} allFiles={allFiles} renderMarkdown={renderMarkdown} onRemove={remove} onRedo={redo} onEdit={edit} />
+    );
   }
 
   if (isResponseMessage(message)) {

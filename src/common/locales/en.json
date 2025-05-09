@@ -195,7 +195,10 @@
     "copied": "Copied!",
     "interrupted": "Interrupted by user.",
     "delete": "Delete",
-    "redo": "Redo"
+    "redo": "Redo",
+    "edit": "Edit",
+    "editingLastMessage": "Editing last message",
+    "cancelEdit": "Cancel"
   },
   "errors": {
     "frozenTitle": "AIDER FROZEN?",

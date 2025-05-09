@@ -30,7 +30,7 @@ export interface ApplicationAPI {
   stopProject: (baseDir: string) => void;
   restartProject: (baseDir: string) => void;
   runPrompt: (baseDir: string, prompt: string, mode?: Mode) => void;
-  redoLastUserPrompt: (baseDir: string, mode: Mode) => void;
+  redoLastUserPrompt: (baseDir: string, mode: Mode, updatedPrompt?: string) => void;
   answerQuestion: (baseDir: string, answer: string) => void;
   loadInputHistory: (baseDir: string) => Promise<string[]>;
   dialog: {

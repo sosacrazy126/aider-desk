@@ -10,6 +10,7 @@
 - optimized MCP server initialization
 - added option to add files as read-only when clicking with CTRL/CMD
 - added UI button to drop all context files
+- ability to edit last user message via user message action menu or /edit-last command
 
 ## [0.12.0]
 

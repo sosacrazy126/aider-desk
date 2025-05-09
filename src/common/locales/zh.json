@@ -191,7 +191,10 @@
     "copied": "已复制!",
     "interrupted": "被用户中断。",
     "delete": "删除",
-    "redo": "重做"
+    "redo": "重做",
+    "edit": "编辑",
+    "editingLastMessage": "正在编辑最后一条消息",
+    "cancelEdit": "取消编辑"
   },
   "errors": {
     "frozenTitle": "AIDER冻结了?",

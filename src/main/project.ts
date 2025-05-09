@@ -1012,19 +1012,21 @@ export class Project {
     await this.updateAgentEstimatedTokens();
   }
 
-  public async redoLastUserPrompt(mode: Mode) {
-    logger.info('Redoing last user prompt:', { baseDir: this.baseDir, mode });
-    const lastUserMessageContent = this.sessionManager.removeLastUserMessage();
+  public async redoLastUserPrompt(mode: Mode, updatedPrompt?: string) {
+    logger.info('Redoing last user prompt:', { baseDir: this.baseDir, mode, hasUpdatedPrompt: !!updatedPrompt });
+    const originalLastUserMessageContent = this.sessionManager.removeLastUserMessage();
 
-    if (lastUserMessageContent) {
-      logger.info('Found last user message content, reloading and re-running prompt.');
-      this.reloadConnectorMessages();
+    const promptToRun = updatedPrompt ?? originalLastUserMessageContent;
+
+    if (promptToRun) {
+      logger.info('Found message content to run, reloading and re-running prompt.');
+      this.reloadConnectorMessages(); // This sends 'clear-project' which truncates UI messages
       await this.updateAgentEstimatedTokens();
 
       // No need to await runPrompt here, let it run in the background
-      void this.runPrompt(lastUserMessageContent, mode);
+      void this.runPrompt(promptToRun, mode);
     } else {
-      logger.warn('Could not find a previous user message to redo.');
+      logger.warn('Could not find a previous user message to redo or an updated prompt to run.');
     }
   }
 
