@@ -2,14 +2,15 @@ import { ContextFile, ContextFilesUpdatedData, OS } from '@common/types';
 import React, { useEffect, useMemo, useState } from 'react';
 import objectHash from 'object-hash';
 import { ControlledTreeEnvironment, Tree } from 'react-complex-tree';
-import { HiChevronDown, HiChevronRight, HiPlus, HiX } from 'react-icons/hi';
+import { HiChevronDown, HiChevronRight, HiPlus, HiX, HiOutlineTrash } from 'react-icons/hi';
 import { BiCollapseVertical, BiExpandVertical } from 'react-icons/bi';
 import { LuFolderTree } from 'react-icons/lu';
 import { TbPencilOff } from 'react-icons/tb';
 import { useTranslation } from 'react-i18next';
 
 import { StyledTooltip } from '../common/StyledTooltip';
-import { useOS } from '../../hooks/useOS';
+
+import { useOS } from '@/hooks/useOS';
 
 import './ContextFiles.css';
 
@@ -174,6 +175,10 @@ export const ContextFiles = ({ baseDir, allFiles, showFileDialog }: Props) => {
     setExpandedItems(['root']);
   };
 
+  const handleDropAllFiles = () => {
+    window.api.runCommand(baseDir, 'drop');
+  };
+
   const dropFile = (item: TreeItem) => (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
     const file = (item as TreeItem).file;
@@ -205,6 +210,16 @@ export const ContextFiles = ({ baseDir, allFiles, showFileDialog }: Props) => {
       <StyledTooltip id="context-files-tooltip" />
       <div className="flex items-center mb-2 flex-shrink-0 p-2">
         <h3 className="text-md font-semibold uppercase pl-1 flex-grow">{t('contextFiles.title')}</h3>
+        <button
+          onClick={handleDropAllFiles}
+          className="p-1.5 hover:bg-neutral-700 rounded-md disabled:text-neutral-600 disabled:hover:bg-transparent"
+          data-tooltip-id="context-files-tooltip"
+          data-tooltip-content={t('contextFiles.dropAll')}
+          data-tooltip-delay-show={500}
+          disabled={files.length === 0}
+        >
+          <HiOutlineTrash className="w-4 h-4" />
+        </button>
         {showAllFiles && (
           <>
             <button

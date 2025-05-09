@@ -231,7 +231,8 @@
     "showAllFiles": "显示所有文件",
     "hideAllFiles": "隐藏所有文件",
     "expandAll": "全部展开",
-    "collapseAll": "全部折叠"
+    "collapseAll": "全部折叠",
+    "dropAll": "删除所有上下文文件"
   },
   "modelSelector": {
     "mainModel": "主模型",

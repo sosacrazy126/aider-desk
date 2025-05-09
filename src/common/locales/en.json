@@ -235,7 +235,8 @@
     "showAllFiles": "Show all files",
     "hideAllFiles": "Hide all files",
     "expandAll": "Expand all",
-    "collapseAll": "Collapse all"
+    "collapseAll": "Collapse all",
+    "dropAll": "Drop all context files"
   },
   "modelSelector": {
     "mainModel": "Main model",

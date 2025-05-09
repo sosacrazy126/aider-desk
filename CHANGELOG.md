@@ -9,6 +9,7 @@
 - normalizing file paths before using them further
 - optimized MCP server initialization
 - added option to add files as read-only when clicking with CTRL/CMD
+- added UI button to drop all context files
 
 ## [0.12.0]
 
