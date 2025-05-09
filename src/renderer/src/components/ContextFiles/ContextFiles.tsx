@@ -1,4 +1,4 @@
-import { ContextFile, ContextFilesUpdatedData } from '@common/types';
+import { ContextFile, ContextFilesUpdatedData, OS } from '@common/types';
 import React, { useEffect, useMemo, useState } from 'react';
 import objectHash from 'object-hash';
 import { ControlledTreeEnvironment, Tree } from 'react-complex-tree';
@@ -9,6 +9,7 @@ import { TbPencilOff } from 'react-icons/tb';
 import { useTranslation } from 'react-i18next';
 
 import { StyledTooltip } from '../common/StyledTooltip';
+import { useOS } from '../../hooks/useOS';
 
 import './ContextFiles.css';
 
@@ -89,6 +90,7 @@ export const ContextFiles = ({ baseDir, allFiles, showFileDialog }: Props) => {
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
   const { t } = useTranslation();
+  const os = useOS();
 
   const sortedFiles = useMemo(() => {
     return [...files].sort((a, b) => a.path.localeCompare(b.path));
@@ -182,13 +184,18 @@ export const ContextFiles = ({ baseDir, allFiles, showFileDialog }: Props) => {
     }
   };
 
-  const addFile = (item: TreeItem) => (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.stopPropagation();
-    const file = (item as TreeItem).file;
-    if (file) {
-      window.api.addFile(baseDir, file.path);
-    } else if (item.isFolder) {
-      window.api.addFile(baseDir, item.index as string);
+  const addFile = (item: TreeItem) => (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    const shouldBeReadOnly = event.ctrlKey || event.metaKey;
+    const pathToAdd = item.file ? item.file.path : item.index;
+
+    if (shouldBeReadOnly) {
+      window.api.addFile(baseDir, pathToAdd, true);
+    } else {
+      window.api.addFile(baseDir, pathToAdd);
+    }
+
+    if (item.isFolder) {
       setExpandedItems((prev) => (prev.includes(item.index) ? prev : [...prev, item.index]));
     }
   };
@@ -290,7 +297,12 @@ export const ContextFiles = ({ baseDir, allFiles, showFileDialog }: Props) => {
                         <button onClick={dropFile(item as TreeItem)} className="px-1 py-1 rounded hover:bg-neutral-900 text-neutral-500 hover:text-red-800">
                           <HiX className="w-4 h-4" />
                         </button>
-                        <button onClick={addFile(item as TreeItem)} className="px-1 py-1 rounded hover:bg-neutral-900 text-neutral-500 hover:text-neutral-100">
+                        <button
+                          onClick={addFile(item as TreeItem)}
+                          className="px-1 py-1 rounded hover:bg-neutral-900 text-neutral-500 hover:text-neutral-100"
+                          data-tooltip-id="context-files-tooltip"
+                          data-tooltip-content={os === OS.MacOS ? t('contextFiles.addFileTooltip.cmd') : t('contextFiles.addFileTooltip.ctrl')}
+                        >
                           <HiPlus className="w-4 h-4" />
                         </button>
                       </>
@@ -311,7 +323,12 @@ export const ContextFiles = ({ baseDir, allFiles, showFileDialog }: Props) => {
                           <HiX className="w-4 h-4" />
                         </button>
                       ) : (
-                        <button onClick={addFile(item as TreeItem)} className="px-1 py-1 rounded hover:bg-neutral-900 text-neutral-500 hover:text-neutral-100">
+                        <button
+                          onClick={addFile(item as TreeItem)}
+                          className="px-1 py-1 rounded hover:bg-neutral-900 text-neutral-500 hover:text-neutral-100"
+                          data-tooltip-id="context-files-tooltip"
+                          data-tooltip-content={os === OS.MacOS ? t('contextFiles.addFileTooltip.cmd') : t('contextFiles.addFileTooltip.ctrl')}
+                        >
                           <HiPlus className="w-4 h-4" />
                         </button>
                       )

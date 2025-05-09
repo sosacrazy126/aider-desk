@@ -20,6 +20,7 @@ import type {
   Mode,
   VersionsInfo,
   EditFormat,
+  OS,
 } from '@common/types';
 
 export interface ApplicationAPI {
@@ -77,6 +78,7 @@ export interface ApplicationAPI {
 
   getReleaseNotes: () => Promise<string | null>;
   clearReleaseNotes: () => Promise<void>;
+  getOS: () => Promise<OS>;
 
   addResponseChunkListener: (baseDir: string, callback: (event: Electron.IpcRendererEvent, data: ResponseChunkData) => void) => string;
   removeResponseChunkListener: (listenerId: string) => void;

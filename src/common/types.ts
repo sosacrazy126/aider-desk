@@ -79,6 +79,12 @@ export interface QuestionData {
 
 export type ContextFileSourceType = 'companion' | 'aider' | 'app' | string;
 
+export enum OS {
+  Windows = 'windows',
+  Linux = 'linux',
+  MacOS = 'macos',
+}
+
 export enum MessageRole {
   User = 'user',
   Assistant = 'assistant',

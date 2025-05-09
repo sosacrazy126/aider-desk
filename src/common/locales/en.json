@@ -228,6 +228,9 @@
   "contextFiles": {
     "title": "Context Files",
     "add": "Add context file",
+    "addFileTooltip": "Add file (use Ctrl/Cmd to add as Read-only)",
+    "addFileTooltip.ctrl": "Add file (use Ctrl to add as Read-only)",
+    "addFileTooltip.cmd": "Add file (use Cmd to add as Read-only)",
     "readOnly": "Read-only file",
     "showAllFiles": "Show all files",
     "hideAllFiles": "Hide all files",

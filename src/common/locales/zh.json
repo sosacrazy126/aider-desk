@@ -224,6 +224,9 @@
   "contextFiles": {
     "title": "上下文文件",
     "add": "添加上下文文件",
+    "addFileTooltip": "添加文件 (按 Ctrl/Cmd 键添加为只读)",
+    "addFileTooltip.ctrl": "添加文件 (按 Ctrl 键添加为只读)",
+    "addFileTooltip.cmd": "添加文件 (按 Cmd 键添加为只读)",
     "readOnly": "只读文件",
     "showAllFiles": "显示所有文件",
     "hideAllFiles": "隐藏所有文件",

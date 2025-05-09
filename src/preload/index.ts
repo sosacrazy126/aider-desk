@@ -15,6 +15,7 @@ import {
   ToolData,
   UserMessageData,
   VersionsInfo,
+  OS,
 } from '@common/types';
 import { normalizeBaseDir } from '@common/utils';
 import { electronAPI } from '@electron-toolkit/preload';
@@ -96,6 +97,7 @@ const api: ApplicationAPI = {
 
   getReleaseNotes: () => ipcRenderer.invoke('get-release-notes'),
   clearReleaseNotes: () => ipcRenderer.invoke('clear-release-notes'),
+  getOS: (): Promise<OS> => ipcRenderer.invoke('get-os'),
 
   addResponseChunkListener: (baseDir, callback) => {
     const listenerId = uuidv4();

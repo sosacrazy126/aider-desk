@@ -1,4 +1,4 @@
-import { EditFormat, FileEdit, McpServerConfig, MessageRole, Mode, ProjectData, ProjectSettings, SettingsData } from '@common/types';
+import { EditFormat, FileEdit, McpServerConfig, MessageRole, Mode, OS, ProjectData, ProjectSettings, SettingsData } from '@common/types';
 import { normalizeBaseDir } from '@common/utils';
 import { BrowserWindow, dialog, ipcMain } from 'electron';
 import { McpManager } from 'src/main/agent/mcp-manager';
@@ -286,5 +286,16 @@ export const setupIpcHandlers = (
 
   ipcMain.handle('clear-release-notes', () => {
     store.clearReleaseNotes();
+  });
+
+  ipcMain.handle('get-os', () => {
+    const platform = process.platform;
+    if (platform === 'win32') {
+      return OS.Windows;
+    } else if (platform === 'darwin') {
+      return OS.MacOS;
+    } else {
+      return OS.Linux;
+    }
   });
 };
