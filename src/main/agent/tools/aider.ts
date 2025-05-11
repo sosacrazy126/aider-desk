@@ -3,7 +3,7 @@ import path from 'path';
 
 import { tool } from 'ai';
 import { z } from 'zod';
-import { SERVER_TOOL_SEPARATOR } from '@common/utils';
+import { TOOL_GROUP_NAME_SEPARATOR } from '@common/utils';
 import { QuestionData } from '@common/types';
 
 import { Project } from '../../project';
@@ -114,6 +114,7 @@ Use this tool for:
 - Explaining code segments.
 - Debugging code.
 - Implementing new features.
+- This tools must be preferred (if not specified by user otherwise) over other tools creating or modifying files, as it is more efficient and effective.
 
 Prerequisites
 - All relevant existing project files for the task MUST be added to the Aider context using 'add_context_file' BEFORE calling this tool.
@@ -136,7 +137,7 @@ Restrictions:
         text: 'Approve prompt to run in Aider?',
         subject: prompt,
         defaultAnswer: 'y',
-        key: `aider${SERVER_TOOL_SEPARATOR}run_prompt`,
+        key: `aider${TOOL_GROUP_NAME_SEPARATOR}run_prompt`,
       };
 
       // Ask the question and wait for the answer
@@ -169,9 +170,9 @@ Restrictions:
   });
 
   return {
-    [`aider${SERVER_TOOL_SEPARATOR}get_context_files`]: getContextFilesTool,
-    [`aider${SERVER_TOOL_SEPARATOR}add_context_file`]: addContextFileTool,
-    [`aider${SERVER_TOOL_SEPARATOR}drop_context_file`]: dropContextFileTool,
-    [`aider${SERVER_TOOL_SEPARATOR}run_prompt`]: runPromptTool,
+    [`aider${TOOL_GROUP_NAME_SEPARATOR}get_context_files`]: getContextFilesTool,
+    [`aider${TOOL_GROUP_NAME_SEPARATOR}add_context_file`]: addContextFileTool,
+    [`aider${TOOL_GROUP_NAME_SEPARATOR}drop_context_file`]: dropContextFileTool,
+    [`aider${TOOL_GROUP_NAME_SEPARATOR}run_prompt`]: runPromptTool,
   };
 };

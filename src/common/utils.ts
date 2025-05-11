@@ -3,7 +3,7 @@ import fs from 'fs/promises';
 import { LlmProvider, PROVIDER_MODELS } from './llm-providers';
 import { UsageReportData } from './types';
 
-export const SERVER_TOOL_SEPARATOR = '---';
+export const TOOL_GROUP_NAME_SEPARATOR = '---';
 
 type TextContent =
   | string
@@ -115,8 +115,8 @@ export const calculateCost = (llmProvider: LlmProvider, sentTokens: number, rece
 };
 
 export const extractServerNameToolName = (toolCallName: string): [string, string] => {
-  const [serverName, ...toolNameParts] = toolCallName.split(SERVER_TOOL_SEPARATOR);
-  const toolName = toolNameParts.join(SERVER_TOOL_SEPARATOR);
+  const [serverName, ...toolNameParts] = toolCallName.split(TOOL_GROUP_NAME_SEPARATOR);
+  const toolName = toolNameParts.join(TOOL_GROUP_NAME_SEPARATOR);
 
   return [serverName, toolName];
 };

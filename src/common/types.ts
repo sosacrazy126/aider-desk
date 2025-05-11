@@ -182,6 +182,7 @@ export interface AgentConfig {
   toolApprovals: Record<string, ToolApprovalState>;
   includeContextFiles: boolean;
   includeRepoMap: boolean;
+  usePowerTools: boolean;
   useAiderTools: boolean;
   customInstructions: string;
 }
@@ -247,4 +248,16 @@ export interface VersionsInfo {
   aiderDeskDownloadProgress?: number;
   aiderDeskNewVersionReady?: boolean;
   releaseNotes?: string | null;
+}
+
+export enum FileWriteMode {
+  Overwrite = 'overwrite',
+  Append = 'append',
+  CreateOnly = 'create_only',
+}
+
+export interface Task {
+  id: string;
+  title: string;
+  completed: boolean;
 }

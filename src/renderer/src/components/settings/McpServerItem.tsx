@@ -2,7 +2,7 @@ import { McpServerConfig, McpTool, ToolApprovalState } from '@common/types';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaPencilAlt, FaTrash } from 'react-icons/fa';
-import { SERVER_TOOL_SEPARATOR } from '@common/utils';
+import { TOOL_GROUP_NAME_SEPARATOR } from '@common/utils';
 
 import { McpToolItem } from './McpToolItem';
 
@@ -44,7 +44,7 @@ export const McpServerItem = ({ serverName, config, onRemove, onEdit, toolApprov
 
   const renderTitle = () => {
     const enabledCount =
-      tools && tools.length - tools.filter((tool) => toolApprovals[`${serverName}${SERVER_TOOL_SEPARATOR}${tool.name}`] === ToolApprovalState.Never).length;
+      tools && tools.length - tools.filter((tool) => toolApprovals[`${serverName}${TOOL_GROUP_NAME_SEPARATOR}${tool.name}`] === ToolApprovalState.Never).length;
 
     return (
       <div className="flex items-center justify-between w-full">

@@ -1,6 +1,6 @@
 import { tool } from 'ai';
 import { z } from 'zod';
-import { SERVER_TOOL_SEPARATOR } from '@common/utils';
+import { TOOL_GROUP_NAME_SEPARATOR } from '@common/utils';
 
 import type { ToolSet } from 'ai';
 
@@ -15,7 +15,7 @@ export const createHelpersToolset = (): ToolSet => {
       // This tool's result is primarily for the LLM's internal reasoning,
       // informing it that its previous attempt failed because the tool was invalid.
       return `Error: You attempted to use a tool named '${toolName}', but no such tool is available (maybe a typo?). Try again with different tool from the list of available tools: ${availableTools.join(', ')}.
-      Make sure you use the tool name exactly as it appears in the list with server name prefix ${SERVER_TOOL_SEPARATOR} and tool name. Example: 'commander${SERVER_TOOL_SEPARATOR}run_command'.`;
+      Make sure you use the tool name exactly as it appears in the list with server name prefix ${TOOL_GROUP_NAME_SEPARATOR} and tool name. Example: 'commander${TOOL_GROUP_NAME_SEPARATOR}run_command'.`;
     },
   });
 
@@ -33,7 +33,7 @@ export const createHelpersToolset = (): ToolSet => {
   });
 
   return {
-    [`helpers${SERVER_TOOL_SEPARATOR}no_such_tool`]: noSuchTool,
-    [`helpers${SERVER_TOOL_SEPARATOR}invalid_tool_arguments`]: invalidToolArguments,
+    [`helpers${TOOL_GROUP_NAME_SEPARATOR}no_such_tool`]: noSuchTool,
+    [`helpers${TOOL_GROUP_NAME_SEPARATOR}invalid_tool_arguments`]: invalidToolArguments,
   };
 };

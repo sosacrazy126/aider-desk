@@ -11,6 +11,7 @@
 - added option to add files as read-only when clicking with CTRL/CMD
 - added UI button to drop all context files
 - ability to edit last user message via user message action menu or /edit-last command
+- added Power Tools for direct file operations, searching, and bash execution
 
 ## [0.12.0]
 

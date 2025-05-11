@@ -1,0 +1,406 @@
+import fs from 'fs/promises';
+import path from 'path';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+import { tool, type ToolSet } from 'ai';
+import { z } from 'zod';
+import { glob } from 'glob';
+import { searchTool } from '@buger/probe';
+import { TOOL_GROUP_NAME_SEPARATOR } from '@common/utils';
+import { FileWriteMode } from '@common/types';
+
+import { Project } from '../../project';
+
+const execAsync = promisify(exec);
+
+export const createPowerToolset = (project: Project): ToolSet => {
+  const fileEditTool = tool({
+    description:
+      'Atomically finds and replaces a specific string or pattern within a specified file. This tool is useful for making targeted changes to file content.',
+    parameters: z.object({
+      filePath: z.string().describe('The path to the file to be edited (relative to the project root).'),
+      searchTerm: z.string().describe('The string or regular expression to find in the file.'),
+      replacementText: z.string().describe('The string to replace the searchTerm with.'),
+      isRegex: z.boolean().optional().default(false).describe('Whether the searchTerm should be treated as a regular expression. Default: false.'),
+      replaceAll: z.boolean().optional().default(false).describe('Whether to replace all occurrences or just the first one. Default: false.'),
+    }),
+    execute: async ({ filePath, searchTerm, replacementText, isRegex, replaceAll }) => {
+      const absolutePath = path.resolve(project.baseDir, filePath);
+      try {
+        const fileContent = await fs.readFile(absolutePath, 'utf8');
+        let modifiedContent: string;
+
+        if (isRegex) {
+          const regex = new RegExp(searchTerm, replaceAll ? 'g' : '');
+          modifiedContent = fileContent.replace(regex, replacementText);
+        } else {
+          if (replaceAll) {
+            modifiedContent = fileContent.replaceAll(searchTerm, replacementText);
+          } else {
+            modifiedContent = fileContent.replace(searchTerm, replacementText);
+          }
+        }
+
+        if (fileContent === modifiedContent) {
+          return `Warning: Search term '${searchTerm}' did not result in changes in '${filePath}'. File content remains the same.`;
+        }
+
+        await fs.writeFile(absolutePath, modifiedContent, 'utf8');
+        return `Successfully edited '${filePath}'.`;
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        if ((error as NodeJS.ErrnoException)?.code === 'ENOENT') {
+          return `Error: File '${filePath}' not found.`;
+        }
+        return `Error editing file '${filePath}': ${errorMessage}`;
+      }
+    },
+  });
+
+  const fileReadTool = tool({
+    description: 'Reads and returns the content of a specified file. Useful for inspecting file contents without adding them to the Aider context.',
+    parameters: z.object({
+      filePath: z.string().describe('The path to the file to be read (relative to the project root).'),
+    }),
+    execute: async ({ filePath }) => {
+      const absolutePath = path.resolve(project.baseDir, filePath);
+      try {
+        const content = await fs.readFile(absolutePath, 'utf8');
+        return `File content of '${filePath}':\n\n${content}`;
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        if ((error as NodeJS.ErrnoException)?.code === 'ENOENT') {
+          return `Error: File '${filePath}' not found.`;
+        }
+        return `Error: Could not read file '${filePath}'. ${errorMessage}`;
+      }
+    },
+  });
+
+  const fileWriteTool = tool({
+    description: 'Writes content to a specified file. Can create a new file, overwrite an existing file, or append to an existing file.',
+    parameters: z.object({
+      filePath: z.string().describe('The path to the file to be written (relative to the project root).'),
+      content: z.string().describe('The content to write to the file.'),
+      mode: z
+        .nativeEnum(FileWriteMode)
+        .optional()
+        .default(FileWriteMode.Overwrite)
+        .describe(
+          "Mode of writing: 'overwrite' (overwrites or creates), 'append' (appends or creates), 'create_only' (creates if not exists, fails if exists). Default: 'overwrite'.",
+        ),
+    }),
+    execute: async ({ filePath, content, mode }) => {
+      const absolutePath = path.resolve(project.baseDir, filePath);
+      try {
+        await fs.mkdir(path.dirname(absolutePath), { recursive: true });
+
+        if (mode === FileWriteMode.CreateOnly) {
+          try {
+            await fs.writeFile(absolutePath, content, { flag: 'wx' });
+            return `Successfully wrote to '${filePath}' (created).`;
+          } catch (e) {
+            if ((e as NodeJS.ErrnoException)?.code === 'EEXIST') {
+              return `Error: File '${filePath}' already exists (mode: create_only).`;
+            }
+            throw e;
+          }
+        } else if (mode === FileWriteMode.Append) {
+          await fs.appendFile(absolutePath, content, 'utf8');
+          return `Successfully appended to '${filePath}'.`;
+        } else {
+          await fs.writeFile(absolutePath, content, 'utf8');
+          return `Successfully wrote to '${filePath}' (overwritten/created).`;
+        }
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        return `Error writing to file '${filePath}': ${errorMessage}`;
+      }
+    },
+  });
+
+  const globTool = tool({
+    description: 'Finds files and directories matching a specified glob pattern within the project. Useful for discovering files based on patterns.',
+    parameters: z.object({
+      pattern: z.string().describe('The glob pattern to search for (e.g., src/**/*.ts, *.md).'),
+      cwd: z
+        .string()
+        .optional()
+        .describe('The current working directory from which to apply the glob pattern (relative to project root). Default: project root.'),
+      ignore: z.array(z.string()).optional().describe('An array of glob patterns to ignore.'),
+    }),
+    execute: async ({ pattern, cwd, ignore }) => {
+      const absoluteCwd = cwd ? path.resolve(project.baseDir, cwd) : project.baseDir;
+      try {
+        const files = await glob(pattern, {
+          cwd: absoluteCwd,
+          ignore: ignore,
+          nodir: false,
+          absolute: false, // Keep paths relative to cwd for easier processing
+        });
+        // Ensure paths are relative to project.baseDir
+        return files.map((file) => path.relative(project.baseDir, path.resolve(absoluteCwd, file)));
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        return `Error executing glob pattern '${pattern}': ${errorMessage}`;
+      }
+    },
+  });
+
+  const grepTool = tool({
+    description:
+      'Searches for content matching a regular expression pattern within files specified by a glob pattern. Returns matching lines and their context.',
+    parameters: z.object({
+      filePattern: z.string().describe('A glob pattern specifying the files to search within (e.g., src/**/*.tsx, *.py).'),
+      searchTerm: z.string().describe('The regular expression to search for within the files.'),
+      contextLines: z
+        .number()
+        .int()
+        .min(0)
+        .optional()
+        .default(0)
+        .describe('The number of lines of context to show before and after each matching line. Default: 0.'),
+      caseSensitive: z.boolean().optional().default(false).describe('Whether the search should be case sensitive. Default: false.'),
+    }),
+    execute: async ({ filePattern, searchTerm, contextLines, caseSensitive }) => {
+      try {
+        const files = await glob(filePattern, {
+          cwd: project.baseDir,
+          nodir: true,
+          absolute: true,
+        });
+
+        if (files.length === 0) {
+          return `No files found matching pattern '${filePattern}'.`;
+        }
+
+        const results: Array<{
+          filePath: string;
+          lineNumber: number;
+          lineContent: string;
+          context?: string[];
+        }> = [];
+        const searchRegex = new RegExp(searchTerm, caseSensitive ? undefined : 'i'); // Simpler for line-by-line test
+
+        for (const absoluteFilePath of files) {
+          const fileContent = await fs.readFile(absoluteFilePath, 'utf8');
+          const lines = fileContent.split('\n');
+          const relativeFilePath = path.relative(project.baseDir, absoluteFilePath);
+
+          lines.forEach((line, index) => {
+            if (searchRegex.test(line)) {
+              const matchResult: {
+                filePath: string;
+                lineNumber: number;
+                lineContent: string;
+                context?: string[];
+              } = {
+                filePath: relativeFilePath,
+                lineNumber: index + 1,
+                lineContent: line,
+              };
+
+              if (contextLines > 0) {
+                const start = Math.max(0, index - contextLines);
+                const end = Math.min(lines.length - 1, index + contextLines);
+                matchResult.context = lines.slice(start, end + 1);
+              }
+              results.push(matchResult);
+            }
+          });
+        }
+
+        if (results.length === 0) {
+          return `No matches found for pattern '${searchTerm}' in files matching '${filePattern}'.`;
+        }
+        return results;
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        return `Error during grep: ${errorMessage}`;
+      }
+    },
+  });
+
+  const bashTool = tool({
+    description: 'Executes a shell command. For safety, commands may be sandboxed or require user approval (approval handled by Agent).',
+    parameters: z.object({
+      command: z.string().describe('The shell command to execute (e.g., ls -la, npm install).'),
+      cwd: z.string().optional().describe('The working directory for the command (relative to project root). Default: project root.'),
+      timeout: z.number().int().min(0).optional().default(60000).describe('Timeout for the command execution in milliseconds. Default: 60000 ms.'),
+    }),
+    execute: async ({ command, cwd, timeout }) => {
+      const absoluteCwd = cwd ? path.resolve(project.baseDir, cwd) : project.baseDir;
+      try {
+        const { stdout, stderr } = await execAsync(command, {
+          cwd: absoluteCwd,
+          timeout: timeout,
+        });
+        return { stdout, stderr, exitCode: 0 };
+      } catch (error: unknown) {
+        const execError = error as {
+          stdout?: string;
+          stderr?: string;
+          message?: string;
+          code?: number;
+        };
+        return {
+          stdout: execError.stdout || '',
+          stderr: execError.stderr || execError.message || String(error),
+          exitCode: typeof execError.code === 'number' ? execError.code : 1,
+        };
+      }
+    },
+  });
+
+  /*
+  const lintTool = tool({
+    description:
+      "Executes a linting command for the project. The command should be specific to the project's linter and configuration. Returns raw command output.",
+    parameters: z.object({
+      command: z.string().describe("The linting command to execute (e.g., 'eslint src/ --format stylish', 'pylint my_module')."),
+      cwd: z.string().optional().describe('The working directory for the command (relative to project root). Default: project root.'),
+      timeout: z.number().int().min(0).optional().default(120000).describe('Timeout for the command execution in milliseconds. Default: 120000 ms.'),
+    }),
+    execute: async ({ command, cwd, timeout }) => {
+      const absoluteCwd = cwd ? path.resolve(project.baseDir, cwd) : project.baseDir;
+      try {
+        const { stdout, stderr } = await execAsync(command, {
+          cwd: absoluteCwd,
+          timeout: timeout,
+        });
+        return {
+          stdout,
+          stderr,
+          exitCode: 0,
+          note: 'Lint command finished. Review stdout/stderr for results.',
+        };
+      } catch (error: unknown) {
+        const execError = error as {
+          stdout?: string;
+          stderr?: string;
+          message?: string;
+          code?: number;
+        };
+        return {
+          stdout: execError.stdout || '',
+          stderr: execError.stderr || execError.message || String(error),
+          exitCode: typeof execError.code === 'number' ? execError.code : 1,
+          note: 'Lint command failed or returned non-zero exit code. Check output for details.',
+        };
+      }
+    },
+  });
+
+  const runTestsTool = tool({
+    description:
+      "Executes a test command for the project. The command should be specific to the project's test runner and configuration. Returns raw command output.",
+    parameters: z.object({
+      command: z.string().describe("The test command to execute (e.g., 'npm test', 'pytest -k my_test_suite')."),
+      cwd: z.string().optional().describe('The working directory for the command (relative to project root). Default: project root.'),
+      timeout: z.number().int().min(0).optional().default(300000).describe('Timeout for the command execution in milliseconds. Default: 300000 ms.'),
+    }),
+    execute: async ({ command, cwd, timeout }) => {
+      const absoluteCwd = cwd ? path.resolve(project.baseDir, cwd) : project.baseDir;
+      try {
+        const { stdout, stderr } = await execAsync(command, {
+          cwd: absoluteCwd,
+          timeout: timeout,
+        });
+        return {
+          stdout,
+          stderr,
+          exitCode: 0,
+          note: 'Test command finished. Review stdout/stderr for results.',
+        };
+      } catch (error: unknown) {
+        const execError = error as {
+          stdout?: string;
+          stderr?: string;
+          message?: string;
+          code?: number;
+        };
+        return {
+          stdout: execError.stdout || '',
+          stderr: execError.stderr || execError.message || String(error),
+          exitCode: typeof execError.code === 'number' ? execError.code : 1,
+          note: 'Test command failed or returned non-zero exit code. Check output for details.',
+        };
+      }
+    },
+  });
+
+  // TaskList tools
+  const prepareTasksTool = tool({
+    description: 'Prepares or re-initializes the task list with a given set of task titles. Clears all existing tasks and creates new ones.',
+    parameters: z.object({
+      titles: z.array(z.string()).describe('An array of titles for the tasks to be created.'),
+    }),
+    execute: async ({ titles }) => {
+      try {
+        return await project.prepareTasks(titles);
+      } catch (error) {
+        return `Error preparing tasks: ${error instanceof Error ? error.message : String(error)}`;
+      }
+    },
+  });
+
+  const getTasksTool = tool({
+    description: 'Retrieves all current tasks from the task list.',
+    parameters: z.object({}), // No parameters
+    execute: async () => {
+      try {
+        return await project.listTasks();
+      } catch (error) {
+        return `Error getting tasks: ${error instanceof Error ? error.message : String(error)}`;
+      }
+    },
+  });
+
+  const updateTaskTool = tool({
+    description: "Updates an existing task's title or completion status. Use 'completed: true' for completed tasks and 'completed: false' for pending tasks.",
+    parameters: z.object({
+      taskId: z.string().describe('The ID of the task to update.'),
+      updates: z.object({
+        title: z.string().optional().describe('The new title for the task.'),
+        completed: z.boolean().optional().describe('The new completion status for the task. True marks as completed, false marks as pending.'),
+      }),
+    }),
+    execute: async ({ taskId, updates }) => {
+      try {
+        const projectUpdatePayload: { title?: string; completed?: boolean } = {};
+        if (updates.title !== undefined) {
+          projectUpdatePayload.title = updates.title;
+        }
+        if (updates.completed !== undefined) {
+          projectUpdatePayload.completed = updates.completed;
+        }
+
+        const updatedTask = await project.updateTask(taskId, projectUpdatePayload);
+        if (!updatedTask) {
+          return `Error: Task with ID '${taskId}' not found or update failed.`;
+        }
+        return updatedTask;
+      } catch (error) {
+        return `Error updating task '${taskId}': ${error instanceof Error ? error.message : String(error)}`;
+      }
+    },
+  });
+   */
+
+  return {
+    [`power${TOOL_GROUP_NAME_SEPARATOR}file_edit`]: fileEditTool,
+    [`power${TOOL_GROUP_NAME_SEPARATOR}file_read`]: fileReadTool,
+    [`power${TOOL_GROUP_NAME_SEPARATOR}file_write`]: fileWriteTool,
+    [`power${TOOL_GROUP_NAME_SEPARATOR}glob`]: globTool,
+    [`power${TOOL_GROUP_NAME_SEPARATOR}grep`]: grepTool,
+    [`power${TOOL_GROUP_NAME_SEPARATOR}semantic_search`]: searchTool(),
+    [`power${TOOL_GROUP_NAME_SEPARATOR}bash`]: bashTool,
+    // TODO: disabled for now until better defined
+    // [`power${TOOL_GROUP_NAME_SEPARATOR}lint`]: lintTool,
+    // [`power${TOOL_GROUP_NAME_SEPARATOR}run_tests`]: runTestsTool,
+    // [`power${TOOL_GROUP_NAME_SEPARATOR}prepare_tasks`]: prepareTasksTool,
+    // [`power${TOOL_GROUP_NAME_SEPARATOR}get_tasks`]: getTasksTool,
+    // [`power${TOOL_GROUP_NAME_SEPARATOR}update_task`]: updateTaskTool,
+  };
+};

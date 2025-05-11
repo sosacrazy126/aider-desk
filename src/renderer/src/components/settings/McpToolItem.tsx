@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { McpTool, ToolApprovalState } from '@common/types';
-import { SERVER_TOOL_SEPARATOR } from '@common/utils';
+import { TOOL_GROUP_NAME_SEPARATOR } from '@common/utils';
 
 import { Select } from '@/components/common/Select';
 
@@ -13,7 +13,7 @@ type Props = {
 
 export const McpToolItem = ({ tool, serverName, toolApprovals, onApprovalChange }: Props) => {
   const { t } = useTranslation();
-  const fullToolId = `${serverName}${SERVER_TOOL_SEPARATOR}${tool.name}`;
+  const fullToolId = `${serverName}${TOOL_GROUP_NAME_SEPARATOR}${tool.name}`;
   const currentApproval = toolApprovals[fullToolId] || ToolApprovalState.Always;
 
   const approvalOptions = [

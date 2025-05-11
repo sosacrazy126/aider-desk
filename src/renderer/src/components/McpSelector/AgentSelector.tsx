@@ -1,9 +1,9 @@
 import { useRef, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MdOutlineHdrAuto, MdOutlineFileCopy, MdSettings, MdOutlineMap } from 'react-icons/md';
+import { MdOutlineHdrAuto, MdOutlineFileCopy, MdSettings, MdOutlineMap, MdFlashOn } from 'react-icons/md';
 import { RiToolsFill } from 'react-icons/ri';
 import { SettingsData, ToolApprovalState } from '@common/types';
-import { SERVER_TOOL_SEPARATOR } from '@common/utils';
+import { TOOL_GROUP_NAME_SEPARATOR } from '@common/utils';
 
 import { McpServerSelectorItem } from './McpServerSelectorItem';
 
@@ -49,7 +49,7 @@ export const AgentSelector = () => {
               const tools = await window.api.loadMcpServerTools(serverName);
               const serverTotalTools = tools?.length ?? 0;
               const serverDisabledTools =
-                tools?.filter((tool) => toolApprovals[`${serverName}${SERVER_TOOL_SEPARATOR}${tool.name}`] === ToolApprovalState.Never).length ?? 0;
+                tools?.filter((tool) => toolApprovals[`${serverName}${TOOL_GROUP_NAME_SEPARATOR}${tool.name}`] === ToolApprovalState.Never).length ?? 0;
               return Math.max(0, serverTotalTools - serverDisabledTools);
             } catch (error) {
               // eslint-disable-next-line no-console
@@ -183,12 +183,27 @@ export const AgentSelector = () => {
     void saveSettings(updatedSettings);
   };
 
+  const handleToggleUsePowerTools = () => {
+    const updatedSettings: SettingsData = {
+      ...settings,
+      agentConfig: {
+        ...settings.agentConfig,
+        usePowerTools: !settings.agentConfig.usePowerTools,
+      },
+    };
+    void saveSettings(updatedSettings);
+  };
+
   const renderConfigureServersButton = (t: (key: string) => string) => (
     <>
       <div className="py-1 border-b border-neutral-700 ">
         <div className="px-3 py-1 text-xs text-neutral-300 hover:text-neutral-100 flex items-center gap-2">
           <Checkbox checked={settings.agentConfig.useAiderTools} onChange={handleToggleUseAiderTools} label={t('mcp.useAiderTools')} className="flex-1 mr-1" />
           <InfoIcon tooltip={t('mcp.aiderToolsTooltip')} />
+        </div>
+        <div className="px-3 py-1 text-xs text-neutral-300 hover:text-neutral-100 flex items-center gap-2">
+          <Checkbox checked={settings.agentConfig.usePowerTools} onChange={handleToggleUsePowerTools} label={t('mcp.usePowerTools')} className="flex-1 mr-1" />
+          <InfoIcon tooltip={t('mcp.powerToolsTooltip')} />
         </div>
         <div className="px-3 py-1 text-xs text-neutral-300 hover:text-neutral-100 flex items-center gap-2">
           <Checkbox
@@ -225,6 +240,7 @@ export const AgentSelector = () => {
         <RiToolsFill className="w-4 h-4" />
         <span className="text-xxs font-mono">{enabledToolsCount ?? '...'}</span>
         {settings.agentConfig.useAiderTools && <MdOutlineHdrAuto className="w-4 h-4 text-green-400 opacity-50" title={t('mcp.useAiderTools')} />}
+        {settings.agentConfig.usePowerTools && <MdFlashOn className="w-4 h-4 text-purple-400 opacity-50" title={t('mcp.usePowerTools')} />}
         {settings.agentConfig.includeContextFiles && <MdOutlineFileCopy className="w-3 h-3 text-yellow-400 opacity-50" title={t('mcp.includeContextFiles')} />}
         {settings.agentConfig.includeRepoMap && <MdOutlineMap className="w-3 h-3 text-blue-400 opacity-50" title={t('mcp.includeRepoMap')} />}
       </button>

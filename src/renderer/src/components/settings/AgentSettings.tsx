@@ -16,7 +16,7 @@ import {
   isOpenRouterProvider,
   getActiveProvider,
 } from '@common/llm-providers';
-import { SERVER_TOOL_SEPARATOR } from '@common/utils';
+import { TOOL_GROUP_NAME_SEPARATOR } from '@common/utils';
 
 import { McpServer, McpServerForm } from './McpServerForm';
 import { McpServerItem } from './McpServerItem';
@@ -207,7 +207,7 @@ export const AgentSettings = ({ settings, setSettings }: Props) => {
     // Filter toolApprovals to remove entries for tools belonging to removed servers
     const updatedToolApprovals = Object.entries(settings.agentConfig.toolApprovals).reduce(
       (acc, [toolId, approval]) => {
-        const serverName = toolId.split(SERVER_TOOL_SEPARATOR)[0];
+        const serverName = toolId.split(TOOL_GROUP_NAME_SEPARATOR)[0];
         if (updatedMcpServers[serverName]) {
           acc[toolId] = approval;
         }

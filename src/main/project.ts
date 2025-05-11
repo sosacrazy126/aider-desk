@@ -23,6 +23,7 @@ import {
   SessionData,
   SettingsData,
   StartupMode,
+  Task,
   TokensInfoData,
   ToolData,
   UsageReportData,
@@ -33,6 +34,7 @@ import treeKill from 'tree-kill';
 import { v4 as uuidv4 } from 'uuid';
 import { parse } from '@dotenvx/dotenvx';
 
+import { TaskManager } from './task-manager';
 import { SessionManager } from './session-manager';
 import { Agent } from './agent';
 import { Connector } from './connector';
@@ -59,6 +61,7 @@ export class Project {
   private currentPromptResponses: ResponseCompletedData[] = [];
   private runPromptResolves: ((value: ResponseCompletedData[]) => void)[] = [];
   private sessionManager: SessionManager = new SessionManager(this);
+  private taskManager: TaskManager = new TaskManager();
   private commandOutputs: Map<string, string> = new Map();
   private repoMap: string = '';
 
@@ -1141,7 +1144,23 @@ export class Project {
 
     if (agentSettingsAffectingTokensChanged) {
       logger.info('Agent settings affecting token count changed, updating estimated tokens.');
-      this.updateAgentEstimatedTokens();
+      void this.updateAgentEstimatedTokens();
     }
+  }
+
+  async updateTask(taskId: string, updates: { title?: string; completed?: boolean }): Promise<Task | undefined> {
+    return this.taskManager.updateTask(taskId, updates);
+  }
+
+  async prepareTasks(titles: string[]): Promise<Task[]> {
+    return this.taskManager.prepareTasks(titles);
+  }
+
+  async listTasks(completed?: boolean): Promise<Task[]> {
+    const tasks = await this.taskManager.getTasks();
+    if (completed === undefined) {
+      return tasks;
+    }
+    return tasks.filter((task) => task.completed === completed);
   }
 }

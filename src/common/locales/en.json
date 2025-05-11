@@ -276,6 +276,8 @@
     "aiderOnly": "aider only",
     "withFiles": "with files",
     "useAiderTools": "Use Aider tools",
+    "usePowerTools": "Use Power tools",
+    "powerToolsTooltip": "Allows the agent to use tools for direct file operations (read, write, edit), searching (glob, grep, semantic search), and executing shell commands (bash).",
     "aiderToolsTooltip": "MCP agent can use Aider to perform add/drop context files actions and run prompts.",
     "includeContextFiles": "Include context files",
     "includeFilesTooltip": "Adds content of context files into the chat of MCP agent. This will increase token usage.",

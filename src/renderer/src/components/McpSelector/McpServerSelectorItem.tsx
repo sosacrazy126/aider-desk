@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { CgSpinner } from 'react-icons/cg';
 import { useTranslation } from 'react-i18next';
 import { ToolApprovalState } from '@common/types';
-import { SERVER_TOOL_SEPARATOR } from '@common/utils';
+import { TOOL_GROUP_NAME_SEPARATOR } from '@common/utils';
 
 import { Checkbox } from '../common/Checkbox';
 
@@ -25,7 +25,7 @@ export const McpServerSelectorItem = ({ serverName, disabled, toolApprovals, onT
         const tools = await window.api.loadMcpServerTools(serverName);
         const totalTools = tools?.length ?? 0;
         const disabledCount =
-          tools?.filter((tool) => toolApprovals[`${serverName}${SERVER_TOOL_SEPARATOR}${tool.name}`] === ToolApprovalState.Never).length ?? 0;
+          tools?.filter((tool) => toolApprovals[`${serverName}${TOOL_GROUP_NAME_SEPARATOR}${tool.name}`] === ToolApprovalState.Never).length ?? 0;
         setToolsCount(Math.max(0, totalTools - disabledCount));
       } catch (error) {
         // eslint-disable-next-line no-console

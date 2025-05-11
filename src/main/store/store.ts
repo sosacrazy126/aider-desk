@@ -46,6 +46,7 @@ export const DEFAULT_SETTINGS: SettingsData = {
     toolApprovals: {},
     includeContextFiles: false,
     includeRepoMap: false,
+    usePowerTools: false,
     useAiderTools: true,
     customInstructions: '',
   },

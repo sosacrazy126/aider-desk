@@ -2,28 +2,39 @@ import fs from 'fs/promises';
 import path from 'path';
 
 import { ContextFile, ContextMessage, McpTool, QuestionData, SettingsData, ToolApprovalState, UsageReportData } from '@common/types';
-import { APICallError, generateText, InvalidToolArgumentsError, NoSuchToolError, streamText, type Tool, type ToolExecutionOptions } from 'ai'; // Added InvalidToolArgumentsError
-import { calculateCost, delay, extractServerNameToolName, SERVER_TOOL_SEPARATOR } from '@common/utils';
+import {
+  APICallError,
+  generateText,
+  InvalidToolArgumentsError,
+  NoSuchToolError,
+  streamText,
+  type Tool,
+  type ToolExecutionOptions,
+  type CoreMessage,
+  type StepResult,
+  type ToolSet,
+} from 'ai'; // Added InvalidToolArgumentsError
+import { calculateCost, delay, extractServerNameToolName, TOOL_GROUP_NAME_SEPARATOR } from '@common/utils';
 import { getActiveProvider, LlmProvider } from '@common/llm-providers';
 // @ts-expect-error gpt-tokenizer is not typed
 import { countTokens } from 'gpt-tokenizer/model/gpt-4o';
-import { getSystemPrompt } from 'src/main/agent/prompts';
-import { parseAiderEnv } from 'src/main/utils';
 import { jsonSchemaToZod } from '@n8n/json-schema-to-zod';
 import { Client as McpSdkClient } from '@modelcontextprotocol/sdk/client/index.js';
 import { ZodSchema } from 'zod';
 
+import { parseAiderEnv } from '../utils';
 import logger from '../logger';
 import { Store } from '../store';
 import { Project } from '../project';
 
+import { createPowerToolset } from './tools/power';
+import { getSystemPrompt } from './prompts';
 import { createAiderToolset } from './tools/aider';
 import { createHelpersToolset } from './tools/helpers';
 import { createLlm } from './llm-provider';
 import { MCP_CLIENT_TIMEOUT, McpManager } from './mcp-manager';
 
 import type { JsonSchema } from '@n8n/json-schema-to-zod';
-import type { CoreMessage, StepResult, ToolSet } from 'ai';
 
 export class Agent {
   private abortController: AbortController | null = null;
@@ -189,7 +200,7 @@ export class Agent {
 
       // Process tools for this enabled server
       mcpConnector.tools.forEach((tool) => {
-        const toolId = `${mcpConnector.serverName}${SERVER_TOOL_SEPARATOR}${tool.name}`;
+        const toolId = `${mcpConnector.serverName}${TOOL_GROUP_NAME_SEPARATOR}${tool.name}`;
 
         // Check approval state first
         const approvalState = agentConfig.toolApprovals[toolId];
@@ -208,8 +219,12 @@ export class Agent {
 
     if (agentConfig.useAiderTools) {
       const aiderTools = createAiderToolset(project);
-      // Add Aider tools to the toolSet
       Object.assign(toolSet, aiderTools);
+    }
+
+    if (agentConfig.usePowerTools) {
+      const powerTools = createPowerToolset(project);
+      Object.assign(toolSet, powerTools);
     }
 
     // Add helper tools
@@ -227,7 +242,7 @@ export class Agent {
     mcpClient: McpSdkClient,
     toolDef: McpTool,
   ): Tool {
-    const toolId = `${serverName}${SERVER_TOOL_SEPARATOR}${toolDef.name}`;
+    const toolId = `${serverName}${TOOL_GROUP_NAME_SEPARATOR}${toolDef.name}`;
     let zodSchema: ZodSchema;
     try {
       zodSchema = jsonSchemaToZod(this.fixInputSchema(provider, toolDef.inputSchema));
@@ -303,7 +318,7 @@ export class Agent {
         this.lastToolCallTime = Date.now();
         return response;
       } catch (error) {
-        logger.error(`Error calling tool ${serverName}${SERVER_TOOL_SEPARATOR}${toolDef.name}:`, error);
+        logger.error(`Error calling tool ${serverName}${TOOL_GROUP_NAME_SEPARATOR}${toolDef.name}:`, error);
         // Update last tool call time even if there's an error
         this.lastToolCallTime = Date.now();
         // Return an error message string to the agent
@@ -418,7 +433,13 @@ export class Agent {
         ...process.env,
         ...this.getAiderEnv(),
       });
-      const systemPrompt = await getSystemPrompt(project.baseDir, agentConfig.useAiderTools, agentConfig.includeContextFiles, agentConfig.customInstructions);
+      const systemPrompt = await getSystemPrompt(
+        project.baseDir,
+        agentConfig.useAiderTools,
+        agentConfig.usePowerTools,
+        agentConfig.includeContextFiles,
+        agentConfig.customInstructions,
+      );
 
       // repairToolCall function that attempts to repair tool calls
       const repairToolCall = async ({ toolCall, tools, error, messages, system }) => {
@@ -431,7 +452,7 @@ export class Agent {
           return {
             toolCallType: 'function' as const,
             toolCallId: toolCall.toolCallId,
-            toolName: `helpers${SERVER_TOOL_SEPARATOR}no_such_tool`,
+            toolName: `helpers${TOOL_GROUP_NAME_SEPARATOR}no_such_tool`,
             args: JSON.stringify({
               toolName: error.toolName,
               availableTools: error.availableTools,
@@ -447,7 +468,7 @@ export class Agent {
           return {
             toolCallType: 'function' as const,
             toolCallId: toolCall.toolCallId,
-            toolName: `helpers${SERVER_TOOL_SEPARATOR}invalid_tool_arguments`,
+            toolName: `helpers${TOOL_GROUP_NAME_SEPARATOR}invalid_tool_arguments`,
             args: JSON.stringify({
               toolName: error.toolName,
               toolArgs: JSON.stringify(error.toolArgs), // Pass the problematic args
@@ -636,14 +657,20 @@ export class Agent {
     try {
       const { agentConfig } = this.store.getSettings();
       const toolSet = await this.getAvailableTools(project); // Now async
-      const systemPrompt = await getSystemPrompt(project.baseDir, agentConfig.useAiderTools, agentConfig.includeContextFiles, agentConfig.customInstructions);
+      const systemPrompt = await getSystemPrompt(
+        project.baseDir,
+        agentConfig.useAiderTools,
+        agentConfig.usePowerTools,
+        agentConfig.includeContextFiles,
+        agentConfig.customInstructions,
+      );
       const messages = await this.prepareMessages(project);
 
       // Format tools for the prompt
       const toolDefinitions = Object.entries(toolSet).map(([name, tool]) => ({
         name,
         description: tool.description,
-        parameters: tool.parameters.describe(), // Get Zod schema description
+        parameters: tool.parameters ? tool.parameters.describe() : '', // Get Zod schema description
       }));
       const toolDefinitionsString = `Available tools: ${JSON.stringify(toolDefinitions, null, 2)}`;
 
