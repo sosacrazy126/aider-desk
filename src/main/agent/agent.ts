@@ -4,14 +4,14 @@ import path from 'path';
 import { ContextFile, ContextMessage, McpTool, QuestionData, SettingsData, ToolApprovalState, UsageReportData } from '@common/types';
 import {
   APICallError,
+  type CoreMessage,
   generateText,
   InvalidToolArgumentsError,
   NoSuchToolError,
+  type StepResult,
   streamText,
   type Tool,
   type ToolExecutionOptions,
-  type CoreMessage,
-  type StepResult,
   type ToolSet,
 } from 'ai'; // Added InvalidToolArgumentsError
 import { calculateCost, delay, extractServerNameToolName, TOOL_GROUP_NAME_SEPARATOR } from '@common/utils';
@@ -449,15 +449,27 @@ export class Agent {
           // If the tool doesn't exist, return a call to the helper tool
           // to inform the LLM about the missing tool.
           logger.warn(`Attempted to call non-existent tool: ${error.toolName}`);
-          return {
-            toolCallType: 'function' as const,
-            toolCallId: toolCall.toolCallId,
-            toolName: `helpers${TOOL_GROUP_NAME_SEPARATOR}no_such_tool`,
-            args: JSON.stringify({
-              toolName: error.toolName,
-              availableTools: error.availableTools,
-            }),
-          };
+
+          const matchingTool = error.availableTools?.find((availableTool) => availableTool.endsWith(`${TOOL_GROUP_NAME_SEPARATOR}${error.toolName}`));
+          if (matchingTool) {
+            logger.info(`Found matching tool for ${error.toolName}: ${matchingTool}. Retrying with full name.`);
+            return {
+              toolCallType: 'function' as const,
+              toolCallId: toolCall.toolCallId,
+              toolName: matchingTool,
+              args: toolCall.args,
+            };
+          } else {
+            return {
+              toolCallType: 'function' as const,
+              toolCallId: toolCall.toolCallId,
+              toolName: `helpers${TOOL_GROUP_NAME_SEPARATOR}no_such_tool`,
+              args: JSON.stringify({
+                toolName: error.toolName,
+                availableTools: error.availableTools,
+              }),
+            };
+          }
         } else if (InvalidToolArgumentsError.isInstance(error)) {
           // If the arguments are invalid, return a call to the helper tool
           // to inform the LLM about the argument error.

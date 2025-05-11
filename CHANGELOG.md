@@ -12,6 +12,7 @@
 - added UI button to drop all context files
 - ability to edit last user message via user message action menu or /edit-last command
 - added Power Tools for direct file operations, searching, and bash execution
+- enhanced tool error handling by retrying with matching tool names
 
 ## [0.12.0]
 
