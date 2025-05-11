@@ -1132,6 +1132,7 @@ export class Project {
     const includeContextFilesChanged = oldAgentConfig?.includeContextFiles !== newAgentConfig?.includeContextFiles;
     const includeRepoMapChanged = oldAgentConfig?.includeRepoMap !== newAgentConfig?.includeRepoMap;
     const useAiderToolsChanged = oldAgentConfig?.useAiderTools !== newAgentConfig?.useAiderTools;
+    const usePowerToolsChanged = oldAgentConfig?.usePowerTools !== newAgentConfig?.usePowerTools;
     const customInstructionsChanged = oldAgentConfig?.customInstructions !== newAgentConfig?.customInstructions;
 
     const agentSettingsAffectingTokensChanged =
@@ -1140,6 +1141,7 @@ export class Project {
       includeContextFilesChanged ||
       includeRepoMapChanged ||
       useAiderToolsChanged ||
+      usePowerToolsChanged ||
       customInstructionsChanged;
 
     if (agentSettingsAffectingTokensChanged) {
