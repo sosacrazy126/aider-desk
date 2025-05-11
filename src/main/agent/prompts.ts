@@ -110,7 +110,7 @@ State inability clearly (1-2 sentences), offer alternatives if possible.
 
 # System Information
 
-Current Date: ${new Date().toISOString()}
+Current Date: ${new Date().toDateString()}
 Operating System: ${(await import('os-name')).default()}
 Current Working Directory: ${projectDir}
 

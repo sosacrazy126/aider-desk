@@ -14,6 +14,7 @@
 - added Power Tools for direct file operations, searching, and bash execution
 - enhanced tool error handling by retrying with matching tool names
 - improved tool messages presentation
+- optimized messages context for implicit caching (e.g. Gemini 2.5 models)
 
 ## [0.12.0]
 

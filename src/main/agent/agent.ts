@@ -148,11 +148,13 @@ export class Agent {
           if (fileContent) {
             messages.push({
               role: 'user',
-              content: 'Here are READ ONLY files included in the aider context, provided for your reference. Do not try to edit these files!\n\n' + fileContent,
+              content:
+                'The following files are included in the Aider context for reference purposes only. These files are READ-ONLY, and their content is provided below. Do not attempt to edit these files:\n\n' +
+                fileContent,
             });
             messages.push({
               role: 'assistant',
-              content: 'Ok, I will use these files as references and will not try to edit them.',
+              content: 'OK, I will use these files as references and will not try to edit them.',
             });
           }
         }
@@ -163,11 +165,14 @@ export class Agent {
           if (fileContent) {
             messages.push({
               role: 'user',
-              content: 'These are files included in the aider context that can be edited, if needed.\n\n' + fileContent,
+              content:
+                'The following files are currently in the Aider context and are available for editing. Their content, as provided below, is up-to-date:\n\n' +
+                fileContent,
             });
             messages.push({
               role: 'assistant',
-              content: 'OK, I understand that I can update those files, but only when needed.',
+              content:
+                "OK, I understand. These are files already added in the Aider context, so I don't have to re-add them. Their content is up-to-date, so I don't have to read them again, unless I have changed them meanwhile.",
             });
           }
         }
@@ -639,7 +644,7 @@ export class Agent {
 
   private async prepareMessages(project: Project): Promise<CoreMessage[]> {
     const { agentConfig } = this.store.getSettings();
-    const messages = project.getContextMessages();
+    const messages: CoreMessage[] = [];
 
     // Add repo map if enabled
     if (agentConfig.includeRepoMap) {
@@ -655,6 +660,9 @@ export class Agent {
         });
       }
     }
+
+    // Add message history
+    messages.push(...project.getContextMessages());
 
     if (agentConfig.includeContextFiles) {
       // Get and store new context files messages
