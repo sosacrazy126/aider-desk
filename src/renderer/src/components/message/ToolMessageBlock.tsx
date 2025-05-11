@@ -5,6 +5,7 @@ import { RiToolsFill } from 'react-icons/ri';
 import { useTranslation } from 'react-i18next';
 import { VscError } from 'react-icons/vsc';
 import clsx from 'clsx';
+import { FileWriteMode } from '@common/types';
 
 import { CopyMessageButton } from './CopyMessageButton';
 import { parseToolContent } from './utils';
@@ -15,6 +16,14 @@ import { MessageBar } from '@/components/message/MessageBar';
 type Props = {
   message: ToolMessage;
   onRemove?: () => void;
+};
+
+const formatName = (name: string): string => {
+  return name
+    .replace(/[-_]/g, ' ')
+    .split(' ')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 };
 
 export const ToolMessageBlock = ({ message, onRemove }: Props) => {
@@ -45,6 +54,74 @@ export const ToolMessageBlock = ({ message, onRemove }: Props) => {
     };
   }, [isInitialAutoExpand]); // Depend only on isInitialAutoExpand
 
+  const getToolName = (message: ToolMessage): string => {
+    const defaultLabel = () => t('toolMessage.toolLabel', { server: formatName(message.serverName), tool: formatName(message.toolName) });
+
+    switch (message.serverName) {
+      case 'aider':
+        switch (message.toolName) {
+          case 'add_context_file':
+            return t('toolMessage.aider.addContextFile', { path: message.args.path as string });
+          case 'drop_context_file':
+            return t('toolMessage.aider.dropContextFile', { path: message.args.path as string });
+          case 'run_prompt':
+            return t('toolMessage.aider.runPrompt');
+          default:
+            return defaultLabel();
+        }
+      case 'power':
+        switch (message.toolName) {
+          case 'file_read':
+            return t('toolMessage.power.fileRead', { filePath: message.args.filePath as string });
+          case 'file_write':
+            switch (message.args.mode as FileWriteMode) {
+              case FileWriteMode.Overwrite:
+                return t('toolMessage.power.fileWrite.overwrite', { filePath: message.args.filePath as string });
+              case FileWriteMode.Append:
+                return t('toolMessage.power.fileWrite.append', { filePath: message.args.filePath as string });
+              case FileWriteMode.CreateOnly:
+                return t('toolMessage.power.fileWrite.createOnly', { filePath: message.args.filePath as string });
+              default:
+                return defaultLabel();
+            }
+          case 'file_edit':
+            return t('toolMessage.power.fileEdit', { filePath: message.args.filePath as string });
+          case 'glob':
+            return t('toolMessage.power.glob', { pattern: message.args.pattern as string });
+          case 'grep':
+            return t('toolMessage.power.grep', { filePattern: message.args.filePattern as string, searchTerm: message.args.searchTerm as string });
+          case 'bash':
+            return t('toolMessage.power.bash', { command: message.args.command as string });
+          case 'semantic_search':
+            return t('toolMessage.power.semanticSearch', { query: message.args.query as string });
+          default:
+            return defaultLabel();
+        }
+      default:
+        return defaultLabel();
+    }
+  };
+
+  const renderToolSpecificContent = () => {
+    if (message.serverName === 'aider' && message.toolName === 'run_prompt') {
+      const promptText = message.args.prompt as string;
+
+      return (
+        <div className="text-xs text-neutral-300 pt-2 px-3">
+          <pre className="whitespace-pre-wrap bg-neutral-900 p-2 rounded text-neutral-300 text-xxs my-1 max-h-[200px] overflow-y-auto scrollbar-thin scrollbar-track-neutral-900 scrollbar-thumb-neutral-700 hover:scrollbar-thumb-neutral-600">
+            {promptText}
+          </pre>
+          {parsedResult?.json && 'deniedReason' in parsedResult.json && typeof parsedResult.json.deniedReason === 'string' && (
+            <div className="flex items-start gap-1 text-neutral-100 text-xxs font-normal mt-2 whitespace-pre-wrap px-1">
+              {t('toolMessage.deniedByReason', { reason: parsedResult.json.deniedReason })}
+            </div>
+          )}
+        </div>
+      );
+    }
+    return null;
+  };
+
   const handleHeaderClick = () => {
     // Clear any existing timer
     if (timerRef.current) {
@@ -67,10 +144,10 @@ export const ToolMessageBlock = ({ message, onRemove }: Props) => {
     let displayContent: string;
     let rawContentToCopy: string;
 
-    if (parsedResult.parsedInnerJson) {
+    if (parsedResult.json) {
       // Display pretty-printed JSON
-      displayContent = JSON.stringify(parsedResult.parsedInnerJson, null, 2);
-      rawContentToCopy = JSON.stringify(parsedResult.parsedInnerJson); // Copy raw JSON
+      displayContent = JSON.stringify(parsedResult.json, null, 2);
+      rawContentToCopy = JSON.stringify(parsedResult.json); // Copy raw JSON
     } else if (parsedResult.extractedText) {
       // Display extracted text if inner JSON parsing failed
       displayContent = parsedResult.extractedText;
@@ -113,9 +190,7 @@ export const ToolMessageBlock = ({ message, onRemove }: Props) => {
           <div className={`text-neutral-500 ${isExecuting ? 'animate-pulse' : ''}`}>
             <RiToolsFill className="w-4 h-4" />
           </div>
-          <div className={`font-medium text-xs text-neutral-100 ${isExecuting ? 'animate-pulse' : ''}`}>
-            {t('toolMessage.toolLabel', { server: message.serverName, tool: message.toolName })}
-          </div>
+          <div className={`text-xs text-neutral-100 ${isExecuting ? 'animate-pulse' : ''}`}>{getToolName(message)}</div>
           {isExecuting && <CgSpinner className="animate-spin w-3 h-3 text-neutral-400" />}
           {!isExecuting && parsedResult?.isError === true && <VscError className="text-red-500" />}
         </div>
@@ -123,6 +198,9 @@ export const ToolMessageBlock = ({ message, onRemove }: Props) => {
           <div className="text-neutral-300">{isExpanded ? <MdKeyboardArrowDown size={16} /> : <MdKeyboardArrowRight size={16} />}</div>
         </div>
       </div>
+
+      {/* Tool Specific Content */}
+      {renderToolSpecificContent()}
 
       {/* Content */}
       <div

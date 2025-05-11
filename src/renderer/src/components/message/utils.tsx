@@ -273,7 +273,7 @@ interface ParsedToolMessage {
 
 export interface ToolContentResult {
   extractedText: string | null;
-  parsedInnerJson: object | null;
+  json: object | null;
   isError: boolean | null;
   rawContent: string; // Always include the original raw content
 }
@@ -287,7 +287,7 @@ export interface ToolContentResult {
 export const parseToolContent = (rawContent: string): ToolContentResult => {
   const result: ToolContentResult = {
     extractedText: null,
-    parsedInnerJson: null,
+    json: null,
     isError: null,
     rawContent: rawContent,
   };
@@ -305,29 +305,33 @@ export const parseToolContent = (rawContent: string): ToolContentResult => {
     }
 
     // Type check for the expected outer structure
-    if (typeof parsedOuter === 'object' && parsedOuter !== null && 'content' in parsedOuter && Array.isArray(parsedOuter.content)) {
-      const toolMessage = parsedOuter as ParsedToolMessage;
-      result.isError = toolMessage.isError || false;
+    if (typeof parsedOuter === 'object' && parsedOuter !== null) {
+      if ('content' in parsedOuter && Array.isArray(parsedOuter.content)) {
+        const toolMessage = parsedOuter as ParsedToolMessage;
+        result.isError = toolMessage.isError || false;
 
-      // Extract text from the 'content' array
-      const textParts = toolMessage.content
-        .map((item) => (item.type === 'text' && item.text ? item.text : null))
-        .filter((text): text is string => text !== null);
+        // Extract text from the 'content' array
+        const textParts = toolMessage.content
+          .map((item) => (item.type === 'text' && item.text ? item.text : null))
+          .filter((text): text is string => text !== null);
 
-      if (textParts.length > 0) {
-        result.extractedText = textParts.join('');
+        if (textParts.length > 0) {
+          result.extractedText = textParts.join('');
 
-        // Try parsing the extracted text as JSON
-        try {
-          const innerJson = JSON.parse(result.extractedText);
-          if (typeof innerJson === 'object' && innerJson !== null) {
-            result.parsedInnerJson = innerJson;
+          // Try parsing the extracted text as JSON
+          try {
+            const innerJson = JSON.parse(result.extractedText);
+            if (typeof innerJson === 'object' && innerJson !== null) {
+              result.json = innerJson;
+            }
+          } catch (innerError) {
+            // Ignore error if inner content is not valid JSON
+            // eslint-disable-next-line no-console
+            console.debug('Inner content is not valid JSON:', innerError);
           }
-        } catch (innerError) {
-          // Ignore error if inner content is not valid JSON
-          // eslint-disable-next-line no-console
-          console.debug('Inner content is not valid JSON:', innerError);
         }
+      } else {
+        result.json = parsedOuter;
       }
     } else {
       // eslint-disable-next-line no-console

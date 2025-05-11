@@ -270,21 +270,19 @@
     "noToolsFound": "No tools could be found. Check your configuration.",
     "server_one": "server",
     "server_other": "servers",
-    "agentEnabled": "MCP agent enabled",
-    "agentDisabled": "MCP agent disabled",
     "aider": "aider",
     "aiderOnly": "aider only",
     "withFiles": "with files",
     "useAiderTools": "Use Aider tools",
     "usePowerTools": "Use Power tools",
     "powerToolsTooltip": "Allows the agent to use tools for direct file operations (read, write, edit), searching (glob, grep, semantic search), and executing shell commands (bash).",
-    "aiderToolsTooltip": "MCP agent can use Aider to perform add/drop context files actions and run prompts.",
+    "aiderToolsTooltip": "Agent can use Aider to perform add/drop context files actions and run prompts.",
     "includeContextFiles": "Include context files",
-    "includeFilesTooltip": "Adds content of context files into the chat of MCP agent. This will increase token usage.",
+    "includeFilesTooltip": "Adds content of context files into the chat of agent. This will increase token usage.",
     "includeRepoMap": "Include repo map",
     "includeRepoMapTooltip": "Include the repository map in the agent's context. This can help the agent understand the project structure, but may increase token usage.",
     "servers": "MCP servers",
-    "configureServers": "Configure servers",
+    "configureServers": "Configure",
     "approval": {
       "never": "Never",
       "always": "Always",
@@ -347,11 +345,35 @@
     "answer": "ANSWER"
   },
   "toolMessage": {
-    "toolLabel": "Tool: {{server}}/{{tool}}",
+    "toolLabel": "{{server}}: {{tool}}",
     "arguments": "Arguments:",
     "executing": "Tool is executing...",
     "result": "Result:",
-    "error": "Error while executing tool:"
+    "error": "Error while executing tool:",
+    "denied": "Denied by user.",
+    "deniedByReason": "Denied by user:\n{{reason}}",
+    "aider": {
+      "addContextFile": "Adding file to Aider's context: {{path}}",
+      "dropContextFile": "Dropping file from Aider's context: {{path}}",
+      "runPrompt": "Running prompt in Aider: "
+    },
+    "power": {
+      "fileRead": "Reading file: {{filePath}}",
+      "fileWrite": {
+        "overwrite": "Rewriting file: {{filePath}}",
+        "append": "Appending to file: {{filePath}}",
+        "createOnly": "Creating file: {{filePath}}"
+      },
+      "fileEdit": "Editing file: {{filePath}}",
+      "glob": "Finding files matching pattern: {{pattern}}",
+      "grep": "Searching files matching '{{filePattern}}' for '{{searchTerm}}'",
+      "bash": "Executing bash command: '{{command}}'",
+      "semanticSearch": "Performing semantic search: {{query}}"
+    },
+    "errors": {
+      "noSuchTool": "Attempted to use unknown tool: {{toolName}}",
+      "invalidToolArguments": "Invalid arguments for tool: {{toolName}}"
+    }
   },
   "codeBlock": {
     "revertChanges": "Revert changes"

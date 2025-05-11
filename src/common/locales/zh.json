@@ -266,17 +266,15 @@
     "noToolsFound": "未找到工具。请检查您的配置。",
     "server_one": "服务器",
     "server_other": "服务器",
-    "agentEnabled": "MCP代理已启用",
-    "agentDisabled": "MCP代理已禁用",
     "aider": "aider",
     "aiderOnly": "仅aider",
     "withFiles": "包含文件",
     "useAiderTools": "使用Aider工具",
     "usePowerTools": "使用 Power 工具",
     "powerToolsTooltip": "允许代理使用强大的工具进行直接文件操作（读、写、编辑）、搜索（glob、grep、语义搜索）和执行 shell 命令（bash）。",
-    "aiderToolsTooltip": "MCP代理可以使用Aider执行添加/删除上下文文件操作和运行提示。",
+    "aiderToolsTooltip": "代理可以使用Aider执行添加/删除上下文文件操作和运行提示。",
     "includeContextFiles": "包含上下文文件",
-    "includeFilesTooltip": "将上下文文件内容添加到MCP代理的聊天中。这将增加令牌使用量。",
+    "includeFilesTooltip": "将上下文文件内容添加到代理的聊天中。这将增加令牌使用量。",
     "includeRepoMap": "包含仓库地图",
     "includeRepoMapTooltip": "在代理的上下文中包含仓库地图。这有助于代理理解项目结构，但可能会增加token使用量。",
     "servers": "MCP服务器",
@@ -347,7 +345,31 @@
     "arguments": "参数:",
     "executing": "工具执行中...",
     "result": "结果:",
-    "error": "执行工具时出错:"
+    "error": "执行工具时出错:",
+    "denied": "拒绝访问",
+    "deniedByReason": "用户拒绝: {{reason}}",
+    "aider": {
+      "addContextFile": "添加文件到 Aider 上下文: {{path}}",
+      "dropContextFile": "从 Aider 上下文移除文件: {{path}}",
+      "runPrompt": "运行 Aider 提示: "
+    },
+    "power": {
+      "fileRead": "读取文件: {{filePath}}",
+      "fileWrite": {
+        "overwrite": "重写文件: {{filePath}}",
+        "append": "追加到文件: {{filePath}}",
+        "createOnly": "创建文件: {{filePath}}"
+      },
+      "fileEdit": "编辑文件: {{filePath}}",
+      "glob": "查找匹配模式的文件: {{pattern}}",
+      "grep": "在匹配 {{filePattern}} 的文件中搜索 {{searchTerm}}",
+      "bash": "执行 bash 命令: {{command}}",
+      "semanticSearch": "执行语义搜索: {{query}}"
+    },
+    "errors": {
+      "noSuchTool": "尝试使用未知工具: {{toolName}}",
+      "invalidToolArguments": "工具参数无效: {{toolName}}"
+    }
   },
   "codeBlock": {
     "revertChanges": "撤销更改"

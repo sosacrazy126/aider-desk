@@ -268,7 +268,7 @@ export class Agent {
       if (currentApprovalState === ToolApprovalState.Ask) {
         const questionData: QuestionData = {
           baseDir: project.baseDir,
-          text: `Approve tool ${toolDef.name} from MCP ${serverName}?`,
+          text: `Approve tool ${toolDef.name} from ${serverName} MCP server?`,
           subject: `${JSON.stringify(args)}`,
           defaultAnswer: 'y',
           key: toolId, // Use toolId as the key for storing the answer

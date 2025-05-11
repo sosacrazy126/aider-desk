@@ -149,7 +149,8 @@ Restrictions:
         return {
           responses: [],
           updatedFiles: [],
-          error: `Aider prompt execution denied by user.${userInput ? ` User input: ${userInput}` : ''}`,
+          deniedReason: userInput,
+          error: 'Aider prompt execution denied by user. Update the prompt based on the denied reason or cancel and do not run again.',
         };
       }
 

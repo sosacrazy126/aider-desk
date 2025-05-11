@@ -65,6 +65,7 @@ ${
 - **Context Management:**
     - **Prerequisite:** Before 'Aider run_prompt', use 'add_context_file' to add **ALL files identified in Step 3 and confirmed for modification in Step 4**. Double-check using 'get_context_files'.
     ${includeContextFiles ? "    - Files listed in your initial context are already available to Aider; do not re-add them unless they need modification and weren't explicitly listed for Aider before." : ''}
+    - **Prompt:** Aider does not see your message history, only the prompt you send. Make sure all the relevant info is included in the prompt.
     - **Cleanup:** After 'Aider run_prompt' completes successfully for a task/sub-task, use 'drop_context_file' to remove the files *you explicitly added* for that specific run_prompt call.
 - **Result Interpretation:** Aider's SEARCH/REPLACE blocks indicate successful modification. Treat these files as updated in your internal state. Do not attempt to modify them again for the same change.
 `

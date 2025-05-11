@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+
 import { CommandOutputMessageBlock } from './CommandOutputMessageBlock';
 import { LoadingMessageBlock } from './LoadingMessageBlock';
 import { LogMessageBlock } from './LogMessageBlock';
@@ -14,6 +16,7 @@ import {
   isResponseMessage,
   Message,
   isToolMessage,
+  LogMessage,
 } from '@/types/message';
 import { ToolMessageBlock } from '@/components/message/ToolMessageBlock';
 
@@ -28,6 +31,8 @@ type Props = {
 };
 
 export const MessageBlock = ({ baseDir, message, allFiles, renderMarkdown, remove, redo, edit }: Props) => {
+  const { t } = useTranslation();
+
   if (isLoadingMessage(message)) {
     return <LoadingMessageBlock message={message} />;
   }
@@ -55,6 +60,25 @@ export const MessageBlock = ({ baseDir, message, allFiles, renderMarkdown, remov
   }
 
   if (isToolMessage(message)) {
+    if (message.serverName === 'helpers') {
+      let logMessageContent = message.content;
+
+      if (message.toolName === 'no_such_tool') {
+        logMessageContent = t('toolMessage.errors.noSuchTool', { toolName: message.args.toolName });
+      } else if (message.toolName === 'invalid_tool_arguments') {
+        logMessageContent = t('toolMessage.errors.invalidToolArguments', {
+          toolName: message.args.toolName,
+        });
+      }
+
+      const logMessage: LogMessage = {
+        type: 'log',
+        level: 'info',
+        id: message.id,
+        content: logMessageContent,
+      };
+      return <LogMessageBlock message={logMessage} />;
+    }
     return <ToolMessageBlock message={message} onRemove={remove} />;
   }
 
