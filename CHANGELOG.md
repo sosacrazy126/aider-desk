@@ -2,6 +2,8 @@
 
 ## [UNRELEASED]
 
+- correctly showing release notes HTML
+
 ## [0.13.0]
 
 - improved requests to OpenRouter by adding require_parameters: true

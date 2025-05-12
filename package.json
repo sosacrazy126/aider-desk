@@ -104,6 +104,7 @@
     "@electron/notarize": "^2.5.0",
     "@eslint/js": "^9.18.0",
     "@modelcontextprotocol/sdk": "^1.7.0",
+    "@tailwindcss/typography": "^0.5.16",
     "@types/electron-progressbar": "^1.2.7",
     "@types/node": "^20.14.8",
     "@types/object-hash": "^3.0.6",

@@ -10,7 +10,7 @@ import { ProjectTabs } from '@/components/project/ProjectTabs';
 import { ProjectView } from '@/components/project/ProjectView';
 import { SettingsDialog } from '@/components/settings/SettingsDialog';
 import { useVersions } from '@/hooks/useVersions';
-import { MarkdownInfoDialog } from '@/components/common/MarkdownInfoDialog';
+import { HtmlInfoDialog } from '@/components/common/HtmlInfoDialog';
 
 export const Home = () => {
   const { t } = useTranslation();
@@ -49,7 +49,8 @@ export const Home = () => {
     const checkReleaseNotes = async () => {
       const notes = await window.api.getReleaseNotes();
       if (notes) {
-        setReleaseNotesContent(notes);
+        const cleanedNotes = notes.replace(/<img[^>]*>/g, '');
+        setReleaseNotesContent(cleanedNotes);
       }
     };
 
@@ -181,7 +182,7 @@ export const Home = () => {
         {isOpenProjectDialogVisible && <OpenProjectDialog onClose={() => setIsOpenProjectDialogVisible(false)} onAddProject={handleAddProject} />}
         {showSettingsTab !== null && <SettingsDialog onClose={() => setShowSettingsTab(null)} initialTab={showSettingsTab} />}
         {releaseNotesContent && versions && (
-          <MarkdownInfoDialog
+          <HtmlInfoDialog
             title={`${t('settings.about.releaseNotes')} - ${versions.aiderDeskCurrentVersion}`}
             text={releaseNotesContent}
             onClose={handleCloseReleaseNotes}
