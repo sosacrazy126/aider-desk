@@ -1,6 +1,6 @@
 # Changelog
 
-## [UNRELEASED]
+## [0.13.0]
 
 - improved requests to OpenRouter by adding require_parameters: true
 - added code edit format selector
