@@ -4,6 +4,7 @@
 
 - correctly showing release notes HTML
 - implemented confirmations for Power tools and added new answer "Always for this run"
+- adding files created by power tools into git
 
 ## [0.13.0]
 

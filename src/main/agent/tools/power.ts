@@ -29,7 +29,9 @@ export const createPowerToolset = (project: Project): ToolSet => {
       isRegex: z.boolean().optional().default(false).describe('Whether the searchTerm should be treated as a regular expression. Default: false.'),
       replaceAll: z.boolean().optional().default(false).describe('Whether to replace all occurrences or just the first one. Default: false.'),
     }),
-    execute: async ({ filePath, searchTerm, replacementText, isRegex, replaceAll }) => {
+    execute: async ({ filePath, searchTerm, replacementText, isRegex, replaceAll }, { toolCallId }) => {
+      project.addToolMessage(toolCallId, 'power', 'file_edit', { filePath, searchTerm, replacementText, isRegex, replaceAll });
+
       const questionKey = `power${TOOL_GROUP_NAME_SEPARATOR}file_edit`;
       const questionText = `Approve editing file '${filePath}'?`;
       const questionSubject = `Search: ${searchTerm}\nReplace: ${replacementText}`;
@@ -77,7 +79,9 @@ export const createPowerToolset = (project: Project): ToolSet => {
     parameters: z.object({
       filePath: z.string().describe('The path to the file to be read (relative to the project root).'),
     }),
-    execute: async ({ filePath }) => {
+    execute: async ({ filePath }, { toolCallId }) => {
+      project.addToolMessage(toolCallId, 'power', 'file_read', { filePath });
+
       const absolutePath = path.resolve(project.baseDir, filePath);
       try {
         const content = await fs.readFile(absolutePath, 'utf8');
@@ -105,13 +109,15 @@ export const createPowerToolset = (project: Project): ToolSet => {
           "Mode of writing: 'overwrite' (overwrites or creates), 'append' (appends or creates), 'create_only' (creates if not exists, fails if exists). Default: 'overwrite'.",
         ),
     }),
-    execute: async ({ filePath, content, mode }) => {
+    execute: async ({ filePath, content, mode }, { toolCallId }) => {
+      project.addToolMessage(toolCallId, 'power', 'file_write', { filePath, content, mode });
+
       const questionKey = `power${TOOL_GROUP_NAME_SEPARATOR}file_write`;
       const questionText =
         mode === FileWriteMode.Overwrite
           ? `Approve overwriting or creating file '${filePath}'?`
           : mode === FileWriteMode.Append
-            ? `Approve appending to or creating file '${filePath}'?`
+            ? `Approve appending to file '${filePath}'?`
             : `Approve creating file '${filePath}'?`;
 
       const [isApproved, userInput] = await approvalManager.handleApproval(questionKey, questionText);
@@ -121,12 +127,26 @@ export const createPowerToolset = (project: Project): ToolSet => {
       }
 
       const absolutePath = path.resolve(project.baseDir, filePath);
+
+      const addToGit = async () => {
+        try {
+          // Add the new file to git staging
+          await project.git.add(absolutePath);
+        } catch (gitError) {
+          const gitErrorMessage = gitError instanceof Error ? gitError.message : String(gitError);
+          project.addLogMessage('warning', `Failed to add new file ${absolutePath} to git staging area: ${gitErrorMessage}`);
+          // Continue even if git add fails, as the file was created successfully
+        }
+      };
+
       try {
         await fs.mkdir(path.dirname(absolutePath), { recursive: true });
 
         if (mode === FileWriteMode.CreateOnly) {
           try {
             await fs.writeFile(absolutePath, content, { flag: 'wx' });
+            await addToGit();
+
             return `Successfully wrote to '${filePath}' (created).`;
           } catch (e) {
             if ((e as NodeJS.ErrnoException)?.code === 'EEXIST') {
@@ -139,6 +159,7 @@ export const createPowerToolset = (project: Project): ToolSet => {
           return `Successfully appended to '${filePath}'.`;
         } else {
           await fs.writeFile(absolutePath, content, 'utf8');
+          await addToGit();
           return `Successfully wrote to '${filePath}' (overwritten/created).`;
         }
       } catch (error) {
@@ -158,7 +179,9 @@ export const createPowerToolset = (project: Project): ToolSet => {
         .describe('The current working directory from which to apply the glob pattern (relative to project root). Default: project root.'),
       ignore: z.array(z.string()).optional().describe('An array of glob patterns to ignore.'),
     }),
-    execute: async ({ pattern, cwd, ignore }) => {
+    execute: async ({ pattern, cwd, ignore }, { toolCallId }) => {
+      project.addToolMessage(toolCallId, 'power', 'glob', { pattern, cwd, ignore });
+
       const absoluteCwd = cwd ? path.resolve(project.baseDir, cwd) : project.baseDir;
       try {
         const files = await glob(pattern, {
@@ -191,7 +214,9 @@ export const createPowerToolset = (project: Project): ToolSet => {
         .describe('The number of lines of context to show before and after each matching line. Default: 0.'),
       caseSensitive: z.boolean().optional().default(false).describe('Whether the search should be case sensitive. Default: false.'),
     }),
-    execute: async ({ filePattern, searchTerm, contextLines, caseSensitive }) => {
+    execute: async ({ filePattern, searchTerm, contextLines, caseSensitive }, { toolCallId }) => {
+      project.addToolMessage(toolCallId, 'power', 'grep', { filePattern, searchTerm, contextLines, caseSensitive });
+
       try {
         const files = await glob(filePattern, {
           cwd: project.baseDir,
@@ -257,7 +282,9 @@ export const createPowerToolset = (project: Project): ToolSet => {
       cwd: z.string().optional().describe('The working directory for the command (relative to project root). Default: project root.'),
       timeout: z.number().int().min(0).optional().default(60000).describe('Timeout for the command execution in milliseconds. Default: 60000 ms.'),
     }),
-    execute: async ({ command, cwd, timeout }) => {
+    execute: async ({ command, cwd, timeout }, { toolCallId }) => {
+      project.addToolMessage(toolCallId, 'power', 'bash', { command, cwd, timeout });
+
       const questionKey = `power${TOOL_GROUP_NAME_SEPARATOR}bash`;
       const questionText = 'Approve executing bash command?';
       const questionSubject = `Command: ${command}\nWorking Directory: ${cwd || '.'}\nTimeout: ${timeout}ms`;
