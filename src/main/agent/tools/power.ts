@@ -12,9 +12,13 @@ import { FileWriteMode } from '@common/types';
 
 import { Project } from '../../project';
 
+import { ApprovalManager } from './approval-manager';
+
 const execAsync = promisify(exec);
 
 export const createPowerToolset = (project: Project): ToolSet => {
+  const approvalManager = new ApprovalManager(project);
+
   const fileEditTool = tool({
     description:
       'Atomically finds and replaces a specific string or pattern within a specified file. This tool is useful for making targeted changes to file content.',
@@ -26,6 +30,16 @@ export const createPowerToolset = (project: Project): ToolSet => {
       replaceAll: z.boolean().optional().default(false).describe('Whether to replace all occurrences or just the first one. Default: false.'),
     }),
     execute: async ({ filePath, searchTerm, replacementText, isRegex, replaceAll }) => {
+      const questionKey = `power${TOOL_GROUP_NAME_SEPARATOR}file_edit`;
+      const questionText = `Approve editing file '${filePath}'?`;
+      const questionSubject = `Search: ${searchTerm}\nReplace: ${replacementText}`;
+
+      const [isApproved, userInput] = await approvalManager.handleApproval(questionKey, questionText, questionSubject);
+
+      if (!isApproved) {
+        return `File edit to '${filePath}' denied by user. Reason: ${userInput}`;
+      }
+
       const absolutePath = path.resolve(project.baseDir, filePath);
       try {
         const fileContent = await fs.readFile(absolutePath, 'utf8');
@@ -92,6 +106,20 @@ export const createPowerToolset = (project: Project): ToolSet => {
         ),
     }),
     execute: async ({ filePath, content, mode }) => {
+      const questionKey = `power${TOOL_GROUP_NAME_SEPARATOR}file_write`;
+      const questionText =
+        mode === FileWriteMode.Overwrite
+          ? `Approve overwriting or creating file '${filePath}'?`
+          : mode === FileWriteMode.Append
+            ? `Approve appending to or creating file '${filePath}'?`
+            : `Approve creating file '${filePath}'?`;
+
+      const [isApproved, userInput] = await approvalManager.handleApproval(questionKey, questionText);
+
+      if (!isApproved) {
+        return `File write to '${filePath}' denied by user. Reason: ${userInput}`;
+      }
+
       const absolutePath = path.resolve(project.baseDir, filePath);
       try {
         await fs.mkdir(path.dirname(absolutePath), { recursive: true });
@@ -230,6 +258,16 @@ export const createPowerToolset = (project: Project): ToolSet => {
       timeout: z.number().int().min(0).optional().default(60000).describe('Timeout for the command execution in milliseconds. Default: 60000 ms.'),
     }),
     execute: async ({ command, cwd, timeout }) => {
+      const questionKey = `power${TOOL_GROUP_NAME_SEPARATOR}bash`;
+      const questionText = 'Approve executing bash command?';
+      const questionSubject = `Command: ${command}\nWorking Directory: ${cwd || '.'}\nTimeout: ${timeout}ms`;
+
+      const [isApproved, userInput] = await approvalManager.handleApproval(questionKey, questionText, questionSubject);
+
+      if (!isApproved) {
+        return `Bash command execution denied by user. Reason: ${userInput}`;
+      }
+
       const absoluteCwd = cwd ? path.resolve(project.baseDir, cwd) : project.baseDir;
       try {
         const { stdout, stderr } = await execAsync(command, {

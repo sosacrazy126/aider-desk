@@ -50,7 +50,7 @@ export class Project {
   private connectors: Connector[] = [];
   private currentCommand: string | null = null;
   private currentQuestion: QuestionData | null = null;
-  private currentQuestionResolves: ((answer: ['y' | 'n', string | undefined]) => void)[] = [];
+  private currentQuestionResolves: ((answer: [string, string | undefined]) => void)[] = [];
   private questionAnswers: Map<string, 'y' | 'n'> = new Map();
   private allTrackedFiles: string[] = [];
   private currentResponseMessageId: string | null = null;
@@ -599,25 +599,41 @@ export class Project {
       answer,
     });
 
-    const normalized = answer.toLowerCase();
-    const yesNoAnswer = normalized === 'a' || normalized === 'y' ? 'y' : 'n';
-    if (normalized === 'd' || normalized === 'a') {
-      logger.info('Storing answer for question:', {
+    const normalizedAnswer = answer.toLowerCase();
+    let determinedAnswer: string | null = null;
+
+    if (this.currentQuestion.answers && this.currentQuestion.answers.length > 0) {
+      for (const answer of this.currentQuestion.answers) {
+        if (answer.shortkey.toLowerCase() === normalizedAnswer) {
+          determinedAnswer = answer.shortkey;
+          break;
+        }
+      }
+    }
+
+    if (!determinedAnswer) {
+      determinedAnswer = normalizedAnswer === 'a' || normalizedAnswer === 'y' ? 'y' : 'n';
+    }
+
+    // If user input 'd' (don't ask again) or 'a' (always), store the determined answer.
+    if (normalizedAnswer === 'd' || normalizedAnswer === 'a') {
+      logger.info('Storing answer for question due to "d" or "a" input:', {
         baseDir: this.baseDir,
-        question: this.currentQuestion,
-        answer,
+        questionKey: this.getQuestionKey(this.currentQuestion),
+        rawInput: answer,
+        determinedAndStoredAnswer: determinedAnswer,
       });
-      this.questionAnswers.set(this.getQuestionKey(this.currentQuestion), yesNoAnswer);
+      this.questionAnswers.set(this.getQuestionKey(this.currentQuestion), determinedAnswer as 'y' | 'n');
     }
 
     if (!this.currentQuestion.internal) {
-      this.findMessageConnectors('answer-question').forEach((connector) => connector.sendAnswerQuestionMessage(yesNoAnswer));
+      this.findMessageConnectors('answer-question').forEach((connector) => connector.sendAnswerQuestionMessage(determinedAnswer!));
     }
     this.currentQuestion = null;
 
     if (this.currentQuestionResolves.length > 0) {
       for (const currentQuestionResolve of this.currentQuestionResolves) {
-        currentQuestionResolve([yesNoAnswer, userInput]);
+        currentQuestionResolve([determinedAnswer!, userInput]);
       }
       this.currentQuestionResolves = [];
       return true;

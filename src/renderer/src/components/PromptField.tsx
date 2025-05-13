@@ -244,7 +244,15 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
       setHighlightedSuggestionIndex(-1);
 
       if (question) {
-        if (ANSWERS.includes(newText.toLowerCase())) {
+        if (question?.answers) {
+          const matchedAnswer = question.answers.find((answer) => answer.shortkey.toLowerCase() === newText.toLowerCase());
+          if (matchedAnswer) {
+            setSelectedAnswer(matchedAnswer.shortkey);
+            return;
+          } else {
+            setSelectedAnswer(null);
+          }
+        } else if (ANSWERS.includes(newText.toLowerCase())) {
           setSelectedAnswer(newText);
           return;
         } else {
@@ -333,18 +341,19 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
       }
 
       if (question) {
+        const answers = question.answers?.map((answer) => answer.shortkey.toLowerCase()) || ANSWERS;
         if (e.key === 'Tab' && selectedAnswer) {
           e.preventDefault();
-          const currentIndex = ANSWERS.indexOf(selectedAnswer.toLowerCase());
+          const currentIndex = answers.indexOf(selectedAnswer.toLowerCase());
           if (currentIndex !== -1) {
             const nextIndex = (currentIndex + (e.shiftKey ? -1 : 1) + ANSWERS.length) % ANSWERS.length;
-            setSelectedAnswer(ANSWERS[nextIndex]);
+            setSelectedAnswer(answers[nextIndex]);
             return;
           }
         }
-        if (e.key === 'Enter' && !e.shiftKey && selectedAnswer && ANSWERS.includes(selectedAnswer.toLowerCase())) {
+        if (e.key === 'Enter' && !e.shiftKey && selectedAnswer && answers.includes(selectedAnswer.toLowerCase())) {
           e.preventDefault();
-          answerQuestion(selectedAnswer); // Use the prop directly
+          answerQuestion(selectedAnswer);
           prepareForNextPrompt();
           return;
         }
@@ -441,34 +450,48 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
               </div>
             )}
             <div className="flex gap-2">
-              <button
-                onClick={() => answerQuestion('y')}
-                className={`px-2 py-0.5 text-xs rounded hover:bg-neutral-700 border border-neutral-600 ${selectedAnswer === 'y' ? 'bg-neutral-700 border-neutral-400' : 'bg-neutral-850'}`}
-                title="Yes (Y)"
-              >
-                {t('promptField.answers.yes')}
-              </button>
-              <button
-                onClick={() => answerQuestion('n')}
-                className={`px-2 py-0.5 text-xs rounded hover:bg-neutral-700 border border-neutral-600 ${selectedAnswer === 'n' ? 'bg-neutral-700 border-neutral-400' : 'bg-neutral-850'}`}
-                title={t('promptField.answers.no')}
-              >
-                {t('promptField.answers.no')}
-              </button>
-              <button
-                onClick={() => answerQuestion('a')}
-                className={`px-2 py-0.5 text-xs rounded hover:bg-neutral-700 border border-neutral-600 ${selectedAnswer === 'a' ? 'bg-neutral-700 border-neutral-400' : 'bg-neutral-850'}`}
-                title={t('promptField.answers.always')}
-              >
-                {t('promptField.answers.always')}
-              </button>
-              <button
-                onClick={() => answerQuestion('d')}
-                className={`px-2 py-0.5 text-xs rounded hover:bg-neutral-700 border border-neutral-600 ${selectedAnswer === 'd' ? 'bg-neutral-700 border-neutral-400' : 'bg-neutral-850'}`}
-                title={t('promptField.answers.dontAsk')}
-              >
-                {t('promptField.answers.dontAsk')}
-              </button>
+              {question.answers && question.answers.length > 0 ? (
+                question.answers.map((answer, index) => (
+                  <button
+                    key={index}
+                    onClick={() => answerQuestion(answer.shortkey)}
+                    className={`px-2 py-0.5 text-xs rounded hover:bg-neutral-700 border border-neutral-600 ${selectedAnswer === answer.shortkey ? 'bg-neutral-700 border-neutral-400' : 'bg-neutral-850'}`}
+                  >
+                    {answer.text}
+                  </button>
+                ))
+              ) : (
+                <>
+                  <button
+                    onClick={() => answerQuestion('y')}
+                    className={`px-2 py-0.5 text-xs rounded hover:bg-neutral-700 border border-neutral-600 ${selectedAnswer === 'y' ? 'bg-neutral-700 border-neutral-400' : 'bg-neutral-850'}`}
+                    title="Yes (Y)"
+                  >
+                    {t('promptField.answers.yes')}
+                  </button>
+                  <button
+                    onClick={() => answerQuestion('n')}
+                    className={`px-2 py-0.5 text-xs rounded hover:bg-neutral-700 border border-neutral-600 ${selectedAnswer === 'n' ? 'bg-neutral-700 border-neutral-400' : 'bg-neutral-850'}`}
+                    title={t('promptField.answers.no')}
+                  >
+                    {t('promptField.answers.no')}
+                  </button>
+                  <button
+                    onClick={() => answerQuestion('a')}
+                    className={`px-2 py-0.5 text-xs rounded hover:bg-neutral-700 border border-neutral-600 ${selectedAnswer === 'a' ? 'bg-neutral-700 border-neutral-400' : 'bg-neutral-850'}`}
+                    title={t('promptField.answers.always')}
+                  >
+                    {t('promptField.answers.always')}
+                  </button>
+                  <button
+                    onClick={() => answerQuestion('d')}
+                    className={`px-2 py-0.5 text-xs rounded hover:bg-neutral-700 border border-neutral-600 ${selectedAnswer === 'd' ? 'bg-neutral-700 border-neutral-400' : 'bg-neutral-850'}`}
+                    title={t('promptField.answers.dontAsk')}
+                  >
+                    {t('promptField.answers.dontAsk')}
+                  </button>
+                </>
+              )}
             </div>
           </div>
         )}

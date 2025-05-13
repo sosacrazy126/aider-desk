@@ -4,13 +4,16 @@ import path from 'path';
 import { tool } from 'ai';
 import { z } from 'zod';
 import { TOOL_GROUP_NAME_SEPARATOR } from '@common/utils';
-import { QuestionData } from '@common/types';
 
 import { Project } from '../../project';
+
+import { ApprovalManager } from './approval-manager';
 
 import type { ToolSet } from 'ai';
 
 export const createAiderToolset = (project: Project): ToolSet => {
+  const approvalManager = new ApprovalManager(project);
+
   const getContextFilesTool = tool({
     description: 'Get all files currently in the context for Aider to read or edit',
     parameters: z.object({
@@ -31,7 +34,10 @@ Use a relative path for files intended for editing within the project. Use an ab
       readOnly: z.boolean().optional().describe('Whether the file is read-only'),
     }),
     execute: async ({ path: relativePath, readOnly = false }, { toolCallId }) => {
-      project.addToolMessage(toolCallId, 'aider', 'add_context_file', { path: relativePath, readOnly });
+      project.addToolMessage(toolCallId, 'aider', 'add_context_file', {
+        path: relativePath,
+        readOnly,
+      });
 
       const absolutePath = path.resolve(project.baseDir, relativePath);
       let fileExists = false;
@@ -45,16 +51,12 @@ Use a relative path for files intended for editing within the project. Use an ab
 
       if (!fileExists) {
         // Ask user if they want to create the file
-        const questionData: QuestionData = {
-          baseDir: project.baseDir,
-          text: `File '${relativePath}' does not exist. Create it?`,
-          defaultAnswer: 'y',
-          key: 'tool_aider_add_context_file_create_file',
-        };
+        const questionKey = 'tool_aider_add_context_file_create_file';
+        const questionText = `File '${relativePath}' does not exist. Create it?`;
 
-        const [yesNoAnswer] = await project.askQuestion(questionData);
+        const [isApproved] = await approvalManager.handleApproval(questionKey, questionText);
 
-        if (yesNoAnswer === 'y') {
+        if (isApproved) {
           try {
             // Create directories if they don't exist
             const dir = path.dirname(absolutePath);
@@ -132,18 +134,11 @@ Restrictions:
     execute: async ({ prompt }, { toolCallId }) => {
       project.addToolMessage(toolCallId, 'aider', 'run_prompt', { prompt });
 
-      const questionData: QuestionData = {
-        baseDir: project.baseDir,
-        text: 'Approve prompt to run in Aider?',
-        subject: prompt,
-        defaultAnswer: 'y',
-        key: `aider${TOOL_GROUP_NAME_SEPARATOR}run_prompt`,
-      };
+      const questionKey = `aider${TOOL_GROUP_NAME_SEPARATOR}run_prompt`;
+      const questionText = 'Approve prompt to run in Aider?';
 
       // Ask the question and wait for the answer
-      const [yesNoAnswer, userInput] = await project.askQuestion(questionData);
-
-      const isApproved = yesNoAnswer === 'y';
+      const [isApproved, userInput] = await approvalManager.handleApproval(questionKey, questionText, prompt);
 
       if (!isApproved) {
         return {

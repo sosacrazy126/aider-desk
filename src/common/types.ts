@@ -68,10 +68,16 @@ export interface SessionData {
   files?: number;
 }
 
+export interface Answer {
+  text: string;
+  shortkey: string;
+}
+
 export interface QuestionData {
   baseDir: string;
   text: string;
   subject?: string;
+  answers?: Answer[];
   defaultAnswer: string;
   internal?: boolean;
   key?: string;

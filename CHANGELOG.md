@@ -3,6 +3,7 @@
 ## [UNRELEASED]
 
 - correctly showing release notes HTML
+- implemented confirmations for Power tools and added new answer "Always for this run"
 
 ## [0.13.0]
 

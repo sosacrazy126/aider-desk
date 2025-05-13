@@ -13,7 +13,7 @@ import {
   type Tool,
   type ToolExecutionOptions,
   type ToolSet,
-} from 'ai'; // Added InvalidToolArgumentsError
+} from 'ai';
 import { calculateCost, delay, extractServerNameToolName, TOOL_GROUP_NAME_SEPARATOR } from '@common/utils';
 import { getActiveProvider, LlmProvider } from '@common/llm-providers';
 // @ts-expect-error gpt-tokenizer is not typed
@@ -397,9 +397,6 @@ export class Agent {
   }
 
   async runAgent(project: Project, prompt: string): Promise<ContextMessage[]> {
-    // The waiting loop for initialization is now handled by mcpManager.getConnectors()
-    // and mcpManager.initMcpConnectors()
-
     const { agentConfig } = this.store.getSettings();
     logger.debug('McpConfig:', agentConfig);
 
@@ -676,7 +673,7 @@ export class Agent {
   async estimateTokens(project: Project): Promise<number> {
     try {
       const { agentConfig } = this.store.getSettings();
-      const toolSet = await this.getAvailableTools(project); // Now async
+      const toolSet = await this.getAvailableTools(project);
       const systemPrompt = await getSystemPrompt(
         project.baseDir,
         agentConfig.useAiderTools,
