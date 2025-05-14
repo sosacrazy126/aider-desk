@@ -8,6 +8,7 @@
 - updated Gemini 2.5 Pro Preview version for Agent
 - reinitializing Executor in Python Connector after shutdown (e.g. sleep)
 - added session token support for Agent's Bedrock provider
+- properly normalizing Windows path on non-Windows OS
 
 ## [0.13.0]
 

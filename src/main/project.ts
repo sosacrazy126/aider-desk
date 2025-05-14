@@ -160,7 +160,13 @@ export class Project {
   }
 
   private normalizeFilePath(filePath: string): string {
-    return path.normalize(filePath);
+    const normalizedPath = path.normalize(filePath);
+
+    if (process.platform !== 'win32') {
+      return normalizedPath.replace(/\\/g, '/');
+    }
+
+    return normalizedPath;
   }
 
   private getAiderProcessPidFilePath(): string {
