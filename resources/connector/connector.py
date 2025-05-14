@@ -254,7 +254,7 @@ class Connector:
     self.running_coder = None
     self.interrupted = False
     self.current_tokenization_future = None
-    self.tokenization_executor = ThreadPoolExecutor(max_workers=2)
+    self.tokenization_executor = None
 
     if watch_files:
       ignores = []
@@ -274,6 +274,11 @@ class Connector:
 
     self.sio = socketio.AsyncClient()
     self._register_events()
+
+  def get_tokenization_executor(self):
+    if self.tokenization_executor is None:
+      self.tokenization_executor = ThreadPoolExecutor(max_workers=2)
+    return self.tokenization_executor
 
   def _register_events(self):
     @self.sio.event
@@ -353,7 +358,10 @@ class Connector:
   async def on_disconnect(self):
     """Handle disconnection event."""
     self.coder.io.tool_output("DISCONNECTED FROM SERVER")
-    self.tokenization_executor.shutdown(wait=True)
+
+    tokenization_executor = self.tokenization_executor
+    self.tokenization_executor = None
+    tokenization_executor.shutdown(wait=True, cancel_futures=True)
 
   async def connect(self):
     """Connect to the server."""
@@ -775,7 +783,7 @@ class Connector:
 
         # Schedule the synchronous tokenization function in an executor
         self.current_tokenization_future = self.loop.run_in_executor(
-            self.tokenization_executor,
+            self.get_tokenization_executor(),
             self._tokenize_files_sync,
             self.coder.root,
             rel_fnames,

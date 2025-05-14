@@ -6,6 +6,7 @@
 - implemented confirmations for Power tools and added new answer "Always for this run"
 - adding files created by power tools into git
 - updated Gemini 2.5 Pro Preview version for Agent
+- reinitializing Executor in Python Connector after shutdown (e.g. sleep)
 
 ## [0.13.0]
 
