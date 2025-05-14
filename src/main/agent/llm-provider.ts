@@ -79,6 +79,7 @@ export const createLlm = (provider: LlmProvider, env: Record<string, string | un
     const region = provider.region || env['AWS_REGION'];
     const accessKeyId = provider.accessKeyId || env['AWS_ACCESS_KEY_ID'];
     const secretAccessKey = provider.secretAccessKey || env['AWS_SECRET_ACCESS_KEY'];
+    const sessionToken = provider.sessionToken || env['AWS_SESSION_TOKEN'];
 
     if (!region) {
       throw new Error('AWS region is required for Bedrock. You can set it in the MCP settings or Aider environment variables (AWS_REGION).');
@@ -99,6 +100,7 @@ export const createLlm = (provider: LlmProvider, env: Record<string, string | un
         secretAccessKey && {
           accessKeyId,
           secretAccessKey,
+          sessionToken,
         }),
       // Let the SDK handle the default chain if explicit keys aren't provided
       credentialProvider: !accessKeyId && !secretAccessKey ? fromNodeProviderChain() : undefined,

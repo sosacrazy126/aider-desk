@@ -110,7 +110,9 @@
     "accessKeyId": "Access Key ID",
     "accessKeyIdTooltip": "AWS access key ID. Can be left empty if AWS_PROFILE is set in environment.",
     "secretAccessKey": "Secret Access Key",
-    "secretAccessKeyTooltip": "AWS secret access key. Can be left empty if AWS_PROFILE is set in environment."
+    "secretAccessKeyTooltip": "AWS secret access key. Can be left empty if AWS_PROFILE is set in environment.",
+    "sessionToken": "Session Token",
+    "sessionTokenTooltip": "Optional session token for temporary credentials."
   },
   "openrouter": {
     "apiKey": "API Key",

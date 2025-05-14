@@ -21,6 +21,7 @@ export const BedrockParameters = ({ settings, setSettings }: Props) => {
   const region = activeProvider?.region || '';
   const accessKeyId = activeProvider?.accessKeyId;
   const secretAccessKey = activeProvider?.secretAccessKey;
+  const sessionToken = activeProvider?.sessionToken;
   const model = activeProvider?.model || '';
 
   const handleRegionChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -50,6 +51,18 @@ export const BedrockParameters = ({ settings, setSettings }: Props) => {
   const handleSecretAccessKeyChange = (e: ChangeEvent<HTMLInputElement>) => {
     const updatedProviders = settings.agentConfig.providers.map((provider) =>
       provider.active && isBedrockProvider(provider) ? { ...provider, secretAccessKey: e.target.value } : provider,
+    );
+
+    const updatedMcpConfig = {
+      ...settings.agentConfig,
+      providers: updatedProviders,
+    };
+    setSettings({ ...settings, agentConfig: updatedMcpConfig });
+  };
+
+  const handleSessionTokenChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const updatedProviders = settings.agentConfig.providers.map((provider) =>
+      provider.active && isBedrockProvider(provider) ? { ...provider, sessionToken: e.target.value } : provider,
     );
 
     const updatedMcpConfig = {
@@ -97,6 +110,18 @@ export const BedrockParameters = ({ settings, setSettings }: Props) => {
         value={secretAccessKey}
         onChange={handleSecretAccessKeyChange}
         placeholder={t('settings.agent.envVarPlaceholder', { envVar: 'AWS_SECRET_ACCESS_KEY' })}
+      />
+      <Input
+        label={
+          <div className="flex items-center">
+            <span>{t('bedrock.sessionToken')}</span>
+            <InfoIcon className="ml-1" tooltip={t('bedrock.sessionTokenTooltip')} />
+          </div>
+        }
+        type="password"
+        value={sessionToken}
+        onChange={handleSessionTokenChange}
+        placeholder={t('settings.agent.envVarPlaceholder', { envVar: 'AWS_SESSION_TOKEN' })}
       />
     </div>
   );

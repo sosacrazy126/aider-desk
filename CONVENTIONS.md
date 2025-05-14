@@ -76,3 +76,5 @@ enum Status {
   Failed = 'failed',
 }
 ```
+
+- when adding some strings to the UI component, always use i18n library and update the translation files: src/common/locales/en.json and src/common/locales/zh.json

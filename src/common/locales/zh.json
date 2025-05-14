@@ -106,7 +106,9 @@
     "accessKeyId": "访问密钥 ID",
     "accessKeyIdTooltip": "AWS 访问密钥 ID。如果设置了 AWS_PROFILE 环境变量，可以留空。",
     "secretAccessKey": "秘密访问密钥",
-    "secretAccessKeyTooltip": "AWS 秘密访问密钥。如果设置了 AWS_PROFILE 环境变量，可以留空。"
+    "secretAccessKeyTooltip": "AWS 秘密访问密钥。如果设置了 AWS_PROFILE 环境变量，可以留空。",
+    "sessionToken": "会话令牌",
+    "sessionTokenTooltip": "临时凭证的可选会话令牌。"
   },
   "openrouter": {
     "apiKey": "API 密钥",

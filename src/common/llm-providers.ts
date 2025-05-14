@@ -51,6 +51,7 @@ export interface BedrockProvider extends LlmProviderBase {
   accessKeyId: string;
   secretAccessKey: string;
   region: string;
+  sessionToken?: string;
 }
 export const isBedrockProvider = (provider: LlmProviderBase): provider is BedrockProvider => provider.name === 'bedrock';
 

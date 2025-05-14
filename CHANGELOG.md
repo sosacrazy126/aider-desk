@@ -7,6 +7,7 @@
 - adding files created by power tools into git
 - updated Gemini 2.5 Pro Preview version for Agent
 - reinitializing Executor in Python Connector after shutdown (e.g. sleep)
+- added session token support for Agent's Bedrock provider
 
 ## [0.13.0]
 
