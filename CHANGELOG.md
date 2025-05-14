@@ -9,6 +9,7 @@
 - reinitializing Executor in Python Connector after shutdown (e.g. sleep)
 - added session token support for Agent's Bedrock provider
 - properly normalizing Windows path on non-Windows OS
+- added Remove action for log messages
 
 ## [0.13.0]
 

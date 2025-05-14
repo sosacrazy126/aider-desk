@@ -38,7 +38,7 @@ export const MessageBlock = ({ baseDir, message, allFiles, renderMarkdown, remov
   }
 
   if (isLogMessage(message)) {
-    return <LogMessageBlock message={message} />;
+    return <LogMessageBlock message={message} onRemove={remove} />;
   }
 
   if (isReflectedMessage(message)) {
@@ -77,7 +77,7 @@ export const MessageBlock = ({ baseDir, message, allFiles, renderMarkdown, remov
         id: message.id,
         content: logMessageContent,
       };
-      return <LogMessageBlock message={logMessage} />;
+      return <LogMessageBlock message={logMessage} onRemove={remove} />;
     }
     return <ToolMessageBlock message={message} onRemove={remove} />;
   }

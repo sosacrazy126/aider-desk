@@ -1,15 +1,18 @@
 import { FaInfoCircle, FaExclamationTriangle, FaExclamationCircle } from 'react-icons/fa';
+import { MdClose } from 'react-icons/md';
 import { useTranslation } from 'react-i18next';
 
 import { CopyMessageButton } from './CopyMessageButton';
 
 import { LogMessage } from '@/types/message';
+import { IconButton } from '@/components/common/IconButton';
 
 type Props = {
   message: LogMessage;
+  onRemove?: () => void;
 };
 
-export const LogMessageBlock = ({ message }: Props) => {
+export const LogMessageBlock = ({ message, onRemove }: Props) => {
   const { t } = useTranslation();
   const baseClasses = 'rounded-md p-3 mb-2 max-w-full break-words whitespace-pre-wrap text-xs border';
 
@@ -40,8 +43,16 @@ export const LogMessageBlock = ({ message }: Props) => {
         <Icon className="inline-block h-3 w-3 flex-shrink-0 mt-[3px]" />
         <div>{t(message.content)}</div>
       </div>
-      <div className="absolute top-2 right-2">
+      <div className="absolute top-2 right-2 flex items-center space-x-1">
         <CopyMessageButton content={message.content} className={config.tooltipClass} />
+        {onRemove && (
+          <IconButton
+            icon={<MdClose className="w-4 h-4" />}
+            onClick={onRemove}
+            tooltip={t('common.remove')}
+            className={`p-1 rounded ${config.tooltipClass} opacity-0 group-hover:opacity-100 transition-opacity duration-200`}
+          />
+        )}
       </div>
     </div>
   );

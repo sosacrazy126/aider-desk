@@ -361,7 +361,9 @@ class Connector:
 
     tokenization_executor = self.tokenization_executor
     self.tokenization_executor = None
-    tokenization_executor.shutdown(wait=True, cancel_futures=True)
+    if tokenization_executor:
+      # Shutdown the executor if it was created
+      tokenization_executor.shutdown(wait=True, cancel_futures=True)
 
   async def connect(self):
     """Connect to the server."""
