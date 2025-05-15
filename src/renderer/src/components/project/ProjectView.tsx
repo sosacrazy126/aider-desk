@@ -388,8 +388,10 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [project.baseDir]);
 
-  const handleAddFile = (filePath: string, readOnly = false) => {
-    window.api.addFile(project.baseDir, filePath, readOnly);
+  const handleAddFiles = (filePaths: string[], readOnly = false) => {
+    for (const filePath of filePaths) {
+      window.api.addFile(project.baseDir, filePath, readOnly);
+    }
     setAddFileDialogOptions(null);
     promptFieldRef.current?.focus();
   };
@@ -720,7 +722,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
             setAddFileDialogOptions(null);
             promptFieldRef.current?.focus();
           }}
-          onAddFile={handleAddFile}
+          onAddFiles={handleAddFiles}
           initialReadOnly={addFileDialogOptions.readOnly}
         />
       )}

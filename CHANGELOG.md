@@ -11,6 +11,7 @@
 - properly normalizing Windows path on non-Windows OS
 - added Remove action for log messages
 - added support for /commit command
+- enhanced AddFileDialog with multi-file selection and also directory selection
 
 ## [0.13.0]
 

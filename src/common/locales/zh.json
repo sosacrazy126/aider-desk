@@ -224,7 +224,10 @@
     "title": "添加上下文文件",
     "placeholder": "选择要添加的文件",
     "browse": "浏览文件",
-    "readOnly": "只读"
+    "readOnly": "只读",
+    "browseFile": "浏览文件",
+    "browseDirectory": "浏览目录",
+    "removeFileTooltip": "移除文件"
   },
   "contextFiles": {
     "title": "上下文文件",

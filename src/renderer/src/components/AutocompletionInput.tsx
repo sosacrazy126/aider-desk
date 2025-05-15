@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
+import clsx from 'clsx';
 
 type Props = {
   value: string;
@@ -108,8 +109,7 @@ export const AutocompletionInput = ({ value, suggestions, onChange, placeholder,
           <div
             id={`suggestion-${index}`}
             key={suggestion}
-            className={`px-3 py-1 text-sm cursor-pointer hover:bg-neutral-700 ${index === selectedIndex ? 'bg-neutral-700' : ''}`}
-            onMouseEnter={() => setSelectedIndex(index)}
+            className={clsx('px-3 py-1 text-sm cursor-pointer hover:bg-neutral-700', index === selectedIndex && 'bg-neutral-850 hover:bg-neutral-850')}
             onMouseDown={() => {
               onChange(suggestion, true);
               setShowSuggestions(false);

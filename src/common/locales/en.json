@@ -226,9 +226,13 @@
   },
   "addFileDialog": {
     "title": "ADD CONTEXT FILE",
-    "placeholder": "Choose file to add",
+    "placeholder": "Find file to add",
+    "placeholderFiles": "Find file to add or press Enter to finish",
     "browse": "Browse files",
-    "readOnly": "Read-Only"
+    "readOnly": "Read-Only",
+    "browseFile": "Browse for files",
+    "browseDirectory": "Browse for directories",
+    "removeFileTooltip": "Remove file"
   },
   "contextFiles": {
     "title": "Context Files",

@@ -23,7 +23,12 @@ export const IconButton = ({ icon, onClick, tooltip, className, tooltipId }: Pro
   };
 
   const renderButton = () => (
-    <div onClick={handleClick} data-tooltip-id={tooltip ? tooltipIdRef.current : undefined} className={combinedClassName}>
+    <div
+      onClick={handleClick}
+      data-tooltip-id={tooltip ? tooltipIdRef.current : undefined}
+      data-tooltip-content={typeof tooltip === 'string' && tooltipId ? tooltip : undefined}
+      className={combinedClassName}
+    >
       {icon}
     </div>
   );
