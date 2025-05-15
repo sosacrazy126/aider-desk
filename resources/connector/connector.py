@@ -408,7 +408,7 @@ class Connector:
         clear_context = message.get('clearContext')
 
         if not prompt:
-          return
+          return json.dumps({"success": True})
 
         try:
             await self.run_prompt(prompt, mode, architect_model, prompt_id, clear_context)
@@ -513,6 +513,7 @@ class Connector:
           "error": f"Unknown action: {action}"
         })
 
+      return json.dumps({"success": True})
     except Exception as e:
       self.coder.io.tool_error(f"Exception in connector: {str(e)}")
       return json.dumps({
@@ -934,10 +935,12 @@ class Connector:
       content = self.coder.io.read_text(fname)
       if is_image_file(relative_fname):
         tokens = self.coder.main_model.token_count_for_image(fname)
-      else:
+      elif content is not None:
         # approximate
         content = f"{relative_fname}\n{fence}\n" + content + "{fence}\n"
         tokens = self.coder.main_model.token_count(content)
+      else:
+        tokens = 0
       info["files"][relative_fname] = {
         "tokens": tokens,
         "cost": tokens * cost_per_token,
