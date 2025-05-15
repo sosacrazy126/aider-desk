@@ -38,6 +38,7 @@ export interface Message {
 export interface LogMessage {
   message: string;
   level: LogLevel;
+  finished?: boolean;
 }
 
 export interface InitMessage {

@@ -10,6 +10,7 @@
 - added session token support for Agent's Bedrock provider
 - properly normalizing Windows path on non-Windows OS
 - added Remove action for log messages
+- added support for /commit command
 
 ## [0.13.0]
 

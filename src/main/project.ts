@@ -925,11 +925,12 @@ export class Project {
     });
   }
 
-  public addLogMessage(level: LogLevel, message?: string) {
+  public addLogMessage(level: LogLevel, message?: string, finished = false) {
     const data: LogData = {
       baseDir: this.baseDir,
       level,
       message,
+      finished,
     };
 
     this.mainWindow.webContents.send('log', data);

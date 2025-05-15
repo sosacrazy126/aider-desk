@@ -81,6 +81,7 @@ class ConnectorInputOutput(InputOutput):
     super().__init__(**kwargs)
     self.connector = connector
     self.running_shell_command = False
+    self.processing_loading_message = False
     self.current_command = None
 
   def add_to_input_history(self, input_text):
@@ -102,6 +103,10 @@ class ConnectorInputOutput(InputOutput):
 
           self.current_command = message[8:]
           wait_for_async(self.connector, send_use_command_output())
+    else:
+      for message in messages:
+        if message.startswith("Commit "):
+          wait_for_async(self.connector, self.connector.send_log_message("info", message, True))
 
   def is_warning_ignored(self, message):
     if message == "Warning: it's best to only add files that need changes to the chat.":
@@ -113,7 +118,7 @@ class ConnectorInputOutput(InputOutput):
   def tool_warning(self, message="", strip=True):
     super().tool_warning(message, strip)
     if self.connector and not self.is_warning_ignored(message):
-      wait_for_async(self.connector, self.connector.send_log_message("warning", message))
+      wait_for_async(self.connector, self.connector.send_log_message("warning", message, self.processing_loading_message))
 
   def is_error_ignored(self, message):
     if message.endswith("is already in the chat as a read-only file"):
@@ -229,9 +234,7 @@ def create_coder(connector):
   )
   coder.commands.io = io
   coder.io = io
-
-  coder.commands.io = io
-  coder.io = io
+  coder.repo.io = io
 
   return coder
 
@@ -382,11 +385,11 @@ class Connector:
     if with_delay:
       await asyncio.sleep(0.01)
 
-  async def send_log_message(self, level, message):
-    self.coder.io.tool_output(f"Sending {level} message to server... {message}")
+  async def send_log_message(self, level, message, finished=False):
     await self.sio.emit("log", {
       'level': level,
-      'message': message
+      'message': message,
+      'finished': finished
     })
     await asyncio.sleep(0.01)
 
@@ -727,9 +730,13 @@ class Connector:
     elif command.startswith("/tokens"):
       self.coder.io.running_shell_command = True
       self.coder.io.tool_output("Running /tokens")
+    elif command.startswith("/commit"):
+      self.coder.io.processing_loading_message = True
+      await self.send_log_message("loading", "Committing changes...")
 
     self.coder.commands.run(command)
     self.coder.io.running_shell_command = False
+    self.coder.io.processing_loading_message = False
     if command.startswith("/paste"):
       await asyncio.sleep(0.1)
       await self.send_update_context_files()

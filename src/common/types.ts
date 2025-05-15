@@ -38,6 +38,7 @@ export interface LogData {
   baseDir: string;
   level: LogLevel;
   message?: string;
+  finished?: boolean;
 }
 
 export interface ToolData {

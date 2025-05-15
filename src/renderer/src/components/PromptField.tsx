@@ -28,6 +28,7 @@ const CONFIRM_COMMANDS = [
   '/drop',
   '/redo',
   '/edit-last',
+  '/commit',
 ];
 
 const ANSWERS = ['y', 'n', 'a', 'd'];

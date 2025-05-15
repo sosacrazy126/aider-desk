@@ -218,7 +218,7 @@ export class ConnectorManager {
     }
 
     const project = this.projectManager.getProject(connector.baseDir);
-    project.addLogMessage(message.level, message.message);
+    project.addLogMessage(message.level, message.message, message.finished);
   };
 
   private removeConnector = (socket: Socket) => {

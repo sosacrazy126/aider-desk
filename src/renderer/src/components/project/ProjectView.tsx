@@ -266,7 +266,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
       }
     };
 
-    const handleLog = (_: IpcRendererEvent, { level, message }: LogData) => {
+    const handleLog = (_: IpcRendererEvent, { level, message, finished }: LogData) => {
       if (level === 'loading') {
         const loadingMessage: LoadingMessage = {
           id: uuidv4(),
@@ -298,6 +298,10 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
           content: message || '',
         };
         setMessages((prevMessages) => [...prevMessages.filter((message) => !isLoadingMessage(message)), logMessage]);
+
+        if (finished) {
+          setProcessing(false);
+        }
       }
     };
 
