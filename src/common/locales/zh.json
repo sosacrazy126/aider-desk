@@ -365,7 +365,13 @@
         "append": "追加到文件: {{filePath}}",
         "createOnly": "创建文件: {{filePath}}"
       },
-      "fileEdit": "编辑文件: {{filePath}}",
+      "fileEdit": {
+        "title": "编辑文件: {{filePath}}",
+        "searchTerm": "搜索词",
+        "regex": "正则表达式",
+        "replacementText": "替换文本",
+        "replaceAll": "替换所有"
+      },
       "glob": "查找匹配模式的文件: {{pattern}}",
       "grep": "在匹配 {{filePattern}} 的文件中搜索 {{searchTerm}}",
       "bash": "执行 bash 命令: {{command}}",

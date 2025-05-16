@@ -1,10 +1,12 @@
 import Prism from 'prismjs';
 import ReactDiffViewer from 'react-diff-viewer-continued';
+
 import 'prismjs/themes/prism-tomorrow.css';
 import 'prismjs/components/prism-typescript';
 import 'prismjs/components/prism-python';
 import 'prismjs/components/prism-bash';
 import 'prismjs/components/prism-json';
+import 'prismjs/components/prism-css';
 
 const DIFF_VIEWER_STYLES = {
   variables: {

@@ -370,7 +370,13 @@
         "append": "Appending to file: {{filePath}}",
         "createOnly": "Creating file: {{filePath}}"
       },
-      "fileEdit": "Editing file: {{filePath}}",
+      "fileEdit": {
+        "title": "Editing file: {{filePath}}",
+        "searchTerm": "Search Term",
+        "regex": "Regex",
+        "replacementText": "Replacement Text",
+        "replaceAll": "Replace All"
+      },
       "glob": "Finding files matching pattern: {{pattern}}",
       "grep": "Searching files matching '{{filePattern}}' for '{{searchTerm}}'",
       "bash": "Executing bash command: '{{command}}'",

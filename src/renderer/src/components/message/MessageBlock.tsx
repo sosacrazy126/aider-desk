@@ -1,5 +1,12 @@
 import { useTranslation } from 'react-i18next';
-import { HELPERS_TOOL_GROUP_NAME, HELPERS_TOOL_NO_SUCH_TOOL, HELPERS_TOOL_INVALID_TOOL_ARGUMENTS } from '@common/tools';
+import {
+  HELPERS_TOOL_GROUP_NAME,
+  HELPERS_TOOL_NO_SUCH_TOOL,
+  HELPERS_TOOL_INVALID_TOOL_ARGUMENTS,
+  POWER_TOOL_GROUP_NAME,
+  POWER_TOOL_FILE_WRITE,
+  POWER_TOOL_FILE_EDIT,
+} from '@common/tools';
 
 import { CommandOutputMessageBlock } from './CommandOutputMessageBlock';
 import { LoadingMessageBlock } from './LoadingMessageBlock';
@@ -18,8 +25,11 @@ import {
   Message,
   isToolMessage,
   LogMessage,
+  ToolMessage,
 } from '@/types/message';
 import { ToolMessageBlock } from '@/components/message/ToolMessageBlock';
+import { FileWriteToolMessage } from '@/components/message/FileWriteToolMessage';
+import { EditFileToolMessage } from '@/components/message/EditFileToolMessage';
 
 type Props = {
   baseDir: string;
@@ -61,27 +71,38 @@ export const MessageBlock = ({ baseDir, message, allFiles, renderMarkdown, remov
   }
 
   if (isToolMessage(message)) {
-    if (message.serverName === HELPERS_TOOL_GROUP_NAME) {
-      let logMessageContent = message.content;
+    const toolMessage = message as ToolMessage;
 
-      if (message.toolName === HELPERS_TOOL_NO_SUCH_TOOL) {
-        logMessageContent = t('toolMessage.errors.noSuchTool', { toolName: message.args.toolName });
-      } else if (message.toolName === HELPERS_TOOL_INVALID_TOOL_ARGUMENTS) {
+    if (toolMessage.serverName === POWER_TOOL_GROUP_NAME) {
+      if (toolMessage.toolName === POWER_TOOL_FILE_WRITE) {
+        return <FileWriteToolMessage message={toolMessage} onRemove={remove} />;
+      }
+      if (toolMessage.toolName === POWER_TOOL_FILE_EDIT) {
+        return <EditFileToolMessage message={toolMessage} onRemove={remove} />;
+      }
+    }
+
+    if (toolMessage.serverName === HELPERS_TOOL_GROUP_NAME) {
+      let logMessageContent = toolMessage.content;
+
+      if (toolMessage.toolName === HELPERS_TOOL_NO_SUCH_TOOL) {
+        logMessageContent = t('toolMessage.errors.noSuchTool', { toolName: toolMessage.args.toolName });
+      } else if (toolMessage.toolName === HELPERS_TOOL_INVALID_TOOL_ARGUMENTS) {
         logMessageContent = t('toolMessage.errors.invalidToolArguments', {
-          toolName: message.args.toolName,
+          toolName: toolMessage.args.toolName,
         });
       }
 
       const logMessage: LogMessage = {
         type: 'log',
         level: 'info',
-        id: message.id,
+        id: toolMessage.id,
         content: logMessageContent,
       };
       return <LogMessageBlock message={logMessage} onRemove={remove} />;
     }
 
-    return <ToolMessageBlock message={message} onRemove={remove} />;
+    return <ToolMessageBlock message={toolMessage} onRemove={remove} />;
   }
 
   return null;

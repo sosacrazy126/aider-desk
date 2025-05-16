@@ -142,3 +142,29 @@ export const isMessageEmpty = (content: unknown): boolean => {
 
   return true;
 };
+
+export // Determine language for CodeBlock based on file extension
+const getLanguageFromPath = (path: string): string => {
+  const extension = path.split('.').pop()?.toLowerCase();
+  // Add more mappings as needed
+  switch (extension) {
+    case 'js':
+    case 'jsx':
+      return 'javascript';
+    case 'ts':
+    case 'tsx':
+      return 'typescript';
+    case 'py':
+      return 'python';
+    case 'json':
+      return 'json';
+    case 'html':
+      return 'html';
+    case 'css':
+      return 'css';
+    case 'md':
+      return 'markdown';
+    default:
+      return 'text'; // Default to plain text
+  }
+};

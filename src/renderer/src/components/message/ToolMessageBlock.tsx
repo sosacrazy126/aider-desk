@@ -1,11 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { MdKeyboardArrowDown, MdKeyboardArrowRight } from 'react-icons/md';
 import { CgSpinner } from 'react-icons/cg';
 import { RiToolsFill } from 'react-icons/ri';
 import { useTranslation } from 'react-i18next';
 import { VscError } from 'react-icons/vsc';
 import clsx from 'clsx';
-import { FileWriteMode } from '@common/types';
 import {
   AIDER_TOOL_ADD_CONTEXT_FILE,
   AIDER_TOOL_DROP_CONTEXT_FILE,
@@ -14,7 +13,6 @@ import {
   POWER_TOOL_BASH,
   POWER_TOOL_FILE_EDIT,
   POWER_TOOL_FILE_READ,
-  POWER_TOOL_FILE_WRITE,
   POWER_TOOL_GLOB,
   POWER_TOOL_GREP,
   POWER_TOOL_GROUP_NAME,
@@ -87,17 +85,6 @@ export const ToolMessageBlock = ({ message, onRemove }: Props) => {
         switch (message.toolName) {
           case POWER_TOOL_FILE_READ:
             return t('toolMessage.power.fileRead', { filePath: message.args.filePath as string });
-          case POWER_TOOL_FILE_WRITE:
-            switch (message.args.mode as FileWriteMode) {
-              case FileWriteMode.Overwrite:
-                return t('toolMessage.power.fileWrite.overwrite', { filePath: message.args.filePath as string });
-              case FileWriteMode.Append:
-                return t('toolMessage.power.fileWrite.append', { filePath: message.args.filePath as string });
-              case FileWriteMode.CreateOnly:
-                return t('toolMessage.power.fileWrite.createOnly', { filePath: message.args.filePath as string });
-              default:
-                return defaultLabel();
-            }
           case POWER_TOOL_FILE_EDIT:
             return t('toolMessage.power.fileEdit', { filePath: message.args.filePath as string });
           case POWER_TOOL_GLOB:

@@ -39,14 +39,14 @@ export const createPowerToolset = (project: Project): ToolSet => {
       isRegex: z.boolean().optional().default(false).describe('Whether the searchTerm should be treated as a regular expression. Default: false.'),
       replaceAll: z.boolean().optional().default(false).describe('Whether to replace all occurrences or just the first one. Default: false.'),
     }),
-    execute: async ({ filePath, searchTerm, replacementText, isRegex, replaceAll }, { toolCallId }) => {
-      project.addToolMessage(toolCallId, TOOL_GROUP_NAME, TOOL_FILE_EDIT, { filePath, searchTerm, replacementText, isRegex, replaceAll });
+    execute: async (args, { toolCallId }) => {
+      const { filePath, searchTerm, replacementText, isRegex, replaceAll } = args;
+      project.addToolMessage(toolCallId, TOOL_GROUP_NAME, TOOL_FILE_EDIT, args);
 
       const questionKey = `${TOOL_GROUP_NAME}${TOOL_GROUP_NAME_SEPARATOR}${TOOL_FILE_EDIT}`;
       const questionText = `Approve editing file '${filePath}'?`;
-      const questionSubject = `Search: ${searchTerm}\nReplace: ${replacementText}`;
 
-      const [isApproved, userInput] = await approvalManager.handleApproval(questionKey, questionText, questionSubject);
+      const [isApproved, userInput] = await approvalManager.handleApproval(questionKey, questionText);
 
       if (!isApproved) {
         return `File edit to '${filePath}' denied by user. Reason: ${userInput}`;

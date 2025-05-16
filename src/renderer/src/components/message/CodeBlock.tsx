@@ -10,6 +10,13 @@ import { IconButton } from '../common/IconButton';
 import { DiffViewer } from './DiffViewer';
 import { CopyMessageButton } from './CopyMessageButton';
 
+import 'prismjs/themes/prism-tomorrow.css';
+import 'prismjs/components/prism-typescript';
+import 'prismjs/components/prism-python';
+import 'prismjs/components/prism-bash';
+import 'prismjs/components/prism-json';
+import 'prismjs/components/prism-css';
+
 const SEARCH_MARKER = /^<{5,9} SEARCH[^\n]*$/m;
 const DIVIDER_MARKER = /^={5,9}\s*$/m;
 const REPLACE_MARKER = /^>{5,9} REPLACE\s*$/m;
@@ -51,41 +58,70 @@ const parseDiffContent = (content: string): { oldValue: string; newValue: string
 type Props = {
   baseDir: string;
   language: string;
-  children: string;
+  children?: string;
   file?: string;
   isComplete?: boolean;
+  oldValue?: string;
+  newValue?: string;
 };
 
-export const CodeBlock = ({ baseDir, language, children, file, isComplete = true }: Props) => {
+export const CodeBlock = ({ baseDir, language, children, file, isComplete = true, oldValue, newValue }: Props) => {
   const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(true);
   const [changesReverted, setChangesReverted] = useState(false);
-  const isDiff = isDiffContent(children);
-  const diffContent = isDiff ? parseDiffContent(children) : null;
+
+  const isExplicitDiff = oldValue !== undefined && newValue !== undefined;
+  const isChildrenDiff = !isExplicitDiff && children ? isDiffContent(children) : false;
+  const displayAsDiff = isExplicitDiff || isChildrenDiff;
+
+  let diffOldValue = '';
+  let diffNewValue = '';
+  let codeForSyntaxHighlight: string | undefined = undefined;
+  let stringToCopy: string;
+
+  if (isExplicitDiff) {
+    diffOldValue = oldValue!; // Known to be string
+    diffNewValue = newValue!; // Known to be string
+    stringToCopy = newValue!;
+  } else if (isChildrenDiff) {
+    const parsed = parseDiffContent(children!); // children is non-null and a diff
+    diffOldValue = parsed.oldValue;
+    diffNewValue = parsed.newValue;
+    stringToCopy = children!;
+  } else {
+    // Not a diff, display children as plain code (if it exists)
+    codeForSyntaxHighlight = children;
+    stringToCopy = children || '';
+  }
 
   const renderContent = () => {
-    if (diffContent) {
-      return <DiffViewer oldValue={diffContent.oldValue} newValue={diffContent.newValue} isComplete={isComplete} language={language} />;
-    } else {
-      const highlightedCode = Prism.highlight(children, Prism.languages[language] || Prism.languages.typescript, language || 'typescript');
+    if (displayAsDiff) {
+      return <DiffViewer oldValue={diffOldValue} newValue={diffNewValue} isComplete={isComplete} language={language} />;
+    } else if (codeForSyntaxHighlight) {
+      const highlightedCode = Prism.highlight(codeForSyntaxHighlight, Prism.languages[language] || Prism.languages.typescript, language || 'typescript');
       return (
         <pre>
           <code className={`language-${language}`} dangerouslySetInnerHTML={{ __html: highlightedCode }} />
         </pre>
       );
     }
+    return null;
   };
 
   const handleRevertChanges = () => {
-    window.api.applyEdits(baseDir, [
-      {
-        path: file!,
-        original: diffContent?.newValue || '',
-        updated: diffContent?.oldValue || '',
-      },
-    ]);
-    setChangesReverted(true);
+    if (file && displayAsDiff) {
+      window.api.applyEdits(baseDir, [
+        {
+          path: file!,
+          original: diffNewValue,
+          updated: diffOldValue,
+        },
+      ]);
+      setChangesReverted(true);
+    }
   };
+
+  const showRevertButton = !isExplicitDiff && displayAsDiff && file && diffOldValue && !changesReverted;
 
   return (
     <div className="mt-1 max-w-full">
@@ -98,7 +134,7 @@ export const CodeBlock = ({ baseDir, language, children, file, isComplete = true
                 {file}
               </span>
               <span className="flex items-center gap-2">
-                {isDiff && file && !!diffContent?.oldValue && !changesReverted && (
+                {showRevertButton && (
                   <div className="relative inline-block">
                     <IconButton
                       icon={<MdUndo size={16} />}
@@ -108,7 +144,7 @@ export const CodeBlock = ({ baseDir, language, children, file, isComplete = true
                     />
                   </div>
                 )}
-                <CopyMessageButton content={children} className="opacity-0 group-hover:opacity-100" />
+                <CopyMessageButton content={stringToCopy} className="opacity-0 group-hover:opacity-100" />
                 {!isComplete && <AiOutlineLoading3Quarters className="animate-spin text-neutral-500" size={14} />}
                 <span className="text-neutral-100 transition-transform duration-200" style={{ transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)' }}>
                   <MdKeyboardArrowDown size={16} />
@@ -125,7 +161,7 @@ export const CodeBlock = ({ baseDir, language, children, file, isComplete = true
         ) : (
           <div className="relative">
             <div className="absolute right-0 top-1 flex items-center gap-2">
-              <CopyMessageButton content={children} />
+              <CopyMessageButton content={stringToCopy} />
               {!isComplete && <AiOutlineLoading3Quarters className="animate-spin text-neutral-500" size={14} />}
             </div>
             {renderContent()}

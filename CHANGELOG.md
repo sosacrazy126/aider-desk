@@ -12,6 +12,7 @@
 - added Remove action for log messages
 - added support for /commit command
 - enhanced AddFileDialog with multi-file selection and also directory selection
+- enhanced write and edit tool messages syntax highlighted code and diff viewer
 
 ## [0.13.0]
 
