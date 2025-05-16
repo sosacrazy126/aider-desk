@@ -4,6 +4,13 @@ import path from 'path';
 import { tool } from 'ai';
 import { z } from 'zod';
 import { TOOL_GROUP_NAME_SEPARATOR } from '@common/utils';
+import {
+  AIDER_TOOL_GROUP_NAME as TOOL_GROUP_NAME,
+  AIDER_TOOL_GET_CONTEXT_FILES as TOOL_GET_CONTEXT_FILES,
+  AIDER_TOOL_ADD_CONTEXT_FILE as TOOL_ADD_CONTEXT_FILE,
+  AIDER_TOOL_DROP_CONTEXT_FILE as TOOL_DROP_CONTEXT_FILE,
+  AIDER_TOOL_RUN_PROMPT as TOOL_RUN_PROMPT,
+} from '@common/tools';
 
 import { Project } from '../../project';
 
@@ -34,7 +41,7 @@ Use a relative path for files intended for editing within the project. Use an ab
       readOnly: z.boolean().optional().describe('Whether the file is read-only'),
     }),
     execute: async ({ path: relativePath, readOnly = false }, { toolCallId }) => {
-      project.addToolMessage(toolCallId, 'aider', 'add_context_file', {
+      project.addToolMessage(toolCallId, TOOL_GROUP_NAME, TOOL_ADD_CONTEXT_FILE, {
         path: relativePath,
         readOnly,
       });
@@ -134,7 +141,7 @@ Restrictions:
     execute: async ({ prompt }, { toolCallId }) => {
       project.addToolMessage(toolCallId, 'aider', 'run_prompt', { prompt });
 
-      const questionKey = `aider${TOOL_GROUP_NAME_SEPARATOR}run_prompt`;
+      const questionKey = `${TOOL_GROUP_NAME}${TOOL_GROUP_NAME_SEPARATOR}${TOOL_RUN_PROMPT}`;
       const questionText = 'Approve prompt to run in Aider?';
 
       // Ask the question and wait for the answer
@@ -166,9 +173,9 @@ Restrictions:
   });
 
   return {
-    [`aider${TOOL_GROUP_NAME_SEPARATOR}get_context_files`]: getContextFilesTool,
-    [`aider${TOOL_GROUP_NAME_SEPARATOR}add_context_file`]: addContextFileTool,
-    [`aider${TOOL_GROUP_NAME_SEPARATOR}drop_context_file`]: dropContextFileTool,
-    [`aider${TOOL_GROUP_NAME_SEPARATOR}run_prompt`]: runPromptTool,
+    [`${TOOL_GROUP_NAME}${TOOL_GROUP_NAME_SEPARATOR}${TOOL_GET_CONTEXT_FILES}`]: getContextFilesTool,
+    [`${TOOL_GROUP_NAME}${TOOL_GROUP_NAME_SEPARATOR}${TOOL_ADD_CONTEXT_FILE}`]: addContextFileTool,
+    [`${TOOL_GROUP_NAME}${TOOL_GROUP_NAME_SEPARATOR}${TOOL_DROP_CONTEXT_FILE}`]: dropContextFileTool,
+    [`${TOOL_GROUP_NAME}${TOOL_GROUP_NAME_SEPARATOR}${TOOL_RUN_PROMPT}`]: runPromptTool,
   };
 };

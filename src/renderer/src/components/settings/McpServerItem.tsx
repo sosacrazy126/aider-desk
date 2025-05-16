@@ -26,7 +26,6 @@ export const McpServerItem = ({ serverName, config, onRemove, onEdit, toolApprov
 
   useEffect(() => {
     const loadTools = async () => {
-      console.log(`Loading MCP server tools for ${serverName}`);
       try {
         const loadedTools = await window.api.loadMcpServerTools(serverName, config);
         setTools(loadedTools);

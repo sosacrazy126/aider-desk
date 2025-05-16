@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { HELPERS_TOOL_GROUP_NAME, HELPERS_TOOL_NO_SUCH_TOOL, HELPERS_TOOL_INVALID_TOOL_ARGUMENTS } from '@common/tools';
 
 import { CommandOutputMessageBlock } from './CommandOutputMessageBlock';
 import { LoadingMessageBlock } from './LoadingMessageBlock';
@@ -60,12 +61,12 @@ export const MessageBlock = ({ baseDir, message, allFiles, renderMarkdown, remov
   }
 
   if (isToolMessage(message)) {
-    if (message.serverName === 'helpers') {
+    if (message.serverName === HELPERS_TOOL_GROUP_NAME) {
       let logMessageContent = message.content;
 
-      if (message.toolName === 'no_such_tool') {
+      if (message.toolName === HELPERS_TOOL_NO_SUCH_TOOL) {
         logMessageContent = t('toolMessage.errors.noSuchTool', { toolName: message.args.toolName });
-      } else if (message.toolName === 'invalid_tool_arguments') {
+      } else if (message.toolName === HELPERS_TOOL_INVALID_TOOL_ARGUMENTS) {
         logMessageContent = t('toolMessage.errors.invalidToolArguments', {
           toolName: message.args.toolName,
         });
@@ -79,6 +80,7 @@ export const MessageBlock = ({ baseDir, message, allFiles, renderMarkdown, remov
       };
       return <LogMessageBlock message={logMessage} onRemove={remove} />;
     }
+
     return <ToolMessageBlock message={message} onRemove={remove} />;
   }
 

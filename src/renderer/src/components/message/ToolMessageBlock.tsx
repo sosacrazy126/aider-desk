@@ -6,6 +6,20 @@ import { useTranslation } from 'react-i18next';
 import { VscError } from 'react-icons/vsc';
 import clsx from 'clsx';
 import { FileWriteMode } from '@common/types';
+import {
+  AIDER_TOOL_ADD_CONTEXT_FILE,
+  AIDER_TOOL_DROP_CONTEXT_FILE,
+  AIDER_TOOL_GROUP_NAME,
+  AIDER_TOOL_RUN_PROMPT,
+  POWER_TOOL_BASH,
+  POWER_TOOL_FILE_EDIT,
+  POWER_TOOL_FILE_READ,
+  POWER_TOOL_FILE_WRITE,
+  POWER_TOOL_GLOB,
+  POWER_TOOL_GREP,
+  POWER_TOOL_GROUP_NAME,
+  POWER_TOOL_SEMANTIC_SEARCH,
+} from '@common/tools';
 
 import { CopyMessageButton } from './CopyMessageButton';
 import { parseToolContent } from './utils';
@@ -58,22 +72,22 @@ export const ToolMessageBlock = ({ message, onRemove }: Props) => {
     const defaultLabel = () => t('toolMessage.toolLabel', { server: formatName(message.serverName), tool: formatName(message.toolName) });
 
     switch (message.serverName) {
-      case 'aider':
+      case AIDER_TOOL_GROUP_NAME:
         switch (message.toolName) {
-          case 'add_context_file':
+          case AIDER_TOOL_ADD_CONTEXT_FILE:
             return t('toolMessage.aider.addContextFile', { path: message.args.path as string });
-          case 'drop_context_file':
+          case AIDER_TOOL_DROP_CONTEXT_FILE:
             return t('toolMessage.aider.dropContextFile', { path: message.args.path as string });
-          case 'run_prompt':
+          case AIDER_TOOL_RUN_PROMPT:
             return t('toolMessage.aider.runPrompt');
           default:
             return defaultLabel();
         }
-      case 'power':
+      case POWER_TOOL_GROUP_NAME:
         switch (message.toolName) {
-          case 'file_read':
+          case POWER_TOOL_FILE_READ:
             return t('toolMessage.power.fileRead', { filePath: message.args.filePath as string });
-          case 'file_write':
+          case POWER_TOOL_FILE_WRITE:
             switch (message.args.mode as FileWriteMode) {
               case FileWriteMode.Overwrite:
                 return t('toolMessage.power.fileWrite.overwrite', { filePath: message.args.filePath as string });
@@ -84,15 +98,15 @@ export const ToolMessageBlock = ({ message, onRemove }: Props) => {
               default:
                 return defaultLabel();
             }
-          case 'file_edit':
+          case POWER_TOOL_FILE_EDIT:
             return t('toolMessage.power.fileEdit', { filePath: message.args.filePath as string });
-          case 'glob':
+          case POWER_TOOL_GLOB:
             return t('toolMessage.power.glob', { pattern: message.args.pattern as string });
-          case 'grep':
+          case POWER_TOOL_GREP:
             return t('toolMessage.power.grep', { filePattern: message.args.filePattern as string, searchTerm: message.args.searchTerm as string });
-          case 'bash':
+          case POWER_TOOL_BASH:
             return t('toolMessage.power.bash', { command: message.args.command as string });
-          case 'semantic_search':
+          case POWER_TOOL_SEMANTIC_SEARCH:
             return t('toolMessage.power.semanticSearch', { query: message.args.query as string });
           default:
             return defaultLabel();

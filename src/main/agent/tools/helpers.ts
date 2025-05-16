@@ -1,6 +1,11 @@
 import { tool } from 'ai';
 import { z } from 'zod';
 import { TOOL_GROUP_NAME_SEPARATOR } from '@common/utils';
+import {
+  HELPERS_TOOL_GROUP_NAME as TOOL_GROUP_NAME,
+  HELPERS_TOOL_NO_SUCH_TOOL as TOOL_NO_SUCH_TOOL,
+  HELPERS_TOOL_INVALID_TOOL_ARGUMENTS as TOOL_INVALID_TOOL_ARGUMENTS,
+} from '@common/tools';
 
 import type { ToolSet } from 'ai';
 
@@ -33,7 +38,7 @@ export const createHelpersToolset = (): ToolSet => {
   });
 
   return {
-    [`helpers${TOOL_GROUP_NAME_SEPARATOR}no_such_tool`]: noSuchTool,
-    [`helpers${TOOL_GROUP_NAME_SEPARATOR}invalid_tool_arguments`]: invalidToolArguments,
+    [`${TOOL_GROUP_NAME}${TOOL_GROUP_NAME_SEPARATOR}${TOOL_NO_SUCH_TOOL}`]: noSuchTool,
+    [`${TOOL_GROUP_NAME}${TOOL_GROUP_NAME_SEPARATOR}${TOOL_INVALID_TOOL_ARGUMENTS}`]: invalidToolArguments,
   };
 };

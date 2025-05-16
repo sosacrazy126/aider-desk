@@ -9,6 +9,16 @@ import { glob } from 'glob';
 import { searchTool } from '@buger/probe';
 import { TOOL_GROUP_NAME_SEPARATOR } from '@common/utils';
 import { FileWriteMode } from '@common/types';
+import {
+  POWER_TOOL_GROUP_NAME as TOOL_GROUP_NAME,
+  POWER_TOOL_FILE_EDIT as TOOL_FILE_EDIT,
+  POWER_TOOL_FILE_READ as TOOL_FILE_READ,
+  POWER_TOOL_FILE_WRITE as TOOL_FILE_WRITE,
+  POWER_TOOL_GLOB as TOOL_GLOB,
+  POWER_TOOL_GREP as TOOL_GREP,
+  POWER_TOOL_SEMANTIC_SEARCH as TOOL_SEMANTIC_SEARCH,
+  POWER_TOOL_BASH as TOOL_BASH,
+} from '@common/tools';
 
 import { Project } from '../../project';
 
@@ -30,9 +40,9 @@ export const createPowerToolset = (project: Project): ToolSet => {
       replaceAll: z.boolean().optional().default(false).describe('Whether to replace all occurrences or just the first one. Default: false.'),
     }),
     execute: async ({ filePath, searchTerm, replacementText, isRegex, replaceAll }, { toolCallId }) => {
-      project.addToolMessage(toolCallId, 'power', 'file_edit', { filePath, searchTerm, replacementText, isRegex, replaceAll });
+      project.addToolMessage(toolCallId, TOOL_GROUP_NAME, TOOL_FILE_EDIT, { filePath, searchTerm, replacementText, isRegex, replaceAll });
 
-      const questionKey = `power${TOOL_GROUP_NAME_SEPARATOR}file_edit`;
+      const questionKey = `${TOOL_GROUP_NAME}${TOOL_GROUP_NAME_SEPARATOR}${TOOL_FILE_EDIT}`;
       const questionText = `Approve editing file '${filePath}'?`;
       const questionSubject = `Search: ${searchTerm}\nReplace: ${replacementText}`;
 
@@ -80,7 +90,7 @@ export const createPowerToolset = (project: Project): ToolSet => {
       filePath: z.string().describe('The path to the file to be read (relative to the project root).'),
     }),
     execute: async ({ filePath }, { toolCallId }) => {
-      project.addToolMessage(toolCallId, 'power', 'file_read', { filePath });
+      project.addToolMessage(toolCallId, TOOL_GROUP_NAME, TOOL_FILE_READ, { filePath });
 
       const absolutePath = path.resolve(project.baseDir, filePath);
       try {
@@ -110,9 +120,9 @@ export const createPowerToolset = (project: Project): ToolSet => {
         ),
     }),
     execute: async ({ filePath, content, mode }, { toolCallId }) => {
-      project.addToolMessage(toolCallId, 'power', 'file_write', { filePath, content, mode });
+      project.addToolMessage(toolCallId, TOOL_GROUP_NAME, TOOL_FILE_WRITE, { filePath, content, mode });
 
-      const questionKey = `power${TOOL_GROUP_NAME_SEPARATOR}file_write`;
+      const questionKey = `${TOOL_GROUP_NAME}${TOOL_GROUP_NAME_SEPARATOR}${TOOL_FILE_WRITE}`;
       const questionText =
         mode === FileWriteMode.Overwrite
           ? `Approve overwriting or creating file '${filePath}'?`
@@ -180,7 +190,7 @@ export const createPowerToolset = (project: Project): ToolSet => {
       ignore: z.array(z.string()).optional().describe('An array of glob patterns to ignore.'),
     }),
     execute: async ({ pattern, cwd, ignore }, { toolCallId }) => {
-      project.addToolMessage(toolCallId, 'power', 'glob', { pattern, cwd, ignore });
+      project.addToolMessage(toolCallId, TOOL_GROUP_NAME, TOOL_GLOB, { pattern, cwd, ignore });
 
       const absoluteCwd = cwd ? path.resolve(project.baseDir, cwd) : project.baseDir;
       try {
@@ -215,7 +225,7 @@ export const createPowerToolset = (project: Project): ToolSet => {
       caseSensitive: z.boolean().optional().default(false).describe('Whether the search should be case sensitive. Default: false.'),
     }),
     execute: async ({ filePattern, searchTerm, contextLines, caseSensitive }, { toolCallId }) => {
-      project.addToolMessage(toolCallId, 'power', 'grep', { filePattern, searchTerm, contextLines, caseSensitive });
+      project.addToolMessage(toolCallId, TOOL_GROUP_NAME, TOOL_GREP, { filePattern, searchTerm, contextLines, caseSensitive });
 
       try {
         const files = await glob(filePattern, {
@@ -283,9 +293,9 @@ export const createPowerToolset = (project: Project): ToolSet => {
       timeout: z.number().int().min(0).optional().default(60000).describe('Timeout for the command execution in milliseconds. Default: 60000 ms.'),
     }),
     execute: async ({ command, cwd, timeout }, { toolCallId }) => {
-      project.addToolMessage(toolCallId, 'power', 'bash', { command, cwd, timeout });
+      project.addToolMessage(toolCallId, TOOL_GROUP_NAME, TOOL_BASH, { command, cwd, timeout });
 
-      const questionKey = `power${TOOL_GROUP_NAME_SEPARATOR}bash`;
+      const questionKey = `${TOOL_GROUP_NAME}${TOOL_GROUP_NAME_SEPARATOR}${TOOL_BASH}`;
       const questionText = 'Approve executing bash command?';
       const questionSubject = `Command: ${command}\nWorking Directory: ${cwd || '.'}\nTimeout: ${timeout}ms`;
 
@@ -454,13 +464,13 @@ export const createPowerToolset = (project: Project): ToolSet => {
    */
 
   return {
-    [`power${TOOL_GROUP_NAME_SEPARATOR}file_edit`]: fileEditTool,
-    [`power${TOOL_GROUP_NAME_SEPARATOR}file_read`]: fileReadTool,
-    [`power${TOOL_GROUP_NAME_SEPARATOR}file_write`]: fileWriteTool,
-    [`power${TOOL_GROUP_NAME_SEPARATOR}glob`]: globTool,
-    [`power${TOOL_GROUP_NAME_SEPARATOR}grep`]: grepTool,
-    [`power${TOOL_GROUP_NAME_SEPARATOR}semantic_search`]: searchTool(),
-    [`power${TOOL_GROUP_NAME_SEPARATOR}bash`]: bashTool,
+    [`${TOOL_GROUP_NAME}${TOOL_GROUP_NAME_SEPARATOR}${TOOL_FILE_EDIT}`]: fileEditTool,
+    [`${TOOL_GROUP_NAME}${TOOL_GROUP_NAME_SEPARATOR}${TOOL_FILE_READ}`]: fileReadTool,
+    [`${TOOL_GROUP_NAME}${TOOL_GROUP_NAME_SEPARATOR}${TOOL_FILE_WRITE}`]: fileWriteTool,
+    [`${TOOL_GROUP_NAME}${TOOL_GROUP_NAME_SEPARATOR}${TOOL_GLOB}`]: globTool,
+    [`${TOOL_GROUP_NAME}${TOOL_GROUP_NAME_SEPARATOR}${TOOL_GREP}`]: grepTool,
+    [`${TOOL_GROUP_NAME}${TOOL_GROUP_NAME_SEPARATOR}${TOOL_SEMANTIC_SEARCH}`]: searchTool(),
+    [`${TOOL_GROUP_NAME}${TOOL_GROUP_NAME_SEPARATOR}${TOOL_BASH}`]: bashTool,
     // TODO: disabled for now until better defined
     // [`power${TOOL_GROUP_NAME_SEPARATOR}lint`]: lintTool,
     // [`power${TOOL_GROUP_NAME_SEPARATOR}run_tests`]: runTestsTool,
