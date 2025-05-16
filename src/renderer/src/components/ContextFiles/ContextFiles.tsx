@@ -244,12 +244,12 @@ export const ContextFiles = ({ baseDir, allFiles, showFileDialog }: Props) => {
         )}
         <button
           onClick={() => setShowAllFiles(!showAllFiles)}
-          className="p-1.5 hover:bg-neutral-700 rounded-md"
+          className="p-1.5 hover:bg-neutral-700 rounded-md group"
           data-tooltip-id="context-files-tooltip"
           data-tooltip-content={showAllFiles ? t('contextFiles.hideAllFiles') : t('contextFiles.showAllFiles')}
           data-tooltip-delay-show={500}
         >
-          <LuFolderTree className={`w-4 h-4 ${showAllFiles ? 'text-neutral-100' : 'text-neutral-700'}`} />
+          <LuFolderTree className={`w-4 h-4 ${showAllFiles ? 'text-neutral-100' : 'text-neutral-700 group-hover:text-neutral-500'}`} />
         </button>
         <button
           onClick={showFileDialog}

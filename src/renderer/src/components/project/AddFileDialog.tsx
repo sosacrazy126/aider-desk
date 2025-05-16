@@ -37,10 +37,30 @@ export const AddFileDialog = ({ onClose, onAddFiles, baseDir, initialReadOnly = 
         return;
       }
       const suggestionFiles = isReadOnly ? await window.api.getFilePathSuggestions(inputValue) : await window.api.getAddableFiles(baseDir);
+      const getParentDirectories = () => {
+        const parentDirs = new Set<string>();
+        for (const filePath of suggestionFiles) {
+          const pathSegments = filePath.split(/[\\/]/);
+
+          if (pathSegments.length <= 1) {
+            continue; // No parent directories if it's a root file or empty/invalid path
+          }
+
+          for (let i = 0; i < pathSegments.length - 1; i++) {
+            // Construct the parent path by joining segments from start up to current segment 'i'
+            const parentPath = pathSegments.slice(0, i + 1).join('/');
+            // Add to set if it's not an empty string (e.g. from a path like "/file.txt" where first segment is empty)
+            if (parentPath) {
+              parentDirs.add(parentPath);
+            }
+          }
+        }
+        return Array.from(parentDirs);
+      };
 
       if (showSuggestions) {
         const filteredSuggestions = matchSorter(
-          suggestionFiles.filter((file) => !selectedPaths.includes(file)),
+          suggestionFiles.concat(isReadOnly ? [] : getParentDirectories()).filter((file) => !selectedPaths.includes(file)),
           inputValue,
           {
             keys: [

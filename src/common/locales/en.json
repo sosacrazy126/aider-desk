@@ -225,9 +225,9 @@
     "agent": "Agent"
   },
   "addFileDialog": {
-    "title": "ADD CONTEXT FILE",
-    "placeholder": "Find file to add",
-    "placeholderFiles": "Find file to add or press Enter to finish",
+    "title": "Add context files",
+    "placeholder": "Enter file or directory to add",
+    "placeholderFiles": "Enter file or directory or press Enter to finish",
     "browse": "Browse files",
     "readOnly": "Read-Only",
     "browseFile": "Browse for files",
@@ -236,7 +236,7 @@
   },
   "contextFiles": {
     "title": "Context Files",
-    "add": "Add context file",
+    "add": "Add context files",
     "addFileTooltip": "Add file (use Ctrl/Cmd to add as Read-only)",
     "addFileTooltip.ctrl": "Add file (use Ctrl to add as Read-only)",
     "addFileTooltip.cmd": "Add file (use Cmd to add as Read-only)",
