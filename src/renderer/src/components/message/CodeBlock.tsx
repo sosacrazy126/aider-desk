@@ -1,62 +1,14 @@
 import Prism from 'prismjs';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import 'prismjs/themes/prism-tomorrow.css';
-import 'prismjs/components/prism-typescript';
-import 'prismjs/components/prism-python';
-import 'prismjs/components/prism-bash';
-import 'prismjs/components/prism-json';
-import ReactDiffViewer from 'react-diff-viewer-continued';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 import { MdKeyboardArrowDown, MdUndo } from 'react-icons/md';
 import { VscCode } from 'react-icons/vsc';
 
 import { IconButton } from '../common/IconButton';
 
+import { DiffViewer } from './DiffViewer';
 import { CopyMessageButton } from './CopyMessageButton';
-
-const DIFF_VIEWER_STYLES = {
-  variables: {
-    dark: {
-      diffViewerBackground: 'var(--tw-gray-950)',
-      diffViewerColor: '#FFF',
-      addedBackground: '#022c22',
-      addedColor: 'white',
-      removedBackground: '#3f1d25',
-      removedColor: 'white',
-      wordAddedBackground: '#044536',
-      wordRemovedBackground: '#601e29',
-      addedGutterBackground: '#022c22',
-      removedGutterBackground: '#3f1d25',
-      gutterBackground: 'var(--tw-gray-950)',
-      gutterBackgroundDark: 'var(--tw-gray-950)',
-      highlightBackground: 'var(--tw-gray-800)',
-      highlightGutterBackground: 'var(--tw-gray-800)',
-      codeFoldGutterBackground: 'var(--tw-gray-950)',
-      codeFoldBackground: 'var(--tw-gray-950)',
-      emptyLineBackground: 'var(--tw-gray-950)',
-      gutterColor: 'var(--tw-gray-500)',
-      addedGutterColor: 'var(--tw-gray-600)',
-      removedGutterColor: 'var(--tw-gray-600)',
-      codeFoldContentColor: 'var(--tw-gray-600)',
-      diffViewerTitleBackground: 'var(--tw-gray-950)',
-      diffViewerTitleColor: 'var(--tw-gray-600)',
-      diffViewerTitleBorderColor: 'var(--tw-gray-800)',
-    },
-  },
-  contentText: {
-    fontSize: 'var(--tw-text-xs)',
-  },
-  gutter: {
-    fontSize: 'var(--tw-text-xs)',
-    padding: '0',
-    minWidth: '25px',
-  },
-  line: {
-    padding: '0',
-    lineHeight: '1rem',
-  },
-};
 
 const SEARCH_MARKER = /^<{5,9} SEARCH[^\n]*$/m;
 const DIVIDER_MARKER = /^={5,9}\s*$/m;
@@ -111,42 +63,9 @@ export const CodeBlock = ({ baseDir, language, children, file, isComplete = true
   const isDiff = isDiffContent(children);
   const diffContent = isDiff ? parseDiffContent(children) : null;
 
-  const highlightSyntax = (code: string) => {
-    if (!code) {
-      return <pre style={{ display: 'inline' }}></pre>;
-    }
-
-    try {
-      const html = Prism.highlight(code, Prism.languages[language] || Prism.languages.typescript, language || 'typescript');
-      return (
-        <pre
-          style={{ display: 'inline' }}
-          dangerouslySetInnerHTML={{
-            __html: html,
-          }}
-        />
-      );
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Syntax highlighting failed:', error);
-      return <pre style={{ display: 'inline' }}>{code}</pre>;
-    }
-  };
-
   const renderContent = () => {
     if (diffContent) {
-      return (
-        <ReactDiffViewer
-          oldValue={diffContent.oldValue}
-          newValue={diffContent.newValue}
-          splitView={true}
-          disableWordDiff={true}
-          useDarkTheme={true}
-          showDiffOnly={false}
-          renderContent={isComplete ? highlightSyntax : undefined}
-          styles={DIFF_VIEWER_STYLES}
-        />
-      );
+      return <DiffViewer oldValue={diffContent.oldValue} newValue={diffContent.newValue} isComplete={isComplete} language={language} />;
     } else {
       const highlightedCode = Prism.highlight(children, Prism.languages[language] || Prism.languages.typescript, language || 'typescript');
       return (
