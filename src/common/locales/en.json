@@ -232,7 +232,8 @@
     "readOnly": "Read-Only",
     "browseFile": "Browse for files",
     "browseDirectory": "Browse for directories",
-    "removeFileTooltip": "Remove file"
+    "removeFileTooltip": "Remove file",
+    "addPathTooltip": "Add path"
   },
   "contextFiles": {
     "title": "Context Files",

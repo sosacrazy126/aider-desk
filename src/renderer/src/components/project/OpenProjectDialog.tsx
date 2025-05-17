@@ -5,6 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { AutocompletionInput } from '@/components/AutocompletionInput';
 import { Accordion } from '@/components/common/Accordion';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { IconButton } from '@/components/common/IconButton';
+import { StyledTooltip } from '@/components/common/StyledTooltip';
 
 type Props = {
   onClose: () => void;
@@ -79,6 +81,7 @@ export const OpenProjectDialog = ({ onClose, onAddProject }: Props) => {
       disabled={!projectPath || !isValidPath}
       width={600}
     >
+      <StyledTooltip id="browseTooltipId" />
       <AutocompletionInput
         value={projectPath}
         suggestions={suggestions}
@@ -88,15 +91,15 @@ export const OpenProjectDialog = ({ onClose, onAddProject }: Props) => {
         }}
         placeholder={t('dialogs.projectPathPlaceholder')}
         autoFocus
-        className="w-full p-3 pr-12 rounded-lg bg-neutral-900/50 border border-neutral-700/50 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-neutral-500/50 focus:ring-1 focus:ring-neutral-500/50 transition-colors"
+        inputClassName="pr-10"
         rightElement={
-          <button
+          <IconButton
             onClick={handleSelectProject}
-            className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-neutral-400 hover:text-white hover:bg-neutral-700/50 transition-colors"
-            title={t('dialogs.browseFoldersTooltip')}
-          >
-            <FaFolder className="w-4 h-4" />
-          </button>
+            className="p-1.5 rounded-md hover:bg-neutral-700/50 transition-colors"
+            tooltip={t('dialogs.browseFoldersTooltip')}
+            tooltipId="browseTooltipId"
+            icon={<FaFolder className="w-4 h-4" />}
+          />
         }
         onSubmit={handleAddProject}
       />

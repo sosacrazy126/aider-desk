@@ -1,6 +1,7 @@
 import { matchSorter } from 'match-sorter';
 import { useEffect, useState } from 'react';
 import { FaFile, FaFolder } from 'react-icons/fa';
+import { PiKeyReturn } from 'react-icons/pi';
 import { IoClose } from 'react-icons/io5';
 import { useTranslation } from 'react-i18next';
 
@@ -104,6 +105,19 @@ export const AddFileDialog = ({ onClose, onAddFiles, baseDir, initialReadOnly = 
     }
   };
 
+  const handleOnPaste = async (pastedText: string) => {
+    if (pastedText) {
+      const isValid = await window.api.isValidPath(baseDir, pastedText);
+      if (isValid && !selectedPaths.includes(pastedText)) {
+        setSelectedPaths([...selectedPaths, pastedText]);
+        setInputValue('');
+        setShowSuggestions(false);
+      } else {
+        setInputValue(pastedText);
+      }
+    }
+  };
+
   const handleRemovePath = (pathToRemove: string) => {
     setSelectedPaths(selectedPaths.filter((path) => path !== pathToRemove));
   };
@@ -148,46 +162,56 @@ export const AddFileDialog = ({ onClose, onAddFiles, baseDir, initialReadOnly = 
     >
       <StyledTooltip id="browseTooltipId" />
       <StyledTooltip id="removeFileTooltipId" />
-      <AutocompletionInput
-        value={inputValue}
-        suggestions={suggestions}
-        onChange={(value, isFromSuggestion) => {
-          setShowSuggestions(!isFromSuggestion);
-          if (isFromSuggestion) {
-            setSelectedPaths((prev) => [...prev, value]);
-            setInputValue('');
-          } else {
-            setInputValue(value);
+      <div className="flex items-center space-x-2 w-full">
+        <AutocompletionInput
+          value={inputValue}
+          suggestions={suggestions}
+          onChange={(value, isFromSuggestion) => {
+            setShowSuggestions(!isFromSuggestion);
+            if (isFromSuggestion && !isReadOnly) {
+              setSelectedPaths((prev) => [...prev, value]);
+              setInputValue('');
+            } else {
+              setInputValue(value);
+            }
+          }}
+          placeholder={selectedPaths.length ? t('addFileDialog.placeholderFiles') : t('addFileDialog.placeholder')}
+          autoFocus
+          className="flex-1"
+          onSubmit={handleAddPathFromInput}
+          onPaste={handleOnPaste}
+          rightElement={
+            isValidInputValue && inputValue && !selectedPaths.includes(inputValue) ? (
+              <IconButton
+                onClick={handleAddPathFromInput}
+                icon={<PiKeyReturn className="w-4 h-4" />}
+                tooltipId="browseTooltipId"
+                tooltip={t('addFileDialog.addPathTooltip')}
+                className="p-2 rounded-md hover:bg-neutral-700/50 transition-colors"
+              />
+            ) : undefined
           }
-        }}
-        placeholder={selectedPaths.length ? t('addFileDialog.placeholderFiles') : t('addFileDialog.placeholder')}
-        autoFocus
-        className="w-full p-3 pr-20 rounded-lg bg-neutral-900/50 border border-neutral-700/50 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-neutral-500/50 focus:ring-1 focus:ring-neutral-500/50 transition-colors"
-        rightElement={
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex space-x-1">
-            <IconButton
-              onClick={() => handleBrowse('file')}
-              icon={<FaFile className="w-4 h-4" />}
-              tooltipId="browseTooltipId"
-              tooltip={t('addFileDialog.browseFile')}
-              className="p-1.5 rounded-md text-neutral-400 hover:text-white hover:bg-neutral-700/50 transition-colors"
-            />
-            <IconButton
-              onClick={() => handleBrowse('directory')}
-              icon={<FaFolder className="w-4 h-4" />}
-              tooltipId="browseTooltipId"
-              tooltip={t('addFileDialog.browseDirectory')}
-              className="p-1.5 rounded-md text-neutral-400 hover:text-white hover:bg-neutral-700/50 transition-colors"
-            />
-          </div>
-        }
-        onSubmit={handleAddPathFromInput}
-      />
+        />
+        <IconButton
+          onClick={() => handleBrowse('file')}
+          icon={<FaFile className="w-4 h-4" />}
+          tooltipId="browseTooltipId"
+          tooltip={t('addFileDialog.browseFile')}
+          className="p-2 rounded-md hover:bg-neutral-700/50 transition-colors"
+        />
+        <IconButton
+          onClick={() => handleBrowse('directory')}
+          icon={<FaFolder className="w-4 h-4" />}
+          tooltipId="browseTooltipId"
+          tooltip={t('addFileDialog.browseDirectory')}
+          className="p-2 rounded-md hover:bg-neutral-700/50 transition-colors"
+        />
+      </div>
       {selectedPaths.length > 0 && (
-        <div className="mt-1 flex flex-wrap gap-1 max-h-40 overflow-y-auto p-0.5 scrollbar-thin scrollbar-track-neutral-800 scrollbar-thumb-neutral-700 hover:scrollbar-thumb-neutral-600">
+        <div className="mt-1 flex flex-wrap gap-1 max-h-40 overflow-y-auto p-0.5 scrollbar-thin scrollbar-track-neutral-800 scrollbar-thumb-neutral-700 hover:scrollbar-thumb-neutral-600 w-full">
           {selectedPaths.map((path) => (
-            <div key={path} className="flex items-center bg-neutral-700 text-white text-xs px-2 py-1 rounded-full">
-              <span className="mr-1 truncate max-w-xs">{path}</span>
+            <div key={path} className="flex items-center bg-neutral-700 text-white text-xs px-2 py-1 rounded-full max-w-full">
+              <span className="mr-1 truncate">{path}</span>
               <IconButton
                 icon={<IoClose />}
                 onClick={() => handleRemovePath(path)}

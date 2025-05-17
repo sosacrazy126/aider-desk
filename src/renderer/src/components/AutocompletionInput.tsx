@@ -9,12 +9,25 @@ type Props = {
   onChange: (value: string, isFromSuggestion: boolean) => void;
   placeholder?: string;
   className?: string;
+  inputClassName?: string;
   rightElement?: ReactNode;
   autoFocus?: boolean;
+  onPaste?: (pastedText: string) => void;
   onSubmit?: () => void;
 };
 
-export const AutocompletionInput = ({ value, suggestions, onChange, placeholder, className, rightElement, autoFocus, onSubmit }: Props) => {
+export const AutocompletionInput = ({
+  value,
+  suggestions,
+  onChange,
+  placeholder,
+  className,
+  inputClassName,
+  rightElement,
+  autoFocus,
+  onPaste,
+  onSubmit,
+}: Props) => {
   const { t } = useTranslation();
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -124,10 +137,13 @@ export const AutocompletionInput = ({ value, suggestions, onChange, placeholder,
   };
 
   return (
-    <div className="relative">
+    <div className={clsx('relative flex items-center', className)}>
       <input
         ref={inputRef}
-        className={className}
+        className={clsx(
+          'w-full p-3 rounded-lg bg-neutral-900/50 border border-neutral-700/50 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-neutral-500/50 focus:ring-1 focus:ring-neutral-500/50 transition-colors',
+          inputClassName,
+        )}
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value, false)}
@@ -135,8 +151,15 @@ export const AutocompletionInput = ({ value, suggestions, onChange, placeholder,
         onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
         placeholder={placeholder ? t(placeholder) : undefined}
         autoFocus={autoFocus}
+        onPaste={(e) => {
+          const pastedText = e.clipboardData.getData('text');
+          if (onPaste) {
+            e.preventDefault();
+            onPaste(pastedText);
+          }
+        }}
       />
-      {rightElement}
+      {rightElement && <div className="absolute right-2 top-1/2 -translate-y-1/2">{rightElement}</div>}
       {renderSuggestions()}
     </div>
   );
