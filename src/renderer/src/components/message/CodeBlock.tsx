@@ -1,5 +1,5 @@
 import Prism from 'prismjs';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 import { MdKeyboardArrowDown, MdUndo } from 'react-icons/md';
@@ -7,8 +7,9 @@ import { VscCode } from 'react-icons/vsc';
 
 import { IconButton } from '../common/IconButton';
 
-import { DiffViewer } from './DiffViewer';
 import { CopyMessageButton } from './CopyMessageButton';
+
+import { DiffViewer } from '@/components/common/DiffViewer';
 
 import 'prismjs/themes/prism-tomorrow.css';
 import 'prismjs/components/prism-typescript';
@@ -94,9 +95,9 @@ export const CodeBlock = ({ baseDir, language, children, file, isComplete = true
     stringToCopy = children || '';
   }
 
-  const renderContent = () => {
+  const content = useMemo(() => {
     if (displayAsDiff) {
-      return <DiffViewer oldValue={diffOldValue} newValue={diffNewValue} isComplete={isComplete} language={language} />;
+      return <DiffViewer oldValue={diffOldValue} newValue={diffNewValue} language={language} />;
     } else if (codeForSyntaxHighlight) {
       const highlightedCode = Prism.highlight(codeForSyntaxHighlight, Prism.languages[language] || Prism.languages.typescript, language || 'typescript');
       return (
@@ -106,7 +107,7 @@ export const CodeBlock = ({ baseDir, language, children, file, isComplete = true
       );
     }
     return null;
-  };
+  }, [codeForSyntaxHighlight, diffNewValue, diffOldValue, displayAsDiff, language]);
 
   const handleRevertChanges = () => {
     if (file && displayAsDiff) {
@@ -155,7 +156,7 @@ export const CodeBlock = ({ baseDir, language, children, file, isComplete = true
               className={`transition-all duration-200 ${isExpanded ? 'max-h-[5000px] opacity-100 overflow-auto scrollbar-thin scrollbar-track-neutral-900 scrollbar-thumb-neutral-800 hover:scrollbar-thumb-neutral-600' : 'max-h-0 opacity-0 overflow-hidden'}`}
             >
               <hr className="border-gray-700 my-2" />
-              {renderContent()}
+              {content}
             </div>
           </>
         ) : (
@@ -164,7 +165,7 @@ export const CodeBlock = ({ baseDir, language, children, file, isComplete = true
               <CopyMessageButton content={stringToCopy} />
               {!isComplete && <AiOutlineLoading3Quarters className="animate-spin text-neutral-500" size={14} />}
             </div>
-            {renderContent()}
+            {content}
           </div>
         )}
       </div>

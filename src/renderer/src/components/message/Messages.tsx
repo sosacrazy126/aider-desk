@@ -78,7 +78,7 @@ export const Messages = forwardRef<MessagesRef, Props>(
         <StyledTooltip id="usage-info-tooltip" />
         {messages.map((message, index) => (
           <MessageBlock
-            key={index}
+            key={message.id || index}
             baseDir={baseDir}
             message={message}
             allFiles={allFiles}

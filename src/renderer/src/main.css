@@ -37,6 +37,11 @@
 
 body {
   margin: 0;
+  background-color: #121212;
+  color: #e0e0e0;
+}
+
+* {
   font-family: "Sono", monospace;
   font-optical-sizing: auto;
   font-weight: 400;
@@ -53,8 +58,3 @@ code {
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-body {
-  background-color: #121212;
-  color: #e0e0e0;
-}

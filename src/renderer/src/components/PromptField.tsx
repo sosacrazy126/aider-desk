@@ -91,6 +91,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
   ) => {
     const { t } = useTranslation();
     const [text, setText] = useState('');
+    const [debouncedText, setDebouncedText] = useState('');
     const [suggestionsVisible, setSuggestionsVisible] = useState(false);
     const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
     const [currentWord, setCurrentWord] = useState('');
@@ -112,6 +113,16 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
       },
       100,
       [currentWord, words],
+    );
+
+    useDebounce(
+      () => {
+        if (text !== debouncedText) {
+          setDebouncedText(text);
+        }
+      },
+      100,
+      [text],
     );
 
     useImperativeHandle(ref, () => ({
@@ -228,7 +239,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
       return () => {
         cancelAnimationFrame(timer);
       };
-    }, [suggestionsVisible, text]);
+    }, [suggestionsVisible, debouncedText]);
 
     const getCurrentWord = (text: string, cursorPosition: number) => {
       const textBeforeCursor = text.slice(0, cursorPosition);
@@ -443,7 +454,7 @@ export const PromptField = React.forwardRef<PromptFieldRef, Props>(
     return (
       <div className="w-full relative">
         {question && (
-          <div className="mb-2 p-3 bg-gradient-to-b from-neutral-950 to-neutral-900 rounded-md border border-neutral-700 text-sm">
+          <div className="mb-2 p-3 bg-gradient-to-b fromF-neutral-950 to-neutral-900 rounded-md border border-neutral-700 text-sm">
             <div className="text-white text-sm mb-2 whitespace-pre-wrap">{question.text}</div>
             {question.subject && (
               <div className="text-neutral-400 text-xs mb-3 whitespace-pre-wrap max-h-[50vh] overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-700 scrollbar-track-neutral-900 scrollbar-rounded">

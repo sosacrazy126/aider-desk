@@ -63,7 +63,9 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [processing, setProcessing] = useState(false);
   const [addFileDialogOptions, setAddFileDialogOptions] = useState<AddFileDialogOptions | null>(null);
-  const [autocompletionData, setAutocompletionData] = useState<AutocompletionData | null>(null);
+  const [allFiles, setAllFiles] = useState<string[]>([]);
+  const [availableModels, setAvailableModels] = useState<string[]>([]);
+  const [autocompletionWords, setAutocompletionWords] = useState<string[]>([]);
   const [aiderModelsData, setAiderModelsData] = useState<ModelsData | null>(null);
   const [inputHistory, setInputHistory] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -305,8 +307,10 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
       }
     };
 
-    const handleUpdateAutocompletion = (_: IpcRendererEvent, data: AutocompletionData) => {
-      setAutocompletionData(data);
+    const handleUpdateAutocompletion = (_: IpcRendererEvent, { allFiles, models, words }: AutocompletionData) => {
+      setAllFiles(allFiles);
+      setAvailableModels(models);
+      setAutocompletionWords(words);
     };
 
     const handleUpdateAiderModels = (_: IpcRendererEvent, data: ModelsData) => {
@@ -607,7 +611,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
             ref={projectTopBarRef}
             baseDir={project.baseDir}
             modelsData={aiderModelsData}
-            allModels={autocompletionData?.models}
+            allModels={availableModels}
             mode={mode}
             renderMarkdown={renderMarkdown}
             onModelChange={handleModelChange}
@@ -621,7 +625,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
             ref={messagesRef}
             baseDir={project.baseDir}
             messages={messages}
-            allFiles={autocompletionData?.allFiles}
+            allFiles={allFiles}
             renderMarkdown={renderMarkdown}
             removeMessage={handleRemoveMessage}
             redoLastUserPrompt={handleRedoLastUserPrompt}
@@ -656,7 +660,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
             runPrompt={runPrompt}
             editLastUserMessage={handleEditLastUserMessage}
             isActive={isActive}
-            words={autocompletionData?.words}
+            words={autocompletionWords}
             clearMessages={clearMessages}
             scrapeWeb={scrapeWeb}
             showFileDialog={showFileDialog}
@@ -684,7 +688,7 @@ export const ProjectView = ({ project, isActive = false }: Props) => {
           <div className="flex-grow flex flex-col overflow-y-hidden">
             <ContextFiles
               baseDir={project.baseDir}
-              allFiles={autocompletionData?.allFiles || []}
+              allFiles={allFiles}
               showFileDialog={() =>
                 setAddFileDialogOptions({
                   readOnly: false,

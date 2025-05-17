@@ -5,7 +5,8 @@ import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 
 import { CopyMessageButton } from './CopyMessageButton';
-import { parseMessageContent } from './utils';
+
+import { useParsedContent } from '@/hooks/useParsedContent';
 
 type Props = {
   thinking: string;
@@ -18,6 +19,8 @@ type Props = {
 export const ThinkingAnswerBlock = ({ thinking, answer, baseDir = '', allFiles = [], renderMarkdown }: Props) => {
   const { t } = useTranslation();
   const [isThinkingExpanded, setIsThinkingExpanded] = useState(false);
+  const parsedThinking = useParsedContent(baseDir, thinking, allFiles, renderMarkdown);
+  const parsedAnswer = useParsedContent(baseDir, answer, allFiles, renderMarkdown);
 
   const handleToggleThinking = (e: MouseEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -40,14 +43,12 @@ export const ThinkingAnswerBlock = ({ thinking, answer, baseDir = '', allFiles =
         </div>
 
         {isThinkingExpanded && (
-          <div className={clsx('p-3 text-xs text-neutral-300 bg-neutral-850', !renderMarkdown && 'whitespace-pre-wrap break-words')}>
-            {parseMessageContent(baseDir, thinking, allFiles, renderMarkdown)}
-          </div>
+          <div className={clsx('p-3 text-xs text-neutral-300 bg-neutral-850', !renderMarkdown && 'whitespace-pre-wrap break-words')}>{parsedThinking}</div>
         )}
       </div>
 
       {/* Answer section - only show if we have an answer or we're streaming */}
-      {answer && (
+      {answer && parsedAnswer && (
         <div className="border border-neutral-700 rounded-md overflow-hidden">
           <div className="flex items-center justify-between gap-2 p-2 bg-neutral-800">
             <div className="flex items-center gap-2">
@@ -58,9 +59,7 @@ export const ThinkingAnswerBlock = ({ thinking, answer, baseDir = '', allFiles =
             </div>
             <CopyMessageButton content={answer} className="text-neutral-600 hover:text-neutral-300" />
           </div>
-          <div className={clsx('p-3 text-xs text-neutral-100 bg-neutral-850', !renderMarkdown && 'whitespace-pre-wrap break-words')}>
-            {parseMessageContent(baseDir, answer, allFiles, renderMarkdown)}
-          </div>
+          <div className={clsx('p-3 text-xs text-neutral-100 bg-neutral-850', !renderMarkdown && 'whitespace-pre-wrap break-words')}>{parsedAnswer}</div>
         </div>
       )}
     </div>
