@@ -114,10 +114,11 @@ export interface WindowState {
 
 /**
  * Structure for debug session state.
- * Extend with additional debug-specific fields as needed.
+ * Now includes editFormat for debug mode consistency.
  */
 export interface DebugSession {
   isActive: boolean;
+  editFormat: EditFormat;
   // Additional debug-specific fields to be implemented in future PRs
 }
 

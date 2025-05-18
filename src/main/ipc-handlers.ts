@@ -195,8 +195,18 @@ export const setupIpcHandlers = (
   ipcMain.on('update-edit-format', (_, baseDir: string, format: EditFormat) => {
     const projectSettings = store.getProjectSettings(baseDir);
     projectSettings.editFormat = format;
+
+    // If there is an active debug session, update its editFormat as well
+    if (projectSettings.debugSession?.isActive) {
+      projectSettings.debugSession.editFormat = format;
+    }
+
     store.saveProjectSettings(baseDir, projectSettings);
-    projectManager.getProject(baseDir).updateModels(projectSettings.mainModel, projectSettings?.weakModel || null, format);
+    projectManager.getProject(baseDir).updateModels(
+      projectSettings.mainModel,
+      projectSettings?.weakModel || null,
+      format
+    );
   });
 
   ipcMain.on('run-command', (_, baseDir: string, command: string) => {
