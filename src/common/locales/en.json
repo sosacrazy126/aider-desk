@@ -391,6 +391,9 @@
   "codeBlock": {
     "revertChanges": "Revert changes"
   },
+  "diffViewer": {
+    "noChanges": "No changes have been made. Content is identical."
+  },
   "promptField": {
     "placeholders": {
       "0": "How can I help you today?",

@@ -17,6 +17,7 @@ import 'prismjs/components/prism-python';
 import 'prismjs/components/prism-bash';
 import 'prismjs/components/prism-json';
 import 'prismjs/components/prism-css';
+import 'prismjs/components/prism-go';
 
 const SEARCH_MARKER = /^<{5,9} SEARCH[^\n]*$/m;
 const DIVIDER_MARKER = /^={5,9}\s*$/m;
