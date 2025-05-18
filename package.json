@@ -28,6 +28,7 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "react-syntax-highlighter": "^15.5.0",
     "@ai-sdk/amazon-bedrock": "^2.2.5",
     "@ai-sdk/anthropic": "^1.2.6",
     "@ai-sdk/deepseek": "^0.2.6",
