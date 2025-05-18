@@ -7,6 +7,9 @@ export type Mode = 'code' | 'ask' | 'architect' | 'context' | 'agent' | 'debug';
 
 export type EditFormat = 'diff' | 'diff-fenced' | 'whole' | 'udiff' | 'udiff-simple' | 'patch';
 
+export const isValidEditFormat = (f: string): f is EditFormat =>
+  ['diff', 'diff-fenced', 'whole', 'udiff', 'udiff-simple', 'patch'].includes(f);
+
 export interface ResponseChunkData {
   messageId: string;
   baseDir: string;
@@ -117,9 +120,10 @@ export interface WindowState {
  * Now includes editFormat for debug mode consistency.
  */
 export interface DebugSession {
+  tests: DebugTestCase[];
+  activeTestId?: string;
   isActive: boolean;
   editFormat: EditFormat;
-  // Additional debug-specific fields to be implemented in future PRs
 }
 
 export interface ProjectSettings {
