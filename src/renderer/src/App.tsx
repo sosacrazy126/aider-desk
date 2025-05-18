@@ -7,6 +7,8 @@ import { useTranslation } from 'react-i18next';
 import { Onboarding } from '@/pages/Onboarding';
 import { Home } from '@/pages/Home';
 import { SettingsProvider, useSettings } from '@/context/SettingsContext';
+import { Provider as ReduxProvider } from 'react-redux';
+import { store } from './state/store';
 import 'react-toastify/dist/ReactToastify.css';
 import { ROUTES } from '@/utils/routes';
 import '@/i18n';
@@ -54,12 +56,14 @@ const App = () => {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: isVisible ? 1 : 0 }} transition={{ duration: 0.5, ease: 'easeIn' }}>
-      <Router>
-        <SettingsProvider>
-          <AnimatedRoutes />
-          <ToastContainer />
-        </SettingsProvider>
-      </Router>
+      <ReduxProvider store={store}>
+        <Router>
+          <SettingsProvider>
+            <AnimatedRoutes />
+            <ToastContainer />
+          </SettingsProvider>
+        </Router>
+      </ReduxProvider>
     </motion.div>
   );
 };
