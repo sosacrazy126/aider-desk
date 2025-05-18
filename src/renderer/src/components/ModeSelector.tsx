@@ -4,6 +4,7 @@ import { FaRegQuestionCircle } from 'react-icons/fa';
 import { AiOutlineFileSearch } from 'react-icons/ai';
 import { RiRobot2Line } from 'react-icons/ri';
 import { GoProjectRoadmap } from 'react-icons/go';
+import { BsBug } from 'react-icons/bs';
 import { MdKeyboardArrowDown, MdKeyboardArrowUp } from 'react-icons/md';
 import { Mode } from '@common/types';
 import { useTranslation } from 'react-i18next';
@@ -44,9 +45,14 @@ const MODE_CONFIG: Record<Mode, ModeConfig> = {
     labelKey: 'mode.context',
     tooltipKey: 'modeTooltip.context',
   },
+  debug: {
+    icon: BsBug,
+    labelKey: 'mode.debug',
+    tooltipKey: 'modeTooltip.debug',
+  },
 };
 
-const MODES_ORDER: Mode[] = ['code', 'agent', 'ask', 'architect', 'context'];
+const MODES_ORDER: Mode[] = ['code', 'agent', 'ask', 'architect', 'context', 'debug'];
 
 type Props = {
   mode: Mode;

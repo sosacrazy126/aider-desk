@@ -7,6 +7,7 @@ import { IoMdClose } from 'react-icons/io';
 import { MdHistory } from 'react-icons/md';
 import { IoLogoMarkdown } from 'react-icons/io5';
 import { RiRobot2Line } from 'react-icons/ri';
+import { BsBug } from 'react-icons/bs';
 import { useTranslation } from 'react-i18next';
 import { getActiveProvider } from '@common/llm-providers';
 
@@ -232,49 +233,58 @@ export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(
           </div>
         ) : (
           <div className="flex items-center h-full">
-            <div className="flex-grow flex items-center space-x-3">
-              {mode === 'agent' && settings?.agentConfig ? (
-                getActiveProvider(settings.agentConfig.providers) ? (
+              <div className="flex-grow flex items-center space-x-3">
+                {mode === 'agent' && settings?.agentConfig ? (
+                  getActiveProvider(settings.agentConfig.providers) ? (
+                    <>
+                      <div className="flex items-center space-x-1">
+                        <RiRobot2Line className="w-4 h-4 text-neutral-100 mr-1" data-tooltip-id="agent-tooltip" />
+                        <StyledTooltip id="agent-tooltip" content={t('modelSelector.agentModel')} />
+                        <AgentModelSelector />
+                      </div>
+                      <div className="h-3 w-px bg-neutral-600/50"></div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex items-center space-x-1 text-xs text-neutral-400">
+                        <RiRobot2Line className="w-4 h-4 text-neutral-100 mr-1" />
+                        <span>{t('modelSelector.noActiveAgentProvider')}</span>
+                      </div>
+                      <div className="h-3 w-px bg-neutral-600/50"></div>
+                    </>
+                  )
+                ) : mode === 'debug' ? (
                   <>
                     <div className="flex items-center space-x-1">
-                      <RiRobot2Line className="w-4 h-4 text-neutral-100 mr-1" data-tooltip-id="agent-tooltip" />
-                      <StyledTooltip id="agent-tooltip" content={t('modelSelector.agentModel')} />
-                      <AgentModelSelector />
+                      <BsBug className="w-4 h-4 text-neutral-100 mr-1" data-tooltip-id="debug-controls-tooltip" />
+                      <StyledTooltip id="debug-controls-tooltip" content={t('mode.debug')} />
+                      <DebugControls />
                     </div>
                     <div className="h-3 w-px bg-neutral-600/50"></div>
                   </>
                 ) : (
                   <>
-                    <div className="flex items-center space-x-1 text-xs text-neutral-400">
-                      <RiRobot2Line className="w-4 h-4 text-neutral-100 mr-1" />
-                      <span>{t('modelSelector.noActiveAgentProvider')}</span>
-                    </div>
-                    <div className="h-3 w-px bg-neutral-600/50"></div>
+                    {mode === 'architect' && (
+                      <>
+                        <div className="flex items-center space-x-1">
+                          <GoProjectRoadmap
+                            className="w-4 h-4 text-neutral-100 mr-1"
+                            data-tooltip-id="architect-model-tooltip"
+                            data-tooltip-content={t('modelSelector.architectModel')}
+                          />
+                          <StyledTooltip id="architect-model-tooltip" />
+                          <ModelSelector
+                            ref={architectModelSelectorRef}
+                            models={allModels}
+                            selectedModel={modelsData.architectModel || modelsData.mainModel}
+                            onChange={updateArchitectModel}
+                          />
+                        </div>
+                        <div className="h-3 w-px bg-neutral-600/50"></div>
+                      </>
+                    )}
                   </>
-                )
-              ) : (
-                <>
-                  {mode === 'architect' && (
-                    <>
-                      <div className="flex items-center space-x-1">
-                        <GoProjectRoadmap
-                          className="w-4 h-4 text-neutral-100 mr-1"
-                          data-tooltip-id="architect-model-tooltip"
-                          data-tooltip-content={t('modelSelector.architectModel')}
-                        />
-                        <StyledTooltip id="architect-model-tooltip" />
-                        <ModelSelector
-                          ref={architectModelSelectorRef}
-                          models={allModels}
-                          selectedModel={modelsData.architectModel || modelsData.mainModel}
-                          onChange={updateArchitectModel}
-                        />
-                      </div>
-                      <div className="h-3 w-px bg-neutral-600/50"></div>
-                    </>
-                  )}
-                </>
-              )}
+                )}
               <div className="flex items-center space-x-1">
                 <CgTerminal className="w-4 h-4 text-neutral-100 mr-1" data-tooltip-id="main-model-tooltip" />
                 <StyledTooltip
@@ -355,3 +365,12 @@ export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(
 );
 
 ProjectBar.displayName = 'ProjectTopBar';
+
+// DebugControls placeholder for Debug mode
+function DebugControls() {
+  return (
+    <div className="text-xs text-neutral-300" data-testid="debug-controls-placeholder">
+      Debug Mode Controls Placeholder
+    </div>
+  );
+}
