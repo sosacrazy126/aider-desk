@@ -1,10 +1,9 @@
-/**
- * SimulationRunner: Executes an agent scenario for testing/debugging.
- * This is a wrapper around the agent's prompt execution logic.
- */
+import { runPrompt } from '@/agent';
+import type { EditFormat } from '@common/types';
 
-export async function runScenario(scenario: string): Promise<string> {
-  // TODO: Replace with actual agent prompt execution
-  // For now, just echo the scenario.
-  return scenario;
+export class SimulationRunner {
+  static async runScenario(scenario: string, format: EditFormat): Promise<string> {
+    const res = await runPrompt(scenario, { mode: 'debug', editFormat: format });
+    return res[0]?.content ?? '';
+  }
 }

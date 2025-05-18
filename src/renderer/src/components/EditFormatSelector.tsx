@@ -1,7 +1,8 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MdKeyboardArrowUp } from 'react-icons/md';
-import { EditFormat } from '@common/types';
+import { EditFormat, isValidEditFormat } from '@common/types';
+import { toast } from 'react-hot-toast';
 
 import { useClickOutside } from '@/hooks/useClickOutside';
 import { useBooleanState } from '@/hooks/useBooleanState';
@@ -11,7 +12,8 @@ export type EditFormatSelectorRef = {
 };
 
 // Define available edit formats based on the EditFormat type
-const editFormatOptions: EditFormat[] = ['diff', 'diff-fenced', 'whole', 'udiff', 'udiff-simple', 'patch'];
+const SUPPORTED: EditFormat[] = ['diff', 'diff-fenced', 'whole', 'udiff', 'udiff-simple', 'patch'];
+const editFormatOptions = SUPPORTED;
 
 type Props = {
   currentFormat: EditFormat;
@@ -47,10 +49,18 @@ export const EditFormatSelector = forwardRef<EditFormatSelectorRef, Props>(({ cu
     }
   }, [visible, hide, show]);
 
-  const handleFormatSelected = (format: EditFormat) => {
-    onFormatChange(format);
+  const handleChange = (fmt: string) => {
+    if (!SUPPORTED.includes(fmt as EditFormat)) {
+      console.warn('[EditFormatSelector] invalid format', fmt);
+      toast.error(t('invalidEditFormat'));
+      return;
+    }
+    onFormatChange(fmt as EditFormat);
     hide();
   };
+
+  // For backwards compatibility:
+  const handleFormatSelected = handleChange;
 
   const filteredFormats = editFormatOptions.filter((format) => format.toLowerCase().includes(searchTerm.toLowerCase()));
 

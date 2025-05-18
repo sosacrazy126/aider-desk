@@ -1,3 +1,5 @@
+import type { EditFormat } from '@common/types';
+
 export type DebugTestCaseStatus = 'pending' | 'failing' | 'passing';
 
 export interface DebugTestCase {
@@ -11,7 +13,8 @@ export interface DebugTestCase {
 }
 
 export interface DebugSession {
-  isActive: boolean;
   tests: DebugTestCase[];
   activeTestId?: string;
+  isActive: boolean;
+  editFormat: EditFormat;
 }

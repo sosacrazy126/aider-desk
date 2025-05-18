@@ -15,6 +15,7 @@ import { IconButton } from '@/components/common/IconButton';
 import { AgentModelSelector } from '@/components/AgentModelSelector';
 import { ModelSelector, ModelSelectorRef } from '@/components/ModelSelector';
 import { EditFormatSelector } from '@/components/EditFormatSelector';
+import { track } from '@/utils/analytics';
 import { SessionsPopup } from '@/components/SessionsPopup';
 import { StyledTooltip } from '@/components/common/StyledTooltip';
 import { useSettings } from '@/context/SettingsContext';
@@ -140,10 +141,11 @@ export const ProjectBar = React.forwardRef<ProjectTopBarRef, Props>(
 
     const updateEditFormat = useCallback(
       (format: EditFormat) => {
+        track('edit_format_selected', { mode, format });
         window.api.updateEditFormat(baseDir, format);
         onModelChange?.();
       },
-      [baseDir, onModelChange],
+      [baseDir, onModelChange, mode],
     );
 
     const loadSessions = useCallback(async () => {
