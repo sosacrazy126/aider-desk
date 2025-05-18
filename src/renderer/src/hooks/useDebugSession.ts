@@ -1,16 +1,24 @@
-import { useSelector } from 'react-redux';
-import { RootState, useAppDispatch } from '../state/store';
-import { initDebugSession, endDebugSession, createTestCase, updateTestCase, setActiveTest } from '../state/debugSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState, AppDispatch } from '@/state/store';
+import {
+  updateTestCase,
+  createTestCase,
+  initDebugSession,
+  endDebugSession,
+  setActiveTest,
+} from '@/state/debugSlice';
+import { DebugTestCase } from '@/types/debug';
 
 export const useDebugSession = () => {
-  const debug = useSelector((state: RootState) => state.debug);
-  const dispatch = useAppDispatch();
+  const dispatch: AppDispatch = useDispatch();
+  const session = useSelector((s: RootState) => s.debug);
+
   return {
-    debug,
-    initDebugSession: () => dispatch(initDebugSession()),
-    endDebugSession: () => dispatch(endDebugSession()),
-    createTestCase: (input: { scenario: string; expected: string }) => dispatch(createTestCase(input)),
-    updateTestCase: (id: string, updates: any) => dispatch(updateTestCase({ id, updates })),
+    session,
+    init: () => dispatch(initDebugSession()),
+    end: () => dispatch(endDebugSession()),
+    addTest: (test: DebugTestCase) => dispatch(createTestCase(test)),
+    updateTest: (test: DebugTestCase) => dispatch(updateTestCase(test)), // Typed
     setActiveTest: (id?: string) => dispatch(setActiveTest(id)),
   };
 };
