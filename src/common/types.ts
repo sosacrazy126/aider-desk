@@ -3,7 +3,7 @@ import { LlmProvider } from '@common/llm-providers';
 import type { CoreMessage } from 'ai';
 import type { JsonSchema } from '@n8n/json-schema-to-zod';
 
-export type Mode = 'code' | 'ask' | 'architect' | 'context' | 'agent';
+export type Mode = 'code' | 'ask' | 'architect' | 'context' | 'agent' | 'debug';
 
 export type EditFormat = 'diff' | 'diff-fenced' | 'whole' | 'udiff' | 'udiff-simple' | 'patch';
 
@@ -112,6 +112,15 @@ export interface WindowState {
   isMaximized: boolean;
 }
 
+/**
+ * Structure for debug session state.
+ * Extend with additional debug-specific fields as needed.
+ */
+export interface DebugSession {
+  isActive: boolean;
+  // Additional debug-specific fields to be implemented in future PRs
+}
+
 export interface ProjectSettings {
   mainModel: string;
   weakModel?: string | null;
@@ -121,6 +130,7 @@ export interface ProjectSettings {
   thinkingTokens?: string;
   currentMode: Mode;
   renderMarkdown: boolean;
+  debugSession?: DebugSession;
 }
 
 export interface ProjectData {
