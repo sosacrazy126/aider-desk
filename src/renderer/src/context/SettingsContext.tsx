@@ -13,8 +13,37 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const loadSettings = async () => {
-      const loadedSettings = await window.api.loadSettings();
-      setSettings(loadedSettings);
+      try {
+        const loadedSettings = await window.api.loadSettings();
+        setSettings(loadedSettings);
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error('Failed to load settings via IPC:', error);
+        setSettings({
+          language: 'en',
+          startupMode: 'empty',
+          zoomLevel: 1,
+          notificationsEnabled: false,
+          aiderDeskAutoUpdate: true,
+          onboardingFinished: false,
+          aider: { options: '', environmentVariables: '' },
+          models: { preferred: [] },
+          agentConfig: {
+            providers: [],
+            maxIterations: 10,
+            maxTokens: 1000,
+            minTimeBetweenToolCalls: 0,
+            mcpServers: {},
+            disabledServers: [],
+            toolApprovals: {},
+            includeContextFiles: false,
+            includeRepoMap: false,
+            usePowerTools: false,
+            useAiderTools: true,
+            customInstructions: '',
+          }
+        });
+      }
     };
     void loadSettings();
   }, []);
