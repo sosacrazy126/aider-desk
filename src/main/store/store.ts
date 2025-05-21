@@ -22,6 +22,7 @@ export const DEFAULT_SETTINGS: SettingsData = {
   zoomLevel: 1,
   notificationsEnabled: false,
   aiderDeskAutoUpdate: true,
+  onboardingFinished: false,
   aider: {
     options: '',
     environmentVariables: '',
@@ -126,14 +127,20 @@ export class Store {
   }
 
   getSettings(): SettingsData {
-    let settings = this.store.get('settings');
+    let settings: SettingsData | undefined;
+    try {
+      settings = this.store.get('settings');
 
-    if (settings) {
-      settings = this.migrate(settings);
+      if (settings) {
+        settings = this.migrate(settings);
+      }
+    } catch (error) {
+      logger.error('Error while getting/migrating settings:', error);
+      return { ...DEFAULT_SETTINGS };
     }
 
     if (!settings) {
-      return DEFAULT_SETTINGS;
+      return { ...DEFAULT_SETTINGS };
     }
 
     return {
